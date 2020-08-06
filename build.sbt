@@ -10,12 +10,14 @@ val spark_version = "3.0.0"
 
 /* Runtime */
 libraryDependencies +=  "org.apache.spark" %% "spark-sql" % spark_version % Provided
-libraryDependencies += "io.projectglow" %% "glow" % "0.5.0" % Provided
+libraryDependencies +=  "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
+libraryDependencies +=  "org.apache.hadoop" % "hadoop-aws" % "3.2.0" % Provided
+libraryDependencies += "io.projectglow" %% "glow" % "0.5.0" exclude ("org.apache.hadoop", "hadoop-client")
+libraryDependencies += "io.delta" %% "delta-core" % "0.7.0" % Provided
 
 /* Test */
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % "test"
 libraryDependencies += "org.apache.spark" %% "spark-hive" % spark_version % "test"
-
 
 test in assembly := {}
 
