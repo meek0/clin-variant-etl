@@ -10,7 +10,7 @@ trait WithSparkSession {
   implicit lazy val spark: SparkSession = SparkSession.builder()
     .config("spark.ui.enabled", value = false)
     .config("hive.metastore.uris", "thrift://localhost:9083")
-//    .config("spark.sql.warehouse.dir", s"s3a://spark/wharehouse")
+    .config("spark.sql.warehouse.dir", s"s3a://spark/wharehouse")
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     .config("spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a", "org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory")

@@ -37,6 +37,7 @@ object Occurrences {
       .withColumn("variant_class", variant_class)
       .withColumn("batch_id", lit(batchId))
       .drop("annotation")
+      .where($"chromosome" === "X")
     //
     //    val biospecimens = broadcast(
     //      spark

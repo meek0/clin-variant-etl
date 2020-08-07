@@ -12,14 +12,17 @@ class MultiFeatureSpec extends AnyFeatureSpec with GivenWhenThen with WithSparkS
       val input = getClass.getResource("/multi.vcf").getFile
       val df = spark.read.format("vcf")
         .option("flattenInfoFields", "true").load(input)
+      df.printSchema()
       df.show(false)
       val output = Glow.transform("split_multiallelics", df)
-      output.write.option("path", "s3a://spark/test4").format("delta").saveAsTable("spark_tests.events4")
       output.show(false)
     }
   }
 
   Feature("Multi select") {
+    Scenario("Read JSSON") {
+      spark.read.json(getClass.getResource("test_json").getFile ).show()
+    }
     Scenario("Transform vcf with vep") {
       spark.table("spark_tests.variants").where(col("pubmed").isNotNull).show()
 

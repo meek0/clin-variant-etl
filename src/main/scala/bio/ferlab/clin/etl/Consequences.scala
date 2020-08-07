@@ -34,6 +34,7 @@ object Consequences {
         impact,
         symbol,
         ensembl_gene_id,
+        ensembl_feature_id,
         ensembl_transcript_id,
         ensembl_regulatory_id,
         feature_type,
@@ -54,9 +55,12 @@ object Consequences {
         canonical
       )
       .drop("annotation")
+      .withColumn("aa_change", when($"amino_acids".isNotNull, concat($"amino_acids.reference", $"protein_position", $"amino_acids.variant")).otherwise(lit(null)))
+      .withColumn("coding_dna_change", when($"cds_position".isNotNull, concat($"cds_position", $"reference", lit(">"), $"alternate")).otherwise(lit(null)))
       .withColumn("consequence", explode($"consequences"))
       .withColumn("batch_id", lit(batchId))
-      .drop(TABLE_CONSEQUENCES)
+      .drop("consequences")
+      .where($"chromosome" === "X")
 
     consequencesDF
   }
@@ -76,25 +80,25 @@ object Consequences {
             consequences("reference") === $"e.reference" &&
             consequences("alternate") === $"e.alternate" &&
             consequences("ensembl_gene_id") === $"e.ensembl_gene_id" &&
-            consequences("ensembl_transcript_id") === $"e.ensembl_transcript_id" &&
-            consequences("ensembl_regulatory_id") === $"e.ensembl_regulatory_id"
+            consequences("ensembl_feature_id") === $"e.ensembl_feature_id"
         )
         .whenNotMatched()
         .insertAll()
         .execute()
 
       /** Compact */
-      writeOnce(spark.table(TABLE_CONSEQUENCES), output)
+      writeOnce(spark.table(TABLE_CONSEQUENCES), output, dataChange = false)
 
 
     }
   }
 
-  private def writeOnce(df: DataFrame, output: String)(implicit spark: SparkSession): Unit = {
+  private def writeOnce(df: DataFrame, output: String, dataChange: Boolean = true)(implicit spark: SparkSession): Unit = {
     import spark.implicits._
     df.repartition(1, $"chromosome")
       .sortWithinPartitions("start")
       .write.mode(SaveMode.Overwrite)
+      .option("dataChange", dataChange)
       .partitionBy("chromosome")
       .format("delta")
       .option("path", s"$output/$TABLE_CONSEQUENCES")

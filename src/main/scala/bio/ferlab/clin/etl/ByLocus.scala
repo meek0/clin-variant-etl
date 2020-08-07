@@ -1,7 +1,9 @@
 package bio.ferlab.clin.etl
 
-import org.apache.spark.sql.functions.{col, concat, sha1}
+import org.apache.spark.sql.functions.{col, concat, lit, sha1, struct, when}
 import org.apache.spark.sql.{Column, DataFrame, RelationalGroupedDataset}
+
+import scala.::
 
 object ByLocus {
 
@@ -9,16 +11,31 @@ object ByLocus {
 
   implicit class ByLocusDataframe(df: DataFrame) {
 
-    def joinByLocus(other: DataFrame, joinType:String = "inner"): DataFrame = {
-      df.join(other, df("chromosome") === other("chromosome") && df("start") === other("start") && df("reference") === other("reference") && df("alternate") === other("alternate"), joinType)
+    def joinAndDrop(other: DataFrame, joinType: String = "inner"): DataFrame = {
+      joinByLocus(other, joinType)
         .drop(other("chromosome"))
         .drop(other("start"))
         .drop(other("reference"))
         .drop(other("alternate"))
     }
 
+
+    def joinAndMerge(other: DataFrame, outputColumnName: String, joinType: String = "inner"): DataFrame = {
+      joinByLocus(other, joinType)
+        .select(df("*"), when(other("chromosome").isNull, lit(null)).otherwise(struct(other.drop("chromosome", "start", "end", "name", "reference", "alternate")("*"))) as outputColumnName)
+    }
+
+    private def joinByLocus(other: DataFrame, joinType: String) = {
+      df.join(other, df("chromosome") === other("chromosome") && df("start") === other("start") && df("reference") === other("reference") && df("alternate") === other("alternate"), joinType)
+    }
+
     def groupByLocus(): RelationalGroupedDataset = {
       df.groupBy(df("chromosome"), df("start"), df("reference"), df("alternate"))
+    }
+
+    def selectLocus(cols: Column*): DataFrame = {
+      val allCols = df("chromosome") :: df("start") :: df("reference") :: df("alternate") :: cols.toList
+      df.select(allCols: _*)
     }
 
   }

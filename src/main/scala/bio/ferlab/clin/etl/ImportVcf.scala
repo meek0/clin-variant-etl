@@ -19,7 +19,7 @@ object ImportVcf extends App {
   run(input, output, batchId, runType)
 
   def run(input: String, output: String, batchId: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
-    spark.sql("use spark_tests")
+    spark.sql("use clin")
     if (runType == "all") {
       Occurrences.run(input, output, batchId)
       Variants.run(input, output, batchId)
