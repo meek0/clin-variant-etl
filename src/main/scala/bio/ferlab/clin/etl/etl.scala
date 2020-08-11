@@ -1,10 +1,10 @@
 package bio.ferlab.clin
 
 import io.projectglow.Glow
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.{aggregate, col, expr, filter, first, lit, ltrim, split, sum, transform, udf, when}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DecimalType}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 package object etl {
   def vcf(input: String)(implicit spark: SparkSession): DataFrame = {

@@ -1,10 +1,12 @@
-import bio.ferlab.clin.etl.columns
+package bio.ferlab.clin.etl
+
 import bio.ferlab.clin.etl.columns._
+import bio.ferlab.clin.testutils.WithSparkHiveSession
 import org.apache.spark.sql.Row
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers {
+class PrepareIndexSpecs extends AnyFlatSpec with WithSparkHiveSession with Matchers {
 
   "ac" should "return sum of allele count" in {
     import spark.implicits._

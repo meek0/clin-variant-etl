@@ -1,3 +1,4 @@
+import bio.ferlab.clin.testutils.WithSparkHiveSession
 import io.projectglow.Glow
 import org.apache.spark.sql.functions.col
 import org.scalatest.GivenWhenThen
@@ -5,7 +6,7 @@ import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.matchers.should.Matchers
 
 
-class MultiFeatureSpec extends AnyFeatureSpec with GivenWhenThen with WithSparkSession with Matchers {
+class MultiFeatureSpec extends AnyFeatureSpec with GivenWhenThen with WithSparkHiveSession with Matchers {
 
   Feature("Multi") {
     Scenario("Transform vcf with vep") {
