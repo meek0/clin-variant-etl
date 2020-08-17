@@ -30,6 +30,12 @@ package object etl {
   def firstAs(c: String): Column = first(col(c)) as c
 
   object columns {
+    val zygosity: Column = when(col("calls")(0) === 1 && col("calls")(1) === 1, "HOM")
+      .when(col("calls")(0) === 0 && col("calls")(1) === 1, "HET")
+      .when(col("calls")(0) === 0 && col("calls")(1) === 0, "HOM REF")
+      .when(col("calls")(0) === 1 && col("calls")(1) === 0, "HET")
+      .otherwise("UNK")
+
     val chromosome: Column = ltrim(col("contigName"), "chr") as "chromosome"
     val reference: Column = col("referenceAllele") as "reference"
     val start: Column = (col("start") + 1) as "start"

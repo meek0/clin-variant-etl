@@ -33,6 +33,7 @@ object Occurrences {
         is_multi_allelic,
         old_multi_allelic
       )
+      .withColumn("zygosity", zygosity)
       .withColumn("hgvsg", hgvsg)
       .withColumn("variant_class", variant_class)
       .withColumn("batch_id", lit(batchId))
