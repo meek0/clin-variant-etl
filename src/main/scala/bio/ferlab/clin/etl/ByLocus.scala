@@ -1,9 +1,7 @@
 package bio.ferlab.clin.etl
 
-import org.apache.spark.sql.functions.{col, concat, lit, sha1, struct, when}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, RelationalGroupedDataset}
-
-import scala.::
 
 object ByLocus {
 

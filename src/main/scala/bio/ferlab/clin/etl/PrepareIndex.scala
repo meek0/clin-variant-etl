@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.ByLocus._
 import bio.ferlab.clin.etl.columns.{ac, an}
-import org.apache.spark.sql.functions.{col, collect_list, first, struct}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object PrepareIndex extends App {
@@ -10,12 +10,8 @@ object PrepareIndex extends App {
   val Array(output, batchId) = args
 
   implicit val spark: SparkSession = SparkSession.builder
-    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    .config("spark.databricks.delta.retentionDurationCheck.enabled", value = false)
-//    .config("spark.sql.shuffle.partitions", 1000)
     .enableHiveSupport()
-    .appName(s"Extract").getOrCreate()
+    .appName(s"Prepare Index").getOrCreate()
 
   run(output, batchId)
 
@@ -26,6 +22,7 @@ object PrepareIndex extends App {
       .andThen(joinWithPopulations)
       .andThen(joinWithClinvar)
       .andThen(joinWithDbSNP)
+      .andThen(joinWithGenes)
     joinVariants(batchId)
       .write.mode("overwrite")
       .json(s"$output/extract")
@@ -77,6 +74,42 @@ object PrepareIndex extends App {
     joinWithDBNSFP(csq)
   }
 
+  private def buildGenes(implicit spark: SparkSession) = {
+    import spark.implicits._
+    val currentGenes = spark.table("consequences")
+      .selectLocus($"ensembl_gene_id", $"biotype")
+      .distinct()
+
+    val humanGenes = spark.table("human_genes").select($"symbol", $"entrez_gene_id", $"omim_gene_id", $"external_references.hgnc" as "hgnc", $"ensembl_gene_id",
+      $"map_location" as "location", $"description" as "name", $"other_designations" as "alias" )
+
+    val orphanet = spark.table("orphanet_gene_set").select($"ensembl_gene_id", $"disorder_id", $"name" as   "panel" )
+
+    val hpo = spark.table("hpo_gene_set").select($"ensembl_gene_id", $"hpo_term_id", $"hpo_term_name" )
+
+    val genes = humanGenes
+      .join(orphanet, humanGenes("ensembl_gene_id") === orphanet("ensembl_gene_id"), "left")
+      .join(hpo, humanGenes("ensembl_gene_id") === hpo("ensembl_gene_id"), "left")
+      .groupBy(humanGenes("ensembl_gene_id")).agg(
+      first(struct(humanGenes("*"))) as "hg",
+      when(first(orphanet("ensembl_gene_id")).isNotNull, collect_list(struct($"disorder_id", $"panel") )).otherwise(lit(null)) as "orphanet",
+      when(first(hpo("ensembl_gene_id")).isNotNull, collect_list(struct($"hpo_term_id",$"hpo_term_name") )).otherwise(lit(null)) as "hpo"
+    )
+      .select($"hg.*", $"orphanet", $"hpo")
+
+    currentGenes
+      .join(genes, currentGenes("ensembl_gene_id") === genes("ensembl_gene_id"), "left")
+      .groupByLocus()
+      .agg(collect_list(struct(currentGenes("biotype") as "biotype", genes("*"))) as "genes")
+
+  }
+
+  def joinWithGenes(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    val genes = buildGenes
+    variants.joinAndDrop(genes, "left")
+      .select(variants("*"), genes("genes"))
+  }
+
   def joinWithPopulations(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val genomes = spark.table("1000_genomes").as("1000Gp3").selectLocus($"ac", $"af")
@@ -103,7 +136,7 @@ object PrepareIndex extends App {
 
   def joinWithDbSNP(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     val dbsnp = spark.table("dbsnp")
-    variants.joinAndDrop(dbsnp)
+    variants.joinAndDrop(dbsnp, "left")
       .select(variants("*"), dbsnp("name") as "dbsnp")
   }
 
