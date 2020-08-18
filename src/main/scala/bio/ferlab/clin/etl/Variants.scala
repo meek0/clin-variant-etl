@@ -71,7 +71,7 @@ object Variants {
         is_multi_allelic,
         old_multi_allelic,
         firstAnn,
-        array_distinct(annotations("symbol")) as "genes"
+        array_distinct(annotations("symbol")) as "genes_symbol"
       )
       .select($"*", hgvsg, variant_class, pubmed, lit(batchId) as "batch_id", lit(null).cast("string") as "last_batch_id")
       .drop("annotation")
