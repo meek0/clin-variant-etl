@@ -13,7 +13,7 @@ docker run -p 8080:8080 --rm -v $PWD/logs:/logs -v $PWD/notebook:/notebook -e ZE
 
 
 TODO
-- Genes
+- Radboumdunc
 - Exomiser
 - Join with biospecimens table
 - Transmission

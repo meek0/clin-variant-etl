@@ -74,7 +74,6 @@ object PrepareIndex extends App {
     joinWithDBNSFP(csq)
   }
 
-
   def joinWithGenes(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     val genes = spark.table("genes")
     variants

@@ -12,7 +12,7 @@ object CreatePublicTables extends App {
   spark.sql("use clin")
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`clinvar` (
+    s"""CREATE TABLE IF NOT EXISTS `clinvar` (
       |   `chromosome` string,
       |   `start` bigint,
       |   `end` bigint,
@@ -28,7 +28,7 @@ object CreatePublicTables extends App {
       |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`dbsnp` (
+    s"""CREATE TABLE IF NOT EXISTS `dbsnp` (
       |   `chromosome` string,
       |   `start` bigint,
       |   `reference` string,
@@ -42,7 +42,7 @@ object CreatePublicTables extends App {
       |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`topmed_bravo` (
+    s"""CREATE TABLE IF NOT EXISTS `topmed_bravo` (
        |   `chromosome` string,
        |   `start` bigint,
        |   `end` bigint,
@@ -57,7 +57,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`gnomad_genomes_3_0` (
+    s"""CREATE TABLE IF NOT EXISTS `gnomad_genomes_3_0` (
        |   `chromosome` string,
        |   `start` bigint,
        |   `name` string,
@@ -71,7 +71,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`gnomad_exomes_2_1_1_liftover_grch38` (
+    s"""CREATE TABLE IF NOT EXISTS `gnomad_exomes_2_1_1_liftover_grch38` (
        |   `chromosome` string,
        |   `start` int,
        |   `name` string,
@@ -85,7 +85,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`gnomad_genomes_2_1_1_liftover_grch38` (
+    s"""CREATE TABLE IF NOT EXISTS `gnomad_genomes_2_1_1_liftover_grch38` (
        |   `chromosome` string,
        |   `start` int,
        |   `name` string,
@@ -99,7 +99,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`1000_genomes` (
+    s"""CREATE TABLE IF NOT EXISTS `1000_genomes` (
        |   `chromosome` string,
        |   `start` bigint,
        |   `name` string,
@@ -113,7 +113,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`dbnsfp_scores` (
+    s"""CREATE TABLE IF NOT EXISTS `dbnsfp_scores` (
        |`start` int,
        |`reference` string,
        |`alternate` string,
@@ -165,7 +165,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`human_genes` (
+    s"""CREATE TABLE IF NOT EXISTS `human_genes` (
        |  `tax_id` int,
        |  `entrez_gene_id` int,
        |  `symbol` string,
@@ -189,7 +189,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`orphanet_gene_set` (
+    s"""CREATE TABLE IF NOT EXISTS `orphanet_gene_set` (
        |  `disorder_id` int,
        |  `orpha_number` int,
        |  `expert_link` string,
@@ -207,7 +207,7 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
-    s"""CREATE TABLE IF NOT EXISTS`hpo_gene_set` (
+    s"""CREATE TABLE IF NOT EXISTS `hpo_gene_set` (
        |  `entrez_gene_id` int,
        |  `symbol` string,
        |  `hpo_term_id` string,
@@ -222,5 +222,25 @@ object CreatePublicTables extends App {
        |USING parquet
        |LOCATION '$input/hpo_gene_set'
        |""".stripMargin)
+  spark.sql(
+    s"""CREATE TABLE IF NOT EXISTS `omim_gene_set` (
+       |  `chromosome` STRING,
+       |  `start` INT,
+       |  `end` INT,
+       |  `cypto_location` STRING,
+       |  `computed_cypto_location` STRING,
+       |  `omim_gene_id` INT,
+       |  `symbols` ARRAY<STRING>,
+       |  `name` STRING,
+       |  `approved_symbol` STRING,
+       |  `entrez_gene_id` INT,
+       |  `ensembl_gene_id` STRING,
+       |  `comments` STRING,
+       |  `phenotype` STRUCT<`name`: STRING, `omim_id`: STRING, `inheritence`: ARRAY<STRING>>
+       |)
+       |USING parquet
+       |LOCATION '$input/omim_gene_set'
+       |""".stripMargin)
+
 }
 
