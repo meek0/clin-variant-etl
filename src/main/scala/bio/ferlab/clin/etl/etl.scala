@@ -76,7 +76,7 @@ package object etl {
     val feature_type: Column = col("annotation.Feature_type") as "feature_type"
     val ensembl_gene_id: Column = col("annotation.Gene") as "ensembl_gene_id"
     val pubmed: Column = split(col("annotation.PUBMED"), "&") as "pubmed"
-    val pick: Column = col("annotation.PICK") as "pick"
+    val pick: Column = when(col("annotation.PICK") === "1", lit(true)).otherwise(false) as "pick"
     val canonical: Column = when(col("annotation.CANONICAL") === "YES", lit(true)).otherwise(lit(false)) as "canonical"
     val dbsnp: Column = col("annotation.rs_dbSNP151") as "dbsnp"
     val is_dbsnp: Column = col("INFO_DB") as "is_dbsnp"
