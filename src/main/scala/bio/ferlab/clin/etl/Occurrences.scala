@@ -24,32 +24,42 @@ object Occurrences {
         alternate,
         name,
         firstAnn,
-        $"genotype.sampleId" as "biospecimen_id",
+        concat(lit("SP"), $"genotype.sampleId") as "biospecimen_id",
         $"genotype.alleleDepths" as "ad",
         $"genotype.depth" as "dp",
         $"genotype.conditionalQuality" as "gq",
         $"genotype.calls" as "calls",
+        $"INFO_QD" as "qd",
         array_contains($"genotype.calls", 1) as "has_alt",
         is_multi_allelic,
         old_multi_allelic
       )
+      .withColumn("ad_ref", $"ad"(0))
+      .withColumn("ad_alt", $"ad"(1))
+      .withColumn("ad_total", $"ad_ref" + $"ad_alt")
+      .withColumn("ad_ratio", when($"ad_total" === 0, 0).otherwise($"ad_alt" / $"ad_total"))
+      .drop("ad")
       .withColumn("zygosity", zygosity)
       .withColumn("hgvsg", hgvsg)
       .withColumn("variant_class", variant_class)
+      .withColumn("exomiser_score", lit(1)) //TODO
       .withColumn("batch_id", lit(batchId))
       .drop("annotation")
       .where($"chromosome" === "X")
-    //
-    //    val biospecimens = broadcast(
-    //      spark
-    //        .table("biospecimens")
-    //        .select($"biospecimen_id", $"patient_id", $"family_id")
-    //    )
-    //
-    //    occurrences
-    //      .join(biospecimens, occurrences("biospecimen_id") === biospecimens("biospecimen_id"), "inner")
-    //      .drop(occurrences("biospecimen_id"))
+
+    val patients = spark.table("patients")
+    val biospecimens = spark
+      .table("biospecimens")
+    val biospecimensWithPatient = broadcast(
+      biospecimens
+        .join(patients, biospecimens("patient_id") === patients("patient_id"))
+        .select($"biospecimen_id", patients("patient_id"), $"family_id", $"practitioner_id", $"organization_id")
+    )
+
     occurrences
+      .join(biospecimensWithPatient, occurrences("biospecimen_id") === biospecimens("biospecimen_id"), "inner")
+      .drop(occurrences("biospecimen_id"))
+
   }
 
   val OCCURRENCES_TABLE = "occurrences"

@@ -23,6 +23,7 @@ object PrepareIndex extends App {
       .andThen(joinWithClinvar)
       .andThen(joinWithDbSNP)
       .andThen(joinWithGenes)
+      .andThen(addExtDb)
     joinVariants(batchId)
       .write.mode("overwrite")
       .json(s"$output/extract")
@@ -36,7 +37,7 @@ object PrepareIndex extends App {
   private def buildNewVariants(batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val newVariants = spark.table("variants").where($"batch_id" === batchId).withColumnRenamed("genes", "genes_symbol").as("variants")
-    val consequences = buildConsequences(spark)
+    val consequences = buildConsequences(spark).as("consequences")
 
     val joinWithConsequences = newVariants
       .joinAndDrop(consequences)
@@ -56,11 +57,11 @@ object PrepareIndex extends App {
       .groupByLocus()
       .agg(
         first(struct(joinWithConsequences("*"))) as "variant",
-        collect_list(struct("occurrences.*")) as "occurrences",
+        collect_list(struct("occurrences.*")) as "donors",
         struct(ac, an) as "internal_frequencies"
       )
       .select($"variant.*",
-        $"occurrences",
+        $"donors",
         $"internal_frequencies"
       )
 
@@ -85,6 +86,20 @@ object PrepareIndex extends App {
         collect_list(struct("genes.*")) as "genes"
       )
       .select("variant.*", "genes")
+  }
+
+  private def addExtDb(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+    variants.withColumn(
+      "ext_db", struct(
+        $"pubmed".isNotNull.as("is_pubmed"),
+        $"dbsnp".isNotNull.as("is_dbsnp"),
+        $"clinvar".isNotNull.as("is_clinvar"),
+        exists($"genes", gene => gene("hpo").isNotNull).as("is_hpo"),
+        exists($"genes", gene => gene("orphanet").isNotNull).as("is_orphanet"),
+        exists($"genes", gene => gene("omim").isNotNull).as("is_omim")
+      )
+    )
   }
 
   def joinWithPopulations(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -126,8 +141,9 @@ object PrepareIndex extends App {
           $"polyphen2_hvar_score", $"polyphen2_hvar_pred",
           $"fathmm_converted_rank_score", $"fathmm_pred",
           $"cadd_score", $"dann_score", $"revel_rankscore",
-          $"lrt_converted_rankscore", $"lrt_pred") as "prediction_scores",
-        struct($"phylo_p17way_primate_rankscore") as "conservations_scores",
+          $"lrt_converted_rankscore", $"lrt_pred") as "predictions",
+        struct($"phylo_p17way_primate_rankscore"
+        ) as "conservations",
       )
 
     c.join(s,
@@ -143,7 +159,7 @@ object PrepareIndex extends App {
       .drop(s("alternate"))
       .drop(s("ensembl_transcript_id"))
 
-      .select(c("*"), s("prediction_scores"), s("conservations_scores"))
+      .select(c("*"), s("predictions"), s("conservations"))
 
 
   }

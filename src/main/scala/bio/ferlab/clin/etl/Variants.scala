@@ -74,6 +74,7 @@ object Variants {
         array_distinct(annotations("symbol")) as "genes_symbol"
       )
       .select($"*", hgvsg, variant_class, pubmed, lit(batchId) as "batch_id", lit(null).cast("string") as "last_batch_id")
+      .withColumn("impact_score", lit(1)) //TODO
       .drop("annotation")
       .where($"chromosome" === "X")
 
