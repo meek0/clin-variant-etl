@@ -1,10 +1,8 @@
 package bio.ferlab.clin.etl
 
-import org.apache.spark.sql.expressions.Window
+import bio.ferlab.clin.etl.columns._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, functions}
-import columns._
-import io.delta.tables.DeltaTable
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object Occurrences {
 
@@ -42,8 +40,8 @@ object Occurrences {
       .withColumn("zygosity", zygosity)
       .withColumn("hgvsg", hgvsg)
       .withColumn("variant_class", variant_class)
-      .withColumn("exomiser_score", lit(1)) //TODO
       .withColumn("batch_id", lit(batchId))
+      .withColumn("last_update", current_date())
       .drop("annotation")
       .where($"chromosome" === "X")
 
@@ -53,7 +51,7 @@ object Occurrences {
     val biospecimensWithPatient = broadcast(
       biospecimens
         .join(patients, biospecimens("patient_id") === patients("patient_id"))
-        .select($"biospecimen_id", patients("patient_id"), $"family_id", $"practitioner_id", $"organization_id")
+        .select($"biospecimen_id", patients("patient_id"), $"family_id", $"practitioner_id", $"organization_id", $"sequencing_strategy", $"study_id")
     )
 
     occurrences

@@ -13,13 +13,10 @@ docker run -p 8080:8080 --rm -v $PWD/logs:/logs -v $PWD/notebook:/notebook -e ZE
 
 
 TODO
-- Radboumdunc
-- Exomiser
-- Join with biospecimens table
+- Field clinvar_trait (still required?)
+- Field orphanet_group (not use?)
 - Transmission
-- Higher impact by variant (impactScore : https://github.com/Ferlab-Ste-Justine/clin-workflow/blob/17ed3f2853a53a7eaeb30edf57ca455dbf717050/src/main/java/org/chusj/VepHelper.java#L1652)
-        - pick?
-- freqs by lab
+- Frequencies by lab
 
 
 

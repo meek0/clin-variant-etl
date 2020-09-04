@@ -236,7 +236,7 @@ object CreatePublicTables extends App {
        |  `entrez_gene_id` INT,
        |  `ensembl_gene_id` STRING,
        |  `comments` STRING,
-       |  `phenotype` STRUCT<`name`: STRING, `omim_id`: STRING, `inheritence`: ARRAY<STRING>>
+       |  `phenotype` STRUCT<`name`: STRING, `omim_id`: STRING, `inheritance`: ARRAY<STRING>>
        |)
        |USING parquet
        |LOCATION '$input/omim_gene_set'

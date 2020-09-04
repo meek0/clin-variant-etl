@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl
 
-import org.apache.spark.sql.{SaveMode, SparkSession}
-import org.apache.spark.sql.functions.{collect_list, explode, first, lit, regexp_replace, struct, when}
+import org.apache.spark.sql.{SaveMode, SparkSession, functions}
+import org.apache.spark.sql.functions.{collect_list, concat, concat_ws, explode, first, lit, regexp_replace, struct, when}
 
 object CreateGenesTable extends App {
 
@@ -28,13 +28,15 @@ object CreateGenesTable extends App {
     )
     .select($"hg.*", $"orphanet")
 
-  val hpo = spark.table("hpo_gene_set").select($"entrez_gene_id", $"hpo_term_id", $"hpo_term_name").distinct()
+  val hpo = spark.table("hpo_gene_set").select($"entrez_gene_id", $"hpo_term_id", $"hpo_term_name")
+    .distinct()
+    .withColumn("hpo_term_label", concat($"hpo_term_name", lit(" ("),$"hpo_term_id", lit(")") ))
   val withHpo = withOrphanet
     .join(hpo, withOrphanet("entrez_gene_id") === hpo("entrez_gene_id"), "left")
     .groupBy(withOrphanet("symbol"))
     .agg(
       first(struct(withOrphanet("*"))) as "hg",
-      when(first(hpo("entrez_gene_id")).isNotNull, collect_list(struct($"hpo_term_id", $"hpo_term_name"))).otherwise(lit(null)) as "hpo"
+      when(first(hpo("entrez_gene_id")).isNotNull, collect_list(struct($"hpo_term_id", $"hpo_term_name", $"hpo_term_label"))).otherwise(lit(null)) as "hpo"
     )
     .select($"hg.*", $"hpo")
 

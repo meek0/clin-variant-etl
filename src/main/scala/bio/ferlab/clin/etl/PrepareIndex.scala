@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.ByLocus._
-import bio.ferlab.clin.etl.columns.{ac, an}
+import bio.ferlab.clin.etl.columns.{ac, an, formatted_consequence, hc, pn, zygosity}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -36,7 +36,12 @@ object PrepareIndex extends App {
 
   private def buildNewVariants(batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val newVariants = spark.table("variants").where($"batch_id" === batchId).withColumnRenamed("genes", "genes_symbol").as("variants")
+    val newVariants = spark.table("variants")
+      .where($"batch_id" === batchId)
+      .withColumnRenamed("genes", "genes_symbol")
+      .withColumn("assembly_version", lit("GRCh38"))
+      .withColumn("last_annotation_update", current_date())
+      .as("variants")
     val consequences = buildConsequences(spark).as("consequences")
 
     val joinWithConsequences = newVariants
@@ -44,9 +49,9 @@ object PrepareIndex extends App {
       .groupByLocus()
       .agg(
         first(struct("variants.*")) as "variant",
-        collect_list(struct("consequences.*")) as "consequences")
-      .select($"variant.*",
-        $"consequences")
+        collect_list(struct("consequences.*")) as "consequences",
+        max("impact_score") as "impact_score")
+      .select($"variant.*", $"consequences", $"impact_score")
 
     val occurrences = spark.table("occurrences")
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
@@ -58,24 +63,32 @@ object PrepareIndex extends App {
       .agg(
         first(struct(joinWithConsequences("*"))) as "variant",
         collect_list(struct("occurrences.*")) as "donors",
-        struct(ac, an) as "internal_frequencies"
+        ac,
+        an,
+        hc,
+        pn
       )
+      .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hc", $"pn"))
       .select($"variant.*",
         $"donors",
         $"internal_frequencies"
       )
-
+      .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
   private def buildConsequences(implicit spark: SparkSession) = {
+    import spark.implicits._
+
     val csq = spark.table("consequences")
       .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_transcript_id", "ensembl_regulatory_id")
+      .withColumn("consequence", formatted_consequence)
       .as("consequences")
 
     joinWithDBNSFP(csq)
   }
 
   def joinWithGenes(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
     val genes = spark.table("genes")
     variants
       .join(genes, variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
@@ -83,9 +96,10 @@ object PrepareIndex extends App {
       .groupByLocus()
       .agg(
         first(struct(variants("*"))) as "variant",
-        collect_list(struct("genes.*")) as "genes"
+        collect_list(struct("genes.*")) as "genes",
+        collect_set("genes.omim.omim_id") as "omim"
       )
-      .select("variant.*", "genes")
+      .select("variant.*", "genes", "omim")
   }
 
   private def addExtDb(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {

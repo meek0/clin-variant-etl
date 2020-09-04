@@ -30,11 +30,7 @@ package object etl {
   def firstAs(c: String): Column = first(col(c)) as c
 
   object columns {
-    val zygosity: Column = when(col("calls")(0) === 1 && col("calls")(1) === 1, "HOM")
-      .when(col("calls")(0) === 0 && col("calls")(1) === 1, "HET")
-      .when(col("calls")(0) === 0 && col("calls")(1) === 0, "HOM REF")
-      .when(col("calls")(0) === 1 && col("calls")(1) === 0, "HET")
-      .otherwise("UNK")
+
 
     val chromosome: Column = ltrim(col("contigName"), "chr") as "chromosome"
     val reference: Column = col("referenceAllele") as "reference"
@@ -47,8 +43,18 @@ package object etl {
 
     def array_sum(c: Column) = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
 
+    val zygosity: Column = when(col("calls")(0) === 1 && col("calls")(1) === 1, "HOM")
+      .when(col("calls")(0) === 0 && col("calls")(1) === 1, "HET")
+      .when(col("calls")(0) === 0 && col("calls")(1) === 0, "HOM REF")
+      .when(col("calls")(0) === 1 && col("calls")(1) === 0, "HET")
+      .otherwise("UNK").as("zygosity")
+
     val ac: Column = sum(array_sum(filter(col("calls"), c => c === 1))) as "ac"
     val an: Column = sum(array_sum(transform(col("calls"), c => when(c === 1 || c === 0, 1).otherwise(0)))) as "an"
+
+    val hc: Column = sum(when(col("zygosity") === "HOM", 1).otherwise(0)) as "hc"
+    val pn: Column = sum(when(col("zygosity") isin("HOM", "HET"), 1).otherwise(0)) as "pn"
+
     val info_ac: Column = col("INFO_AC")(0) as "ac"
     val info_af: Column = col("INFO_AF")(0) as "af"
     val info_an: Column = col("INFO_AN") as "an"
@@ -88,6 +94,7 @@ package object etl {
     val intron: Column = col("annotation.INTRON") as "intron"
     val hgvsc: Column = col("annotation.HGVSc") as "hgvsc"
     val hgvsp: Column = col("annotation.HGVSp") as "hgvsp"
+    val formatted_consequence: Column = regexp_replace(regexp_replace(col("consequence"), "_variant", ""), "_", " ")
 
     val strand: Column = col("annotation.STRAND") as "strand"
     val cds_position: Column = col("annotation.CDS_position") as "cds_position"
@@ -107,6 +114,7 @@ package object etl {
       col("end"),
       col("reference"),
       col("alternate"))
+
   }
 
 }
