@@ -67,7 +67,7 @@ object CreatePublicTables extends App {
        |   `af` double
        |)
        |USING parquet
-       |LOCATION '$input/gnomad_genomes_3_0'
+       |LOCATION '$input/gnomad/gnomad_genomes_3_0'
        |""".stripMargin)
 
   spark.sql(
@@ -81,7 +81,7 @@ object CreatePublicTables extends App {
        |   `af` double
        |)
        |USING parquet
-       |LOCATION '$input/gnomad_exomes_2_1_1_liftover_grch38'
+       |LOCATION '$input/gnomad/gnomad_exomes_2_1_1_liftover_grch38'
        |""".stripMargin)
 
   spark.sql(
@@ -95,7 +95,7 @@ object CreatePublicTables extends App {
        |   `af` double
        |)
        |USING parquet
-       |LOCATION '$input/gnomad_genomes_2_1_1_liftover_grch38'
+       |LOCATION '$input/gnomad/gnomad_genomes_2_1_1_liftover_grch38'
        |""".stripMargin)
 
   spark.sql(
@@ -161,7 +161,7 @@ object CreatePublicTables extends App {
        |`chromosome` string
        |)
        |USING parquet
-       |LOCATION '$input/dbnsfp_scores'
+       |LOCATION '$input/dbnsfp/scores'
        |""".stripMargin)
 
   spark.sql(
