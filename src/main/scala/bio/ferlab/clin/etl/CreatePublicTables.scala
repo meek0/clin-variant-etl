@@ -59,7 +59,7 @@ object CreatePublicTables extends App {
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `gnomad_genomes_3_0` (
        |   `chromosome` string,
-       |   `start` bigint,
+       |   `start` int,
        |   `name` string,
        |   `reference` string,
        |   `alternate` string,
@@ -67,7 +67,7 @@ object CreatePublicTables extends App {
        |   `af` double
        |)
        |USING parquet
-       |LOCATION '$input/gnomad/gnomad_genomes_3_0'
+       |LOCATION '$input/gnomad/gnomad_genomes_3.0'
        |""".stripMargin)
 
   spark.sql(
@@ -81,7 +81,7 @@ object CreatePublicTables extends App {
        |   `af` double
        |)
        |USING parquet
-       |LOCATION '$input/gnomad/gnomad_exomes_2_1_1_liftover_grch38'
+       |LOCATION '$input/gnomad/gnomad_exomes_2.1.1_liftover_grch38'
        |""".stripMargin)
 
   spark.sql(
@@ -95,7 +95,7 @@ object CreatePublicTables extends App {
        |   `af` double
        |)
        |USING parquet
-       |LOCATION '$input/gnomad/gnomad_genomes_2_1_1_liftover_grch38'
+       |LOCATION '$input/gnomad/gnomad_genomes_2.1.1_liftover_grch38'
        |""".stripMargin)
 
   spark.sql(
