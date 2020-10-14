@@ -75,7 +75,6 @@ object Variants {
       )
       .select($"*", hgvsg, variant_class, pubmed, lit(batchId) as "batch_id", lit(null).cast("string") as "last_batch_id")
       .drop("annotation")
-      .where($"chromosome" === "X")
 
     variants
   }

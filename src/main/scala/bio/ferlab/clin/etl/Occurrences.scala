@@ -43,7 +43,6 @@ object Occurrences {
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
       .drop("annotation")
-      .where($"chromosome" === "X")
 
     val patients = spark.table("patients")
     val biospecimens = spark

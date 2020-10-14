@@ -61,7 +61,6 @@ object Consequences {
       .withColumn("consequence", explode($"consequences"))
       .withColumn("batch_id", lit(batchId))
       .drop("consequences")
-      .where($"chromosome" === "X")
 
     consequencesDF
   }
