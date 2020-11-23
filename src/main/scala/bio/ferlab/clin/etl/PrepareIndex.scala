@@ -118,11 +118,11 @@ object PrepareIndex extends App {
 
   def joinWithPopulations(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val genomes = spark.table("1000_genomes").as("1000Gp3").selectLocus($"ac", $"af")
-    val topmed = spark.table("topmed_bravo").selectLocus($"ac", $"af")
-    val gnomad_genomes_2_1 = spark.table("gnomad_genomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af")
-    val gnomad_exomes_2_1 = spark.table("gnomad_exomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af")
-    val gnomad_genomes_3_0 = spark.table("gnomad_genomes_3_0").as("gnomad_genomes_3_0").selectLocus($"ac", $"af")
+    val genomes = spark.table("1000_genomes").as("1000Gp3").selectLocus($"ac", $"af", $"an")
+    val topmed = spark.table("topmed_bravo").selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_genomes_2_1 = spark.table("gnomad_genomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_exomes_2_1 = spark.table("gnomad_exomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_genomes_3_0 = spark.table("gnomad_genomes_3_0").as("gnomad_genomes_3_0").selectLocus($"ac", $"af", $"an", $"hom")
 
     variants.joinAndMerge(genomes, "1000_genomes", "left")
       .joinAndMerge(topmed, "topmed_bravo", "left")
