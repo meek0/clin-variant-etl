@@ -57,6 +57,8 @@ object PrepareIndex extends App {
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
       .as("occurrences")
 
+    val nbParticipantsWithOccurrences: Long = occurrences.select(countDistinct($"patient_id")).as[Long].collect().head
+    val allelesNumber = nbParticipantsWithOccurrences * 2
     joinWithConsequences
       .joinAndDrop(occurrences)
       .groupByLocus()
@@ -64,7 +66,7 @@ object PrepareIndex extends App {
         first(struct(joinWithConsequences("*"))) as "variant",
         collect_list(struct("occurrences.*")) as "donors",
         ac,
-        an,
+        lit(allelesNumber) as "an",
         hc,
         pn
       )
@@ -129,7 +131,7 @@ object PrepareIndex extends App {
       .joinAndMerge(gnomad_genomes_2_1, "gnomad_genomes_2_1_1", "left")
       .joinAndMerge(gnomad_exomes_2_1, "exac", "left")
       .joinAndMerge(gnomad_genomes_3_0, "gnomad_genomes_3_0", "left")
-      .select(variants("*"), struct(col("1000_genomes"), col("gnomad_genomes_2_1_1"), col("exac"), col("gnomad_genomes_3_0"), col("internal_frequencies") as "internal") as "frequencies")
+      .select(variants("*"), struct(col("1000_genomes"), col("topmed_bravo"), col("gnomad_genomes_2_1_1"), col("exac"), col("gnomad_genomes_3_0"), col("internal_frequencies") as "internal") as "frequencies")
       .drop("internal_frequencies")
   }
 
@@ -148,16 +150,18 @@ object PrepareIndex extends App {
 
   def joinWithDBNSFP(c: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val s = spark.table("dbnsfp_scores")
+    val s = spark.table("dbnsfp_original")
       .selectLocus(
         $"ensembl_transcript_id",
-        struct($"sift_converted_rank_score", $"sift_pred",
-          $"polyphen2_hvar_score", $"polyphen2_hvar_pred",
-          $"fathmm_converted_rank_score", $"fathmm_pred",
-          $"cadd_score", $"dann_score", $"revel_rankscore",
-          $"lrt_converted_rankscore", $"lrt_pred") as "predictions",
-        struct($"phylo_p17way_primate_rankscore"
-        ) as "conservations",
+        struct(
+          $"SIFT_converted_rankscore" as "sift_converted_rank_score", $"SIFT_pred" as "sift_pred",
+          $"Polyphen2_HVAR_rankscore" as "polyphen2_hvar_score", $"Polyphen2_HVAR_pred" as "polyphen2_hvar_pred",
+          $"FATHMM_converted_rankscore", $"FATHMM_pred" as "fathmm_pred",
+          $"CADD_raw_rankscore" as "cadd_score",
+          $"DANN_rankscore" as "dann_score",
+          $"REVEL_rankscore" as "revel_rankscore",
+          $"LRT_converted_rankscore" as "lrt_converted_rankscore", $"LRT_pred" as "lrt_pred") as "predictions",
+        struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_rankscore") as "conservations",
       )
 
     c.join(s,
