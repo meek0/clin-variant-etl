@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.ByLocus._
-import bio.ferlab.clin.etl.columns.{ac, an, formatted_consequence, hc, pn, zygosity}
+import bio.ferlab.clin.etl.columns.{ac, an, formatted_consequence, formatted_consequences, hc, pn, zygosity}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -83,7 +83,7 @@ object PrepareIndex extends App {
 
     val csq = spark.table("consequences")
       .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_transcript_id", "ensembl_regulatory_id")
-      .withColumn("consequence", formatted_consequence)
+      .withColumn("consequence", formatted_consequences)
       .as("consequences")
 
     joinWithDBNSFP(csq)

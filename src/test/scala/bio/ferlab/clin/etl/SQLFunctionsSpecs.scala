@@ -82,4 +82,17 @@ class SQLFunctionsSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
       ).as[Long].collect() should contain only 2
 
   }
+
+  "format_consequences" should  "removed _variant and replaced _ by space)" in {
+    val csq = Seq(
+      Seq("intron_variant", "splice_acceptor", "exon"),
+      Seq("intron_variant")
+    )toDF("consequences")
+
+    csq.select(formatted_consequences as "conequences").as[Seq[String]].collect() should contain theSameElementsAs Seq(
+      Seq("intron", "splice acceptor", "exon"),
+      Seq("intron")
+    )
+
+  }
 }

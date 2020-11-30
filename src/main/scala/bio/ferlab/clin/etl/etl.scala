@@ -94,7 +94,9 @@ package object etl {
     val intron: Column = col("annotation.INTRON") as "intron"
     val hgvsc: Column = col("annotation.HGVSc") as "hgvsc"
     val hgvsp: Column = col("annotation.HGVSp") as "hgvsp"
-    val formatted_consequence: Column = regexp_replace(regexp_replace(col("consequence"), "_variant", ""), "_", " ")
+    val formatted_consequence: Column => Column = c => regexp_replace(regexp_replace(c, "_variant", ""), "_", " ")
+    val formatted_consequences: Column = transform(col("consequences"), formatted_consequence)
+
 
     val strand: Column = col("annotation.STRAND") as "strand"
     val cds_position: Column = col("annotation.CDS_position") as "cds_position"
