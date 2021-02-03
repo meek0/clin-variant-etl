@@ -1,9 +1,9 @@
 package bio.ferlab.clin.etl
 
+import bio.ferlab.clin.etl.columns._
+import io.delta.tables.DeltaTable
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import columns._
-import io.delta.tables.DeltaTable
 
 object Consequences {
   val TABLE_CONSEQUENCES = "consequences"

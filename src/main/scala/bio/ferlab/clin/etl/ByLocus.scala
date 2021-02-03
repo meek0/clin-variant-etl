@@ -23,7 +23,7 @@ object ByLocus {
         .select(df("*"), when(other("chromosome").isNull, lit(null)).otherwise(struct(other.drop("chromosome", "start", "end", "name", "reference", "alternate")("*"))) as outputColumnName)
     }
 
-    private def joinByLocus(other: DataFrame, joinType: String) = {
+    private def joinByLocus(other: DataFrame, joinType: String): DataFrame = {
       df.join(other, df("chromosome") === other("chromosome") && df("start") === other("start") && df("reference") === other("reference") && df("alternate") === other("alternate"), joinType)
     }
 

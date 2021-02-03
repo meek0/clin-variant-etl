@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl
 
-import org.apache.spark.sql.{SaveMode, SparkSession, functions}
-import org.apache.spark.sql.functions.{collect_list, concat, concat_ws, explode, first, lit, regexp_replace, struct, when}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 object CreateGenesTable extends App {
 

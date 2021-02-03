@@ -42,6 +42,7 @@ object Occurrences {
       .withColumn("variant_class", variant_class)
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
+      .withColumn("variant_type", lit("germline"))
       .drop("annotation")
 
     val patients = spark.table("patients")
@@ -49,8 +50,8 @@ object Occurrences {
       .table("biospecimens")
     val biospecimensWithPatient = broadcast(
       biospecimens
-        .join(patients, biospecimens("patient_id") === patients("patient_id"))
-        .select($"biospecimen_id", patients("patient_id"), $"family_id", $"practitioner_id", $"organization_id", $"sequencing_strategy", $"study_id")
+        .join(patients, Seq("patient_id"))
+        .select($"biospecimen_id", $"patient_id", $"family_id", $"practitioner_id", $"organization_id", $"sequencing_strategy", $"study_id")
     )
 
     occurrences

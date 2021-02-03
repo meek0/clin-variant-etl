@@ -1,8 +1,6 @@
 package bio.ferlab.clin.etl
 
 import org.apache.spark.sql.SparkSession
-import columns._
-import org.apache.spark.sql.functions.{collect_list, first}
 object ImportVcf extends App {
 
   val Array(input, output, batchId, runType) = args
