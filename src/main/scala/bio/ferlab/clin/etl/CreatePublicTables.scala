@@ -13,13 +13,14 @@ object CreatePublicTables extends App {
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `clinvar` (
-       |`chromosome` STRING,
+       |  `chromosome` STRING,
        |  `start` BIGINT,
        |  `end` BIGINT,
-       |  `name` STRING,
        |  `reference` STRING,
        |  `alternate` STRING,
-       |  `clin_sig_original` ARRAY<STRING>,
+       |  `interpretations` ARRAY<STRING>,
+       |  `name` STRING,
+       |  `clin_sig` ARRAY<STRING>,
        |  `clin_sig_conflict` ARRAY<STRING>,
        |  `filters` ARRAY<STRING>,
        |  `af_exac` DOUBLE,
@@ -43,25 +44,70 @@ object CreatePublicTables extends App {
        |  `af_esp` DOUBLE,
        |  `clndisdbincl` ARRAY<STRING>,
        |  `old_multiallelic` STRING,
-       |  `clin_sig` ARRAY<STRING>
+       |  `inheritance` ARRAY<STRING>,
+       |  `conditions` ARRAY<STRING>
       |)
       |USING parquet
       |LOCATION '$input/clinvar'
       |""".stripMargin)
 
   spark.sql(
+    s"""CREATE TABLE IF NOT EXISTS `cosmic_gene_set` (
+       |  `symbol` STRING,
+       |  `name` STRING,
+       |  `entrez_gene_id` STRING,
+       |  `tier` INT,
+       |  `genome_location` STRING,
+       |  `hallmark` BOOLEAN,
+       |  `chr_band` STRING,
+       |  `somatic` BOOLEAN,
+       |  `germline` BOOLEAN,
+       |  `tumour_types_somatic` ARRAY<STRING>,
+       |  `tumour_types_germline` ARRAY<STRING>,
+       |  `cancer_syndrome` STRING,
+       |  `tissue_type` ARRAY<STRING>,
+       |  `molecular_genetics` STRING,
+       |  `role_in_cancer` ARRAY<STRING>,
+       |  `mutation_types` ARRAY<STRING>,
+       |  `translocation_partner` ARRAY<STRING>,
+       |  `other_germline_mutation` BOOLEAN,
+       |  `other_syndrome` ARRAY<STRING>,
+       |  `synonyms` ARRAY<STRING>
+       |)
+       |USING parquet
+       |LOCATION '$input/cosmic_gene_set'
+       |""".stripMargin)
+
+  spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `dbsnp` (
-      |   `chromosome` string,
-      |   `start` bigint,
-      |   `reference` string,
-      |   `alternate` string,
-      |   `end` bigint,
-      |   `name` string,
-      |   `original_contig_name` string
+      |   `chromosome` STRING,
+      |   `start` BIGINT,
+      |   `reference` STRING,
+      |   `alternate` STRING,
+      |   `end` BIGINT,
+      |   `name` STRING,
+      |   `original_contig_name` STRING
       |)
       |USING parquet
       |LOCATION '$input/dbsnp'
       |""".stripMargin)
+
+  spark.sql(
+    s"""CREATE TABLE IF NOT EXISTS `ddd_gene_set` (
+       |  symbol STRING,
+       |  omim_gene_id STRING,
+       |  disease_name STRING,
+       |  disease_omim_id STRING,
+       |  ddd_category STRING,
+       |  mutation_consequence STRING,
+       |  phenotypes ARRAY<STRING>,
+       |  organ_specificity ARRAY<STRING>,
+       |  panel STRING,
+       |  hgnc_id STRING
+       |)
+       |USING parquet
+       |LOCATION '$input/ddd_gene_set'
+       |""".stripMargin)
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `topmed_bravo` (
@@ -652,21 +698,21 @@ object CreatePublicTables extends App {
     s"""CREATE TABLE IF NOT EXISTS `human_genes` (
        |  `tax_id` int,
        |  `entrez_gene_id` int,
-       |  `symbol` string,
-       |  `locus_tag` string,
-       |  `synonyms` array<string>,
-       |  `external_references` map<string,string>,
-       |  `chromosome` string,
-       |  `map_location` string,
-       |  `description` string,
-       |  `type_of_gene` string,
-       |  `symbol_from_nomenclature_authority` string,
-       |  `full_name_from_nomenclature_authority` string,
-       |  `nomenclature_status` string,
-       |  `other_designations` array<string>,
-       |  `feature_types` map<string,string>,
-       |  `ensembl_gene_id` string,
-       |  `omim_gene_id` string
+       |  `symbol` STRING,
+       |  `locus_tag` STRING,
+       |  `synonyms` ARRAY<STRING>,
+       |  `external_references` MAP<STRING,STRING>,
+       |  `chromosome` STRING,
+       |  `map_location` STRING,
+       |  `description` STRING,
+       |  `type_of_gene` STRING,
+       |  `symbol_from_nomenclature_authority` STRING,
+       |  `full_name_from_nomenclature_authority` STRING,
+       |  `nomenclature_status` STRING,
+       |  `other_designations` ARRAY<STRING>,
+       |  `feature_types` MAP<STRING,STRING>,
+       |  `ensembl_gene_id` STRING,
+       |  `omim_gene_id` STRING
        |)
        |USING parquet
        |LOCATION '$input/human_genes'
@@ -674,17 +720,34 @@ object CreatePublicTables extends App {
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `orphanet_gene_set` (
-       |  `disorder_id` int,
-       |  `orpha_number` int,
-       |  `expert_link` string,
-       |  `name` string,
-       |  `disorder_type` string,
-       |  `disorder_group` string,
-       |  `gene_symbol` string,
-       |  `ensembl_gene_id` string,
-       |  `association_type` string,
-       |  `association_type_id` int,
-       |  `status` string
+       |  `orpha_code` BIGINT,
+       |  `disorder_id` BIGINT,
+       |  `expert_link` STRING,
+       |  `name` STRING,
+       |  `disorder_type_id` BIGINT,
+       |  `disorder_type` STRING,
+       |  `disorder_group_id` BIGINT,
+       |  `disorder_group` STRING,
+       |  `gene_source_of_validation` STRING,
+       |  `gene_id` BIGINT,
+       |  `gene_symbol` STRING,
+       |  `gene_name` STRING,
+       |  `gene_synonym_list` ARRAY<STRING>,
+       |  `ensembl_gene_id` STRING,
+       |  `genatlas_gene_id` STRING,
+       |  `hgnc_gene_id` STRING,
+       |  `omim_gene_id` STRING,
+       |  `reactome_gene_id` STRING,
+       |  `swiss_prot_gene_id` STRING,
+       |  `association_type` STRING,
+       |  `association_type_id` BIGINT,
+       |  `association_status` STRING,
+       |  `gene_locus_id` BIGINT,
+       |  `gene_locus` STRING,
+       |  `gene_locus_key` BIGINT,
+       |  `average_age_of_onset` ARRAY<STRING>,
+       |  `average_age_of_death` ARRAY<STRING>,
+       |  `type_of_inheritance` ARRAY<STRING>
        |)
        |USING parquet
        |LOCATION '$input/orphanet_gene_set'
@@ -693,19 +756,20 @@ object CreatePublicTables extends App {
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `hpo_gene_set` (
        |  `entrez_gene_id` int,
-       |  `symbol` string,
-       |  `hpo_term_id` string,
-       |  `hpo_term_name` string,
-       |  `frequency_raw` string,
-       |  `frequency_hpo` string,
-       |  `source_info` string,
-       |  `source` string,
-       |  `source_id` string,
-       |  `ensembl_gene_id` string
+       |  `symbol` STRING,
+       |  `hpo_term_id` STRING,
+       |  `hpo_term_name` STRING,
+       |  `frequency_raw` STRING,
+       |  `frequency_hpo` STRING,
+       |  `source_info` STRING,
+       |  `source` STRING,
+       |  `source_id` STRING,
+       |  `ensembl_gene_id` STRING
        |)
        |USING parquet
        |LOCATION '$input/hpo_gene_set'
        |""".stripMargin)
+
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `omim_gene_set` (
        |  `chromosome` STRING,
