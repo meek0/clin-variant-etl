@@ -17,7 +17,8 @@ object CreateGenesTable extends App {
   val humanGenes = spark.table("human_genes").select($"chromosome", $"symbol", $"entrez_gene_id", $"omim_gene_id", $"external_references.hgnc" as "hgnc", $"ensembl_gene_id",
     $"map_location" as "location", $"description" as "name", $"synonyms" as "alias", regexp_replace($"type_of_gene", "-", "_") as "biotype")
 
-  val orphanet = spark.table("orphanet_gene_set").select($"gene_symbol", $"disorder_id", $"name" as "panel")
+  val orphanet = spark.table("orphanet_gene_set")
+    .select($"gene_symbol", $"disorder_id", $"name" as "panel", $"type_of_inheritance" as "inheritance")
 
   val withOrphanet = humanGenes
     .join(orphanet, humanGenes("symbol") === orphanet("gene_symbol"), "left")
