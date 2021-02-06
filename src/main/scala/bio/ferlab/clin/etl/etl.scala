@@ -41,7 +41,7 @@ package object etl {
     val name: Column = col("names")(0) as "name"
     val calculated_af: Column = col("ac").divide(col("an")).cast(DecimalType(8, 8)) as "af"
 
-    def array_sum(c: Column) = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
+    def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
 
     val zygosity: Column = when(col("calls")(0) === 1 && col("calls")(1) === 1, "HOM")
       .when(col("calls")(0) === 0 && col("calls")(1) === 1, "HET")

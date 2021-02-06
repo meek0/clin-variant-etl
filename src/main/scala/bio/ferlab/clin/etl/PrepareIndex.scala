@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.ByLocus._
-import bio.ferlab.clin.etl.columns.{ac, an, formatted_consequence, formatted_consequences, hc, pn, zygosity}
+import bio.ferlab.clin.etl.columns.{ac, formatted_consequences, hc, pn}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -24,6 +24,7 @@ object PrepareIndex extends App {
       .andThen(joinWithDbSNP)
       .andThen(joinWithGenes)
       .andThen(addExtDb)
+
     joinVariants(batchId)
       .write.mode("overwrite")
       .json(s"$output/extract")
@@ -42,6 +43,7 @@ object PrepareIndex extends App {
       .withColumn("assembly_version", lit("GRCh38"))
       .withColumn("last_annotation_update", current_date())
       .as("variants")
+
     val consequences = buildConsequences(spark).as("consequences")
 
     val joinWithConsequences = newVariants
@@ -78,8 +80,7 @@ object PrepareIndex extends App {
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
-  private def buildConsequences(implicit spark: SparkSession) = {
-    import spark.implicits._
+  private def buildConsequences(implicit spark: SparkSession): DataFrame = {
 
     val csq = spark.table("consequences")
       .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_transcript_id", "ensembl_regulatory_id")
@@ -90,7 +91,6 @@ object PrepareIndex extends App {
   }
 
   def joinWithGenes(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
     val genes = spark.table("genes")
     variants
       .join(genes, variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
@@ -144,7 +144,8 @@ object PrepareIndex extends App {
 
   def joinWithDbSNP(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     val dbsnp = spark.table("dbsnp")
-    variants.joinAndDrop(dbsnp, "left")
+    variants
+      .joinAndDrop(dbsnp, "left")
       .select(variants("*"), dbsnp("name") as "dbsnp")
   }
 
@@ -154,13 +155,17 @@ object PrepareIndex extends App {
       .selectLocus(
         $"ensembl_transcript_id",
         struct(
-          $"SIFT_converted_rankscore" as "sift_converted_rank_score", $"SIFT_pred" as "sift_pred",
-          $"Polyphen2_HVAR_rankscore" as "polyphen2_hvar_score", $"Polyphen2_HVAR_pred" as "polyphen2_hvar_pred",
-          $"FATHMM_converted_rankscore", $"FATHMM_pred" as "fathmm_pred",
+          $"SIFT_converted_rankscore" as "sift_converted_rank_score",
+          $"SIFT_pred" as "sift_pred",
+          $"Polyphen2_HVAR_rankscore" as "polyphen2_hvar_score",
+          $"Polyphen2_HVAR_pred" as "polyphen2_hvar_pred",
+          $"FATHMM_converted_rankscore",
+          $"FATHMM_pred" as "fathmm_pred",
           $"CADD_raw_rankscore" as "cadd_score",
           $"DANN_rankscore" as "dann_score",
           $"REVEL_rankscore" as "revel_rankscore",
-          $"LRT_converted_rankscore" as "lrt_converted_rankscore", $"LRT_pred" as "lrt_pred") as "predictions",
+          $"LRT_converted_rankscore" as "lrt_converted_rankscore",
+          $"LRT_pred" as "lrt_pred") as "predictions",
         struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_rankscore") as "conservations",
       )
 
@@ -183,4 +188,3 @@ object PrepareIndex extends App {
   }
 
 }
-
