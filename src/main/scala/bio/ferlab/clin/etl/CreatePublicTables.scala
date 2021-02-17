@@ -12,6 +12,124 @@ object CreatePublicTables extends App {
   spark.sql("use clin")
 
   spark.sql(
+    s"""CREATE TABLE IF NOT EXISTS `cancer_hotspots` (
+       |`chromosome` STRING,
+       |`start` BIGINT,
+       |`end` BIGINT,
+       |`hugo_symbol` STRING,
+       |`entrez_gene_id` STRING,
+       |`center` STRING,
+       |`ncbi_build` STRING,
+       |`strand` STRING,
+       |`variant_classification` STRING,
+       |`variant_type` STRING,
+       |`reference_allele` STRING,
+       |`tumor_seq_allele1` STRING,
+       |`tumor_seq_allele2` STRING,
+       |`dbsnp_rs` STRING,
+       |`dbsnp_val_status` STRING,
+       |`tumor_sample_barcode` STRING,
+       |`matched_norm_sample_barcode` STRING,
+       |`match_norm_seq_allele1` STRING,
+       |`match_norm_seq_allele2` STRING,
+       |`tumor_validation_allele1` STRING,
+       |`tumor_validation_allele2` STRING,
+       |`match_norm_validation_allele1` STRING,
+       |`match_norm_validation_allele2` STRING,
+       |`verification_status` STRING,
+       |`validation_status` STRING,
+       |`mutation_status` STRING,
+       |`sequencing_phase` STRING,
+       |`sequence_source` STRING,
+       |`validation_method` STRING,
+       |`score` STRING,
+       |`bam_file` STRING,
+       |`sequencer` STRING,
+       |`tumor_sample_uuid` STRING,
+       |`matched_norm_sample_uuid` STRING,
+       |`hgvsc` STRING,
+       |`hgvsp` STRING,
+       |`hgvsp_short` STRING,
+       |`transcript_id` STRING,
+       |`exon_number` STRING,
+       |`t_depth` STRING,
+       |`t_ref_count` STRING,
+       |`t_alt_count` STRING,
+       |`n_depth` STRING,
+       |`n_ref_count` STRING,
+       |`n_alt_count` STRING,
+       |`all_effects` STRING,
+       |`allele` STRING,
+       |`gene` STRING,
+       |`feature` STRING,
+       |`feature_type` STRING,
+       |`consequence` STRING,
+       |`cdna_position` STRING,
+       |`cds_position` STRING,
+       |`protein_position` STRING,
+       |`amino_acids` STRING,
+       |`codons` STRING,
+       |`existing_variation` STRING,
+       |`allele_num` STRING,
+       |`distance` STRING,
+       |`strand_vep` STRING,
+       |`symbol` STRING,
+       |`symbol_source` STRING,
+       |`hgnc_id` STRING,
+       |`biotype` STRING,
+       |`canonical` STRING,
+       |`ccds` STRING,
+       |`ensp` STRING,
+       |`swissprot` STRING,
+       |`trembl` STRING,
+       |`uniparc` STRING,
+       |`refseq` STRING,
+       |`sift` STRING,
+       |`polyphen` STRING,
+       |`exon` STRING,
+       |`intron` STRING,
+       |`domains` STRING,
+       |`clin_sig` STRING,
+       |`somatic` STRING,
+       |`pubmed` STRING,
+       |`motif_name` STRING,
+       |`motif_pos` STRING,
+       |`high_inf_pos` STRING,
+       |`motif_score_change` STRING,
+       |`impact` STRING,
+       |`pick` STRING,
+       |`variant_class` STRING,
+       |`tsl` STRING,
+       |`hgvs_offset` STRING,
+       |`pheno` STRING,
+       |`minimised` STRING,
+       |`gene_pheno` STRING,
+       |`filter` STRING,
+       |`flanking_bps` STRING,
+       |`variant_id` STRING,
+       |`variant_qual` STRING,
+       |`tumortype` STRING,
+       |`platform` STRING,
+       |`judgement` STRING,
+       |`amino_acid_change` STRING,
+       |`amino_acid_position` STRING,
+       |`protein_lenght` STRING,
+       |`reference_amino_acid` STRING,
+       |`variant_amino_acid` STRING,
+       |`allele_freq` STRING,
+       |`tm` STRING,
+       |`amino_acid_length` STRING,
+       |`ref_tri` STRING,
+       |`oncotree_organtype` STRING,
+       |`oncotree_parent` STRING,
+       |`oncotree_detailed` STRING,
+       |`master_id` STRING
+       |)
+       |USING parquet
+       |LOCATION '$input/cancer_hotspots'
+       |""".stripMargin)
+
+  spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `clinvar` (
        |  `chromosome` STRING,
        |  `start` BIGINT,
@@ -46,10 +164,10 @@ object CreatePublicTables extends App {
        |  `old_multiallelic` STRING,
        |  `inheritance` ARRAY<STRING>,
        |  `conditions` ARRAY<STRING>
-      |)
-      |USING parquet
-      |LOCATION '$input/clinvar'
-      |""".stripMargin)
+       |)
+       |USING parquet
+       |LOCATION '$input/clinvar'
+       |""".stripMargin)
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `cosmic_gene_set` (
@@ -566,6 +684,71 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
   spark.sql(
+    s"""
+       |CREATE TABLE IF NOT EXISTS `dbnsfp_annovar
+       |`start` BIGINT,
+       |`end` BIGINT,
+       |`reference` STRING,
+       |`alternate` STRING,
+       |`DamagePredCount` DOUBLE,
+       |`SIFT_pred` STRING,
+       |`SIFT4G_pred` STRING,
+       |`Polyphen2_HDIV_pred` STRING,
+       |`Polyphen2_HVAR_pred` STRING,
+       |`LRT_pred` STRING,
+       |`MutationTaster_pred` STRING,
+       |`MutationAssessor_pred` STRING,
+       |`FATHMM_pred` STRING,
+       |`PROVEAN_pred` STRING,
+       |`VEST4_score` DOUBLE,
+       |`MetaSVM_pred` STRING,
+       |`MetaLR_pred` STRING,
+       |`M-CAP_pred` STRING,
+       |`REVEL_score` DOUBLE,
+       |`MutPred_score` DOUBLE,
+       |`MVP_score` DOUBLE,
+       |`MPC_score` DOUBLE,
+       |`PrimateAI_pred` STRING,
+       |`DEOGEN2_pred` STRING,
+       |`BayesDel_addAF_pred` STRING,
+       |`BayesDel_noAF_pred` STRING,
+       |`ClinPred_pred` STRING,
+       |`LIST-S2_pred` STRING,
+       |`CADD_raw` STRING,
+       |`CADD_phred` STRING,
+       |`DANN_score` DOUBLE,
+       |`fathmm-MKL_coding_pred` STRING,
+       |`fathmm-XF_coding_pred` STRING,
+       |`Eigen-raw_coding` STRING,
+       |`Eigen-phred_coding` STRING,
+       |`Eigen-PC-raw_coding` STRING,
+       |`Eigen-PC-phred_coding` STRING,
+       |`GenoCanyon_score` DOUBLE,
+       |`integrated_fitCons_score` DOUBLE,
+       |`GM12878_fitCons_score` DOUBLE,
+       |`H1-hESC_fitCons_score` DOUBLE,
+       |`HUVEC_fitCons_score` DOUBLE,
+       |`LINSIGHT` STRING,
+       |`GERP++_NR` DOUBLE,
+       |`GERP++_RS` DOUBLE,
+       |`phyloP100way_vertebrate` DOUBLE,
+       |`phyloP30way_mammalian` DOUBLE,
+       |`phyloP17way_primate` DOUBLE,
+       |`phastCons100way_vertebrate` DOUBLE,
+       |`phastCons30way_mammalian` DOUBLE,
+       |`phastCons17way_primate` DOUBLE,
+       |`bStatistic` DOUBLE,
+       |`Interpro_domain` STRING,
+       |`GTEx_V8_gene` ARRAY<STRING>,
+       |`GTEx_V8_tissue`  ARRAY<STRING>,
+       |`chromosome` STRING)
+       |USING parquet
+       |PARTITIONED BY (chromosome)
+       |LOCATION '$input/annovar/dbnsfp'
+       |""".stripMargin
+  )
+
+  spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `dbnsfp_original` (
        |  `start` STRING,
        |  `reference` STRING,
@@ -693,6 +876,60 @@ object CreatePublicTables extends App {
        |PARTITIONED BY (chromosome)
        |LOCATION '$input/dbnsfp/scores'
        |""".stripMargin)
+
+  spark.sql(
+    s"""
+       |CREATE TABLE IF NOT EXISTS `dbnsfp_scores` (
+       |`start` INT,
+       |`reference` STRING,
+       |`alternate` STRING,
+       |`aaref` STRING,
+       |`symbol` STRING,
+       |`ensembl_gene_id` STRING,
+       |`ensembl_protein_id` STRING,
+       |`ensembl_transcript_id` STRING,
+       |`cds_strand` STRING,
+       |`sift_score` DOUBLE,
+       |`sift_pred` STRING,
+       |`sift_converted_rank_score` DOUBLE,
+       |`polyphen2_hdiv_score` DOUBLE,
+       |`polyphen2_hdiv_pred` STRING,
+       |`polyphen2_hdiv_rank_score` DOUBLE,
+       |`polyphen2_hvar_score` DOUBLE,
+       |`polyphen2_hvar_pred` STRING,
+       |`polyphen2_hvar_rank_score` DOUBLE,
+       |`fathmm_score` DOUBLE,
+       |`fathmm_pred` STRING,
+       |`fathmm_converted_rank_score` DOUBLE,
+       |`cadd_score` DOUBLE,
+       |`cadd_rankscore` DOUBLE,
+       |`cadd_phred` DOUBLE,
+       |`dann_score` DOUBLE,
+       |`dann_rank_score` DOUBLE,
+       |`revel_rankscore` DOUBLE,
+       |`lrt_converted_rankscore` DOUBLE,
+       |`lrt_pred` STRING,
+       |`phylo_p100way_vertebrate` DOUBLE,
+       |`phylo_p100way_vertebrate_rankscore` DOUBLE,
+       |`phylop30way_mammalian` DOUBLE,
+       |`phylo_p30way_mammalian_rankscore` DOUBLE,
+       |`phylop17way_primate` DOUBLE,
+       |`phylo_p17way_primate_rankscore` DOUBLE,
+       |`phast_cons100way_vertebrate` DOUBLE,
+       |`phast_cons100way_vertebrate_rankscore` DOUBLE,
+       |`phastcons30way_mammalian` DOUBLE,
+       |`phast_cons30way_mammalian_rankscore` DOUBLE,
+       |`phast_cons17way_primate` DOUBLE,
+       |`phast_cons17way_primate_rankscore` DOUBLE,
+       |`gerp_nr` DOUBLE,
+       |`gerp_rs` DOUBLE,
+       |`gerp_rs_rankscore` DOUBLE,
+       |`chromosome` STRING)
+       |USING parquet
+       |PARTITIONED BY (chromosome)
+       |LOCATION '$input/dbnsfp/parquet/scores'
+       |""".stripMargin
+  )
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `human_genes` (
