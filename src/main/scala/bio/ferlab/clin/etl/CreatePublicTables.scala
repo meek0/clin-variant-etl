@@ -685,7 +685,7 @@ object CreatePublicTables extends App {
 
   spark.sql(
     s"""
-       |CREATE TABLE IF NOT EXISTS `dbnsfp_annovar
+       |CREATE TABLE IF NOT EXISTS `dbnsfp_annovar` (
        |`start` BIGINT,
        |`end` BIGINT,
        |`reference` STRING,
