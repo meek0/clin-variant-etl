@@ -1,9 +1,10 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.ByLocus._
-import bio.ferlab.clin.etl.columns.{ac, formatted_consequences, hc, pn}
+import bio.ferlab.clin.etl.columns.{ac, formatted_consequences, het, hom}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object PrepareIndex extends App {
 
@@ -15,7 +16,7 @@ object PrepareIndex extends App {
 
   run(output, batchId)
 
-  def run(output: String, batchId: String)(implicit spark: SparkSession): Unit = {
+  def run(output: String, batchId: String)(implicit spark: SparkSession): DataFrame = {
     spark.sql("use clin")
 
     val joinVariants: String => DataFrame = (buildNewVariants _)
@@ -25,14 +26,17 @@ object PrepareIndex extends App {
       .andThen(joinWithGenes)
       .andThen(addExtDb)
 
-    joinVariants(batchId)
-      .write.mode("overwrite")
+    val finalDf = joinVariants(batchId)
+    finalDf
+      .coalesce(1)
+      .write
+      .mode(SaveMode.Overwrite)
       .json(s"$output/extract")
 
     //    val updatedVariants = spark.table("variants").where($"last_batch_id" === batchId)
     //      .join(occurrences, newVariants("chromosome") === occurrences("chromosome") && newVariants("start") === occurrences("start") && newVariants("reference") === occurrences("reference") && newVariants("alternate") === occurrences("alternate"))
 
-
+    finalDf
   }
 
   private def buildNewVariants(batchId: String)(implicit spark: SparkSession): DataFrame = {
@@ -47,7 +51,7 @@ object PrepareIndex extends App {
     val consequences = buildConsequences(spark).as("consequences")
 
     val joinWithConsequences = newVariants
-      .joinAndDrop(consequences)
+      .joinByLocus(consequences, "inner")
       .groupByLocus()
       .agg(
         first(struct("variants.*")) as "variant",
@@ -62,17 +66,17 @@ object PrepareIndex extends App {
     val nbParticipantsWithOccurrences: Long = occurrences.select(countDistinct($"patient_id")).as[Long].collect().head
     val allelesNumber = nbParticipantsWithOccurrences * 2
     joinWithConsequences
-      .joinAndDrop(occurrences)
+      .joinByLocus(occurrences, "inner")
       .groupByLocus()
       .agg(
         first(struct(joinWithConsequences("*"))) as "variant",
         collect_list(struct("occurrences.*")) as "donors",
         ac,
         lit(allelesNumber) as "an",
-        hc,
-        pn
+        het,
+        hom
       )
-      .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hc", $"pn"))
+      .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .select($"variant.*",
         $"donors",
         $"internal_frequencies"
@@ -92,14 +96,16 @@ object PrepareIndex extends App {
 
   def joinWithGenes(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     val genes = spark.table("genes")
+      .withColumnRenamed("chromosome", "genes_chromosome")
+
     variants
-      .join(genes, variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
-      .drop(genes("chromosome"))
+      .join(genes, col("chromosome") === col("genes_chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
+      .drop(genes("genes_chromosome"))
       .groupByLocus()
       .agg(
         first(struct(variants("*"))) as "variant",
         collect_list(struct("genes.*")) as "genes",
-        collect_set("genes.omim.omim_id") as "omim"
+        flatten(collect_set("genes.omim.omim_id")) as "omim"
       )
       .select("variant.*", "genes", "omim")
   }
@@ -108,7 +114,7 @@ object PrepareIndex extends App {
     import spark.implicits._
     variants.withColumn(
       "ext_db", struct(
-        $"pubmed".isNotNull.as("is_pubmed"),
+        $"pubmed".isNotNull.as("is_pubmed"), // ????
         $"dbsnp".isNotNull.as("is_dbsnp"),
         $"clinvar".isNotNull.as("is_clinvar"),
         exists($"genes", gene => gene("hpo").isNotNull).as("is_hpo"),
@@ -121,7 +127,7 @@ object PrepareIndex extends App {
   def joinWithPopulations(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val genomes = spark.table("1000_genomes").as("1000Gp3").selectLocus($"ac", $"af", $"an")
-    val topmed = spark.table("topmed_bravo").selectLocus($"ac", $"af", $"an", $"hom")
+    val topmed = spark.table("topmed_bravo").selectLocus($"ac", $"af", $"an", $"hom", $"het")
     val gnomad_genomes_2_1 = spark.table("gnomad_genomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
     val gnomad_exomes_2_1 = spark.table("gnomad_exomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
     val gnomad_genomes_3_0 = spark.table("gnomad_genomes_3_0").as("gnomad_genomes_3_0").selectLocus($"ac", $"af", $"an", $"hom")
@@ -137,7 +143,8 @@ object PrepareIndex extends App {
 
   def joinWithClinvar(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val clinvar = spark.table("clinvar").selectLocus($"clinvar.name" as "clinvar_id", $"clin_sig")
+    val clinvar = spark.table("clinvar")
+      .selectLocus($"clinvar.name" as "clinvar_id", $"clin_sig", $"conditions", $"inheritance", $"interpretations")
     variants.joinAndMerge(clinvar, "clinvar", "left")
 
   }
@@ -145,15 +152,16 @@ object PrepareIndex extends App {
   def joinWithDbSNP(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     val dbsnp = spark.table("dbsnp")
     variants
-      .joinAndDrop(dbsnp, "left")
+      .joinByLocus(dbsnp, "left")
       .select(variants("*"), dbsnp("name") as "dbsnp")
   }
 
   def joinWithDBNSFP(c: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val s = spark.table("dbnsfp_original")
+      .withColumn("start", col("start").cast(LongType))
       .selectLocus(
-        $"ensembl_transcript_id",
+        $"ensembl_transcript_id" as "ensembl_feature_id",
         struct(
           $"SIFT_converted_rankscore" as "sift_converted_rank_score",
           $"SIFT_pred" as "sift_pred",
@@ -169,19 +177,8 @@ object PrepareIndex extends App {
         struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_rankscore") as "conservations",
       )
 
-    c.join(s,
-      c("chromosome") === s("chromosome") &&
-        c("start") === s("start") &&
-        c("reference") === s("reference") &&
-        c("alternate") === s("alternate") &&
-        c("ensembl_feature_id") === s("ensembl_transcript_id"),
-      "left")
-      .drop(s("chromosome"))
-      .drop(s("start"))
-      .drop(s("reference"))
-      .drop(s("alternate"))
-      .drop(s("ensembl_transcript_id"))
-
+    c
+      .join(s, Seq("chromosome", "start", "reference", "alternate", "ensembl_feature_id"), "left")
       .select(c("*"), s("predictions"), s("conservations"))
 
 

@@ -9,30 +9,23 @@ object ByLocus {
 
   implicit class ByLocusDataframe(df: DataFrame) {
 
-    def joinAndDrop(other: DataFrame, joinType: String = "inner"): DataFrame = {
-      joinByLocus(other, joinType)
-        .drop(other("chromosome"))
-        .drop(other("start"))
-        .drop(other("reference"))
-        .drop(other("alternate"))
-    }
-
-
     def joinAndMerge(other: DataFrame, outputColumnName: String, joinType: String = "inner"): DataFrame = {
+      val otherFields = other.drop("chromosome", "start", "end", "name", "reference", "alternate")
       joinByLocus(other, joinType)
-        .select(df("*"), when(other("chromosome").isNull, lit(null)).otherwise(struct(other.drop("chromosome", "start", "end", "name", "reference", "alternate")("*"))) as outputColumnName)
+        .withColumn(outputColumnName, when(col(otherFields.columns.head).isNotNull, struct(otherFields("*"))).otherwise(lit(null)))
+        .select(df.columns.map(col):+ col(outputColumnName):_*)
     }
 
-    private def joinByLocus(other: DataFrame, joinType: String): DataFrame = {
-      df.join(other, df("chromosome") === other("chromosome") && df("start") === other("start") && df("reference") === other("reference") && df("alternate") === other("alternate"), joinType)
+    def joinByLocus(other: DataFrame, joinType: String): DataFrame = {
+      df.join(other, Seq("chromosome", "start", "reference", "alternate"), joinType)
     }
 
     def groupByLocus(): RelationalGroupedDataset = {
-      df.groupBy(df("chromosome"), df("start"), df("reference"), df("alternate"))
+      df.groupBy(col("chromosome"), col("start"), col("reference"), col("alternate"))
     }
 
     def selectLocus(cols: Column*): DataFrame = {
-      val allCols = df("chromosome") :: df("start") :: df("reference") :: df("alternate") :: cols.toList
+      val allCols = col("chromosome") :: col("start") :: col("reference") :: col("alternate") :: cols.toList
       df.select(allCols: _*)
     }
 

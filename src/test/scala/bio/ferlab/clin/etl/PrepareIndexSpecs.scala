@@ -1,12 +1,14 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.columns._
-import bio.ferlab.clin.testutils.WithSparkHiveSession
-import org.apache.spark.sql.Row
+import bio.ferlab.clin.model._
+import bio.ferlab.clin.testutils.{ClassGenerator, WithSparkSession}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Row, SaveMode}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class PrepareIndexSpecs extends AnyFlatSpec with WithSparkHiveSession with Matchers {
+class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers {
 
   "ac" should "return sum of allele count" in {
     import spark.implicits._
@@ -16,6 +18,68 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkHiveSession with Match
         ac,
         columns.an
       ).collect() should contain theSameElementsAs Seq(Row(3, 6))
+
+  }
+
+  "prepare index" should "run without error" in {
+
+    import spark.implicits._
+
+    spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+    spark.sql("USE clin")
+
+    Seq(ClinvarOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/clinvar")
+      .saveAsTable("clin.clinvar")
+
+    Seq(Dbnsfp_originalOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/dbnsfp_original")
+      .saveAsTable("clin.dbnsfp_original")
+
+    Seq(DbsnpOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/dbsnp")
+      .saveAsTable("clin.dbsnp")
+
+    Seq(GenesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/genes")
+      .saveAsTable("clin.genes")
+
+    Seq(GnomadExomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/gnomad_exomes_2_1_1_liftover_grch38")
+      .saveAsTable("clin.gnomad_exomes_2_1_1_liftover_grch38")
+
+    Seq(GnomadGenomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/gnomad_genomes_2_1_1_liftover_grch38")
+      .saveAsTable("clin.gnomad_genomes_2_1_1_liftover_grch38")
+
+    Seq(GnomadGenomes30Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/gnomad_genomes_3_0")
+      .saveAsTable("clin.gnomad_genomes_3_0")
+
+    Seq(OneKGenomesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/1000_genomes")
+      .saveAsTable("clin.1000_genomes")
+
+    Seq(Topmed_bravoOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/topmed_bravo")
+      .saveAsTable("clin.topmed_bravo")
+
+    Seq(OccurrenceOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/occurrences")
+      .saveAsTable("clin.occurrences")
+
+    Seq(VariantOutput(), VariantOutput(`batch_id` = "BAT2")).toDF
+      .write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/variants")
+      .saveAsTable("clin.variants")
+
+    Seq(ConsequenceOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/consequences")
+      .saveAsTable("clin.consequences")
+
+    val result = PrepareIndex.run("spark-warehouse/output", "BAT1")
+
+    result.as[VariantIndexOutput].collect().head shouldBe VariantIndexOutput()
 
   }
 

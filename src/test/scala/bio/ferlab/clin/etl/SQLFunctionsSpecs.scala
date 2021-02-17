@@ -1,8 +1,7 @@
 package bio.ferlab.clin.etl
 
+import bio.ferlab.clin.etl.columns._
 import bio.ferlab.clin.testutils.WithSparkSession
-import columns._
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions.struct
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -64,21 +63,21 @@ class SQLFunctionsSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
 
   }
 
-  "pn" should "return number of patient with at least 1 alternate allele" in {
+  "participant_number" should "return number of patient with at least 1 alternate allele" in {
     import spark.implicits._
     val occurrences = Seq("HET", "HET", "HOM REF", "HOM","HOM", "UNK").toDF("zygosity")
     occurrences
       .select(
-        columns.pn
+        columns.participant_number
       ).as[Long].collect() should contain only 4
 
   }
-  "hc" should "return number of patients with homozygotes alternate alleles" in {
+  "hom" should "return number of patients with homozygotes alternate alleles" in {
     import spark.implicits._
     val occurrences = Seq("HET", "HOM REF", "HOM", "HOM", "UNK").toDF("zygosity")
     occurrences
       .select(
-        columns.hc
+        columns.hom
       ).as[Long].collect() should contain only 2
 
   }
