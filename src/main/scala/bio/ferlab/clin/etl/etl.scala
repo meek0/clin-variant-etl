@@ -52,8 +52,9 @@ package object etl {
     val ac: Column = sum(array_sum(filter(col("calls"), c => c === 1))) as "ac"
     val an: Column = sum(array_sum(transform(col("calls"), c => when(c === 1 || c === 0, 1).otherwise(0)))) as "an"
 
-    val hc: Column = sum(when(col("zygosity") === "HOM", 1).otherwise(0)) as "hc"
-    val pn: Column = sum(when(col("zygosity") isin("HOM", "HET"), 1).otherwise(0)) as "pn"
+    val participant_number: Column = sum(when(col("zygosity") isin("HOM", "HET"), 1).otherwise(0)) as "participant_number"
+    val hom: Column = sum(when(col("zygosity") === "HOM", 1).otherwise(0)) as "hom"
+    val het: Column = sum(when(col("zygosity") === "HET", 1).otherwise(0)) as "het"
 
     val info_ac: Column = col("INFO_AC")(0) as "ac"
     val info_af: Column = col("INFO_AF")(0) as "af"
