@@ -25,7 +25,8 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `last_annotation_update`: Date = Date.valueOf("2021-02-18"),
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `impact_score`: Int = 1,
-                              `donors`: List[DONORS] = List(DONORS()),
+                              `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
+                              `lab_frequencies`: Map[String, Freq] = Map("OR00201" -> Freq(2, 2, 1.0, 1, 0), "OR00202" -> Freq(2, 2, 1.0, 1, 0)),
                               `dna_change`: String = "T>C",
                               `frequencies`: FREQUENCIES = FREQUENCIES(),
                               `clinvar`: CLINVAR = CLINVAR(),
@@ -104,7 +105,7 @@ case class FREQUENCIES(//`1000_genomes`: Freq = Freq(3446, 5008,  0.688099),
                        gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
                        exac: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
                        gnomad_genomes_3_0: GnomadFreqOutput = GnomadFreqOutput(0, 53780, 0.0, 0),
-                       internal: Freq = Freq(2, 2, 1.0, 1, 0))
+                       internal: Freq = Freq(4, 4, 1.0, 2, 0))
 
 
 case class ThousandGenomesFreq(ac: Long = 10,

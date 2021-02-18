@@ -64,7 +64,8 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
       .option("path", "spark-warehouse/clin.db/topmed_bravo")
       .saveAsTable("clin.topmed_bravo")
 
-    Seq(OccurrenceOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+    Seq(OccurrenceOutput(), OccurrenceOutput(`organization_id` = "OR00202")).toDF
+      .write.format("parquet").mode(SaveMode.Overwrite)
       .option("path", "spark-warehouse/clin.db/occurrences")
       .saveAsTable("clin.occurrences")
 
