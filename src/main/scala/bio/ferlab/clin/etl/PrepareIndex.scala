@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.ByLocus._
-import bio.ferlab.clin.etl.columns.{ac, formatted_consequences, het, hom}
-import org.apache.spark.sql.functions._
+import bio.ferlab.clin.etl.columns._
+import org.apache.spark.sql.functions.{first, _}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
@@ -63,22 +63,29 @@ object PrepareIndex extends App {
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
       .as("occurrences")
 
-    val nbParticipantsWithOccurrences: Long = occurrences.select(countDistinct($"patient_id")).as[Long].collect().head
-    val allelesNumber = nbParticipantsWithOccurrences * 2
+    //val nbParticipantsWithOccurrences: Long = occurrences.select(countDistinct($"patient_id")).as[Long].collect().head
+    //val allelesNumber = nbParticipantsWithOccurrences * 2
     joinWithConsequences
       .joinByLocus(occurrences, "inner")
+      .groupBy(locus :+ col("organization_id"):_*)
+      .agg(ac, an, het, hom,
+        first(struct(joinWithConsequences("*"))) as "variant",
+        collect_list(struct("occurrences.*")) as "donors")
+      .withColumn("lab_frequency", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .groupByLocus()
       .agg(
-        first(struct(joinWithConsequences("*"))) as "variant",
-        collect_list(struct("occurrences.*")) as "donors",
-        ac,
-        lit(allelesNumber) as "an",
-        het,
-        hom
+        first(col("variant")) as "variant",
+        flatten(collect_list(col("donors"))) as "donors",
+        sum(col("ac")) as "ac",
+        sum(col("an")) as "an",
+        sum(col("het")) as "het",
+        sum(col("hom")) as "hom",
+        map_from_entries(collect_list(struct($"organization_id", $"lab_frequency"))) as "lab_frequencies",
       )
       .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .select($"variant.*",
         $"donors",
+        $"lab_frequencies",
         $"internal_frequencies"
       )
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
