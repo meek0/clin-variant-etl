@@ -1,0 +1,22 @@
+package bio.ferlab.clin.model
+
+case class CosmicGeneSetOutput(`symbol`: String = "A1CF",
+                               `name`: String = "APOBEC1 complementation factor",
+                               `entrez_gene_id`: String = "29974",
+                               `tier`: Int = 2,
+                               `genome_location`: String = "10:50799421-50885675",
+                               `hallmark`: Boolean = false,
+                               `chr_band`: String = "11.23",
+                               `somatic`: Boolean = true,
+                               `germline`: Boolean = false,
+                               `tumour_types_somatic`: List[String] = List("melanoma"),
+                               `tumour_types_germline`: Option[List[String]] = None,
+                               `cancer_syndrome`: Option[String] = None,
+                               `tissue_type`: List[String] = List("E"),
+                               `molecular_genetics`: Option[String] = None,
+                               `role_in_cancer`: List[String] = List("oncogene"),
+                               `mutation_types`: List[String] = List("Mis"),
+                               `translocation_partner`: Option[List[String]] = None,
+                               `other_germline_mutation`: Boolean = false,
+                               `other_syndrome`: Option[List[String]] = None,
+                               `synonyms`: List[String] = List("29974", "A1CF", "ACF", "ACF64", "ACF65", "APOBEC1CF", "ASP", "ENSG00000148584.14"))

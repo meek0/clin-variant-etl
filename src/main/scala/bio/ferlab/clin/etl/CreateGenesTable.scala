@@ -10,6 +10,9 @@ object CreateGenesTable extends App {
   implicit val spark: SparkSession = SparkSession.builder
     .enableHiveSupport()
     .appName(s"Create Genes Tables").getOrCreate()
+
+  spark.sparkContext.setLogLevel("ERROR")
+
   spark.sql("use clin")
 
   import spark.implicits._
@@ -25,13 +28,15 @@ object CreateGenesTable extends App {
     .groupBy(humanGenes("symbol"))
     .agg(
       first(struct(humanGenes("*"))) as "hg",
-      when(first(orphanet("gene_symbol")).isNotNull, collect_list(struct($"disorder_id", $"panel"))).otherwise(lit(null)) as "orphanet",
+      when(first(orphanet("gene_symbol")).isNotNull,
+        collect_list(struct($"disorder_id", $"panel", $"inheritance"))).otherwise(lit(null)) as "orphanet",
     )
     .select($"hg.*", $"orphanet")
 
   val hpo = spark.table("hpo_gene_set").select($"entrez_gene_id", $"hpo_term_id", $"hpo_term_name")
     .distinct()
     .withColumn("hpo_term_label", concat($"hpo_term_name", lit(" ("),$"hpo_term_id", lit(")") ))
+
   val withHpo = withOrphanet
     .join(hpo, withOrphanet("entrez_gene_id") === hpo("entrez_gene_id"), "left")
     .groupBy(withOrphanet("symbol"))

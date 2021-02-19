@@ -25,6 +25,7 @@ object ClassGenerator {
     case ArrayType(BooleanType, _)            => "List[Boolean]"
     case ArrayType(DoubleType, _)             => "List[Double]"
     case ArrayType(LongType, _)               => "List[Long]"
+    case MapType(StringType,StringType, _)    => "Map[String,String]"
     case MapType(StringType,LongType, _)      => "Map[String,Long]"
     case MapType(StringType,DecimalType(), _) => "Map[String,BigDecimal]"
     case MapType(StringType,ArrayType(StringType,_),_) =>"Map[String, List[String]]"
@@ -40,12 +41,13 @@ object ClassGenerator {
     case (name, values, DecimalType())                                 => values.getAs(name)
     case (name, values, DateType)                                      => s"""Date.valueOf("${values.getAs(name)}")"""
     case (name, values, TimestampType)                                 => s"""Timestamp.valueOf("${values.getAs(name)}")"""
-    case (name, values, ArrayType(StringType,_))                       => s"""List(${values.getAs[List[String]](name).mkString("\"", "\", \"", "\"")})"""
+    case (name, values, ArrayType(StringType,_))                       => values.getAs[List[String]](name).mkString("List(", ", ", ")")
     case (name, values, ArrayType(FloatType,_))                        => values.getAs[List[Float]](name).mkString("List(", ", ", ")")
     case (name, values, ArrayType(IntegerType,_))                      => values.getAs[List[Int]](name).mkString("List(", ", ", ")")
     case (name, values, ArrayType(BooleanType,_))                      => values.getAs[List[Boolean]](name).mkString("List(", ", ", ")")
     case (name, values, ArrayType(DoubleType,_))                       => values.getAs[List[Boolean]](name).mkString("List(", ", ", ")")
     case (name, values, ArrayType(LongType,_))                         => values.getAs[List[Long]](name).mkString("List(", ", ", ")")
+    case (name, values, MapType(StringType,StringType, _))             => values.getAs[Map[String, String]](name).map{ case (k, v) => s"""\"$k\" -> \"$v\"""" }.mkString("Map(", ", ", ")")
     case (name, values, MapType(StringType,LongType, _))               => values.getAs[Map[String, Long]](name).mkString("Map(", ", ", ")")
     case (name, values, MapType(StringType,DecimalType(), _))          => values.getAs[Map[String, BigDecimal]](name).mkString("Map(", ", ", ")")
     case (name, values, MapType(StringType,ArrayType(StringType,_),_)) => values.getAs[Map[String, List[String]]](name).mkString("Map(", ", ", ")")
@@ -61,8 +63,8 @@ object ClassGenerator {
           else
             s"""`$name`: ${getType(dataType)} = ${getValue(name, values, dataType)}"""
 
-        case StructField(name, StructType(_), _, _) => s"""`$name`: ${name.toUpperCase} = ${name.toUpperCase}() """
-        case StructField(name, ArrayType(StructType(_), _), _, _) => s"""`$name`: List[${name.toUpperCase}] = List(${name.toUpperCase}()) """
+        case StructField(name, StructType(_), _, _) => s"""`$name`: ${name.toUpperCase} = ${name.toUpperCase}()"""
+        case StructField(name, ArrayType(StructType(_), _), _, _) => s"""`$name`: List[${name.toUpperCase}] = List(${name.toUpperCase}())"""
         case structField: StructField => structField.toString()
 
       }
