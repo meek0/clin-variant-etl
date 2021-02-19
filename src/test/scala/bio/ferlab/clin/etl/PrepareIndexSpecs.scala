@@ -2,8 +2,7 @@ package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.columns._
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{ClassGenerator, WithSparkSession}
-import org.apache.spark.sql.functions._
+import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.{Row, SaveMode}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
