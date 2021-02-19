@@ -16,7 +16,8 @@ case class GenesOutput(`symbol`: String = "OR4F5",
                        `chromosome`: String = "1")
 
 case class ORPHANET(`disorder_id`: Int = 17827,
-                    `panel`: String = "Immunodeficiency due to a classical component pathway complement deficiency")
+                    `panel`: String = "Immunodeficiency due to a classical component pathway complement deficiency",
+                    `inheritance`: List[String] = List("Autosomal recessive"))
 
 case class HPO(`hpo_term_id`: String = "HP:0001347",
                `hpo_term_name`: String = "Hyperreflexia",
