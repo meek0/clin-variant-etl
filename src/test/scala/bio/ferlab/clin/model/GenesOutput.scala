@@ -15,7 +15,7 @@ case class GenesOutput(`symbol`: String = "OR4F5",
                        `omim`: List[OMIM] = List(OMIM()),
                        `chromosome`: String = "1")
 
-case class ORPHANET(`disorder_id`: Int = 17827,
+case class ORPHANET(`disorder_id`: Long = 17827,
                     `panel`: String = "Immunodeficiency due to a classical component pathway complement deficiency",
                     `inheritance`: List[String] = List("Autosomal recessive"))
 
