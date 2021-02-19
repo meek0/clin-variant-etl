@@ -5,6 +5,7 @@
 package bio.ferlab.clin.model
 
 import java.sql.Date
+import java.time.LocalDate
 
 
 case class VariantIndexOutput(`chromosome`: String = "1",
@@ -22,11 +23,12 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `batch_id`: String = "BAT1",
                               `last_batch_id`: Option[String] = None,
                               `assembly_version`: String = "GRCh38",
-                              `last_annotation_update`: Date = Date.valueOf("2021-02-18"),
+                              `last_annotation_update`: Date = Date.valueOf(LocalDate.now()),
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `impact_score`: Int = 1,
                               `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
                               `lab_frequencies`: Map[String, Freq] = Map("OR00201" -> Freq(2, 2, 1.0, 1, 0), "OR00202" -> Freq(2, 2, 1.0, 1, 0)),
+                              `participant_number`: Long = 2,
                               `dna_change`: String = "T>C",
                               `frequencies`: FREQUENCIES = FREQUENCIES(),
                               `clinvar`: CLINVAR = CLINVAR(),
@@ -44,15 +46,15 @@ case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_var
                         `feature_type`: String = "Transcript",
                         `strand`: Int = 1,
                         `biotype`: String = "transcribed_unprocessed_pseudogene",
-                        `exon`: EXON = EXON() ,
-                        `intron`: INTRON = INTRON() ,
+                        `exon`: EXON = EXON(),
+                        `intron`: INTRON = INTRON(),
                         `hgvsc`: Option[String] = None,
                         `hgvsp`: Option[String] = None,
                         `cds_position`: Option[Int] = None,
                         `cdna_position`: Option[Int] = None,
                         `protein_position`: Option[Int] = None,
-                        `amino_acids`: AMINO_ACIDS = AMINO_ACIDS() ,
-                        `codons`: CODONS = CODONS() ,
+                        `amino_acids`: AMINO_ACIDS = AMINO_ACIDS(),
+                        `codons`: CODONS = CODONS(),
                         `pick`: Boolean = false,
                         `canonical`: Boolean = false,
                         `aa_change`: Option[String] = None,
@@ -140,8 +142,8 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `name`: Option[String] = Some("calcium voltage-gated channel subunit alpha1 E"),
                  `alias`: Option[List[String]] = Some(List("BII", "CACH6", "CACNL1A6", "Cav2.3", "EIEE69", "gm139")),
                  `biotype`: Option[String] = Some("protein_coding"),
-                 `orphanet`: List[ORPHANET] = List(ORPHANET()) ,
-                 `hpo`: List[HPO] = List(HPO()) ,
+                 `orphanet`: List[ORPHANET] = List(ORPHANET()),
+                 `hpo`: List[HPO] = List(HPO()),
                  `omim`: List[OMIM] = List(OMIM()) )
 
 
