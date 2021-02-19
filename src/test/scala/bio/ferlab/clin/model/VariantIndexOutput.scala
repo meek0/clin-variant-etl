@@ -5,6 +5,7 @@
 package bio.ferlab.clin.model
 
 import java.sql.Date
+import java.time.LocalDate
 
 
 case class VariantIndexOutput(`chromosome`: String = "1",
@@ -22,11 +23,12 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `batch_id`: String = "BAT1",
                               `last_batch_id`: Option[String] = None,
                               `assembly_version`: String = "GRCh38",
-                              `last_annotation_update`: Date = Date.valueOf("2021-02-18"),
+                              `last_annotation_update`: Date = Date.valueOf(LocalDate.now()),
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `impact_score`: Int = 1,
                               `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
                               `lab_frequencies`: Map[String, Freq] = Map("OR00201" -> Freq(2, 2, 1.0, 1, 0), "OR00202" -> Freq(2, 2, 1.0, 1, 0)),
+                              `participant_number`: Long = 2,
                               `dna_change`: String = "T>C",
                               `frequencies`: FREQUENCIES = FREQUENCIES(),
                               `clinvar`: CLINVAR = CLINVAR(),

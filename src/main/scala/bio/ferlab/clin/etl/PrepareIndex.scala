@@ -68,7 +68,7 @@ object PrepareIndex extends App {
     joinWithConsequences
       .joinByLocus(occurrences, "inner")
       .groupBy(locus :+ col("organization_id"):_*)
-      .agg(ac, an, het, hom,
+      .agg(ac, an, het, hom, participant_number,
         first(struct(joinWithConsequences("*"))) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
       .withColumn("lab_frequency", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
@@ -80,13 +80,15 @@ object PrepareIndex extends App {
         sum(col("an")) as "an",
         sum(col("het")) as "het",
         sum(col("hom")) as "hom",
+        sum(col("participant_number")) as "participant_number",
         map_from_entries(collect_list(struct($"organization_id", $"lab_frequency"))) as "lab_frequencies",
       )
       .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .select($"variant.*",
         $"donors",
         $"lab_frequencies",
-        $"internal_frequencies"
+        $"internal_frequencies",
+        $"participant_number"
       )
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
