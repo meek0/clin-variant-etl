@@ -31,6 +31,13 @@ cd ~/???/clin-environments/qa/spark-jobs/genes-tables-creation/
 kustomize build . | kubectl apply -f -
 ```
 
+#### check the logs
+
+```shell
+kubectl get pods
+kubectl logs xxxxx
+```
+
 
 
 TODO
