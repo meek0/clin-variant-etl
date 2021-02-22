@@ -14,8 +14,9 @@ object PrepareGeneIndex extends App {
 
   def run(output: String)(implicit spark: SparkSession): Unit = {
     spark.sql("use clin")
-    spark.table("genes").select(
-      "chromosome", "symbol", "entrez_gene_id", "omim_gene_id", "hgnc", "ensembl_gene_id", "location", "name", "alias", "biotype")
+    spark.table("genes")
+      .select("chromosome", "symbol", "entrez_gene_id", "omim_gene_id", "hgnc",
+        "ensembl_gene_id", "location", "name", "alias", "biotype")
       .write.mode("overwrite")
       .json(s"$output")
   }
