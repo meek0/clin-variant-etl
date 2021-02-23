@@ -5,6 +5,8 @@ import io.delta.tables._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
+import scala.util.{Failure, Success, Try}
+
 object Variants {
 
   def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
@@ -20,28 +22,27 @@ object Variants {
 
   private def write(variants: DataFrame, output: String)(implicit spark: SparkSession): Unit = {
     import spark.implicits._
-    if (!spark.catalog.tableExists("variants")) {
-      writeOnce(variants, output)
-    } else {
-      /** Merge */
-      val existingVariants = DeltaTable.forName("variants")
-      existingVariants.as("e")
-        .merge(
-          variants.as("v"),
-          variants("chromosome") === $"e.chromosome" &&
-            variants("start") === $"e.start" &&
-            variants("reference") === $"e.reference" &&
-            variants("alternate") === $"e.alternate"
-        )
-        .whenMatched()
-        .updateExpr(Map("last_batch_id" -> "v.batch_id"))
-        .whenNotMatched()
-        .insertAll()
-        .execute()
 
-      /** Compact */
-      writeOnce(spark.table("variants"), output, dataChange = false)
+    Try(DeltaTable.forName("variants")) match {
+      case Failure(_) => writeOnce(variants, output)
+      case Success(existingVariants) =>
+        /** Merge */
+        existingVariants.as("e")
+          .merge(
+            variants.as("v"),
+            variants("chromosome") === $"e.chromosome" &&
+              variants("start") === $"e.start" &&
+              variants("reference") === $"e.reference" &&
+              variants("alternate") === $"e.alternate"
+          )
+          .whenMatched()
+          .updateExpr(Map("last_batch_id" -> "v.batch_id"))
+          .whenNotMatched()
+          .insertAll()
+          .execute()
 
+        /** Compact */
+        writeOnce(spark.table("variants"), output, dataChange = false)
     }
   }
 
@@ -71,9 +72,13 @@ object Variants {
         is_multi_allelic,
         old_multi_allelic,
         firstAnn,
-        array_distinct(annotations("symbol")) as "genes_symbol"
+        array_distinct(annotations("symbol")) as "genes_symbol",
+        hgvsg,
+        variant_class,
+        pubmed,
+        lit(batchId) as "batch_id",
+        lit(null).cast("string") as "last_batch_id"
       )
-      .select($"*", hgvsg, variant_class, pubmed, lit(batchId) as "batch_id", lit(null).cast("string") as "last_batch_id")
       .drop("annotation")
 
     variants
