@@ -28,7 +28,6 @@ object PrepareIndex extends App {
 
     val finalDf = joinVariants(batchId)
     finalDf
-      .coalesce(1)
       .write
       .mode(SaveMode.Overwrite)
       .json(s"$output/extract")
@@ -63,13 +62,11 @@ object PrepareIndex extends App {
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
       .as("occurrences")
 
-    //val nbParticipantsWithOccurrences: Long = occurrences.select(countDistinct($"patient_id")).as[Long].collect().head
-    //val allelesNumber = nbParticipantsWithOccurrences * 2
     joinWithConsequences
       .joinByLocus(occurrences, "inner")
       .groupBy(locus :+ col("organization_id"):_*)
       .agg(ac, an, het, hom, participant_number,
-        first(struct(joinWithConsequences("*"))) as "variant",
+        first(struct(joinWithConsequences("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
       .withColumn("lab_frequency", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .groupByLocus()
