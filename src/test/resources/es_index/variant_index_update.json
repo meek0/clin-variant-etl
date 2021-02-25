@@ -1,0 +1,79 @@
+{
+  "chromosome": "1",
+  "start": 69897,
+  "reference": "T",
+  "alternate": "C",
+  "donors": [{
+    "dp": 1,
+    "gq": 2,
+    "calls": [1, 1],
+    "qd": 8.07,
+    "has_alt": true,
+    "ad_ref": 0,
+    "ad_alt": 1,
+    "ad_total": 1,
+    "ad_ratio": 1.0,
+    "zygosity": "HOM",
+    "hgvsg": "chr1:g.69897T>C",
+    "variant_class": "SNV",
+    "batch_id": "BAT1",
+    "last_update": "2020-11-29",
+    "variant_type": "germline",
+    "biospecimen_id": "SP14909",
+    "patient_id": "PA0001",
+    "family_id": "FA0001",
+    "practitioner_id": "PPR00101",
+    "organization_id": "OR00201",
+    "sequencing_strategy": "WXS",
+    "study_id": "ET00010"
+  }, {
+    "dp": 1,
+    "gq": 2,
+    "calls": [1, 1],
+    "qd": 8.07,
+    "has_alt": true,
+    "ad_ref": 0,
+    "ad_alt": 1,
+    "ad_total": 1,
+    "ad_ratio": 1.0,
+    "zygosity": "HOM",
+    "hgvsg": "chr1:g.69897T>C",
+    "variant_class": "SNV",
+    "batch_id": "BAT1",
+    "last_update": "2020-11-29",
+    "variant_type": "germline",
+    "biospecimen_id": "SP14909",
+    "patient_id": "PA0001",
+    "family_id": "FA0001",
+    "practitioner_id": "PPR00101",
+    "organization_id": "OR00202",
+    "sequencing_strategy": "WXS",
+    "study_id": "ET00010"
+  }],
+  "lab_frequencies": {
+    "OR00201": {
+      "ac": 2,
+      "an": 2,
+      "af": 1.0,
+      "hom": 1,
+      "het": 0
+    },
+    "OR00202": {
+      "ac": 2,
+      "an": 2,
+      "af": 1.0,
+      "hom": 1,
+      "het": 0
+    }
+  },
+  "frequencies": {
+    "internal": {
+      "ac": 4,
+      "an": 4,
+      "af": 1.0,
+      "hom": 2,
+      "het": 0
+    }
+  },
+  "participant_number": 2
+}

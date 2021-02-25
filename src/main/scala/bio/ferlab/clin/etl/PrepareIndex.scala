@@ -15,33 +15,54 @@ object PrepareIndex extends App {
     .appName(s"Prepare Index").getOrCreate()
 
   run(output, batchId)
+  runUpdate(output, batchId)
 
   def run(output: String, batchId: String)(implicit spark: SparkSession): DataFrame = {
     spark.sql("use clin")
 
-    val joinVariants: String => DataFrame = (buildNewVariants _)
+    val newVariantFlow: DataFrame => DataFrame = (buildNewVariants _)
       .andThen(joinWithPopulations)
       .andThen(joinWithClinvar)
       .andThen(joinWithDbSNP)
       .andThen(joinWithGenes)
       .andThen(addExtDb)
 
-    val finalDf = joinVariants(batchId)
+    val newVariants =
+      spark.table("variants")
+        .where(col("batch_id") === batchId)
+
+    val finalDf = newVariantFlow(newVariants)
     finalDf
       .write
       .mode(SaveMode.Overwrite)
       .json(s"$output/extract")
 
-    //    val updatedVariants = spark.table("variants").where($"last_batch_id" === batchId)
-    //      .join(occurrences, newVariants("chromosome") === occurrences("chromosome") && newVariants("start") === occurrences("start") && newVariants("reference") === occurrences("reference") && newVariants("alternate") === occurrences("alternate"))
-
     finalDf
   }
 
-  private def buildNewVariants(batchId: String)(implicit spark: SparkSession): DataFrame = {
+  def runUpdate(output: String, batchId: String)(implicit spark: SparkSession): DataFrame = {
+    spark.sql("use clin")
+
+    val updateVariantFlow: DataFrame => DataFrame = buildNewVariants _
+
+    val updatedVariants =
+      spark.table("variants")
+        .where(col("last_batch_id") === batchId)
+
+    val finalDf = updateVariantFlow(updatedVariants)
+      .withColumn("frequencies", map(lit("internal"), col("internal_frequencies")))
+      .select("chromosome", "start", "reference", "alternate", "donors", "lab_frequencies",  "frequencies", "participant_number")
+
+    finalDf
+      .write
+      .mode(SaveMode.Overwrite)
+      .json(s"$output/update")
+    finalDf
+  }
+
+  private def buildNewVariants(variantDF: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val newVariants = spark.table("variants")
-      .where($"batch_id" === batchId)
+    val newVariants = variantDF
       .withColumnRenamed("genes", "genes_symbol")
       .withColumn("assembly_version", lit("GRCh38"))
       .withColumn("last_annotation_update", current_date())

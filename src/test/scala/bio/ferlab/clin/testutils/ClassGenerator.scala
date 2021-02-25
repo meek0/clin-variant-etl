@@ -6,6 +6,7 @@ import org.apache.spark.sql.types._
 
 import java.io._
 import java.time.LocalDateTime
+import scala.annotation.tailrec
 
 object ClassGenerator {
 
@@ -79,6 +80,7 @@ object ClassGenerator {
 
   private def getNestedClasses: DataFrame => List[String] = {df =>
 
+    @tailrec
     def getNestedRecurse(done: Map[String, DataFrame], todo: List[DataFrame]): Map[String, DataFrame] = {
       todo match {
         case Nil => done
@@ -148,4 +150,6 @@ object ClassGeneratorImplicits {
       ClassGenerator.writeCLassFile(packageName, className, df, rootFolder)
   }
 }
+
+
 
