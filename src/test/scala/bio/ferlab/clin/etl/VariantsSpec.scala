@@ -9,13 +9,12 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   import spark.implicits._
 
-
   "variants job" should "transform data in expected format" in {
 
     val df = Seq(VCFInput()).toDF()
 
-    Variants.build(df, "BAT1").as[VariantOutput].collect() should contain allElementsOf (
-      Seq(VariantOutput())
-      )
+    Variants.build(df, "BAT1").as[VariantOutput].collect() should contain allElementsOf Seq(
+      VariantOutput()
+    )
   }
 }
