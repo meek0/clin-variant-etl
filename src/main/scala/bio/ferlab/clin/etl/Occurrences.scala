@@ -7,12 +7,13 @@ import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 object Occurrences {
 
   def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
-    write(build(input, batchId), output)
+    val occurrences = vcf(input)
+    write(build(occurrences, batchId), output)
   }
 
-  def build(input: String, batchId: String)(implicit spark: SparkSession): DataFrame = {
+  def build(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val occurrences = vcf(input)
+    val occurrences = inputDf
       .withColumn("genotype", explode($"genotypes"))
       .select(
         chromosome,
@@ -46,17 +47,15 @@ object Occurrences {
       .drop("annotation")
 
     val patients = spark.table("patients")
-    val biospecimens = spark
-      .table("biospecimens")
+    val biospecimens = spark.table("biospecimens")
+
     val biospecimensWithPatient = broadcast(
       biospecimens
         .join(patients, Seq("patient_id"))
         .select($"biospecimen_id", $"patient_id", $"family_id", $"practitioner_id", $"organization_id", $"sequencing_strategy", $"study_id")
     )
 
-    occurrences
-      .join(biospecimensWithPatient, occurrences("biospecimen_id") === biospecimens("biospecimen_id"), "inner")
-      .drop(occurrences("biospecimen_id"))
+    occurrences.join(biospecimensWithPatient, Seq("biospecimen_id"), "inner")
 
   }
 
