@@ -20,7 +20,7 @@ object Variants {
 
   }
 
-  private def write(variants: DataFrame, output: String)(implicit spark: SparkSession): Unit = {
+  def write(variants: DataFrame, output: String)(implicit spark: SparkSession): Unit = {
     import spark.implicits._
 
     Try(DeltaTable.forName("variants")) match {
@@ -62,6 +62,7 @@ object Variants {
   def build(inputDF: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val variants = inputDF
+      .withColumn("annotation", firstAnn)
       .select(
         chromosome,
         start,
@@ -71,7 +72,6 @@ object Variants {
         name,
         is_multi_allelic,
         old_multi_allelic,
-        firstAnn,
         array_distinct(annotations("symbol")) as "genes_symbol",
         hgvsg,
         variant_class,
