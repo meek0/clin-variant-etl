@@ -2,7 +2,7 @@ name := "clin-variant-etl"
 
 version := "0.1"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.12.13"
 
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
@@ -18,6 +18,9 @@ libraryDependencies += "io.delta" %% "delta-core" % "0.7.0"
 /* Test */
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % "test"
 libraryDependencies += "org.apache.spark" %% "spark-hive" % spark_version % "test"
+
+parallelExecution in test := false
+fork := true
 
 test in assembly := {}
 

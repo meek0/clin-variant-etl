@@ -56,7 +56,7 @@ object Variants {
       .partitionBy("chromosome")
       .format("delta")
       .option("path", s"$output/variants")
-      .saveAsTable("variants")
+      .saveAsTable("clin.variants")
   }
 
   def build(inputDF: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
