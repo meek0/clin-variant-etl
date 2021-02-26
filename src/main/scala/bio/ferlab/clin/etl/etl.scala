@@ -110,13 +110,8 @@ package object etl {
     val is_multi_allelic: Column = col("splitFromMultiAllelic") as "is_multi_allelic"
     val old_multi_allelic: Column = col("INFO_OLD_MULTIALLELIC") as "old_multi_allelic"
 
-
-    val locus: Seq[Column] = Seq(
-      col("chromosome"),
-      col("start"),
-      col("end"),
-      col("reference"),
-      col("alternate"))
+    val locusColumnNames: Seq[String] = Seq("chromosome", "start", "end", "reference")
+    val locus: Seq[Column] = locusColumnNames.map(col)
 
   }
 

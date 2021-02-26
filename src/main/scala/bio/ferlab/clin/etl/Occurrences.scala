@@ -2,13 +2,24 @@ package bio.ferlab.clin.etl
 
 import bio.ferlab.clin.etl.columns._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object Occurrences {
 
+  val OCCURRENCES_TABLE = "occurrences"
+
   def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
     val occurrences = vcf(input)
-    write(build(occurrences, batchId), output)
+    val updates = build(occurrences, batchId)
+    SparkUtils.insert(
+      updates,
+      Some(output),
+      "clin_raw",
+      OCCURRENCES_TABLE,
+      {_.repartition(1, col("chromosome"))
+        .sortWithinPartitions(col("chromosome"), col("start"))},
+      Seq("chromosome")
+    )
   }
 
   def build(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
@@ -56,31 +67,6 @@ object Occurrences {
     )
 
     occurrences.join(biospecimensWithPatient, Seq("biospecimen_id"), "inner")
-
-  }
-
-  val OCCURRENCES_TABLE = "occurrences"
-
-  def write(occ: DataFrame, output: String)(implicit spark: SparkSession): Unit = {
-    import spark.implicits._
-    occ
-      .repartition(1, $"chromosome")
-      .sortWithinPartitions($"chromosome", $"start")
-      .write.mode(SaveMode.Append)
-      .partitionBy("chromosome")
-      .format("delta")
-      .option("path", s"$output/$OCCURRENCES_TABLE")
-      .saveAsTable(OCCURRENCES_TABLE)
-
-    //Compact
-    spark.table(OCCURRENCES_TABLE)
-      .repartition(1, $"chromosome")
-      .sortWithinPartitions($"chromosome", $"start")
-      .write.mode(SaveMode.Overwrite)
-      .partitionBy("chromosome")
-      .format("delta")
-      .option("path", s"$output/$OCCURRENCES_TABLE")
-      .saveAsTable(OCCURRENCES_TABLE)
 
   }
 }
