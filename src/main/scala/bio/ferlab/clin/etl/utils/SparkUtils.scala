@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.utils
 
 import io.delta.tables.DeltaTable
 import org.apache.spark.sql.{Column, DataFrame, SaveMode, SparkSession}
@@ -19,13 +19,13 @@ object SparkUtils {
       .write
       .option("dataChange", dataChange)
       .mode(mode)
-      .partitionBy(partitionBy:_*)
+      .partitionBy(partitionBy: _*)
       .format("delta")
 
     outputFolder.fold(dfw.saveAsTable(s"$database.$tableName"))(output =>
       dfw
-      .option("path", s"$output/$tableName")
-      .saveAsTable(s"$database.$tableName"))
+        .option("path", s"$output/$tableName")
+        .saveAsTable(s"$database.$tableName"))
 
 
   }

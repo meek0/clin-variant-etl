@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.external
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession

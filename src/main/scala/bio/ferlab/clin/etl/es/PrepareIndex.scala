@@ -1,8 +1,8 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.etl.ByLocus._
-import bio.ferlab.clin.etl.columns._
-import org.apache.spark.sql.functions.{first, _}
+import bio.ferlab.clin.etl.utils.GenomicsUtils._
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
@@ -51,7 +51,7 @@ object PrepareIndex extends App {
 
     val finalDf = updateVariantFlow(updatedVariants)
       .withColumn("frequencies", map(lit("internal"), col("internal_frequencies")))
-      .select("chromosome", "start", "reference", "alternate", "donors", "lab_frequencies",  "frequencies", "participant_number")
+      .select("chromosome", "start", "reference", "alternate", "donors", "lab_frequencies", "frequencies", "participant_number")
 
     finalDf
       .write
@@ -85,7 +85,7 @@ object PrepareIndex extends App {
 
     joinWithConsequences
       .joinByLocus(occurrences, "inner")
-      .groupBy(locus:+ col("alternate") :+ col("organization_id"):_*)
+      .groupBy(locus :+ col("alternate") :+ col("organization_id"): _*)
       .agg(ac, an, het, hom, participant_number,
         first(struct(joinWithConsequences("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")

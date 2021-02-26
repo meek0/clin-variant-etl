@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.es
 
 import org.apache.spark.sql.SparkSession
 
@@ -22,4 +22,3 @@ object PrepareGeneIndex extends App {
   }
 
 }
-

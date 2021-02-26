@@ -1,6 +1,8 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.columns._
+import bio.ferlab.clin.etl.utils.SparkUtils
+import bio.ferlab.clin.etl.utils.VcfUtils._
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -16,8 +18,10 @@ object Consequences {
       Some(output),
       "clin_raw",
       TABLE_CONSEQUENCES,
-      {_.repartition(1, col("chromosome")).sortWithinPartitions("start")},
-      locusColumnNames:+ "ensembl_gene_id":+ "ensembl_feature_id",
+      {
+        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
+      },
+      locusColumnNames :+ "ensembl_gene_id" :+ "ensembl_feature_id",
       Seq("chromosome"))
   }
 

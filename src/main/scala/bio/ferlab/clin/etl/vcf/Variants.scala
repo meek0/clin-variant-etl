@@ -1,7 +1,9 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.columns._
-import org.apache.spark.sql.functions._
+import bio.ferlab.clin.etl.utils.SparkUtils
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
+import bio.ferlab.clin.etl.utils.VcfUtils.vcf
+import org.apache.spark.sql.functions.{array_distinct, col, current_timestamp, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object Variants {
@@ -15,7 +17,9 @@ object Variants {
       Some(output),
       "clin_raw",
       "variants",
-      {_.repartition(1, col("chromosome")).sortWithinPartitions("start")},
+      {
+        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
+      },
       locusColumnNames,
       Seq("chromosome"))
 

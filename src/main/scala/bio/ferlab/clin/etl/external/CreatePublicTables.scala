@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.external
 
 import org.apache.spark.sql.SparkSession
 
@@ -198,17 +198,17 @@ object CreatePublicTables extends App {
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `dbsnp` (
-      |   `chromosome` STRING,
-      |   `start` BIGINT,
-      |   `reference` STRING,
-      |   `alternate` STRING,
-      |   `end` BIGINT,
-      |   `name` STRING,
-      |   `original_contig_name` STRING
-      |)
-      |USING parquet
-      |LOCATION '$input/dbsnp'
-      |""".stripMargin)
+       |   `chromosome` STRING,
+       |   `start` BIGINT,
+       |   `reference` STRING,
+       |   `alternate` STRING,
+       |   `end` BIGINT,
+       |   `name` STRING,
+       |   `original_contig_name` STRING
+       |)
+       |USING parquet
+       |LOCATION '$input/dbsnp'
+       |""".stripMargin)
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `ddd_gene_set` (
@@ -1028,4 +1028,3 @@ object CreatePublicTables extends App {
        |""".stripMargin)
 
 }
-

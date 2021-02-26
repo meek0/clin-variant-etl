@@ -1,6 +1,6 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.utils
 
-import bio.ferlab.clin.etl.columns.{locus, locusColumnNames}
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.clin.model.VariantOutput
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.scalatest.flatspec.AnyFlatSpec

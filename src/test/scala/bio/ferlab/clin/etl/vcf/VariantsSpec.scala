@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.model.{VCFInput, VariantOutput}
 import bio.ferlab.clin.testutils.WithSparkSession

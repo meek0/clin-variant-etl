@@ -1,11 +1,13 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.utils
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, RelationalGroupedDataset}
 
-object ByLocus {
+object GenomicsUtils {
 
   val id: Column = sha1(concat(col("chromosome"), col("start"), col("reference"), col("alternate"))) as "id"
+
+
 
   implicit class ByLocusDataframe(df: DataFrame) {
 
@@ -13,7 +15,7 @@ object ByLocus {
       val otherFields = other.drop("chromosome", "start", "end", "name", "reference", "alternate")
       joinByLocus(other, joinType)
         .withColumn(outputColumnName, when(col(otherFields.columns.head).isNotNull, struct(otherFields("*"))).otherwise(lit(null)))
-        .select(df.columns.map(col):+ col(outputColumnName):_*)
+        .select(df.columns.map(col) :+ col(outputColumnName): _*)
     }
 
     def joinByLocus(other: DataFrame, joinType: String): DataFrame = {

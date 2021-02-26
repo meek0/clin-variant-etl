@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.external
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -37,7 +37,7 @@ object CreateGenesTable extends App {
 
     val hpo = spark.table("hpo_gene_set").select($"entrez_gene_id", $"hpo_term_id", $"hpo_term_name")
       .distinct()
-      .withColumn("hpo_term_label", concat($"hpo_term_name", lit(" ("),$"hpo_term_id", lit(")") ))
+      .withColumn("hpo_term_label", concat($"hpo_term_name", lit(" ("), $"hpo_term_id", lit(")")))
 
     val withHpo = withOrphanet
       .join(hpo, withOrphanet("entrez_gene_id") === hpo("entrez_gene_id"), "left")
@@ -71,4 +71,3 @@ object CreateGenesTable extends App {
   }
 
 }
-

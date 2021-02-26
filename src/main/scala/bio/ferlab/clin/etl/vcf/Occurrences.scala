@@ -1,6 +1,8 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.columns._
+import bio.ferlab.clin.etl.utils.SparkUtils
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
+import bio.ferlab.clin.etl.utils.VcfUtils.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -16,8 +18,10 @@ object Occurrences {
       Some(output),
       "clin_raw",
       OCCURRENCES_TABLE,
-      {_.repartition(1, col("chromosome"))
-        .sortWithinPartitions(col("chromosome"), col("start"))},
+      {
+        _.repartition(1, col("chromosome"))
+          .sortWithinPartitions(col("chromosome"), col("start"))
+      },
       Seq("chromosome")
     )
   }
