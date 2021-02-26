@@ -5,7 +5,7 @@ import org.apache.spark.sql.{Column, DataFrame, SaveMode, SparkSession}
 
 import scala.util.{Failure, Success, Try}
 
-object SparkUtils {
+object DeltaUtils {
 
   def writeOnce(df: DataFrame,
                 outputFolder: Option[String],
@@ -67,7 +67,7 @@ object SparkUtils {
     import spark.implicits._
     Try(DeltaTable.forName(tableName)) match {
       case Failure(_) =>
-        SparkUtils.writeOnce(
+        DeltaUtils.writeOnce(
           repartition(updates),
           database = database,
           tableName = tableName,
@@ -92,7 +92,7 @@ object SparkUtils {
           .execute()
 
         /** Compact */
-        SparkUtils.writeOnce(
+        DeltaUtils.writeOnce(
           repartition(updates),
           database = database,
           tableName = tableName,
