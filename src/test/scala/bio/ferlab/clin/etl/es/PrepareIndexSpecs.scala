@@ -1,6 +1,7 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.etl.columns._
+import bio.ferlab.clin.etl.utils.VcfUtils._
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.{Row, SaveMode}

@@ -1,6 +1,7 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.vcf
 
 import org.apache.spark.sql.SparkSession
+
 object ImportVcf extends App {
 
   val Array(input, output, batchId, runType) = args
@@ -10,7 +11,7 @@ object ImportVcf extends App {
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     .config("spark.databricks.delta.retentionDurationCheck.enabled", value = false)
     .config("spark.delta.merge.repartitionBeforeWrite", value = true)
-//    .config("", value = 20) //Avoid too many small files as output of merging delta
+    //    .config("", value = 20) //Avoid too many small files as output of merging delta
     .enableHiveSupport()
     .appName(s"Import $runType").getOrCreate()
 
@@ -31,9 +32,7 @@ object ImportVcf extends App {
       Consequences.run(input, output, batchId)
 
 
-
   }
 
 
 }
-

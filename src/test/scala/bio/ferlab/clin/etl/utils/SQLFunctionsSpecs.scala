@@ -1,6 +1,7 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.utils
 
-import bio.ferlab.clin.etl.columns._
+import bio.ferlab.clin.etl.utils.VcfUtils._
+import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.functions.struct
 import org.scalatest.flatspec.AnyFlatSpec

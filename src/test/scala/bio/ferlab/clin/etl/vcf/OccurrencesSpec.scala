@@ -1,6 +1,6 @@
-package bio.ferlab.clin.etl
+package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.model.{BiospecimenOutput, ClinvarOutput, OccurrenceOutput, PatientOutput, VCFInput, VariantOutput}
+import bio.ferlab.clin.model.{BiospecimenOutput, OccurrenceOutput, PatientOutput, VCFInput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.SaveMode
 import org.scalatest.flatspec.AnyFlatSpec
