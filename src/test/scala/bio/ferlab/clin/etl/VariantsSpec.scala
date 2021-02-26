@@ -13,8 +13,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     val df = Seq(VCFInput()).toDF()
 
-    Variants.build(df, "BAT1").as[VariantOutput].collect() should contain allElementsOf Seq(
-      VariantOutput()
-    )
+    val result = Variants.build(df, "BAT1").as[VariantOutput].collect().head
+    result shouldBe VariantOutput(`createdOn` = result.`createdOn`, `updatedOn` = result.`updatedOn`)
   }
 }

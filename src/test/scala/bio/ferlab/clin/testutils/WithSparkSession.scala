@@ -14,5 +14,4 @@ trait WithSparkSession extends WithOutputFolder {
 
   spark.sparkContext.setLogLevel("ERROR")
 
-
 }

@@ -1,5 +1,8 @@
 package bio.ferlab.clin.model
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
+
 case class ConsequenceOutput(`chromosome`: String = "1",
                              `start`: Long = 69897,
                              `end`: Long = 69898,
@@ -32,7 +35,9 @@ case class ConsequenceOutput(`chromosome`: String = "1",
                              `aa_change`: Option[String] = None,
                              `coding_dna_change`: Option[String] = None,
                              `impact_score`: Int = 1,
-                             `batch_id`: String = "BAT1")
+                             `batch_id`: String = "BAT1",
+                             `createdOn`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
+                             `updatedOn`: Timestamp = Timestamp.valueOf(LocalDateTime.now()))
 
 case class EXON(`rank`: Option[Int] = None,
                 `total`: Option[Int] = None)

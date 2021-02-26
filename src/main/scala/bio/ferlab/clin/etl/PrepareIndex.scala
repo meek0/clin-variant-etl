@@ -17,7 +17,7 @@ object PrepareIndex extends App {
   run(output, batchId)
   runUpdate(output, batchId)
 
-  def run(output: String, batchId: String)(implicit spark: SparkSession): DataFrame = {
+  def run(output: String, lastExecutionDateTime: String)(implicit spark: SparkSession): DataFrame = {
     spark.sql("use clin")
 
     val newVariantFlow: DataFrame => DataFrame = (buildNewVariants _)
@@ -29,7 +29,7 @@ object PrepareIndex extends App {
 
     val newVariants =
       spark.table("variants")
-        .where(col("batch_id") === batchId)
+        .where(col("createdOn") >= lastExecutionDateTime)
 
     val finalDf = newVariantFlow(newVariants)
     finalDf
@@ -40,14 +40,14 @@ object PrepareIndex extends App {
     finalDf
   }
 
-  def runUpdate(output: String, batchId: String)(implicit spark: SparkSession): DataFrame = {
+  def runUpdate(output: String, lastExecutionDateTime: String)(implicit spark: SparkSession): DataFrame = {
     spark.sql("use clin")
 
     val updateVariantFlow: DataFrame => DataFrame = buildNewVariants _
 
     val updatedVariants =
       spark.table("variants")
-        .where(col("last_batch_id") === batchId)
+        .where(col("updatedOn") >= lastExecutionDateTime and col("createdOn") =!= col("updatedOn"))
 
     val finalDf = updateVariantFlow(updatedVariants)
       .withColumn("frequencies", map(lit("internal"), col("internal_frequencies")))
@@ -85,7 +85,7 @@ object PrepareIndex extends App {
 
     joinWithConsequences
       .joinByLocus(occurrences, "inner")
-      .groupBy(locus :+ col("organization_id"):_*)
+      .groupBy(locus:+ col("alternate") :+ col("organization_id"):_*)
       .agg(ac, an, het, hom, participant_number,
         first(struct(joinWithConsequences("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
