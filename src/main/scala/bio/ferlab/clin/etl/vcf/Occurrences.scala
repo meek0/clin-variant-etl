@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.SparkUtils
+import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.clin.etl.utils.VcfUtils.vcf
 import org.apache.spark.sql.functions._
@@ -13,7 +13,7 @@ object Occurrences {
   def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
     val occurrences = vcf(input)
     val updates = build(occurrences, batchId)
-    SparkUtils.insert(
+    DeltaUtils.insert(
       updates,
       Some(output),
       "clin_raw",

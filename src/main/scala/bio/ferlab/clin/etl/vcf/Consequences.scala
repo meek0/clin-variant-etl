@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.SparkUtils
+import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils._
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import org.apache.spark.sql.functions._
@@ -13,7 +13,7 @@ object Consequences {
     val inputDF = vcf(input)
     val consequences: DataFrame = build(inputDF, batchId)
 
-    SparkUtils.upsert(
+    DeltaUtils.upsert(
       consequences,
       Some(output),
       "clin_raw",

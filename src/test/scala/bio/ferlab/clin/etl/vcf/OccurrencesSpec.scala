@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.model.{BiospecimenOutput, OccurrenceOutput, PatientOutput, VCFInput}
+import bio.ferlab.clin.model.{BiospecimenOutput, OccurrenceRawOutput, PatientOutput, VCFInput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.SaveMode
 import org.scalatest.flatspec.AnyFlatSpec
@@ -29,8 +29,8 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     val df = Seq(VCFInput()).toDF()
 
-    Occurrences.build(df, "BAT1").as[OccurrenceOutput].collect() should contain allElementsOf Seq(
-      OccurrenceOutput(`last_update` = Date.valueOf(LocalDate.now()))
+    Occurrences.build(df, "BAT1").as[OccurrenceRawOutput].collect() should contain allElementsOf Seq(
+      OccurrenceRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
     )
   }
 }

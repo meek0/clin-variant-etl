@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.SparkUtils
+import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.clin.etl.utils.VcfUtils.vcf
 import org.apache.spark.sql.functions.{array_distinct, col, current_timestamp, lit}
@@ -12,7 +12,7 @@ object Variants {
     val inputDF = vcf(input)
     val annotations: DataFrame = build(inputDF, batchId)
 
-    SparkUtils.upsert(
+    DeltaUtils.upsert(
       annotations,
       Some(output),
       "clin_raw",

@@ -7,8 +7,6 @@ object GenomicsUtils {
 
   val id: Column = sha1(concat(col("chromosome"), col("start"), col("reference"), col("alternate"))) as "id"
 
-
-
   implicit class ByLocusDataframe(df: DataFrame) {
 
     def joinAndMerge(other: DataFrame, outputColumnName: String, joinType: String = "inner"): DataFrame = {

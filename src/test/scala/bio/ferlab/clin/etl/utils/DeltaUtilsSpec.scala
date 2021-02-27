@@ -1,14 +1,14 @@
 package bio.ferlab.clin.etl.utils
 
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
-import bio.ferlab.clin.model.VariantOutput
+import bio.ferlab.clin.model.VariantRawOutput
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.util.UUID
 
-class SparkUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class DeltaUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   import spark.implicits._
 
@@ -17,14 +17,14 @@ class SparkUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     val tableName = UUID.randomUUID().toString.replace("-", "")
     val database = "default"
 
-    val df = Seq(VariantOutput()).toDF()
+    val df = Seq(VariantRawOutput()).toDF()
 
     withOutputFolder("spark-warehouse"){ output =>
-      SparkUtils.insert(df, Some(output), database, tableName, { df => df}, Seq("chromosome"))
+      DeltaUtils.insert(df, Some(output), database, tableName, { df => df}, Seq("chromosome"))
 
       spark.table(tableName).count() shouldBe 1
 
-      SparkUtils.insert(df, Some(output), database, tableName, { df => df}, Seq("chromosome"))
+      DeltaUtils.insert(df, Some(output), database, tableName, { df => df}, Seq("chromosome"))
 
       spark.table(tableName).count() shouldBe 2
     }
@@ -36,22 +36,22 @@ class SparkUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     val tableName = UUID.randomUUID().toString.replace("-", "")
     val database = "default"
 
-    val variant1 = VariantOutput()
-    val variant2 = VariantOutput() //different createdOn and updatedOn than variant1 but same locus
+    val variant1 = VariantRawOutput()
+    val variant2 = VariantRawOutput() //different createdOn and updatedOn than variant1 but same locus
 
     val initialLoad = Seq(variant1).toDF()
     val update = Seq(variant2).toDF()
 
     withOutputFolder("spark-warehouse"){ output =>
-      SparkUtils.upsert(initialLoad, Some(output), database, tableName, { df => df}, locusColumnNames, Seq("chromosome"))
+      DeltaUtils.upsert(initialLoad, Some(output), database, tableName, { df => df}, locusColumnNames, Seq("chromosome"))
 
       spark.table(tableName).count() shouldBe 1
 
-      SparkUtils.upsert(update, Some(output), database, tableName, { df => df}, locusColumnNames, Seq("chromosome"))
+      DeltaUtils.upsert(update, Some(output), database, tableName, { df => df}, locusColumnNames, Seq("chromosome"))
 
       spark.table(tableName).count() shouldBe 1
 
-      val result = spark.table(tableName).as[VariantOutput].collect().head
+      val result = spark.table(tableName).as[VariantRawOutput].collect().head
       result shouldBe variant1.copy(`updatedOn` = variant2.`updatedOn`)
     }
 
