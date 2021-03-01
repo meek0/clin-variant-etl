@@ -61,8 +61,8 @@ object Occurrences {
       .withColumn("variant_type", lit("germline"))
       .drop("annotation")
 
-    val patients = spark.table("patients")
-    val biospecimens = spark.table("biospecimens")
+    val patients = spark.table("clin.patients")
+    val biospecimens = spark.table("clin.biospecimens")
 
     val biospecimensWithPatient = broadcast(
       biospecimens

@@ -18,21 +18,19 @@ object ImportVcf extends App {
   run(input, output, batchId, runType)
 
   def run(input: String, output: String, batchId: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
-    spark.sql("use clin")
-    if (runType == "all") {
-      Occurrences.run(input, output, batchId)
-      Variants.run(input, output, batchId)
-      Consequences.run(input, output, batchId)
+    spark.sql("use clin_raw")
+
+    runType match {
+      case "variants" => Variants.run(input, output, batchId)
+      case "consequences" => Consequences.run(input, output, batchId)
+      case "occurrences" => Occurrences.run(input, output, batchId)
+      case "all" =>
+        Occurrences.run(input, output, batchId)
+        Variants.run(input, output, batchId)
+        Consequences.run(input, output, batchId)
+      case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
     }
-    else if (runType == "occurrences")
-      Occurrences.run(input, output, batchId)
-    else if (runType == "variants")
-      Variants.run(input, output, batchId)
-    else if (runType == "consequences")
-      Consequences.run(input, output, batchId)
 
 
   }
-
-
 }

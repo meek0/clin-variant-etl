@@ -47,7 +47,7 @@ object DeltaUtils {
       mode = SaveMode.Append)
 
     writeOnce(
-      df = repartition(spark.table(tableName)),
+      df = repartition(spark.table(s"$database.$tableName")),
       outputFolder = outputFolder,
       database = database,
       tableName = tableName,

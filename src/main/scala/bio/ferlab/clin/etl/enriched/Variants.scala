@@ -6,12 +6,14 @@ import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import java.sql.Timestamp
+
 object Variants {
 
-  def run(input: String, output: String, lastExecutionDateTime: String)(implicit spark: SparkSession): Unit = {
+  def run(input: String, output: String, lastExecutionDateTime: Timestamp)(implicit spark: SparkSession): Unit = {
     val inputDF =
       spark.table("clin_raw.variants")
-        .where(col("updateOn") >= lastExecutionDateTime)
+        .where(col("updatedOn") >= lastExecutionDateTime)
 
     val ouputDF: DataFrame = transform(inputDF)
 
@@ -29,17 +31,15 @@ object Variants {
   }
 
   def transform(inputDF: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    addExtDb(
-      joinWithGenes(
-        joinWithClinvar(
-          joinWithDbSNP(
-            joinWithPopulations(
-              build(inputDF)
-            )
-          )
-        )
-      )
-    )
+    val buildDF = build(inputDF).persist()
+    buildDF.show(1)
+    inputDF.unpersist()
+
+    val joinWithPop = joinWithPopulations(buildDF)
+    val joinDbSNP = joinWithDbSNP(joinWithPop)
+    val joinClinvar = joinWithClinvar(joinDbSNP)
+    val joinGenes = joinWithGenes(joinClinvar)
+    addExtDb(joinGenes)
   }
 
   def build(inputDF: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -87,7 +87,8 @@ object Variants {
     val gnomad_exomes_2_1 = spark.table("clin.gnomad_exomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
     val gnomad_genomes_3_0 = spark.table("clin.gnomad_genomes_3_0").as("gnomad_genomes_3_0").selectLocus($"ac", $"af", $"an", $"hom")
 
-    variants.joinAndMerge(genomes, "1000_genomes", "left")
+    broadcast(variants)
+      .joinAndMerge(genomes, "1000_genomes", "left")
       .joinAndMerge(topmed, "topmed_bravo", "left")
       .joinAndMerge(gnomad_genomes_2_1, "gnomad_genomes_2_1_1", "left")
       .joinAndMerge(gnomad_exomes_2_1, "exac", "left")
