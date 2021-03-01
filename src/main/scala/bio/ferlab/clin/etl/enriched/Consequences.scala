@@ -7,10 +7,12 @@ import org.apache.spark.sql.functions.{col, struct}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import java.sql.Timestamp
+
 object Consequences {
 
-  def run(input: String, output: String, lastExecutionDateTime: String)(implicit spark: SparkSession): Unit = {
-    val inputDf = spark.table("clin_raw.consequences").where(col("updateOn") >= lastExecutionDateTime)
+  def run(input: String, output: String, lastExecutionDateTime: Timestamp)(implicit spark: SparkSession): Unit = {
+    val inputDf = spark.table("clin_raw.consequences").where(col("updatedOn") >= lastExecutionDateTime)
     val outputDf = build(inputDf)
 
     DeltaUtils.upsert(
