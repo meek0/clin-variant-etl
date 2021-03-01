@@ -11,8 +11,8 @@ import java.sql.Timestamp
 
 object Consequences {
 
-  def run(input: String, output: String, lastExecutionDateTime: Timestamp)(implicit spark: SparkSession): Unit = {
-    val inputDf = spark.table("clin_raw.consequences").where(col("updatedOn") >= lastExecutionDateTime)
+  def run(input: String, output: String, lastExecutionTimestamp: Timestamp)(implicit spark: SparkSession): Unit = {
+    val inputDf = spark.table("clin_raw.consequences").where(col("updatedOn") >= lastExecutionTimestamp)
     val outputDf = build(inputDf)
 
     DeltaUtils.upsert(
