@@ -10,10 +10,10 @@ import java.sql.Timestamp
 
 object Variants {
 
-  def run(input: String, output: String, lastExecutionDateTime: Timestamp)(implicit spark: SparkSession): Unit = {
+  def run(input: String, output: String, lastExecutionTimestamp: Timestamp)(implicit spark: SparkSession): Unit = {
     val inputDF =
       spark.table("clin_raw.variants")
-        .where(col("updatedOn") >= lastExecutionDateTime)
+        .where(col("updatedOn") >= lastExecutionTimestamp)
 
     val ouputDF: DataFrame = transform(inputDF)
 

@@ -4,23 +4,30 @@ import bio.ferlab.clin.etl.utils.GenomicsUtils._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
+import scala.util.Try
+
 object PrepareIndex extends App {
 
-  val Array(output, batchId) = args
+  val Array(output, lastExecutionString) = args
 
   implicit val spark: SparkSession = SparkSession.builder
     .enableHiveSupport()
     .appName(s"Prepare Index").getOrCreate()
 
-  run(output, batchId)
-  runUpdate(output, batchId)
+  val minimumDateTime = LocalDateTime.of(1900, 1 , 1, 0, 0, 0)
+  val lastExecutionTimestamp = Try(Timestamp.valueOf(lastExecutionString)).getOrElse(Timestamp.valueOf(minimumDateTime))
 
-  def run(output: String, lastExecutionDateTime: String)(implicit spark: SparkSession): DataFrame = {
+  run(output, lastExecutionTimestamp)
+  runUpdate(output, lastExecutionTimestamp)
+
+  def run(output: String, lastExecutionTimestamp: Timestamp)(implicit spark: SparkSession): DataFrame = {
     spark.sql("use clin")
 
     val newVariants =
       spark.table("clin.variants")
-        .where(col("createdOn") >= lastExecutionDateTime)
+        .where(col("createdOn") >= lastExecutionTimestamp)
 
     val finalDf = buildVariants(newVariants)
     finalDf
@@ -30,12 +37,12 @@ object PrepareIndex extends App {
     finalDf
   }
 
-  def runUpdate(output: String, lastExecutionDateTime: String)(implicit spark: SparkSession): DataFrame = {
+  def runUpdate(output: String, lastExecutionTimestamp: Timestamp)(implicit spark: SparkSession): DataFrame = {
     spark.sql("use clin")
 
     val updatedVariants =
       spark.table("clin.variants")
-        .where(col("updatedOn") >= lastExecutionDateTime and col("createdOn") =!= col("updatedOn"))
+        .where(col("updatedOn") >= lastExecutionTimestamp and col("createdOn") =!= col("updatedOn"))
 
     val finalDf = buildVariants(updatedVariants)
       .withColumn("frequencies", map(lit("internal"), col("frequencies.internal")))
