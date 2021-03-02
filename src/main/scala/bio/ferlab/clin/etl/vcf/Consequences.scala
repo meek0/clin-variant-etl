@@ -70,8 +70,8 @@ object Consequences {
       .withColumn("coding_dna_change", when($"cds_position".isNotNull, concat($"cds_position", $"reference", lit(">"), $"alternate")).otherwise(lit(null)))
       .withColumn("impact_score", when($"impact" === "MODIFIER", 1).when($"impact" === "LOW", 2).when($"impact" === "MODERATE", 3).when($"impact" === "HIGH", 4).otherwise(0))
       .withColumn("batch_id", lit(batchId))
-      .withColumn("createdOn", current_timestamp())
-      .withColumn("updatedOn", current_timestamp())
+      .withColumn("createdOn", lit(batchId))//current_timestamp())
+      .withColumn("updatedOn", lit(batchId))//current_timestamp())
 
     consequencesDF
   }

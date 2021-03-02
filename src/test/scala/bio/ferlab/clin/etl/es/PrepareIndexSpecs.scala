@@ -19,8 +19,8 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
   spark.sql("USE clin")
 
   Seq(VariantEnrichedOutput(
-    `createdOn` = Timestamp.valueOf("2020-01-01 12:00:00"),
-    `updatedOn` = Timestamp.valueOf("2020-01-01 12:00:00")))
+    `createdOn` = "BAT1",//Timestamp.valueOf("2020-01-01 12:00:00"),
+    `updatedOn` = "BAT1"))//Timestamp.valueOf("2020-01-01 12:00:00")))
     .toDF
     .write.format("delta").mode(SaveMode.Overwrite)
     .option("path", "spark-warehouse/clin.db/variants")
@@ -33,7 +33,7 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
 
   "run" should "produce json files in the right format" in {
 
-    val result = PrepareIndex.run("spark-warehouse/output", "2019-12-31 12:00:00")
+    val result = PrepareIndex.run("spark-warehouse/output", "BAT0")
     result.as[VariantIndexOutput].collect().head shouldBe VariantIndexOutput()
 
   }
@@ -42,13 +42,13 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
 
     Seq(VariantEnrichedOutput(
       `batch_id` = "BAT2",
-      `createdOn` = Timestamp.valueOf("2020-01-01 12:00:00"),
-      `updatedOn` = Timestamp.valueOf("2020-01-01 13:00:00")))
+      `createdOn` = "BAT1",//Timestamp.valueOf("2020-01-01 12:00:00"),
+      `updatedOn` = "BAT2"))//Timestamp.valueOf("2020-01-01 13:00:00")))
       .toDF
       .write.format("delta").mode(SaveMode.Overwrite)
       .saveAsTable("clin.variants")
 
-    val resultUpdate = PrepareIndex.runUpdate("spark-warehouse/output", "2020-01-01 12:00:00")
+    val resultUpdate = PrepareIndex.runUpdate("spark-warehouse/output", "BAT1")
 
     resultUpdate.as[VariantIndexUpdate].collect().head shouldBe VariantIndexUpdate()
   }

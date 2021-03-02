@@ -4,8 +4,6 @@
  */
 package bio.ferlab.clin.model
 
-import java.sql.Timestamp
-
 
 case class ConsequenceEnrichedOutput(`chromosome`: String = "1",
                                      `start`: Long = 69897,
@@ -33,8 +31,8 @@ case class ConsequenceEnrichedOutput(`chromosome`: String = "1",
                                      `aa_change`: Option[String] = None,
                                      `coding_dna_change`: Option[String] = None,
                                      `impact_score`: Int = 1,
-                                     `createdOn`: Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"),
-                                     `updatedOn`: Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"),
+                                     `createdOn`: String = "BAT1",//Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"),
+                                     `updatedOn`: String = "BAT1",//Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"),
                                      `consequence`: List[String] = List("downstream gene"),
                                      `predictions`: PREDICTIONS = PREDICTIONS(),
                                      `conservations`: CONSERVATIONS = CONSERVATIONS())

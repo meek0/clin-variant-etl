@@ -4,7 +4,7 @@
  */
 package bio.ferlab.clin.model
 
-import java.sql.{Date, Timestamp}
+import java.sql.Date
 import java.time.LocalDate
 
 
@@ -24,8 +24,8 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `last_batch_id`: Option[String] = None,
                                  `assembly_version`: String = "GRCh38",
                                  `last_annotation_update`: Date = Date.valueOf(LocalDate.now()),
-                                 `createdOn`: Timestamp = Timestamp.valueOf("2021-02-26 14:31:48.242"),
-                                 `updatedOn`: Timestamp = Timestamp.valueOf("2021-02-26 14:31:48.243"),
+                                 `createdOn`: String = "BAT1",//Timestamp = Timestamp.valueOf("2021-02-26 14:31:48.242"),
+                                 `updatedOn`: String = "BAT1",//Timestamp = Timestamp.valueOf("2021-02-26 14:31:48.243"),
                                  `variant_type`: String = "germline",
                                  `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
                                  `lab_frequencies`: Map[String, Freq] = Map("OR00201" -> Freq(2, 2, 1.0, 1, 0), "OR00202" -> Freq(2, 2, 1.0, 1, 0)),
