@@ -1,19 +1,17 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.GenomicsUtils._
 import bio.ferlab.clin.etl.utils.DeltaUtils
+import bio.ferlab.clin.etl.utils.GenomicsUtils._
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import java.sql.Timestamp
-
 object Variants {
 
-  def run(input: String, output: String, lastExecutionTimestamp: Timestamp)(implicit spark: SparkSession): Unit = {
+  def run(input: String, output: String, lastExecution: String)(implicit spark: SparkSession): Unit = {
     val inputDF =
       spark.table("clin_raw.variants")
-        .where(col("updatedOn") >= lastExecutionTimestamp)
+        .where(col("updatedOn") >= lastExecution)
 
     val ouputDF: DataFrame = transform(inputDF)
 

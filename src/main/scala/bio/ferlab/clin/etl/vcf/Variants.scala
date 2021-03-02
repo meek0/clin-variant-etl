@@ -47,8 +47,8 @@ object Variants {
         pubmed,
         lit(batchId) as "batch_id",
         lit(null).cast("string") as "last_batch_id",
-        current_timestamp() as "createdOn",
-        current_timestamp() as "updatedOn"
+        /*current_timestamp()*/lit(batchId) as "createdOn",
+        /*current_timestamp()*/lit(batchId) as "updatedOn"
       )
       .drop("annotation")
 
