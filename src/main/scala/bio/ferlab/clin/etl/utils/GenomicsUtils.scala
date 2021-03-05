@@ -11,7 +11,8 @@ object GenomicsUtils {
 
     def joinAndMerge(other: DataFrame, outputColumnName: String, joinType: String = "inner"): DataFrame = {
       val otherFields = other.drop("chromosome", "start", "end", "name", "reference", "alternate")
-      joinByLocus(other, joinType)
+
+      df.joinByLocus(other, joinType)
         .withColumn(outputColumnName, when(col(otherFields.columns.head).isNotNull, struct(otherFields("*"))).otherwise(lit(null)))
         .select(df.columns.map(col) :+ col(outputColumnName): _*)
     }

@@ -62,13 +62,6 @@ case class DONORS(`dp`: Int = 1,
                   `sequencing_strategy`: String = "WXS",
                   `study_id`: String = "ET00010")
 
-
-case class INTERNAL_FREQUENCIES(`ac`: Long = 4,
-                                `an`: Long = 4,
-                                `af`: Double = 1.0,
-                                `hom`: Long = 2,
-                                `het`: Long = 0)
-
 case class FREQUENCIES(//`1000_genomes`: Freq = Freq(3446, 5008,  0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),
                        gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
@@ -109,7 +102,7 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `biotype`: Option[String] = Some("protein_coding"),
                  `orphanet`: List[ORPHANET] = List(ORPHANET()),
                  `hpo`: List[HPO] = List(HPO()),
-                 `omim`: List[OMIM] = List(OMIM()) )
+                 `omim`: List[OMIM] = List(OMIM()))
 
 
 case class EXT_DB(`is_pubmed`: Boolean = false,

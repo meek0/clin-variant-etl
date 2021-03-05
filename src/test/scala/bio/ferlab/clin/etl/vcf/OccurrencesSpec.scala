@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.model.{BiospecimenOutput, OccurrenceRawOutput, PatientOutput, VCFInput}
+import bio.ferlab.clin.model.{BiospecimenOutput, OccurrenceRawOutput, VCFInput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.SaveMode
 import org.scalatest.flatspec.AnyFlatSpec
@@ -34,3 +34,9 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   }
 }
+//TODO replace with bio.ferlab.clin.model.PatientOutput
+case class PatientOutput(`patient_id`: String = "PA0001",
+                         `family_id`: String = "FA0001",
+                         `practitioner_id`: String = "PPR00101",
+                         `organization_id`: String = "OR00201",
+                         `study_id`: String = "ET00010")
