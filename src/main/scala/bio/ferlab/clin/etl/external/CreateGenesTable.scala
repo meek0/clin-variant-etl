@@ -19,55 +19,56 @@ object CreateGenesTable extends App {
 
   def run(output: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val humanGenes = spark.table("human_genes").select($"chromosome", $"symbol", $"entrez_gene_id", $"omim_gene_id", $"external_references.hgnc" as "hgnc", $"ensembl_gene_id",
-      $"map_location" as "location", $"description" as "name", $"synonyms" as "alias", regexp_replace($"type_of_gene", "-", "_") as "biotype")
+
+    val humanGenes = spark.table("human_genes")
+      .select($"chromosome", $"symbol", $"entrez_gene_id", $"omim_gene_id",
+        $"external_references.hgnc" as "hgnc",
+        $"ensembl_gene_id",
+        $"map_location" as "location",
+        $"description" as "name",
+        $"synonyms" as "alias",
+        regexp_replace($"type_of_gene", "-", "_") as "biotype")
 
     val orphanet = spark.table("orphanet_gene_set")
-      .select($"gene_symbol", $"disorder_id", $"name" as "panel", $"type_of_inheritance" as "inheritance")
+      .select($"gene_symbol" as "symbol", $"disorder_id", $"name" as "panel", $"type_of_inheritance" as "inheritance")
 
-    val withOrphanet = humanGenes
-      .join(orphanet, humanGenes("symbol") === orphanet("gene_symbol"), "left")
-      .groupBy(humanGenes("symbol"))
-      .agg(
-        first(struct(humanGenes("*"))) as "hg",
-        when(first(orphanet("gene_symbol")).isNotNull,
-          collect_list(struct($"disorder_id", $"panel", $"inheritance"))).otherwise(lit(null)) as "orphanet",
-      )
-      .select($"hg.*", $"orphanet")
+    val omim =  spark.table("omim_gene_set")
+      .select($"omim_gene_id",
+        $"phenotype.name" as "name",
+        $"phenotype.omim_id" as "omim_id",
+        $"phenotype.inheritance" as "inheritance")
 
-    val hpo = spark.table("hpo_gene_set").select($"entrez_gene_id", $"hpo_term_id", $"hpo_term_name")
+    val hpo = spark.table("hpo_gene_set")
+      .select($"entrez_gene_id", $"hpo_term_id", $"hpo_term_name")
       .distinct()
       .withColumn("hpo_term_label", concat($"hpo_term_name", lit(" ("), $"hpo_term_id", lit(")")))
 
-    val withHpo = withOrphanet
-      .join(hpo, withOrphanet("entrez_gene_id") === hpo("entrez_gene_id"), "left")
-      .groupBy(withOrphanet("symbol"))
-      .agg(
-        first(struct(withOrphanet("*"))) as "hg",
-        when(first(hpo("entrez_gene_id")).isNotNull, collect_list(struct($"hpo_term_id", $"hpo_term_name", $"hpo_term_label"))).otherwise(lit(null)) as "hpo"
-      )
-      .select($"hg.*", $"hpo")
+    val ddd_gene_set = spark.table("ddd_gene_set")
+      .select("disease_name", "symbol")
 
-    val omim = spark.table("omim_gene_set").select($"omim_gene_id", $"phenotype")
+    val cosmic_gene_set = spark.table("cosmic_gene_set")
+      .select("symbol", "tumour_types_germline")
 
-    val genes = withHpo
-      .join(omim, withHpo("omim_gene_id") === omim("omim_gene_id"), "left")
-      .groupBy(withHpo("symbol"))
-      .agg(
-        first(struct(withHpo("*"))) as "hg",
-        when(first(omim("omim_gene_id")).isNotNull, collect_list($"phenotype")).otherwise(lit(null)) as "omim"
-      )
-      .select($"hg.*", $"omim")
+    humanGenes
+      .joinAndMergeWith(orphanet, Seq("symbol"), "orphanet")
+      .joinAndMergeWith(hpo, Seq("entrez_gene_id"), "hpo")
+      .joinAndMergeWith(omim, Seq("omim_gene_id"), "omim")
+      .joinAndMergeWith(ddd_gene_set, Seq("symbol"), "ddd")
+      .joinAndMergeWith(cosmic_gene_set, Seq("symbol"), "cosmic")
 
-    genes.repartition(1)
-      .write
-      .mode("overwrite")
-      .partitionBy("chromosome")
-      .format("parquet")
-      .option("path", s"$output/genes")
-      .saveAsTable("genes")
+  }
 
-    genes
+  implicit class DataFrameOps(df: DataFrame) {
+    def joinAndMergeWith(gene_set: DataFrame, joinOn: Seq[String], asColumnName: String) = {
+      df
+        .join(gene_set, joinOn, "left")
+        .groupBy("symbol")
+        .agg(
+          first(struct(df("*"))) as "hg",
+          collect_list(struct(gene_set.drop(joinOn:_*)("*"))) as asColumnName
+        )
+        .select(col("hg.*"), col(asColumnName))
+    }
   }
 
 }
