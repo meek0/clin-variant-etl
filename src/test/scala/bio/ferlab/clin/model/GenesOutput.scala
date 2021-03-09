@@ -13,7 +13,9 @@ case class GenesOutput(`symbol`: String = "OR4F5",
                        `orphanet`: List[ORPHANET] = List(ORPHANET()),
                        `hpo`: List[HPO] = List(HPO()),
                        `omim`: List[OMIM] = List(OMIM()),
-                       `chromosome`: String = "1")
+                       `chromosome`: String = "1",
+                       `ddd`: List[DDD] = List(DDD()),
+                       `cosmic`: List[COSMIC] = List(COSMIC()))
 
 case class ORPHANET(`disorder_id`: Long = 17827,
                     `panel`: String = "Immunodeficiency due to a classical component pathway complement deficiency",
@@ -26,3 +28,7 @@ case class HPO(`hpo_term_id`: String = "HP:0001347",
 case class OMIM(`name`: String = "Epileptic encephalopathy, early infantile, 69",
                 `omim_id`: String = "618285",
                 `inheritance`: List[String] = List("AD"))
+
+case class DDD(`disease_name`: String = "OCULOAURICULAR SYNDROME")
+
+case class COSMIC(`tumour_types_germline`: List[String] = List("breast", "colon", "endometrial cancer under age 50"))

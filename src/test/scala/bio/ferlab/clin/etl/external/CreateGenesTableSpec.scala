@@ -31,6 +31,14 @@ class CreateGenesTableSpec extends AnyFlatSpec with WithSparkSession with Matche
       .option("path", "spark-warehouse/clin.db/omim_gene_set")
       .saveAsTable("clin.omim_gene_set")
 
+    Seq(DddGeneSetOutput(`symbol` = "OR4F5")).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/ddd_gene_set")
+      .saveAsTable("clin.ddd_gene_set")
+
+    Seq(CosmicGeneSetOutput(`symbol` = "OR4F5")).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .option("path", "spark-warehouse/clin.db/cosmic_gene_set")
+      .saveAsTable("clin.cosmic_gene_set")
+
     val result = CreateGenesTable.run("spark-warehouse/output")
 
     result.as[GenesOutput].collect().head shouldBe GenesOutput()
