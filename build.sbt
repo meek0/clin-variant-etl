@@ -6,17 +6,21 @@ scalaVersion := "2.12.13"
 
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
-val spark_version = "3.0.1"
+val spark_version = "3.0.2"
+
+resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2
 
 /* Runtime */
-libraryDependencies +=  "org.apache.spark" %% "spark-sql" % spark_version % Provided
-libraryDependencies +=  "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
-libraryDependencies +=  "org.apache.hadoop" % "hadoop-aws" % "3.2.1" % Provided
-libraryDependencies += "io.projectglow" %% "glow" % "0.5.0" exclude ("org.apache.hadoop", "hadoop-client")
-libraryDependencies += "io.delta" %% "delta-core" % "0.7.0"
+libraryDependencies += "bio.ferlab" %% "datalake-core" % "0.0.2"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % spark_version % Provided
+libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
+libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.1" % Provided
+libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" exclude ("org.apache.hadoop", "hadoop-client")
+libraryDependencies += "io.delta" %% "delta-core" % "0.8.0"
 
 /* Test */
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test"
 libraryDependencies += "org.apache.spark" %% "spark-hive" % spark_version % "test"
 
 parallelExecution in test := false
@@ -36,4 +40,4 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
-assemblyJarName in assembly := "clin-etl-variant.jar"
+assemblyJarName in assembly := "clin-variant-etl.jar"
