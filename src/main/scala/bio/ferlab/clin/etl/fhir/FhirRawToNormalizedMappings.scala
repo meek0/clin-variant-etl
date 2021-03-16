@@ -1,10 +1,11 @@
 package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.etl.fhir.FhirCatalog.{Normalized, Raw}
+import bio.ferlab.clin.etl.fhir.FhirCustomOperations._
 import bio.ferlab.datalake.core.etl.DataSource
 import bio.ferlab.datalake.core.transformation._
-import FhirCustomOperations._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.LongType
 
 object FhirRawToNormalizedMappings {
   val INPUT_FILENAME = "ingestionFileName"
@@ -24,7 +25,7 @@ object FhirRawToNormalizedMappings {
       _
         .withColumn("patientId", patientId)
         .withColumn("practitionerId", practitionerId)
-        .withExtention("ageInDays", "extension.valueAge.value", "%/age-at-event")
+        .withExtention("ageInDays", "extension.valueAge.value", "%/age-at-event", LongType)
     ),
     Drop("assessor", "subject", "extension")
   )
@@ -41,8 +42,7 @@ object FhirRawToNormalizedMappings {
   val observationMappings: List[Transformation] = List(
     Custom(
       _
-        .withExtention("ageAtOnset", "extension.valueCoding.code", "%/age-at-onset")
-        .withExtention("hpoCategory", "extension.valueCoding.code", "%/hpo-category")
+        .withObservationExtension
         .withColumn("observationDescription", col("code.coding.display")(0))
         .withColumn("observationCode", col("code.coding.code")(0))
         .withColumn("patientId", patientId)
@@ -120,9 +120,7 @@ object FhirRawToNormalizedMappings {
         .withColumn("serviceRequestDescription", col("code.coding.display")(0))
         .withColumn("patientId", patientId)
         .withColumn("practitionerId", regexp_replace(col("requester.reference"), "Practitioner/", ""))
-        .withExtention("isSubmitted", "extension.valueBoolean", "%/is-submitted")
-        .withExtention("clinicalImpressionId", "extension.valueReference.reference", "%/ref-clin-impression")
-        .withColumn("clinicalImpressionId", regexp_replace(col("clinicalImpressionId"), "ClinicalImpression/", ""))
+        .withServiceRequestExtension
         .extractIdentifier(List("MR" -> "medicalRecordNumber"))
         .withColumn("note", transform(col("note"), c =>
           struct(

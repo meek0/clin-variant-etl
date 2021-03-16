@@ -3,8 +3,8 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.INGESTION_TIMESTAMP
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.{col, collect_set, concat_ws, explode, first, max, regexp_replace, struct, to_timestamp, udf, when}
-import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.functions.{col, collect_set, concat_ws, explode, first, lit, max, regexp_replace, struct, to_timestamp, udf, when}
+import org.apache.spark.sql.types.{BooleanType, DataType, LongType, StringType}
 
 object FhirCustomOperations {
 
@@ -78,22 +78,67 @@ object FhirCustomOperations {
         )
     }
 
-    def withNested(sourceColumn: String, destColName: String, valuePath: String, whenUrlExpr: String, urlLikeExpr: String): DataFrame = {
-      df
-        .withColumn(sourceColumn, explode(col(sourceColumn)))
-        .withColumn(destColName,
-          when(col(whenUrlExpr).like(urlLikeExpr),
-            col(valuePath)))
-        .groupBy("id", INGESTION_TIMESTAMP)
-        .agg(
-          max(destColName) as destColName,
-          df.drop("id", INGESTION_TIMESTAMP, sourceColumn).columns.map(c => first(c) as c):+
-            (collect_set(col(sourceColumn)) as sourceColumn):_*
-        )
+    def withServiceRequestExtension: DataFrame = {
+      df.where(col("extension").isNull)
+        .drop("extension")
+        .withColumn("ref-clin-impression", lit(null).cast(StringType))
+        .withColumn("is-submitted", lit(null).cast(BooleanType))
+        .unionByName {
+          df.withColumn("extension", explode(col("extension")))
+            .withColumn("ref-clin-impression",
+              when(col("extension.url").like("%/ref-clin-impression"),
+                regexp_replace(col("extension.valueReference.reference"), "ClinicalImpression/", "")))
+            .withColumn("is-submitted",
+              when(col("extension.url").like("%/is-submitted"), col("extension.valueBoolean")))
+            .groupBy("id")
+            .agg(
+              max("ref-clin-impression") as "ref-clin-impression",
+              df.drop("id", "extension").columns.map(c => first(c) as c):+
+                (max("is-submitted") as "is-submitted"):_*
+            )
+        }
     }
 
-    def withExtention(destColName: String, valuePath: String, urlLikeExpr: String): DataFrame = {
-      withNested("extension", destColName, valuePath: String, "extension.url", urlLikeExpr)
+    def withObservationExtension: DataFrame = {
+      df.where(col("extension").isNull)
+        .drop("extension")
+        .withColumn("age-at-onset", lit(null).cast(StringType))
+        .withColumn("hpo-category", lit(null).cast(StringType))
+        .unionByName {
+          df.withColumn("extension", explode(col("extension")))
+            .withColumn("age-at-onset",
+              when(col("extension.url").like("%/age-at-onset"), col("extension.valueCoding.code")))
+            .withColumn("hpo-category",
+              when(col("extension.url").like("%/hpo-category"), col("extension.valueCoding.code")))
+            .groupBy("id")
+            .agg(
+              max("age-at-onset") as "age-at-onset",
+              df.drop("id", "extension").columns.map(c => first(c) as c):+
+                (max("hpo-category") as "hpo-category"):_*
+            )
+        }
+    }
+
+    def withNested(sourceColumn: String, destColName: String, valuePath: String, whenUrlExpr: String, urlLikeExpr: String, castInto: DataType): DataFrame = {
+      df.filter(col(sourceColumn).isNull)
+        .withColumn(destColName, lit(null).cast(castInto))
+        .unionByName {
+          df
+            .withColumn(sourceColumn, explode(col(sourceColumn)))
+            .withColumn(destColName,
+              when(col(whenUrlExpr).like(urlLikeExpr),
+                col(valuePath)))
+            .groupBy("id", INGESTION_TIMESTAMP)
+            .agg(
+              max(destColName) as destColName,
+              df.drop("id", INGESTION_TIMESTAMP, sourceColumn).columns.map(c => first(c) as c):+
+                (collect_set(col(sourceColumn)) as sourceColumn):_*
+            )
+        }
+    }
+
+    def withExtention(destColName: String, valuePath: String, urlLikeExpr: String, castInto: DataType = StringType): DataFrame = {
+      withNested("extension", destColName, valuePath: String, "extension.url", urlLikeExpr, castInto)
     }
 
     def withPatientNames: DataFrame = {
