@@ -17,7 +17,7 @@ sbt assembly
 
 Assuming your local aws profile is called `clin`
 ```shell
-aws --profile clin --endpoint https://esc.calculquebec.ca:8080 s3 cp target/scala-2.12/clin-etl-variant.jar s3://spark/clin-etl-variant.jar
+aws --profile clin --endpoint https://esc.calculquebec.ca:8080 s3 cp target/scala-2.12/clin-variant-etl.jar s3://spark/clin-variant-etl.jar
 ```
 #### Go to desired job in clin-environments repository
 
