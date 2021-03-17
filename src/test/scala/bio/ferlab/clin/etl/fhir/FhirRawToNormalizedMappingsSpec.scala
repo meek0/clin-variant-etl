@@ -30,8 +30,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='CI0005'").as[ClinicalImpressionOutput].head()
     head shouldBe ClinicalImpressionOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
   }
 
@@ -51,8 +51,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='13636'").as[GroupOutput].head()
     head shouldBe GroupOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
   }
 
@@ -72,8 +72,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='OB0001'").as[ObservationOutput].head()
     head shouldBe ObservationOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
   }
 
@@ -91,8 +91,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='17771'").as[PatientOutput].head()
     head shouldBe PatientOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 
   "organziation raw job" should "return data in the expected format" in {
@@ -109,8 +109,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='OR00207'").as[OrganizationOutput].head()
     head shouldBe OrganizationOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 
   "practitioner raw job" should "return data in the expected format" in {
@@ -127,8 +127,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='PR00108'").as[PartitionerOutput].head()
     head shouldBe PartitionerOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
   }
 
@@ -148,8 +148,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'").as[PartitionerRoleOutput].head()
     head shouldBe PartitionerRoleOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
   }
 
@@ -169,8 +169,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     input(inputDs).dropDuplicates("id").count() shouldBe output.count()
     val head = output.where("id='32130'").as[ServiceRequestOutput].head()
     head shouldBe ServiceRequestOutput()
-      .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
-        `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
   }
 

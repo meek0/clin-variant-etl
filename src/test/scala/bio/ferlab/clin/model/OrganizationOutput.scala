@@ -10,11 +10,11 @@ import java.sql.Timestamp
 case class OrganizationOutput(`alias`: List[String] = List("CHUSJ"),
                               `id`: String = "OR00207",
                               `name`: String = "CHU Sainte-Justine - Centre hospitalier universitaire mère-enfant",
-                              `resourceType`: String = "Organization",
+                              `resource_type`: String = "Organization",
                               `code`: String = "prov",
                               `description`: String = "Healthcare Provider",
-                              `ingestionFileName`: String = "s3://clin/raw/landing/Organization/Organization_0_20210304_153643.json",
-                              `ingestedOn`: Timestamp = Timestamp.valueOf("2021-03-04 15:36:43.0"),
-                              `versionId`: String = "53",
-                              `updatedOn`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:12.758"),
-                              `createdOn`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:12.758"))
+                              `ingestion_file_name`: String = "s3://clin/raw/landing/Organization/Organization_0_20210304_153643.json",
+                              `ingested_on`: Timestamp = Timestamp.valueOf("2021-03-04 15:36:43.0"),
+                              `version_id`: String = "53",
+                              `updated_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:12.758"),
+                              `created_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:12.758"))
