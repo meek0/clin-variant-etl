@@ -8,7 +8,7 @@ import java.sql.Timestamp
 
 
 case class OrganizationOutput(`alias`: List[String] = List("CHUSJ"),
-                              `id`: String = "OR00207",
+                              `organization_id`: String = "OR00207",
                               `name`: String = "CHU Sainte-Justine - Centre hospitalier universitaire mère-enfant",
                               `resource_type`: String = "Organization",
                               `code`: String = "prov",

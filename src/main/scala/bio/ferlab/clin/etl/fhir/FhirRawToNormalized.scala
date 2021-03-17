@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.datalake.core.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.core.etl.{ETL, RawToNormalizedETL}
 import org.apache.spark.sql.SparkSession
+import org.apache.log4j.{Level, Logger}
 
 object FhirRawToNormalized extends App {
 
@@ -16,7 +17,10 @@ object FhirRawToNormalized extends App {
     .enableHiveSupport()
     .appName(s"Fhir Raw to Normalized").getOrCreate()
 
-  spark.sparkContext.setLogLevel("ERROR")
+  //spark.sparkContext.setLogLevel("ERROR")
+  Logger.getRootLogger.setLevel(Level.ERROR)
+  Logger.getLogger("bio.ferlab.datalake").setLevel(Level.INFO)
+
 
   implicit val conf: Configuration = Configuration(
     List(

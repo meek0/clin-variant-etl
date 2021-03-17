@@ -9,7 +9,7 @@ import java.sql.Timestamp
 
 case class GroupOutput(`actual`: Boolean = true,
                        `family_structure_code`: String = "DUO",
-                       `id`: String = "13636",
+                       `group_id`: String = "13636",
                        `resource_type`: String = "Group",
                        `type`: String = "person",
                        `ingestion_file_name`: String = "raw/landing/fhir/Group/Group_0_19000101_130549.json",

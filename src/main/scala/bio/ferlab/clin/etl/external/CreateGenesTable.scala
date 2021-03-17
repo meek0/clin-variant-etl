@@ -12,15 +12,13 @@ object CreateGenesTable extends App {
     .appName(s"Create Genes Tables").getOrCreate()
 
   spark.sparkContext.setLogLevel("ERROR")
-
   spark.sql("use clin")
-
   run(output)
 
   def run(output: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val humanGenes = spark.table("human_genes")
+    val humanGenes = spark.table("clin.human_genes")
       .select($"chromosome", $"symbol", $"entrez_gene_id", $"omim_gene_id",
         $"external_references.hgnc" as "hgnc",
         $"ensembl_gene_id",
