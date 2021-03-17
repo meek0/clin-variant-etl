@@ -8,18 +8,18 @@ import java.sql.{Date, Timestamp}
 
 
 case class ClinicalImpressionOutput(`date`: Date = Date.valueOf("2019-06-20"),
-                                    `ageInDays`: Long = 1315,
+                                    `age_in_days`: Long = 1315,
                                     `id`: String = "CI0005",
                                     `investigation`: List[INVESTIGATION] = List(INVESTIGATION()),
-                                    `resourceType`: String = "ClinicalImpression",
+                                    `resource_type`: String = "ClinicalImpression",
                                     `status`: String = "in-progress",
-                                    `ingestionFileName`: String = "/raw/landing/fhir/ClinicalImpression/ClinicalImpression_0_19000101_102715.json",
-                                    `ingestedOn`: Timestamp = Timestamp.valueOf("2021-03-10 10:27:15.0"),
-                                    `versionId`: String = "25",
-                                    `updatedOn`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:41.572"),
-                                    `createdOn`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:41.572"),
-                                    `patientId`: String = "PA0005",
-                                    `practitionerId`: String = "PR00105")
+                                    `ingestion_file_name`: String = "/raw/landing/fhir/ClinicalImpression/ClinicalImpression_0_19000101_102715.json",
+                                    `ingested_on`: Timestamp = Timestamp.valueOf("2021-03-10 10:27:15.0"),
+                                    `version_id`: String = "25",
+                                    `updated_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:41.572"),
+                                    `created_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:41.572"),
+                                    `patient_id`: String = "PA0005",
+                                    `practitioner_id`: String = "PR00105")
 
 
 case class ITEM(`reference`: String = "Observation/OB0157")

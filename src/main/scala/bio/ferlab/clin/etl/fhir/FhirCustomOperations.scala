@@ -12,31 +12,31 @@ object FhirCustomOperations {
   case class ENTITY(entity: REFERENCE)
   val extractmemberUdf: UserDefinedFunction = udf { entities: Seq[ENTITY] => entities.map(_.entity.reference.replace("Patient/", "")) }
 
-  val patientId: Column = regexp_replace(col("subject.reference"), "Patient/", "")
-  val practitionerId: Column = regexp_replace(col("assessor.reference"), "Practitioner/", "")
-  val organizationId: Column = regexp_replace(col("organization.reference"), "Organization/", "")
+  val patient_id: Column = regexp_replace(col("subject.reference"), "Patient/", "")
+  val practitioner_id: Column = regexp_replace(col("assessor.reference"), "Practitioner/", "")
+  val organization_id: Column = regexp_replace(col("organization.reference"), "Organization/", "")
 
   implicit class DataFrameOps(df: DataFrame) {
 
     def withTelecoms: DataFrame = {
       df.where(col("telecom").isNull).drop("telecom")
         .withColumn("phones", array(struct(
-          lit(null).cast(StringType) as "phoneNumber",
+          lit(null).cast(StringType) as "phone_number",
           lit(null).cast(LongType) as "rank")))
-        .withColumn("emailAddresses", array())
+        .withColumn("email_addresses", array())
         .unionByName {
           df.withColumn("telecom", explode(col("telecom")))
             .withColumn("phones", when(col("telecom.system") === "phone",
               struct(
-                col("telecom.value") as "phoneNumber",
+                col("telecom.value") as "phone_number",
                 col("telecom.rank") as "rank")
             ))
-            .withColumn("emailAddresses", when(col("telecom.system") === "email", col("telecom.value")))
+            .withColumn("email_addresses", when(col("telecom.system") === "email", col("telecom.value")))
             .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
               collect_set(col("phones")) as "phones",
               df.drop("id", INGESTION_TIMESTAMP, "telecom").columns.map(c => first(c) as c):+
-                (collect_set(col("emailAddresses")) as "emailAddresses"):_*
+                (collect_set(col("email_addresses")) as "email_addresses"):_*
             )
         }
     }
@@ -169,9 +169,9 @@ object FhirCustomOperations {
     }
 
     def withMetadata: DataFrame = {
-      df.withColumn("versionId", col("meta.versionId"))
-        .withColumn("updatedOn", to_timestamp(col("meta.lastUpdated"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz"))
-        .withColumn("createdOn", col("updatedOn"))
+      df.withColumn("version_id", col("meta.versionId"))
+        .withColumn("updated_on", to_timestamp(col("meta.lastUpdated"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz"))
+        .withColumn("created_on", col("updated_on"))
     }
   }
 

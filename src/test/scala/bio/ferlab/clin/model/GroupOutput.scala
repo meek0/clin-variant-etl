@@ -8,14 +8,14 @@ import java.sql.Timestamp
 
 
 case class GroupOutput(`actual`: Boolean = true,
-                       `familyStructureCode`: String = "DUO",
+                       `family_structure_code`: String = "DUO",
                        `id`: String = "13636",
-                       `resourceType`: String = "Group",
+                       `resource_type`: String = "Group",
                        `type`: String = "person",
-                       `ingestionFileName`: String = "raw/landing/fhir/Group/Group_0_19000101_130549.json",
-                       `ingestedOn`: Timestamp = Timestamp.valueOf("2021-03-10 13:05:49.0"),
-                       `versionId`: String = "1",
-                       `updatedOn`: Timestamp = Timestamp.valueOf("2021-02-05 11:21:27.111"),
-                       `createdOn`: Timestamp = Timestamp.valueOf("2021-02-05 11:21:27.111"),
+                       `ingestion_file_name`: String = "raw/landing/fhir/Group/Group_0_19000101_130549.json",
+                       `ingested_on`: Timestamp = Timestamp.valueOf("2021-03-10 13:05:49.0"),
+                       `version_id`: String = "1",
+                       `updated_on`: Timestamp = Timestamp.valueOf("2021-02-05 11:21:27.111"),
+                       `created_on`: Timestamp = Timestamp.valueOf("2021-02-05 11:21:27.111"),
                        `members`: List[String] = List("13634", "13635"))
 

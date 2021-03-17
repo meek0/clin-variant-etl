@@ -8,16 +8,16 @@ import java.sql.Timestamp
 
 
 case class PartitionerOutput(`id`: String = "PR00108",
-                             `lastName`: String = "Gélinas",
-                             `firstName`: String = "Clara",
-                             `namePrefix`: String = "Dre.",
-                             `nameSuffix`: String = "",
-                             `fullName`: String = "Dre. Clara Gélinas",
-                             `medicalLicenseNumber`: String = "37512",
-                             `resourceType`: String = "Practitioner",
-                             `ingestionFileName`: String = "file:///Users/christophe/ferlab/clin-variant-etl/target/scala-2.12/test-classes/raw/landing/Practitioner/Practitioner_0_20210305_082656.json",
-                             `ingestedOn`: Timestamp = Timestamp.valueOf("2021-03-05 08:26:56.0"),
-                             `versionId`: String = "53",
-                             `updatedOn`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:09.532"),
-                             `createdOn`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:09.532"))
+                             `last_name`: String = "Gélinas",
+                             `first_name`: String = "Clara",
+                             `name_prefix`: String = "Dre.",
+                             `name_suffix`: String = "",
+                             `full_name`: String = "Dre. Clara Gélinas",
+                             `medical_license_number`: String = "37512",
+                             `resource_type`: String = "Practitioner",
+                             `ingestion_file_name`: String = "file:///Users/christophe/ferlab/clin-variant-etl/target/scala-2.12/test-classes/raw/landing/Practitioner/Practitioner_0_20210305_082656.json",
+                             `ingested_on`: Timestamp = Timestamp.valueOf("2021-03-05 08:26:56.0"),
+                             `version_id`: String = "53",
+                             `updated_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:09.532"),
+                             `created_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:09.532"))
 
