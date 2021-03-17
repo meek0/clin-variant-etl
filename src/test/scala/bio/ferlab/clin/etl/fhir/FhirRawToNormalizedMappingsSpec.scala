@@ -22,12 +22,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='CI0005'")
-    output.show(false)
+    val output = job.transform(input)
+    output.where("id='CI0005'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ClinicalImpressionOutput", output, "src/test/scala/")
 
-    val head = output.as[ClinicalImpressionOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='CI0005'").as[ClinicalImpressionOutput].head()
     head shouldBe ClinicalImpressionOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -42,12 +43,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='13636'")
-    output.show(false)
+    val output = job.transform(input)
+    output.where("id='13636'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "GroupOutput", output, "src/test/scala/")
 
-    val head = output.as[GroupOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='13636'").as[GroupOutput].head()
     head shouldBe GroupOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -62,12 +64,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='OB0001'")
-    output.show(false)
+    val output = job.transform(input)
+    output.where("id='OB0001'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ObservationOutput", output, "src/test/scala/")
 
-    val head = output.as[ObservationOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='OB0001'").as[ObservationOutput].head()
     head shouldBe ObservationOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -82,10 +85,11 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='17771'")
-    output.show(false)
+    val output = job.transform(input).persist()
+    output.where("id='17771'").show(false)
 
-    val head = output.as[PatientOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='17771'").as[PatientOutput].head()
     head shouldBe PatientOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -99,10 +103,11 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='OR00207'")
-    output.show(false)
+    val output = job.transform(input)
+    output.where("id='OR00207'").show(false)
 
-    val head = output.as[OrganizationOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='OR00207'").as[OrganizationOutput].head()
     head shouldBe OrganizationOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -116,10 +121,11 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='PR00108'")
-    output.show(false)
+    val output = job.transform(input)
+    output.where("id='PR00108'").show(false)
 
-    val head = output.as[PartitionerOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='PR00108'").as[PartitionerOutput].head()
     head shouldBe PartitionerOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -134,12 +140,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'")
-    output.show(false)
+    val output = job.transform(input)
+    output.where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "PartitionerRoleOutput", output, "src/test/scala/")
 
-    val head = output.as[PartitionerRoleOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'").as[PartitionerRoleOutput].head()
     head shouldBe PartitionerRoleOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)
@@ -154,13 +161,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val input = job.extract()
 
-    val output = job.transform(input).where("id='32130'")
-    output.show(false)
+    val output = job.transform(input)//.where("id='32130'")
+    output.where("id='32130'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ServiceRequestOutput", output, "src/test/scala/")
 
-    //input(inputDs).dropDuplicates("id").count() shouldBe output.count()
-    val head = output.as[ServiceRequestOutput].head()
+    input(inputDs).dropDuplicates("id").count() shouldBe output.count()
+    val head = output.where("id='32130'").as[ServiceRequestOutput].head()
     head shouldBe ServiceRequestOutput()
       .copy(`ingestionFileName` = head.`ingestionFileName`, `ingestedOn` = head.`ingestedOn`,
         `updatedOn` = head.`updatedOn`, `createdOn` = head.`createdOn`)

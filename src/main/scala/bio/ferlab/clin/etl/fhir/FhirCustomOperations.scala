@@ -1,10 +1,10 @@
 package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.INGESTION_TIMESTAMP
-import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.{col, collect_set, concat_ws, explode, first, lit, max, regexp_replace, struct, to_timestamp, udf, when}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DataType, LongType, StringType}
+import org.apache.spark.sql.{Column, DataFrame}
 
 object FhirCustomOperations {
 
@@ -19,19 +19,26 @@ object FhirCustomOperations {
   implicit class DataFrameOps(df: DataFrame) {
 
     def withTelecoms: DataFrame = {
-      df.withColumn("telecom", explode(col("telecom")))
-        .withColumn("phones", when(col("telecom.system") === "phone",
-          struct(
-            col("telecom.value") as "phoneNumber",
-            col("telecom.rank") as "rank")
-        ))
-        .withColumn("emailAddresses", when(col("telecom.system") === "email", col("telecom.value")))
-        .groupBy("id", INGESTION_TIMESTAMP)
-        .agg(
-          collect_set(col("phones")) as "phones",
-          df.drop("id", INGESTION_TIMESTAMP, "telecom").columns.map(c => first(c) as c):+
-            (collect_set(col("emailAddresses")) as "emailAddresses"):_*
-        )
+      df.where(col("telecom").isNull).drop("telecom")
+        .withColumn("phones", array(struct(
+          lit(null).cast(StringType) as "phoneNumber",
+          lit(null).cast(LongType) as "rank")))
+        .withColumn("emailAddresses", array())
+        .unionByName {
+          df.withColumn("telecom", explode(col("telecom")))
+            .withColumn("phones", when(col("telecom.system") === "phone",
+              struct(
+                col("telecom.value") as "phoneNumber",
+                col("telecom.rank") as "rank")
+            ))
+            .withColumn("emailAddresses", when(col("telecom.system") === "email", col("telecom.value")))
+            .groupBy("id", INGESTION_TIMESTAMP)
+            .agg(
+              collect_set(col("phones")) as "phones",
+              df.drop("id", INGESTION_TIMESTAMP, "telecom").columns.map(c => first(c) as c):+
+                (collect_set(col("emailAddresses")) as "emailAddresses"):_*
+            )
+        }
     }
 
     def extractIdentifier(codeList: List[(String, String)]): DataFrame = {
@@ -40,7 +47,7 @@ object FhirCustomOperations {
       val withColumnDf = codeList.foldLeft(explodedDf){ case (d, (code, destColumn)) =>
         d.withColumn(destColumn, when(col("identifier.type.coding.code")(0).isin(code), col("identifier.value")))
       }
-      codeList match {
+      val dfWithIdentifiers = codeList match {
         case head::Nil =>
           withColumnDf
             .groupBy("id", INGESTION_TIMESTAMP)
@@ -58,24 +65,36 @@ object FhirCustomOperations {
             )
       }
 
+      val dfWithNulls = codeList.foldLeft(df.where(col("identifier").isNull)){ case (d, (code, destColumn)) =>
+        d.withColumn(destColumn, lit(null).cast(StringType))
+      }
+
+      dfWithIdentifiers.unionByName(dfWithNulls.drop("identifier"))
+
     }
 
     def withPatientExtension: DataFrame = {
-      df.withColumn("extension", explode(col("extension")))
-        .withColumn("familyId",
-          when(col("extension.url").like("%/family-id"),
-            regexp_replace(col("extension.valueReference.reference"), "Group/", "")))
-        .withColumn("is-fetus",
-          when(col("extension.url").like("%/is-fetus"), col("extension.valueBoolean")))
-        .withColumn("is-proband",
-          when(col("extension.url").like("%/is-proband"), col("extension.valueBoolean")))
-        .groupBy("id", INGESTION_TIMESTAMP)
-        .agg(
-          max("familyId") as "familyId",
-          df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
-            (max("is-proband") as "is-proband"):+
-            (max("is-fetus") as "is-fetus"):_*
-        )
+      df.where(col("extension").isNull).drop("extension")
+        .withColumn("family-id", lit(null).cast(StringType))
+        .withColumn("is-fetus", lit(null).cast(BooleanType))
+        .withColumn("is-proband", lit(null).cast(BooleanType))
+        .unionByName {
+          df.withColumn("extension", explode(col("extension")))
+            .withColumn("family-id",
+              when(col("extension.url").like("%/family-id"),
+                regexp_replace(col("extension.valueReference.reference"), "Group/", "")))
+            .withColumn("is-fetus",
+              when(col("extension.url").like("%/is-fetus"), col("extension.valueBoolean")))
+            .withColumn("is-proband",
+              when(col("extension.url").like("%/is-proband"), col("extension.valueBoolean")))
+            .groupBy("id", INGESTION_TIMESTAMP)
+            .agg(
+              max("family-id") as "family-id",
+              df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
+                (max("is-proband") as "is-proband"):+
+                (max("is-fetus") as "is-fetus"):_*
+            )
+        }
     }
 
     def withServiceRequestExtension: DataFrame = {

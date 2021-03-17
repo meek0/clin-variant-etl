@@ -61,10 +61,8 @@ object FhirRawToNormalizedMappings {
   val organizationMappings: List[Transformation] = List(
     Custom(
       _
-        .withColumn("type", explode(col("type")))
-        .withColumn("coding", explode(col("type.coding")))
-        .withColumn("code", col("coding.code"))
-        .withColumn("description", col("coding.display"))
+        .withColumn("code", col("type")(0)("coding")(0)("code"))
+        .withColumn("description", col("type")(0)("coding")(0)("display"))
     ),
     Drop("type", "coding")
   )
@@ -77,7 +75,7 @@ object FhirRawToNormalizedMappings {
         .withColumn("organizationId", regexp_replace(col("managingOrganization.reference"), "Organization/", ""))
         .withPatientNames
         .withPatientExtension
-        .extractIdentifier(List("MR" -> "medicalRecordNumber", "JHN" -> "jurisdictionalHealthNumber"))
+        .extractIdentifier(List("MR" -> "medical_record_number", "JHN" -> "jurisdictional_health_number"))
     ),
     Drop("name", "text", "extension", "managingOrganization", "generalPractitioner", "identifier")
   )
@@ -85,15 +83,13 @@ object FhirRawToNormalizedMappings {
   val practitionerMappings: List[Transformation]  = List(
     Custom(
       _
-        .withColumn("name", explode(col("name")))
-        .withColumn("firstName", col("name.given")(0))
-        .withColumn("lastName", col("name.family"))
-        .withColumn("namePrefix", col("name.prefix")(0))
-        .withColumn("nameSuffix", trim(col("name.suffix")(0)))
+        .withColumn("firstName", col("name")(0)("given")(0))
+        .withColumn("lastName", col("name")(0)("family"))
+        .withColumn("namePrefix", col("name")(0)("prefix")(0))
+        .withColumn("nameSuffix", trim(col("name")(0)("suffix")(0)))
         .withColumn("nameSuffix", when(col("nameSuffix") === "null", lit("")).otherwise(col("nameSuffix")))
         .withColumn("fullName", trim(concat_ws(" ", col("namePrefix"), col("firstName"), col("lastName"), col("nameSuffix"))))
-        .withColumn("identifier", explode(col("identifier")))
-        .withColumn("medicalLicenseNumber", col("identifier.value"))
+        .withColumn("medicalLicenseNumber", col("identifier.value")(0))
     ),
     Drop("name", "identifier")
   )
@@ -121,7 +117,7 @@ object FhirRawToNormalizedMappings {
         .withColumn("patientId", patientId)
         .withColumn("practitionerId", regexp_replace(col("requester.reference"), "Practitioner/", ""))
         .withServiceRequestExtension
-        .extractIdentifier(List("MR" -> "medicalRecordNumber"))
+        .extractIdentifier(List("MR" -> "medical_record_number"))
         .withColumn("note", transform(col("note"), c =>
           struct(
             c("text").as("text"),
