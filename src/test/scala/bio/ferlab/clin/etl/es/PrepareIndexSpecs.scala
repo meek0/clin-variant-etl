@@ -23,12 +23,12 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
     `updatedOn` = "BAT1"))//Timestamp.valueOf("2020-01-01 12:00:00")))
     .toDF
     .write.format("delta").mode(SaveMode.Overwrite)
-    .option("path", "spark-warehouse/clin.db/variants")
+    //.option("path", "spark-warehouse/clin.db/variants")
     .saveAsTable("clin.variants")
 
   Seq(ConsequenceEnrichedOutput()).toDF
     .write.format("delta").mode(SaveMode.Overwrite)
-    .option("path", "spark-warehouse/clin.db/consequences")
+    //.option("path", "spark-warehouse/clin.db/consequences")
     .saveAsTable("clin.consequences")
 
   "run" should "produce json files in the right format" in {

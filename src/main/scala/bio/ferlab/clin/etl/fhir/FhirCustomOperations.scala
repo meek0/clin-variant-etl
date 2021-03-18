@@ -87,10 +87,10 @@ object FhirCustomOperations {
               when(col("extension.url").like("%/is-fetus"), col("extension.valueBoolean")))
             .withColumn("is-proband",
               when(col("extension.url").like("%/is-proband"), col("extension.valueBoolean")))
-            .groupBy("id", INGESTION_TIMESTAMP)
+            .groupBy("patient_id", INGESTION_TIMESTAMP)
             .agg(
               max("family-id") as "family-id",
-              df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
+              df.drop("patient_id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
                 (max("is-proband") as "is-proband"):+
                 (max("is-fetus") as "is-fetus"):_*
             )
@@ -109,31 +109,33 @@ object FhirCustomOperations {
                 regexp_replace(col("extension.valueReference.reference"), "ClinicalImpression/", "")))
             .withColumn("is-submitted",
               when(col("extension.url").like("%/is-submitted"), col("extension.valueBoolean")))
-            .groupBy("id")
+            .groupBy("service_request_id")
             .agg(
               max("ref-clin-impression") as "ref-clin-impression",
-              df.drop("id", "extension").columns.map(c => first(c) as c):+
+              df.drop("service_request_id", "extension").columns.map(c => first(c) as c):+
                 (max("is-submitted") as "is-submitted"):_*
             )
         }
     }
 
     def withObservationExtension: DataFrame = {
+      val hpo_category = "hpo_category"
+      val age_at_onset = "age_at_onset"
       df.where(col("extension").isNull)
         .drop("extension")
-        .withColumn("age-at-onset", lit(null).cast(StringType))
-        .withColumn("hpo-category", lit(null).cast(StringType))
+        .withColumn(age_at_onset, lit(null).cast(StringType))
+        .withColumn(hpo_category, lit(null).cast(StringType))
         .unionByName {
           df.withColumn("extension", explode(col("extension")))
-            .withColumn("age-at-onset",
+            .withColumn(age_at_onset,
               when(col("extension.url").like("%/age-at-onset"), col("extension.valueCoding.code")))
-            .withColumn("hpo-category",
+            .withColumn(hpo_category,
               when(col("extension.url").like("%/hpo-category"), col("extension.valueCoding.code")))
-            .groupBy("id")
+            .groupBy("observation_id")
             .agg(
-              max("age-at-onset") as "age-at-onset",
-              df.drop("id", "extension").columns.map(c => first(c) as c):+
-                (max("hpo-category") as "hpo-category"):_*
+              max(age_at_onset) as age_at_onset,
+              df.drop("observation_id", "extension").columns.map(c => first(c) as c):+
+                (max(hpo_category) as hpo_category):_*
             )
         }
     }

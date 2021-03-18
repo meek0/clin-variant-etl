@@ -7,7 +7,7 @@ package bio.ferlab.clin.model
 import java.sql.{Date, Timestamp}
 
 
-case class PatientOutput(`id`: String = "17771",
+case class PatientOutput(`patient_id`: String = "17771",
                          `ingested_on`: Timestamp = Timestamp.valueOf("2021-03-05 08:26:56.0"),
                          `family-id`: String = "17772",
                          `active`: Boolean = true,
