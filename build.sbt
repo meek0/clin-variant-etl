@@ -12,7 +12,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/r
 resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2
 
 /* Runtime */
-libraryDependencies += "bio.ferlab" %% "datalake-core" % "0.0.7"
+libraryDependencies += "bio.ferlab" %% "datalake-core" % "0.0.8"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % spark_version % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.1" % Provided
