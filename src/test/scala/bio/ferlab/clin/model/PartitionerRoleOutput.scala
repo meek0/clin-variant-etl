@@ -7,11 +7,12 @@ package bio.ferlab.clin.model
 import java.sql.Timestamp
 
 
-case class PartitionerRoleOutput(`active`: Boolean = true,
+case class PartitionerRoleOutput(//`practitioner_role_id`: String = "PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f",
+                                 `id`: String = "PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f",
+                                 `active`: Boolean = true,
                                  `role_code`: String = "doctor",
                                  `role_description_EN`: String = "Doctor",
                                  `role_description_FR`: String = "Médecin prescripteur",
-                                 `practitioner_role_id`: String = "PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f",
                                  `organization_id`: String = "OR00210",
                                  `practitioner_id`: String = "c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f",
                                  `resource_type`: String = "PractitionerRole",

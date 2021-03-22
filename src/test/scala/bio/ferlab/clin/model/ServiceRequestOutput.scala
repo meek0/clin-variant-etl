@@ -2,7 +2,9 @@ package bio.ferlab.clin.model
 
 import java.sql.{Date, Timestamp}
 
-case class ServiceRequestOutput(`category`: String = "MedicalRequest",
+case class ServiceRequestOutput(//`service_request_id`: String = "32130",
+                                `id`: String = "32130",
+                                `category`: String = "MedicalRequest",
                                 `service_request_code`: String = "PHME",
                                 `service_request_description`: String = "Prédisposition aux hématopathies malignes de l'enfant",
                                 `resource_type`: String = "ServiceRequest",
@@ -10,7 +12,6 @@ case class ServiceRequestOutput(`category`: String = "MedicalRequest",
                                 `practitioner_id`: String = "c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f",
                                 `ref-clin-impression`: String = "32131",
                                 `is-submitted`: Boolean = true,
-                                `service_request_id`: String = "32130",
                                 `version_id`: String = "2",
                                 `medical_record_number`: String = "423180",
                                 `authored_on`: Date = Date.valueOf("2021-03-04"),

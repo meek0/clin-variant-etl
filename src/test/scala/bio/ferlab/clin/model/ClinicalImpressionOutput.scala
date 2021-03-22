@@ -7,9 +7,10 @@ package bio.ferlab.clin.model
 import java.sql.{Date, Timestamp}
 
 
-case class ClinicalImpressionOutput(`date`: Date = Date.valueOf("2019-06-20"),
+case class ClinicalImpressionOutput(//`clinical_impression_id`: String = "CI0005",
+                                    `id`: String = "CI0005",
+                                    `date`: Date = Date.valueOf("2019-06-20"),
                                     `age_at_event_in_days`: Long = 1315,
-                                    `clinical_impression_id`: String = "CI0005",
                                     `investigation`: List[INVESTIGATION] = List(INVESTIGATION()),
                                     `resource_type`: String = "ClinicalImpression",
                                     `status`: String = "in-progress",

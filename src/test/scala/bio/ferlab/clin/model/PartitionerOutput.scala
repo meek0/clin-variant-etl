@@ -7,7 +7,8 @@ package bio.ferlab.clin.model
 import java.sql.Timestamp
 
 
-case class PartitionerOutput(`practitioner_id`: String = "PR00108",
+case class PartitionerOutput(//`practitioner_id`: String = "PR00108",
+                             `id`: String = "PR00108",
                              `last_name`: String = "Gélinas",
                              `first_name`: String = "Clara",
                              `name_prefix`: String = "Dre.",

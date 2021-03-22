@@ -7,9 +7,10 @@ package bio.ferlab.clin.model
 import java.sql.{Date, Timestamp}
 
 
-case class PatientOutput(`patient_id`: String = "17771",
+case class PatientOutput(//`patient_id`: String = "17771",
+                         `id`: String = "17771",
                          `ingested_on`: Timestamp = Timestamp.valueOf("2021-03-05 08:26:56.0"),
-                         `family-id`: String = "17772",
+                         `family_id`: String = "17772",
                          `active`: Boolean = true,
                          `birth_date`: Date = Date.valueOf("2021-02-01"),
                          `gender`: String = "male",
@@ -25,5 +26,5 @@ case class PatientOutput(`patient_id`: String = "17771",
                          `version_id`: String = "1",
                          `updated_on`: Timestamp = Timestamp.valueOf("2021-02-15 11:55:04.06"),
                          `created_on`: Timestamp = Timestamp.valueOf("2021-02-15 11:55:04.06"),
-                         `is-proband`: Boolean = true,
-                         `is-fetus`: Boolean = false)
+                         `is_proband`: Boolean = true,
+                         `is_fetus`: Boolean = false)
