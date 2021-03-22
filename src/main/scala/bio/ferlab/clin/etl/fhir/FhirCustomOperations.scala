@@ -75,24 +75,24 @@ object FhirCustomOperations {
 
     def withPatientExtension: DataFrame = {
       df.where(col("extension").isNull).drop("extension")
-        .withColumn("family-id", lit(null).cast(StringType))
-        .withColumn("is-fetus", lit(null).cast(BooleanType))
-        .withColumn("is-proband", lit(null).cast(BooleanType))
+        .withColumn("family_id", lit(null).cast(StringType))
+        .withColumn("is_fetus", lit(null).cast(BooleanType))
+        .withColumn("is_proband", lit(null).cast(BooleanType))
         .unionByName {
           df.withColumn("extension", explode(col("extension")))
-            .withColumn("family-id",
+            .withColumn("family_id",
               when(col("extension.url").like("%/family-id"),
                 regexp_replace(col("extension.valueReference.reference"), "Group/", "")))
-            .withColumn("is-fetus",
+            .withColumn("is_fetus",
               when(col("extension.url").like("%/is-fetus"), col("extension.valueBoolean")))
-            .withColumn("is-proband",
+            .withColumn("is_proband",
               when(col("extension.url").like("%/is-proband"), col("extension.valueBoolean")))
-            .groupBy("patient_id", INGESTION_TIMESTAMP)
+            .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
-              max("family-id") as "family-id",
-              df.drop("patient_id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
-                (max("is-proband") as "is-proband"):+
-                (max("is-fetus") as "is-fetus"):_*
+              max("family_id") as "family_id",
+              df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
+                (max("is_proband") as "is_proband"):+
+                (max("is_fetus") as "is_fetus"):_*
             )
         }
     }
@@ -109,10 +109,10 @@ object FhirCustomOperations {
                 regexp_replace(col("extension.valueReference.reference"), "ClinicalImpression/", "")))
             .withColumn("is-submitted",
               when(col("extension.url").like("%/is-submitted"), col("extension.valueBoolean")))
-            .groupBy("service_request_id")
+            .groupBy("id")
             .agg(
               max("ref-clin-impression") as "ref-clin-impression",
-              df.drop("service_request_id", "extension").columns.map(c => first(c) as c):+
+              df.drop("id", "extension").columns.map(c => first(c) as c):+
                 (max("is-submitted") as "is-submitted"):_*
             )
         }
@@ -131,10 +131,10 @@ object FhirCustomOperations {
               when(col("extension.url").like("%/age-at-onset"), col("extension.valueCoding.code")))
             .withColumn(hpo_category,
               when(col("extension.url").like("%/hpo-category"), col("extension.valueCoding.code")))
-            .groupBy("observation_id")
+            .groupBy("id")
             .agg(
               max(age_at_onset) as age_at_onset,
-              df.drop("observation_id", "extension").columns.map(c => first(c) as c):+
+              df.drop("id", "extension").columns.map(c => first(c) as c):+
                 (max(hpo_category) as hpo_category):_*
             )
         }

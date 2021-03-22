@@ -25,7 +25,7 @@ object FhirRawToNormalizedMappings {
     Date("yyyy-MM-dd", "date"),
     Custom(
       _
-        .withColumnRenamed("id", "clinical_impression_id")
+        //.withColumnRenamed("id", "clinical_impression_id")
         .withColumn("patient_id", patient_id)
         .withColumn("practitioner_id", practitioner_id)
         .withColumn("age_at_event_in_days", col("extension")(0)("valueAge")("value"))
@@ -36,7 +36,7 @@ object FhirRawToNormalizedMappings {
   val groupMappings: List[Transformation] = List(
     Custom(
       _
-        .withColumnRenamed("id", "group_id")
+        //.withColumnRenamed("id", "group_id")
         .withColumn("members", transform(col("member"), c => regexp_replace(c("entity")("reference"), "Patient/", "")))
         .withColumn("family_structure_code", col("extension")(0)("valueCoding")("code"))
     ),
@@ -46,7 +46,7 @@ object FhirRawToNormalizedMappings {
   val observationMappings: List[Transformation] = List(
     Custom(
       _
-        .withColumnRenamed("id", "observation_id")
+        //.withColumnRenamed("id", "observation_id")
         .withObservationExtension
         .withColumn("observation_description", col("code.coding.display")(0))
         .withColumn("observation_code", col("code.coding.code")(0))
@@ -66,7 +66,7 @@ object FhirRawToNormalizedMappings {
   val organizationMappings: List[Transformation] = List(
     Custom(
       _
-        .withColumnRenamed("id", "organization_id")
+        //.withColumnRenamed("id", "organization_id")
         .withColumn("code", col("type")(0)("coding")(0)("code"))
         .withColumn("description", col("type")(0)("coding")(0)("display"))
     ),
@@ -79,7 +79,7 @@ object FhirRawToNormalizedMappings {
     Custom (
       _
         .extractIdentifier(List("MR" -> "medical_record_number", "JHN" -> "jurisdictional_health_number"))
-        .withColumnRenamed("id", "patient_id")
+        //.withColumnRenamed("id", "patient_id")
         .withColumn("practitioner_id", regexp_replace(col("generalPractitioner.reference")(0), "PractitionerRole/", ""))
         .withColumn("organization_id", regexp_replace(col("managingOrganization.reference"), "Organization/", ""))
         .withPatientNames
@@ -91,7 +91,7 @@ object FhirRawToNormalizedMappings {
   val practitionerMappings: List[Transformation]  = List(
     Custom(
       _
-        .withColumnRenamed("id", "practitioner_id")
+        //.withColumnRenamed("id", "practitioner_id")
         .withColumn("first_name", col("name")(0)("given")(0))
         .withColumn("last_name", col("name")(0)("family"))
         .withColumn("name_prefix", col("name")(0)("prefix")(0))
@@ -112,7 +112,7 @@ object FhirRawToNormalizedMappings {
         .withColumn("role_code", col("code")(0)("coding")(0)("code"))
         .withColumn("role_description_EN", col("code")(0)("coding")(0)("display"))
         .withColumn("role_description_FR", col("code")(0)("text"))
-        .withColumnRenamed("id", "practitioner_role_id")
+        //.withColumnRenamed("id", "practitioner_role_id")
 
     ),
     Drop("meta", "telecoms", "code", "practitioner", "organization")
@@ -124,7 +124,7 @@ object FhirRawToNormalizedMappings {
     Custom(
       _
         .extractIdentifier(List("MR" -> "medical_record_number"))
-        .withColumnRenamed("id", "service_request_id")
+        //.withColumnRenamed("id", "service_request_id")
         .withColumn("category", col("category")(0)("text"))
         .withColumn("service_request_code", col("code.coding.code")(0))
         .withColumn("service_request_description", col("code.coding.display")(0))

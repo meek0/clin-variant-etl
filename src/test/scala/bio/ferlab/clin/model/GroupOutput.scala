@@ -7,9 +7,10 @@ package bio.ferlab.clin.model
 import java.sql.Timestamp
 
 
-case class GroupOutput(`actual`: Boolean = true,
+case class GroupOutput(//`group_id`: String = "13636",
+                       `id`: String = "13636",
+                       `actual`: Boolean = true,
                        `family_structure_code`: String = "DUO",
-                       `group_id`: String = "13636",
                        `resource_type`: String = "Group",
                        `type`: String = "person",
                        `ingestion_file_name`: String = "raw/landing/fhir/Group/Group_0_19000101_130549.json",

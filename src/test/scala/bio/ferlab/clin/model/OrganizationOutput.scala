@@ -7,8 +7,9 @@ package bio.ferlab.clin.model
 import java.sql.Timestamp
 
 
-case class OrganizationOutput(`alias`: List[String] = List("CHUSJ"),
-                              `organization_id`: String = "OR00207",
+case class OrganizationOutput(//`organization_id`: String = "OR00207",
+                              `id`: String = "OR00207",
+                              `alias`: List[String] = List("CHUSJ"),
                               `name`: String = "CHU Sainte-Justine - Centre hospitalier universitaire mère-enfant",
                               `resource_type`: String = "Organization",
                               `code`: String = "prov",

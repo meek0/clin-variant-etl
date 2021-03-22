@@ -7,12 +7,13 @@ package bio.ferlab.clin.model
 import java.sql.Timestamp
 
 
-case class ObservationOutput(`category_description`: String = "Laboratory",
+case class ObservationOutput(//`observation_id`: String = "OB0001",
+                             `id`: String = "OB0001",
+                             `category_description`: String = "Laboratory",
                              `observation_code`: String = "PHENO",
                              `observation_description`: String = "cgh",
                              `age_at_onset`: String = "HP:0410280",
                              `hpo_category`: String = "HP:0001626",
-                             `observation_id`: String = "OB0001",
                              `interpretation_code`: String = "NEG",
                              `interpretation_description_EN`: String = "Negative",
                              `interpretation_description_FR`: String = "Non observé",
