@@ -2,10 +2,9 @@ package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.etl.fhir.FhirCatalog.{Normalized, Raw}
 import bio.ferlab.clin.etl.fhir.FhirCustomOperations._
-import bio.ferlab.datalake.core.etl.DataSource
-import bio.ferlab.datalake.core.transformation._
+import bio.ferlab.datalake.spark3.config.DatasetConf
+import bio.ferlab.datalake.spark3.transformation._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.LongType
 
 object FhirRawToNormalizedMappings {
   val INPUT_FILENAME = "ingestion_file_name"
@@ -141,7 +140,7 @@ object FhirRawToNormalizedMappings {
     Drop("meta", "code", "subject", "requester", "extension", "identifier")
   )
 
-  val mappings: List[(DataSource, DataSource, List[Transformation])] = List(
+  val mappings: List[(DatasetConf, DatasetConf, List[Transformation])] = List(
     (Raw.clinicalImpression, Normalized.clinical_impression, defaultTransformations ++ clinicalImpressionMappings),
     (Raw.group             , Normalized.group              , defaultTransformations ++ groupMappings),
     (Raw.observation       , Normalized.observation        , defaultTransformations ++ observationMappings),

@@ -3,8 +3,8 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirCatalog.Raw
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.core.config.{Configuration, StorageConf}
-import bio.ferlab.datalake.core.etl.RawToNormalizedETL
+import bio.ferlab.datalake.spark3.config.{Configuration, StorageConf}
+import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 import org.apache.spark.sql.functions.col
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -23,7 +23,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where(col("id") === "CI0005").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ClinicalImpressionOutput", output, "src/test/scala/")
@@ -44,7 +44,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where(col("id") === "13636").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "GroupOutput", output, "src/test/scala/")
@@ -65,7 +65,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where("id='OB0001'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ObservationOutput", output, "src/test/scala/")
@@ -86,7 +86,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where("id='17771'").show(false)
 
     output.count() shouldBe 6
@@ -104,7 +104,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where("id='OR00207'").show(false)
 
     output.count() shouldBe 7
@@ -122,7 +122,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where("id='PR00108'").show(false)
 
     output.count() shouldBe 6
@@ -141,7 +141,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "PartitionerRoleOutput", output, "src/test/scala/")
@@ -162,7 +162,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     job.run()
 
-    val output = spark.table(s"${dst.database}.${dst.name}")
+    val output = spark.table(s"${dst.table.get.fullName}")
     output.where("id='32130'").show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ServiceRequestOutput", output, "src/test/scala/")

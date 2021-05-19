@@ -1,9 +1,9 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.datalake.core.config.{Configuration, StorageConf}
-import bio.ferlab.datalake.core.etl.{ETL, RawToNormalizedETL}
-import org.apache.spark.sql.SparkSession
+import bio.ferlab.datalake.spark3.config.{Configuration, StorageConf}
+import bio.ferlab.datalake.spark3.etl.{ETL, RawToNormalizedETL}
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
 
 object FhirRawToNormalized extends App {
 
