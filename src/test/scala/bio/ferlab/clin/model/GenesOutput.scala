@@ -1,6 +1,5 @@
 package bio.ferlab.clin.model
 
-
 case class GenesOutput(`symbol`: String = "OR4F5",
                        `entrez_gene_id`: Int = 777,
                        `omim_gene_id`: String = "601013",
@@ -27,8 +26,10 @@ case class HPO(`hpo_term_id`: String = "HP:0001347",
 
 case class OMIM(`name`: String = "Epileptic encephalopathy, early infantile, 69",
                 `omim_id`: String = "618285",
-                `inheritance`: List[String] = List("AD"))
+                `inheritance`: List[String] = List("Autosomal dominant"),
+                `inheritance_code`: List[String] = List("AD"))
 
 case class DDD(`disease_name`: String = "OCULOAURICULAR SYNDROME")
 
-case class COSMIC(`tumour_types_germline`: List[String] = List("breast", "colon", "endometrial cancer under age 50"))
+case class COSMIC(`tumour_types_germline`: List[String] =
+                  List("breast", "colon", "endometrial cancer under age 50"))

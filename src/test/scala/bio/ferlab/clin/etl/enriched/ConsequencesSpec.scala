@@ -4,21 +4,24 @@ import bio.ferlab.clin.model.{ConsequenceEnrichedOutput, ConsequenceRawOutput, D
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SaveMode
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.File
 
-class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
-  FileUtils.deleteDirectory(new File("spark-warehouse"))
-  spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+  override def beforeAll(): Unit = {
+    FileUtils.deleteDirectory(new File("spark-warehouse"))
+    spark.sql("CREATE DATABASE IF NOT EXISTS clin")
 
-  Seq(Dbnsfp_originalOutput()).toDF
-    .write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.dbnsfp_original")
+    Seq(Dbnsfp_originalOutput()).toDF
+      .write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.dbnsfp_original")
+  }
 
   "consequences job" should "transform data in expected format" in {
 
@@ -28,9 +31,6 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     result shouldBe ConsequenceEnrichedOutput(
       `createdOn` = result.`createdOn`,
       `updatedOn` = result.`updatedOn`)
-
-    //val df = Consequences.build(df)
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ConsequenceEnrichedOutput2", df, "src/test/scala/")
   }
 }
 
