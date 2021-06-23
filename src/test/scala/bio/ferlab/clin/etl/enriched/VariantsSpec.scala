@@ -6,46 +6,49 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{Row, SaveMode}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.File
 
-class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
-  FileUtils.deleteDirectory(new File("spark-warehouse"))
-  spark.sql("CREATE DATABASE IF NOT EXISTS clin_raw")
-  spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+  override def beforeAll(): Unit = {
+    FileUtils.deleteDirectory(new File("spark-warehouse"))
+    spark.sql("CREATE DATABASE IF NOT EXISTS clin_raw")
+    spark.sql("CREATE DATABASE IF NOT EXISTS clin")
 
-  Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
-    .write.format("delta").mode(SaveMode.Overwrite)
-    .saveAsTable("clin_raw.occurrences")
+    Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
+      .write.format("delta").mode(SaveMode.Overwrite)
+      .saveAsTable("clin_raw.occurrences")
 
-  Seq(GnomadExomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.gnomad_exomes_2_1_1_liftover_grch38")
+    Seq(GnomadExomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.gnomad_exomes_2_1_1_liftover_grch38")
 
-  Seq(GnomadGenomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.gnomad_genomes_2_1_1_liftover_grch38")
+    Seq(GnomadGenomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.gnomad_genomes_2_1_1_liftover_grch38")
 
-  Seq(GnomadGenomes30Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.gnomad_genomes_3_0")
+    Seq(GnomadGenomes30Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.gnomad_genomes_3_0")
 
-  Seq(OneKGenomesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.1000_genomes")
+    Seq(OneKGenomesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.1000_genomes")
 
-  Seq(Topmed_bravoOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.topmed_bravo")
+    Seq(Topmed_bravoOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.topmed_bravo")
 
-  Seq(ClinvarOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.clinvar")
+    Seq(ClinvarOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.clinvar")
 
-  Seq(DbsnpOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.dbsnp")
+    Seq(DbsnpOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.dbsnp")
 
-  Seq(GenesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-    .saveAsTable("clin.genes")
+    Seq(GenesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
+      .saveAsTable("clin.genes")
+  }
 
   "ac" should "return sum of allele count" in {
     import spark.implicits._
