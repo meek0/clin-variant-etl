@@ -2,34 +2,36 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
-import bio.ferlab.clin.etl.utils.VcfUtils.vcf
+import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.SparkUtils.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object Occurrences {
+class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   val OCCURRENCES_TABLE = "occurrences"
 
-  def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
-    val occurrences = vcf(input)
-    val updates = build(occurrences, batchId)
-    DeltaUtils.insert(
-      updates,
-      Some(output),
-      "clin_raw",
-      OCCURRENCES_TABLE,
-      {
-        _.repartition(1, col("chromosome"))
-          .sortWithinPartitions(col("chromosome"), col("start"))
-      },
-      Seq("chromosome")
+  override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
+
+  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+    Map(
+      //TODO add vcf normalization
+      "complete_joint_calling" -> vcf(conf.getDataset("complete_joint_calling").location, referenceGenomePath = None),
+      "patient" -> spark.table("clin.patient"),
+      "biospecimens" -> spark.table("clin.biospecimens")
     )
   }
 
-  def build(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
+  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
+
+    val inputDf = data("complete_joint_calling")
+    val patients = data("patient")
+    val biospecimens = data("biospecimens")
+
     val occurrences = inputDf
-      .withColumn("genotype", explode($"genotypes"))
+      .withColumn("genotype", explode(col("genotypes")))
       .select(
         chromosome,
         start,
@@ -61,16 +63,26 @@ object Occurrences {
       .withColumn("variant_type", lit("germline"))
       .drop("annotation")
 
-    val patients = spark.table("clin.patients")
-    val biospecimens = spark.table("clin.biospecimens")
-
     val biospecimensWithPatient = broadcast(
       biospecimens
         .join(patients, Seq("patient_id"))
         .select($"biospecimen_id", $"patient_id", $"family_id", $"practitioner_id", $"organization_id", $"sequencing_strategy", $"study_id")
     )
-
     occurrences.join(biospecimensWithPatient, Seq("biospecimen_id"), "inner")
+  }
 
+  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    DeltaUtils.insert(
+      data,
+      Some(destination.location),
+      "clin",
+      OCCURRENCES_TABLE,
+      {
+        _.repartition(1, col("chromosome"))
+          .sortWithinPartitions(col("chromosome"), col("start"))
+      },
+      Seq("chromosome")
+    )
+    data
   }
 }
