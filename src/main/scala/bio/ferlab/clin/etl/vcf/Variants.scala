@@ -2,35 +2,25 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
-import bio.ferlab.clin.etl.utils.VcfUtils.vcf
-import org.apache.spark.sql.functions.{array_distinct, col, current_timestamp, lit}
+import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.SparkUtils.vcf
+import org.apache.spark.sql.functions.{array_distinct, col, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object Variants {
+class Variants(batchId: String)(implicit configuration: Configuration) extends ETL {
 
-  def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
-    val inputDF = vcf(input)
-    val annotations: DataFrame = build(inputDF, batchId)
+  override val destination: DatasetConf = conf.getDataset("normalized_variants")
 
-    DeltaUtils.upsert(
-      annotations,
-      Some(output),
-      "clin_raw",
-      "variants",
-      {
-        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
-      },
-      locusColumnNames,
-      Seq("chromosome"))
-
-    //write(annotations, output)
-    //    val deltaTable = DeltaTable.forName("variants")
-    //    deltaTable.vacuum()
-
+  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+    Map(
+      //TODO add vcf normalization
+      "complete_joint_calling" -> vcf(conf.getDataset("complete_joint_calling").location, referenceGenomePath = None)
+    )
   }
 
-  def build(inputDF: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
-    val variants = inputDF
+  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+    data("complete_joint_calling")
       .withColumn("annotation", firstAnn)
       .select(
         chromosome,
@@ -51,7 +41,20 @@ object Variants {
         /*current_timestamp()*/lit(batchId) as "updatedOn"
       )
       .drop("annotation")
+  }
 
-    variants
+  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    DeltaUtils.upsert(
+      data,
+      Some(destination.location),
+      destination.table.map(_.database).getOrElse("clin"),
+      destination.table.map(_.database).getOrElse("variants"),
+      {
+        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
+      },
+      locusColumnNames,
+      Seq("chromosome")
+    )
+    data
   }
 }

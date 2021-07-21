@@ -10,8 +10,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
-  val OCCURRENCES_TABLE = "occurrences"
-
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -76,7 +74,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
       data,
       Some(destination.location),
       "clin",
-      OCCURRENCES_TABLE,
+      destination.table.map(_.name).getOrElse("occurrences"),
       {
         _.repartition(1, col("chromosome"))
           .sortWithinPartitions(col("chromosome"), col("start"))
