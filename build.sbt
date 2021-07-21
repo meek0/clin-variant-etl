@@ -15,7 +15,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/r
 resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2
 
 /* Runtime */
-libraryDependencies += "bio.ferlab" %% "datalake-spark3" % "0.0.46"
+libraryDependencies += "bio.ferlab" %% "datalake-spark3" % "0.0.50"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % spark_version % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.1" % Provided
@@ -26,12 +26,12 @@ libraryDependencies += "io.delta" %% "delta-core" % deltaCoreVersion
 libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % Test
 libraryDependencies += "org.apache.spark" %% "spark-hive" % spark_version % Test
 
-parallelExecution in test := false
+test / parallelExecution := false
 fork := true
 
-test in assembly := {}
+assembly / test:= {}
 
-assemblyMergeStrategy in assembly := {
+assembly / assemblyMergeStrategy := {
   case "META-INF/io.netty.versions.properties" => MergeStrategy.last
   case "META-INF/native/libnetty_transport_native_epoll_x86_64.so" => MergeStrategy.last
   case "META-INF/DISCLAIMER" => MergeStrategy.last
@@ -43,4 +43,4 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
-assemblyJarName in assembly := "clin-variant-etl.jar"
+assembly / assemblyJarName := "clin-variant-etl.jar"

@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
+import bio.ferlab.datalake.spark3.config.ConfigurationLoader
 import org.apache.spark.sql.SparkSession
 
 object ImportVcf extends App {
@@ -17,15 +18,17 @@ object ImportVcf extends App {
 
   run(input, output, batchId, runType)
 
+  implicit val conf = ConfigurationLoader.loadFromResources(input)
+
   def run(input: String, output: String, batchId: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
-    spark.sql("use clin_raw")
+    spark.sql("use clin")
 
     runType match {
       case "variants" => Variants.run(input, output, batchId)
       case "consequences" => Consequences.run(input, output, batchId)
-      case "occurrences" => Occurrences.run(input, output, batchId)
+      case "occurrences" => new Occurrences(batchId).run()
       case "all" =>
-        Occurrences.run(input, output, batchId)
+        new Occurrences(batchId).run()
         Variants.run(input, output, batchId)
         Consequences.run(input, output, batchId)
       case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
