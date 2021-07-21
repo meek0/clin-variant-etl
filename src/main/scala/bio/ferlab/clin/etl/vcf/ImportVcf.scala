@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 
 object ImportVcf extends App {
 
-  val Array(input, output, batchId, runType) = args
+  val Array(input, output, batchId, runType, config) = args
 
   implicit val spark: SparkSession = SparkSession.builder
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -18,19 +18,19 @@ object ImportVcf extends App {
 
   run(input, output, batchId, runType)
 
-  implicit val conf = ConfigurationLoader.loadFromResources(input)
+  implicit val conf = ConfigurationLoader.loadFromResources(config)
 
   def run(input: String, output: String, batchId: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
     spark.sql("use clin")
 
     runType match {
-      case "variants" => Variants.run(input, output, batchId)
-      case "consequences" => Consequences.run(input, output, batchId)
+      case "variants" => new Variants(batchId).run()
+      case "consequences" => new Consequences(batchId).run()
       case "occurrences" => new Occurrences(batchId).run()
       case "all" =>
         new Occurrences(batchId).run()
-        Variants.run(input, output, batchId)
-        Consequences.run(input, output, batchId)
+        new Variants(batchId).run()
+        new Consequences(batchId).run()
       case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
     }
 

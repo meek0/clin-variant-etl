@@ -1,34 +1,27 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.DeltaUtils
-import bio.ferlab.clin.etl.utils.VcfUtils._
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
+import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.SparkUtils.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object Consequences {
-  val TABLE_CONSEQUENCES = "consequences"
+class Consequences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
-  def run(input: String, output: String, batchId: String)(implicit spark: SparkSession): Unit = {
-    val inputDF = vcf(input)
-    val consequences: DataFrame = build(inputDF, batchId)
+  override val destination: DatasetConf = conf.getDataset("normalized_consequences")
 
-    DeltaUtils.upsert(
-      consequences,
-      Some(output),
-      "clin_raw",
-      TABLE_CONSEQUENCES,
-      {
-        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
-      },
-      locusColumnNames :+ "ensembl_gene_id" :+ "ensembl_feature_id",
-      Seq("chromosome"))
+  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+    Map(
+      //TODO add vcf normalization
+      "complete_joint_calling" -> vcf(conf.getDataset("complete_joint_calling").location, referenceGenomePath = None)
+    )
   }
 
-
-  def build(inputDF: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
+  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val consequencesDF = inputDF
+    data("complete_joint_calling")
       .select(
         chromosome,
         start,
@@ -72,7 +65,20 @@ object Consequences {
       .withColumn("batch_id", lit(batchId))
       .withColumn("createdOn", lit(batchId))//current_timestamp())
       .withColumn("updatedOn", lit(batchId))//current_timestamp())
+  }
 
-    consequencesDF
+  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    DeltaUtils.upsert(
+      data,
+      Some(destination.location),
+      destination.table.map(_.database).getOrElse("clin"),
+      destination.table.map(_.name).getOrElse("consequences"),
+      {
+        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
+      },
+      locusColumnNames :+ "ensembl_gene_id" :+ "ensembl_feature_id",
+      Seq("chromosome")
+    )
+    data
   }
 }
