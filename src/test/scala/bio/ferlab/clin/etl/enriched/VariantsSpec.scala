@@ -4,6 +4,7 @@ import bio.ferlab.clin.etl.utils.VcfUtils.columns
 import bio.ferlab.clin.etl.utils.VcfUtils.columns.ac
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, StorageConf}
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{Row, SaveMode}
 import org.scalatest.BeforeAndAfterAll
@@ -16,12 +17,23 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   import spark.implicits._
 
+  implicit val localConf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
+    .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
+
+  val normalized_occurrences = Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
+
+  val normalized_variants = Seq(VariantRawOutput()).toDF()
+
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(new File("spark-warehouse"))
     spark.sql("CREATE DATABASE IF NOT EXISTS clin_raw")
     spark.sql("CREATE DATABASE IF NOT EXISTS clin")
 
-    Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
+    normalized_variants
+      .write.format("delta").mode(SaveMode.Overwrite)
+      .saveAsTable("clin_raw.variants")
+
+    normalized_occurrences
       .write.format("delta").mode(SaveMode.Overwrite)
       .saveAsTable("clin_raw.occurrences")
 
@@ -63,17 +75,30 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "transform data in expected format" in {
 
-    val df = Seq(VariantRawOutput()).toDF()
+    val data = Map(
+      "normalized_variants" -> normalized_variants,
+      "normalized_occurrences" -> normalized_occurrences
+    )
 
-    val result = Variants.transform(df)
+    val result = new Variants("BAT0").transform(data)
       .as[VariantEnrichedOutput].collect().head
 
     result shouldBe VariantEnrichedOutput(
       `donors` = List(DONORS(), DONORS(`organization_id` = "OR00202")),
       `createdOn` = result.`createdOn`,
       `updatedOn` = result.`updatedOn`)
+  }
 
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VariantEnrichedOutput", result, "src/test/scala/")
+  "variants job" should "run" in {
+
+    new Variants("BAT0").run()
+
+    val result = spark.table("clin.variants").as[VariantEnrichedOutput].collect().head
+
+    result shouldBe VariantEnrichedOutput(
+      `donors` = List(DONORS(), DONORS(`organization_id` = "OR00202")),
+      `createdOn` = result.`createdOn`,
+      `updatedOn` = result.`updatedOn`)
   }
 }
 
