@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
-import bio.ferlab.datalake.spark3.implicits.SparkUtils.vcf
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -70,17 +70,9 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   }
 
   override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    DeltaUtils.insert(
-      data,
-      Some(destination.location),
-      "clin",
-      destination.table.map(_.name).getOrElse("occurrences"),
-      {
-        _.repartition(1, col("chromosome"))
-          .sortWithinPartitions(col("chromosome"), col("start"))
-      },
-      Seq("chromosome")
+    super.load(data
+      .repartition(1, col("chromosome"))
+      .sortWithinPartitions(col("chromosome"), col("start"))
     )
-    data
   }
 }

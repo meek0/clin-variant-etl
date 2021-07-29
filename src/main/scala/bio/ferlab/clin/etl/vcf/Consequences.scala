@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
-import bio.ferlab.datalake.spark3.implicits.SparkUtils.vcf
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -68,17 +68,8 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   }
 
   override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    DeltaUtils.upsert(
-      data,
-      Some(destination.location),
-      destination.table.map(_.database).getOrElse("clin"),
-      destination.table.map(_.name).getOrElse("consequences"),
-      {
-        _.repartition(1, col("chromosome")).sortWithinPartitions("start")
-      },
-      locusColumnNames :+ "ensembl_gene_id" :+ "ensembl_feature_id",
-      Seq("chromosome")
-    )
-    data
+    super.load(data
+      .repartition(1, col("chromosome"))
+      .sortWithinPartitions("start"))
   }
 }

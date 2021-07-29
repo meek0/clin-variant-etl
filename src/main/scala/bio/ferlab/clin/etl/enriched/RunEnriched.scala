@@ -26,10 +26,10 @@ object RunEnriched extends App {
   def run(input: String, output: String, lastBatch: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
     runType match {
       case "variants" => new Variants(lastBatch).run()
-      case "consequences" => Consequences.run(input, output, lastBatch)
+      case "consequences" => new Consequences(lastBatch).run()
       case "all" =>
         new Variants(lastBatch).run()
-        Consequences.run(input, output, lastBatch)
+        new Consequences(lastBatch).run()
       case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
     }
 

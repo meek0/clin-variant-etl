@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.utils.GenomicsUtils._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
-object PrepareIndex extends App {
+object PrepareVariantIndex extends App {
 
   val Array(output, lastBatch) = args
 

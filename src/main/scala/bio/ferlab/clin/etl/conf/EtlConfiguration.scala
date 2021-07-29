@@ -59,17 +59,17 @@ object EtlConfiguration extends App {
         DatasetConf("service_request"        , alias, "/normalized/fhir/ServiceRequest"             , DELTA  , Upsert   , TableConf("clin", "service_request")),
 
         //??
-        DatasetConf("biospecimens"           , alias, "/normalized/fhir/biospecimens"               , DELTA  , Upsert   , TableConf("clin", "service_request")),
+        DatasetConf("biospecimens"           , alias, "/normalized/fhir/biospecimens"               , DELTA  , Upsert   , TableConf("clin", "biospecimens")),
 
         //clinical normalized
-        DatasetConf("normalized_occurrences" , alias, "/normalized/occurrences"                     , DELTA  , Insert   , TableConf("clin_normalized", "occurrences")),
-        DatasetConf("normalized_variants"    , alias, "/normalized/variants"                        , DELTA  , Insert   , TableConf("clin_normalized", "variants")),
-        DatasetConf("normalized_consequences", alias, "/normalized/consequences"                    , DELTA  , Insert   , TableConf("clin_normalized", "consequences")),
+        DatasetConf("normalized_occurrences" , alias, "/normalized/occurrences"                     , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "occurrences"))),
+        DatasetConf("normalized_variants"    , alias, "/normalized/variants"                        , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "variants"))),
+        DatasetConf("normalized_consequences", alias, "/normalized/consequences"                    , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "consequences"))),
 
         //clinical enriched
-        DatasetConf("enriched_occurrences"   , alias, "/enriched/occurrences"                       , DELTA  , Insert   , TableConf("clin", "occurrences")),
-        DatasetConf("enriched_variants"      , alias, "/enriched/variants"                          , DELTA  , Insert   , TableConf("clin", "variants")),
-        DatasetConf("enriched_consequences"  , alias, "/enriched/consequences"                      , DELTA  , Insert   , TableConf("clin", "consequences")),
+        DatasetConf("enriched_occurrences"   , alias, "/enriched/occurrences"                       , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "occurrences"))),
+        DatasetConf("enriched_variants"      , alias, "/enriched/variants"                          , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "variants"))),
+        DatasetConf("enriched_consequences"  , alias, "/enriched/consequences"                      , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences"))),
       ),
       sparkconf = clin_spark_conf
     )

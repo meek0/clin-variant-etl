@@ -9,9 +9,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.File
-import java.sql.Timestamp
 
-class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class PrepareVariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
@@ -36,7 +35,7 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
 
   "run" should "produce json files in the right format" in {
 
-    val result = PrepareIndex.run("spark-warehouse/output", "BAT0")
+    val result = PrepareVariantIndex.run("spark-warehouse/output", "BAT0")
     result.as[VariantIndexOutput].collect().head shouldBe VariantIndexOutput()
 
   }
@@ -51,7 +50,7 @@ class PrepareIndexSpecs extends AnyFlatSpec with WithSparkSession with Matchers 
       .write.format("delta").mode(SaveMode.Overwrite)
       .saveAsTable("clin.variants")
 
-    val resultUpdate = PrepareIndex.runUpdate("spark-warehouse/output", "BAT1")
+    val resultUpdate = PrepareVariantIndex.runUpdate("spark-warehouse/output", "BAT1")
 
     resultUpdate.as[VariantIndexUpdate].collect().head shouldBe VariantIndexUpdate()
   }
