@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
@@ -11,17 +10,18 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class Consequences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_consequences")
+  val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       //TODO add vcf normalization
-      "complete_joint_calling" -> vcf(conf.getDataset("complete_joint_calling").location, referenceGenomePath = None)
+      complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None)
     )
   }
 
   override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    data("complete_joint_calling")
+    data(complete_joint_calling.id)
       .select(
         chromosome,
         start,

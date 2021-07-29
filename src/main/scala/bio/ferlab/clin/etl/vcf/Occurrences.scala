@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
@@ -11,22 +10,25 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
+  val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
+  val patient: DatasetConf = conf.getDataset("patient")
+  val biospecimens: DatasetConf = conf.getDataset("biospecimens")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       //TODO add vcf normalization
-      "complete_joint_calling" -> vcf(conf.getDataset("complete_joint_calling").location, referenceGenomePath = None),
-      "patient" -> spark.table("clin.patient"),
-      "biospecimens" -> spark.table("clin.biospecimens")
+      complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None),
+      patient.id -> patient.read,
+      biospecimens.id -> biospecimens.read
     )
   }
 
   override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val inputDf = data("complete_joint_calling")
-    val patients = data("patient")
-    val biospecimens = data("biospecimens")
+    val inputDf = data(complete_joint_calling.id)
+    val patients = data(patient.id)
+    val bios = data(biospecimens.id)
 
     val occurrences = inputDf
       .withColumn("genotype", explode(col("genotypes")))
@@ -62,7 +64,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
       .drop("annotation")
 
     val biospecimensWithPatient = broadcast(
-      biospecimens
+      bios
         .join(patients, Seq("patient_id"))
         .select($"biospecimen_id", $"patient_id", $"family_id", $"practitioner_id", $"organization_id", $"sequencing_strategy", $"study_id")
     )

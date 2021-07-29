@@ -19,8 +19,6 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   "consequences job" should "transform data in expected format" in {
 
-    val df = Seq(VCFInput()).toDF()
-
     val result = new Consequences("BAT1").transform(data).as[ConsequenceRawOutput].collect().head
     result shouldBe
       ConsequenceRawOutput("1", 69897, 69898, "T", "C", "rs200676709", List("synonymous_variant"), "LOW", "OR4F5", "ENSG00000186092",
