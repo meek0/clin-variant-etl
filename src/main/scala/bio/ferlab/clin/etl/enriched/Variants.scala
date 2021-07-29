@@ -3,21 +3,63 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.etl.utils.DeltaUtils
 import bio.ferlab.clin.etl.utils.GenomicsUtils._
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
+import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.etl.ETL
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-object Variants {
+class Variants(lastBatchId: String)(implicit configuration: Configuration) extends ETL {
 
-  def run(input: String, output: String, lastExecution: String)(implicit spark: SparkSession): Unit = {
-    val inputDF =
+  override val destination: DatasetConf = conf.getDataset("enriched_variants")
+
+  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+    import spark.implicits._
+    val normalized_variants =
       spark.table("clin_raw.variants")
-        .where(col("updatedOn") >= lastExecution)
+        .where(col("updatedOn") >= lastBatchId)
 
-    val ouputDF: DataFrame = transform(inputDF)
+    val normalized_occurrences =
+      spark.table("clin_raw.occurrences")
 
+    val genomes = spark.table("clin.1000_genomes").as("1000Gp3").selectLocus($"ac", $"af", $"an")
+    val topmed = spark.table("clin.topmed_bravo").selectLocus($"ac", $"af", $"an", $"hom", $"het")
+    val gnomad_genomes_2_1 = spark.table("clin.gnomad_genomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_exomes_2_1 = spark.table("clin.gnomad_exomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_genomes_3_0 = spark.table("clin.gnomad_genomes_3_0").as("gnomad_genomes_3_0").selectLocus($"ac", $"af", $"an", $"hom")
+
+    Map(
+      "normalized_variants" -> normalized_variants,
+      "normalized_occurrences" -> normalized_occurrences,
+      "1000_genomes" -> genomes,
+      "topmed" -> topmed,
+      "gnomad_genomes_2_1" -> gnomad_genomes_2_1,
+      "gnomad_exomes_2_1" -> gnomad_exomes_2_1,
+      "gnomad_genomes_3_0" -> gnomad_genomes_3_0,
+      "dbsnp" -> spark.table("clin.dbsnp"),
+      "clinvar" -> spark.table("clin.clinvar"),
+      "genes" -> spark.table("clin.genes")
+    )
+  }
+
+  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+    val variants = data("normalized_variants")
+    val occurrences = data("normalized_occurrences")
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
+      .as("occurrences")
+
+    val buildDF = variantsWithFrequencies(variants, occurrences)
+    val joinWithPop = joinWithPopulations(buildDF, data)
+    val joinDbSNP = joinWithDbSNP(joinWithPop, data("dbsnp"))
+    val joinClinvar = joinWithClinvar(joinDbSNP, data("clinvar"))
+    val joinGenes = joinWithGenes(joinClinvar, data("genes"))
+    addExtDb(joinGenes)
+  }
+
+  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
     DeltaUtils.upsert(
-      ouputDF,
-      Some(output),
+      data,
+      Some(destination.location),
       "clin",
       "variants",
       {
@@ -25,33 +67,18 @@ object Variants {
       },
       locusColumnNames,
       Seq("chromosome"))
-
+    data
   }
 
-  def transform(inputDF: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    val buildDF = build(inputDF).persist()
-    buildDF.show(1)
-    inputDF.unpersist()
-
-    val joinWithPop = joinWithPopulations(buildDF)
-    val joinDbSNP = joinWithDbSNP(joinWithPop)
-    val joinClinvar = joinWithClinvar(joinDbSNP)
-    val joinGenes = joinWithGenes(joinClinvar)
-    addExtDb(joinGenes)
-  }
-
-  def build(inputDF: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def variantsWithFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val occurrences = spark.table("clin_raw.occurrences")
-      .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
-      .as("occurrences")
 
-    inputDF
+    variants
       .withColumnRenamed("genes", "genes_symbol")
       .joinByLocus(occurrences, "inner")
       .groupBy(locus :+ col("alternate") :+ col("organization_id"): _*)
       .agg(ac, an, het, hom, participant_number,
-        first(struct(inputDF("*"), $"variant_type")) as "variant",
+        first(struct(variants("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
       .withColumn("lab_frequency", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .groupByLocus()
@@ -77,45 +104,40 @@ object Variants {
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
-  def joinWithPopulations(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-    val genomes = spark.table("clin.1000_genomes").as("1000Gp3").selectLocus($"ac", $"af", $"an")
-    val topmed = spark.table("clin.topmed_bravo").selectLocus($"ac", $"af", $"an", $"hom", $"het")
-    val gnomad_genomes_2_1 = spark.table("clin.gnomad_genomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
-    val gnomad_exomes_2_1 = spark.table("clin.gnomad_exomes_2_1_1_liftover_grch38").selectLocus($"ac", $"af", $"an", $"hom")
-    val gnomad_genomes_3_0 = spark.table("clin.gnomad_genomes_3_0").as("gnomad_genomes_3_0").selectLocus($"ac", $"af", $"an", $"hom")
+  def joinWithPopulations(variants: DataFrame, data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
 
     broadcast(variants)
-      .joinAndMerge(genomes, "1000_genomes", "left")
-      .joinAndMerge(topmed, "topmed_bravo", "left")
-      .joinAndMerge(gnomad_genomes_2_1, "gnomad_genomes_2_1_1", "left")
-      .joinAndMerge(gnomad_exomes_2_1, "exac", "left")
-      .joinAndMerge(gnomad_genomes_3_0, "gnomad_genomes_3_0", "left")
+      .joinAndMerge(data("1000_genomes"), "1000_genomes", "left")
+      .joinAndMerge(data("topmed"), "topmed_bravo", "left")
+      .joinAndMerge(data("gnomad_genomes_2_1"), "gnomad_genomes_2_1_1", "left")
+      .joinAndMerge(data("gnomad_exomes_2_1"), "exac", "left")
+      .joinAndMerge(data("gnomad_genomes_3_0"), "gnomad_genomes_3_0", "left")
       .select(variants("*"), struct(col("1000_genomes"), col("topmed_bravo"), col("gnomad_genomes_2_1_1"), col("exac"), col("gnomad_genomes_3_0"), col("internal_frequencies") as "internal") as "frequencies")
       .drop("internal_frequencies")
   }
 
-  def joinWithDbSNP(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    val dbsnp = spark.table("clin.dbsnp")
+  def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame)(implicit spark: SparkSession): DataFrame = {
     variants
       .joinByLocus(dbsnp, "left")
       .select(variants("*"), dbsnp("name") as "dbsnp")
   }
 
-  def joinWithClinvar(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def joinWithClinvar(variants: DataFrame, clinvar: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val clinvar = spark.table("clin.clinvar")
-      .selectLocus($"clinvar.name" as "clinvar_id", $"clin_sig", $"conditions", $"inheritance", $"interpretations")
-    variants.joinAndMerge(clinvar, "clinvar", "left")
+    variants
+      .joinAndMerge(
+        clinvar.selectLocus($"clinvar.name" as "clinvar_id", $"clin_sig", $"conditions", $"inheritance", $"interpretations"),
+        "clinvar",
+        "left")
   }
 
-  def joinWithGenes(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    val genes = spark.table("clin.genes")
+  def joinWithGenes(variants: DataFrame, genes: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    val genesRenamed = genes
       .withColumnRenamed("chromosome", "genes_chromosome")
 
     variants
-      .join(genes, col("chromosome") === col("genes_chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
-      .drop(genes("genes_chromosome"))
+      .join(genesRenamed, col("chromosome") === col("genes_chromosome") && array_contains(variants("genes_symbol"), genesRenamed("symbol")), "left")
+      .drop(genesRenamed("genes_chromosome"))
       .groupByLocus()
       .agg(
         first(struct(variants("*"))) as "variant",
