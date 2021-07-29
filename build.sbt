@@ -15,7 +15,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/r
 resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2
 
 /* Runtime */
-libraryDependencies += "bio.ferlab" %% "datalake-spark3" % "0.0.50"
+libraryDependencies += "bio.ferlab" %% "datalake-spark3" % "0.0.52"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % spark_version % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.1" % Provided
@@ -40,7 +40,7 @@ assembly / assemblyMergeStrategy := {
   case "git.properties" => MergeStrategy.discard
   case "mime.types" => MergeStrategy.first
   case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
     oldStrategy(x)
 }
 assembly / assemblyJarName := "clin-variant-etl.jar"

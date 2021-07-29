@@ -4,9 +4,10 @@ import bio.ferlab.clin.etl.utils.VcfUtils.columns
 import bio.ferlab.clin.etl.utils.VcfUtils.columns.ac
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, StorageConf}
+import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
+import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{Row, SaveMode}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -17,49 +18,56 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   import spark.implicits._
 
-  implicit val localConf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
+  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
 
-  val normalized_occurrences = Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
+  val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
+  val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
+  val `1000_genomes`: DatasetConf = conf.getDataset("1000_genomes")
+  val topmed_bravo: DatasetConf = conf.getDataset("topmed_bravo")
+  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("gnomad_genomes_2_1_1")
+  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("gnomad_exomes_2_1_1")
+  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("gnomad_genomes_3_0")
+  val dbsnp: DatasetConf = conf.getDataset("dbsnp")
+  val clinvar: DatasetConf = conf.getDataset("clinvar")
+  val genes: DatasetConf = conf.getDataset("genes")
 
-  val normalized_variants = Seq(VariantRawOutput()).toDF()
+  val normalized_occurrencesDf: DataFrame = Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
+  val normalized_variantsDf: DataFrame = Seq(VariantRawOutput()).toDF()
+  val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
+  val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
+  val gnomad_genomes_2_1_1Df: DataFrame = Seq(GnomadGenomes21Output()).toDF
+  val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes21Output()).toDF
+  val gnomad_genomes_3_0Df: DataFrame = Seq(GnomadGenomes30Output()).toDF
+  val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
+  val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
+  val genesDf: DataFrame = Seq(GenesOutput()).toDF()
+
+  val data = Map(
+    normalized_variants.id -> normalized_variantsDf,
+    normalized_occurrences.id -> normalized_occurrencesDf,
+    `1000_genomes`.id -> genomesDf,
+    topmed_bravo.id -> topmed_bravoDf,
+    gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1Df,
+    gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1Df,
+    gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
+    dbsnp.id -> dbsnpDf,
+    clinvar.id -> clinvarDf,
+    genes.id -> genesDf
+  )
 
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(new File("spark-warehouse"))
-    spark.sql("CREATE DATABASE IF NOT EXISTS clin_raw")
+    spark.sql("CREATE DATABASE IF NOT EXISTS clin_normalized")
     spark.sql("CREATE DATABASE IF NOT EXISTS clin")
 
-    normalized_variants
-      .write.format("delta").mode(SaveMode.Overwrite)
-      .saveAsTable("clin_raw.variants")
+    data.foreach { case (id, df) =>
+      val ds = conf.getDataset(id)
 
-    normalized_occurrences
-      .write.format("delta").mode(SaveMode.Overwrite)
-      .saveAsTable("clin_raw.occurrences")
-
-    Seq(GnomadExomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.gnomad_exomes_2_1_1_liftover_grch38")
-
-    Seq(GnomadGenomes21Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.gnomad_genomes_2_1_1_liftover_grch38")
-
-    Seq(GnomadGenomes30Output()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.gnomad_genomes_3_0")
-
-    Seq(OneKGenomesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.1000_genomes")
-
-    Seq(Topmed_bravoOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.topmed_bravo")
-
-    Seq(ClinvarOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.clinvar")
-
-    Seq(DbsnpOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.dbsnp")
-
-    Seq(GenesOutput()).toDF.write.format("parquet").mode(SaveMode.Overwrite)
-      .saveAsTable("clin.genes")
+      LoadResolver
+        .resolve(spark, conf)(ds.format, LoadType.OverWrite)
+        .apply(ds, df)
+    }
   }
 
   "ac" should "return sum of allele count" in {
@@ -74,11 +82,6 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   }
 
   "variants job" should "transform data in expected format" in {
-
-    val data = Map(
-      "normalized_variants" -> normalized_variants,
-      "normalized_occurrences" -> normalized_occurrences
-    )
 
     val result = new Variants("BAT0").transform(data)
       .as[VariantEnrichedOutput].collect().head
