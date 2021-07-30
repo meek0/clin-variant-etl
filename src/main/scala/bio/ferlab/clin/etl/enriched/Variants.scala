@@ -1,10 +1,9 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.DeltaUtils
-import bio.ferlab.clin.etl.utils.GenomicsUtils._
 import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
