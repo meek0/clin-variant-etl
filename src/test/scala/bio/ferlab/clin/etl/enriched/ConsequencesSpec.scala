@@ -5,7 +5,6 @@ import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.SaveMode
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

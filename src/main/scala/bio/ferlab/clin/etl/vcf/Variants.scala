@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions.{array_distinct, col, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -21,7 +21,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     data(complete_joint_calling.id)
-      .withColumn("annotation", firstAnn)
+      .withColumn("annotation", firstCsq)
       .select(
         chromosome,
         start,
@@ -31,7 +31,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         name,
         is_multi_allelic,
         old_multi_allelic,
-        array_distinct(annotations("symbol")) as "genes_symbol",
+        array_distinct(csq("symbol")) as "genes_symbol",
         hgvsg,
         variant_class,
         pubmed,

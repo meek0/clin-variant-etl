@@ -1,11 +1,10 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.clin.etl.vcf.Occurrences.{affected_status, getFamilyRelationships, getOccurrences}
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{familyInfo, fatherAffectedStatus, fatherCalls, motherAffectedStatus, motherCalls, zygosity}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -112,7 +111,7 @@ object Occurrences {
         reference,
         alternate,
         name,
-        firstAnn,
+        firstCsq,
         concat(lit("SP"), $"genotype.sampleId") as "biospecimen_id", //TODO double check this
         $"genotype.alleleDepths" as "ad",
         $"genotype.depth" as "dp",
