@@ -59,6 +59,7 @@ object EtlConfiguration extends App {
         DatasetConf("service_request"        , alias, "/normalized/fhir/ServiceRequest"             , DELTA  , Upsert   , TableConf("clin", "service_request")),
 
         //??
+        DatasetConf("family_relationships"   , alias, "/normalized/fhir/family_relationships"       , DELTA  , Upsert   , TableConf("clin", "family_relationships")),
         DatasetConf("biospecimens"           , alias, "/normalized/fhir/biospecimens"               , DELTA  , Upsert   , TableConf("clin", "biospecimens")),
 
         //clinical normalized
