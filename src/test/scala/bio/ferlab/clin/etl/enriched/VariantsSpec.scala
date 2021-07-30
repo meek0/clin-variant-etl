@@ -1,13 +1,11 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.VcfUtils.columns
-import bio.ferlab.clin.etl.utils.VcfUtils.columns.ac
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{DataFrame, Row, SaveMode}
+import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -68,17 +66,6 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
         .resolve(spark, conf)(ds.format, LoadType.OverWrite)
         .apply(ds, df)
     }
-  }
-
-  "ac" should "return sum of allele count" in {
-    import spark.implicits._
-    val occurrences = Seq(Seq(0, 1), Seq(1, 1), Seq(0, 0)).toDF("calls")
-    occurrences
-      .select(
-        ac,
-        columns.an
-      ).collect() should contain theSameElementsAs Seq(Row(3, 6))
-
   }
 
   "variants job" should "transform data in expected format" in {

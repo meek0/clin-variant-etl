@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.VcfUtils.columns._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -29,7 +29,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
         reference,
         alternate,
         name,
-        annotations
+        csq
       )
       .withColumn("annotation", explode($"annotations"))
       .drop("annotations")
@@ -56,7 +56,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
         amino_acids,
         codons,
         pick,
-        canonical
+        original_canonical
       )
       .drop("annotation")
       .withColumn("aa_change", when($"amino_acids".isNotNull, concat($"amino_acids.reference", $"protein_position", $"amino_acids.variant")).otherwise(lit(null)))

@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.VcfUtils.columns._
+import bio.ferlab.clin.etl.utils.VcfUtils.{ac, an, het, hom, participant_number}
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -72,7 +72,12 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
       .withColumnRenamed("genes", "genes_symbol")
       .joinByLocus(occurrences, "inner")
       .groupBy(locus :+ col("alternate") :+ col("organization_id"): _*)
-      .agg(ac, an, het, hom, participant_number,
+      .agg(
+        ac,
+        an,
+        het,
+        hom,
+        participant_number,
         first(struct(variants("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
       .withColumn("lab_frequency", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
