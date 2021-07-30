@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.etl.utils.GenomicsUtils._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
