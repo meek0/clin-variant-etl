@@ -42,7 +42,8 @@ object PrepareVariantIndex extends App {
 
     val finalDf = buildVariants(updatedVariants)
       .withColumn("frequencies", map(lit("internal"), col("frequencies.internal")))
-      .select("chromosome", "start", "reference", "alternate", "donors", "lab_frequencies", "frequencies", "participant_number")
+      .select("chromosome", "start", "reference", "alternate", "donors", "frequencies_by_lab", "frequencies",
+        "participant_number", "transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab")
 
     finalDf
       .write
