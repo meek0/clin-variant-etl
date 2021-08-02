@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.INGESTION_TIMESTAMP
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{BooleanType, DataType, LongType, StringType}
+import org.apache.spark.sql.types.{ArrayType, BooleanType, DataType, LongType, StringType, StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame}
 
 object FhirCustomOperations {
@@ -74,12 +74,22 @@ object FhirCustomOperations {
     }
 
     def withPatientExtension: DataFrame = {
+      val familyRelationshipType =
+        ArrayType(StructType(List(StructField("patient2", StringType), StructField("patient1_to_patient2_relation", StringType))))
+
       df.where(col("extension").isNull).drop("extension")
         .withColumn("family_id", lit(null).cast(StringType))
         .withColumn("is_fetus", lit(null).cast(BooleanType))
         .withColumn("is_proband", lit(null).cast(BooleanType))
+        .withColumn("family_relationship", lit(null).cast(familyRelationshipType))
         .unionByName {
           df.withColumn("extension", explode(col("extension")))
+            .withColumn("family_relationship",
+              when(col("extension.url").like("%/family-relation"),
+                struct(
+                  regexp_replace(filter(col("extension")("extension"), c => c("url") === "subject")(0)("valueReference")("reference"), "Patient/", "") as "patient2",
+                  filter(col("extension")("extension"), c => c("url") === "relation")(0)("valueCodeableConcept")("coding")(0)("code") as "patient1_to_patient2_relation",
+                )))
             .withColumn("family_id",
               when(col("extension.url").like("%/family-id"),
                 regexp_replace(col("extension.valueReference.reference"), "Group/", "")))
@@ -92,7 +102,8 @@ object FhirCustomOperations {
               max("family_id") as "family_id",
               df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
                 (max("is_proband") as "is_proband"):+
-                (max("is_fetus") as "is_fetus"):_*
+                (max("is_fetus") as "is_fetus"):+
+                (collect_list("family_relationship") as "family_relationship"):_*
             )
         }
     }

@@ -20,6 +20,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("dbnsfp_original")
+  val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
 
   val data = Map(
     normalized_consequences.id -> Seq(ConsequenceRawOutput()).toDF(),
@@ -28,6 +29,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(new File("spark-warehouse"))
+    FileUtils.deleteDirectory(new File(enriched_consequences.location))
     spark.sql("CREATE DATABASE IF NOT EXISTS clin")
 
     data.foreach { case (id, df) =>

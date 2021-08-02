@@ -68,7 +68,16 @@ case class DONORS(`dp`: Int = 1,
                   `practitioner_id`: String = "PPR00101",
                   `organization_id`: String = "OR00201",
                   `sequencing_strategy`: String = "WXS",
-                  `study_id`: String = "ET00010")
+                  `mother_id`: String = "PA0003",
+                  `father_id`: String = "PA0002",
+                  `mother_calls`: Option[List[Int]] = None,
+                  `father_calls`: Option[List[Int]] = None,
+                  `mother_affected_status`: Option[Boolean] = None,
+                  `father_affected_status`: Option[Boolean] = None,
+                  `mother_zygosity`: Option[String] = None,
+                  `father_zygosity`: Option[String] = None,
+                  `parental_origin`: Option[String] = None,
+                  `transmission`: Option[String] = None)
 
 case class FREQUENCIES(//`1000_genomes`: Freq = Freq(3446, 5008,  0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),

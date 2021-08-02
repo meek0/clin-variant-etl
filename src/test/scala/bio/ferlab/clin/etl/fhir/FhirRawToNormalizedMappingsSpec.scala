@@ -5,7 +5,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -40,17 +40,19 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
     val inputDs = Raw.group
 
+    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Group/Group_0_19000101_130549.json")
+
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val job = new RawToNormalizedETL(src, dst, mapping)
-    job.run()
+    val output = job.transform(Map(inputDs.id -> inputDf))
 
-    val output = spark.table(s"${dst.table.get.fullName}")
-    output.where(col("id") === "13636").show(false)
+    //val output = spark.table(s"${dst.table.get.fullName}")
+    output.show(false)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "GroupOutput", output, "src/test/scala/")
 
-    output.count() shouldBe 5
-    val head = output.where(col("id") === "13636").as[GroupOutput].head()
+    output.count() shouldBe 6
+    val head = output.where(col("id") === "ASHK-A").as[GroupOutput].head()
     head shouldBe GroupOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
@@ -82,18 +84,20 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
     val inputDs = Raw.patient
 
-    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
-    job.run()
+    val inputDf = spark.read
+      .json("src/test/resources/raw/landing/fhir/Patient/Patient_1_19000101_102715.json")
+   val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
+   val job = new RawToNormalizedETL(src, dst, mapping)
+   val output = job.transform(Map(inputDs.id -> inputDf))
 
-    val output = spark.table(s"${dst.table.get.fullName}")
-    output.where("id='17771'").show(false)
+   //val output = spark.table(s"${dst.table.get.fullName}")
+   output.where("id='QA-PA-00002'").as[PatientOutput].show(false)
 
-    output.count() shouldBe 6
-    val head = output.where("id='17771'").as[PatientOutput].head()
-    head shouldBe PatientOutput()
-      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
+   output.count() shouldBe 9
+   val head = output.where("id='QA-PA-00002'").as[PatientOutput].head()
+   head shouldBe PatientOutput()
+     .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+       `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 
   "organziation raw job" should "return data in the expected format" in {

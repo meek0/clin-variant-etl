@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model.{OccurrenceRawOutput, _}
+import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
@@ -73,13 +73,19 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     }
   }
 
+  val expectedDonors =
+    List(
+      DONORS(`transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+      DONORS(`transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+    )
+
   "variants job" should "transform data in expected format" in {
 
     val result = new Variants("BAT0").transform(data)
       .as[VariantEnrichedOutput].collect().head
 
     result shouldBe VariantEnrichedOutput(
-      `donors` = List(DONORS(), DONORS(`organization_id` = "OR00202")),
+      `donors` = expectedDonors,
       `createdOn` = result.`createdOn`,
       `updatedOn` = result.`updatedOn`)
   }
@@ -128,7 +134,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     val result = spark.table("clin.variants").as[VariantEnrichedOutput].collect().head
 
     result shouldBe VariantEnrichedOutput(
-      `donors` = List(DONORS(), DONORS(`organization_id` = "OR00202")),
+      `donors` = expectedDonors,
       `createdOn` = result.`createdOn`,
       `updatedOn` = result.`updatedOn`)
   }

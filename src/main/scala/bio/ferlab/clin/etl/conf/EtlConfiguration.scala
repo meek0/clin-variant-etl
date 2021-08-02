@@ -59,8 +59,7 @@ object EtlConfiguration extends App {
         DatasetConf("service_request"        , alias, "/normalized/fhir/ServiceRequest"             , DELTA  , Upsert   , TableConf("clin", "service_request")),
 
         //??
-        DatasetConf("family_relationships"   , alias, "/normalized/fhir/family_relationships"       , DELTA  , Upsert   , TableConf("clin", "family_relationships")),
-        DatasetConf("biospecimens"           , alias, "/normalized/fhir/biospecimens"               , DELTA  , Upsert   , TableConf("clin", "biospecimens")),
+        DatasetConf("biospecimen"            , alias, "/normalized/fhir/biospecimen"                , DELTA  , Upsert   , TableConf("clin", "biospecimen")),
 
         //clinical normalized
         DatasetConf("normalized_occurrences" , alias, "/normalized/occurrences"                     , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "occurrences"))),

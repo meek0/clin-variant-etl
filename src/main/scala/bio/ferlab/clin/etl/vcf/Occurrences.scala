@@ -1,50 +1,63 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.vcf.Occurrences.{affected_status, getFamilyRelationships, getOccurrences}
+import bio.ferlab.clin.etl.vcf.Occurrences.{getFamilyRelationships, getOccurrences}
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
   val patient: DatasetConf = conf.getDataset("patient")
-  val biospecimens: DatasetConf = conf.getDataset("biospecimens")
-  val family_relationships: DatasetConf = conf.getDataset("family_relationships")
+  val biospecimen: DatasetConf = conf.getDataset("biospecimen")
+  val group: DatasetConf = conf.getDataset("group")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       //TODO add vcf normalization
       complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None),
       patient.id -> patient.read,
-      biospecimens.id -> biospecimens.read,
-      family_relationships.id -> family_relationships.read
+      biospecimen.id -> biospecimen.read,
+      group.id -> group.read
     )
   }
 
   override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+    val groupDf = data(group.id)
+      .withColumn("member", explode(col("members")))
+      .select(
+        col("member.affected_status") as "affected_status",
+        col("member.patient_id") as "patient_id"
+      )
 
     val patients = data(patient.id)
-      .select("patient_id", "is_proband", "affected_status", "gender", "practitioner_id", "organization_id", "study_id")
-      .withColumn("affected_status", affected_status)
+      .select(
+        col("id") as "patient_id",
+        col("family_id"),
+        col("is_proband"),
+        col("gender"),
+        col("practitioner_id"),
+        col("organization_id")
+      )
+      .join(groupDf, Seq("patient_id"), "left")
       .withColumn("gender",
         when(col("gender") === "male", lit("Male"))
           .when(col("gender") === "female", lit("Female"))
           .otherwise(col("gender")))
 
-    val family_relationshipsDf = getFamilyRelationships(data(family_relationships.id))
+    val familyRelationshipDf = getFamilyRelationships(data(patient.id))
 
-    val bios = data(biospecimens.id)
-      .select("biospecimen_id", "patient_id", "family_id", "sequencing_strategy")
+    val bios = data(biospecimen.id)
+      .select("biospecimen_id", "patient_id", "sequencing_strategy")
 
-    val biospecimensWithPatient = bios.join(patients, Seq("patient_id"))
-
-    val joinedRelation = biospecimensWithPatient.join(family_relationshipsDf, Seq("patient_id"), "left")
+    val joinedRelation =
+      bios
+        .join(patients, Seq("patient_id"))
+        .join(familyRelationshipDf, Seq("patient_id"), "left")
 
     val occurrences = getOccurrences(data(complete_joint_calling.id), batchId)
     occurrences
@@ -72,16 +85,17 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
 }
 
 object Occurrences {
-  val affected_status: Column = {
-    when(col("affected_status").cast(StringType) === "true", lit(true))
-      .otherwise(
-        when(col("affected_status") === "affected", lit(true))
-          .otherwise(lit(false)))
-  }
 
-  def getFamilyRelationships(familyRelationshipsDf: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def getFamilyRelationships(patientDf: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    familyRelationshipsDf.where($"patient1_to_patient2_relation".isin("Mother", "Father"))
+
+    patientDf
+      .withColumn("fr", explode(col("family_relationship")))
+      .select(
+        $"id" as "patient1",
+        $"fr.patient2" as "patient2",
+        $"fr.patient1_to_patient2_relation" as "patient1_to_patient2_relation"
+      ).filter($"patient1_to_patient2_relation".isin("MTH", "FTH"))
       .groupBy("patient2")
       .agg(
         map_from_entries(
@@ -95,8 +109,8 @@ object Occurrences {
       )
       .select(
         $"patient2" as "patient_id",
-        $"relations.Mother" as "mother_id",
-        $"relations.Father" as "father_id"
+        $"relations.MTH" as "mother_id",
+        $"relations.FTH" as "father_id"
       )
   }
 
