@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.VcfUtils.{ac, an, het, hom, participant_number}
+import bio.ferlab.clin.etl.vcf.Occurrences
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -41,7 +42,8 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
     import spark.implicits._
     val variants = data(normalized_variants.id)
     val occurrences = data(normalized_occurrences.id)
-      .drop("is_multi_allelic", "old_multi_allelic", "name", "end").where($"has_alt" === true)
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
+      .where($"has_alt" === true)
       .as("occurrences")
 
     val genomesDf = data(`1000_genomes`.id).selectLocus($"ac", $"af", $"an")
@@ -51,8 +53,11 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
     val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac", $"af", $"an", $"hom")
 
 
-    val buildDF = variantsWithFrequencies(variants, occurrences)
-    val joinWithPop = joinWithPopulations(buildDF, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df)
+    val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrences)
+    joinWithTransmissions.selectLocus(col("transmissions"), col("transmissions_by_lab")).show(false)
+    val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrences)
+    val joinWithFrequencies = variantsWithFrequencies(joinWithParentalOrigin, occurrences)
+    val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data("dbsnp"))
     val joinClinvar = joinWithClinvar(joinDbSNP, data("clinvar"))
     val joinGenes = joinWithGenes(joinClinvar, data("genes"))
@@ -65,13 +70,38 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
       .sortWithinPartitions("start"))
   }
 
+  def variantsWithAggregate(aggregate: String, variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    val aggregateVariantLevel =
+      occurrences
+        .groupBy(locus :+ col(aggregate): _*)
+        .agg(count(aggregate) as s"${aggregate}_count")
+        .groupBy(locus : _*)
+        .agg(
+          map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count"))), c => c(aggregate).isNotNull)) as s"${aggregate}s",
+        )
+
+    val aggregateByLab =
+      occurrences
+        .groupBy(locus :+ col(aggregate) :+ col("organization_id"): _*)
+        .agg(count(aggregate) as s"${aggregate}_count_by_lab")
+        .groupBy(locus :+ col("organization_id"): _*)
+        .agg(
+          map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count_by_lab"))), c => c(aggregate).isNotNull)) as s"${aggregate}s_by_lab",
+        )
+        .groupBy(locus : _*)
+        .agg(map_from_entries(collect_list(struct(col("organization_id"), col(s"${aggregate}s_by_lab")))) as s"${aggregate}s_by_lab")
+
+    variants
+      .joinByLocus(aggregateVariantLevel, "left")
+      .joinByLocus(aggregateByLab, "left")
+  }
+
   def variantsWithFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
     variants
-      .withColumnRenamed("genes", "genes_symbol")
       .joinByLocus(occurrences, "inner")
-      .groupBy(locus :+ col("alternate") :+ col("organization_id"): _*)
+      .groupBy(locus :+ col("organization_id"): _*)
       .agg(
         ac,
         an,
@@ -90,12 +120,12 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
         sum(col("het")) as "het",
         sum(col("hom")) as "hom",
         sum(col("participant_number")) as "participant_number",
-        map_from_entries(collect_list(struct($"organization_id", $"lab_frequency"))) as "lab_frequencies",
+        map_from_entries(collect_list(struct($"organization_id", $"lab_frequency"))) as "frequencies_by_lab",
       )
       .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .select($"variant.*",
         $"donors",
-        $"lab_frequencies",
+        $"frequencies_by_lab",
         $"internal_frequencies",
         $"participant_number"
       )
@@ -151,14 +181,15 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
 
   private def addExtDb(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    variants.withColumn(
-      "ext_db", struct(
-        $"pubmed".isNotNull.as("is_pubmed"), // ????
-        $"dbsnp".isNotNull.as("is_dbsnp"),
-        $"clinvar".isNotNull.as("is_clinvar"),
-        exists($"genes", gene => gene("hpo").isNotNull).as("is_hpo"),
-        exists($"genes", gene => gene("orphanet").isNotNull).as("is_orphanet"),
-        exists($"genes", gene => gene("omim").isNotNull).as("is_omim")
+    variants
+      .withColumn(
+        "ext_db", struct(
+          $"pubmed".isNotNull.as("is_pubmed"),
+          $"dbsnp".isNotNull.as("is_dbsnp"),
+          $"clinvar".isNotNull.as("is_clinvar"),
+          exists($"genes", gene => gene("hpo").isNotNull).as("is_hpo"),
+          exists($"genes", gene => gene("orphanet").isNotNull).as("is_orphanet"),
+          exists($"genes", gene => gene("omim").isNotNull).as("is_omim")
       )
     )
   }

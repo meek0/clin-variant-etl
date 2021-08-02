@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.{OccurrenceRawOutput, _}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
@@ -19,6 +19,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
 
+  val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
   val `1000_genomes`: DatasetConf = conf.getDataset("1000_genomes")
@@ -30,7 +31,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val clinvar: DatasetConf = conf.getDataset("clinvar")
   val genes: DatasetConf = conf.getDataset("genes")
 
-  val normalized_occurrencesDf: DataFrame = Seq(OccurrenceRawOutput(), OccurrenceRawOutput(`organization_id` = "OR00202")).toDF
+  val normalized_occurrencesDf: DataFrame = Seq(
+    OccurrenceRawOutput(`transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    OccurrenceRawOutput(`transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+  ).toDF
   val normalized_variantsDf: DataFrame = Seq(VariantRawOutput()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
   val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
@@ -56,6 +60,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(new File("spark-warehouse"))
+    FileUtils.deleteDirectory(new File(enriched_variants.location))
     spark.sql("CREATE DATABASE IF NOT EXISTS clin_normalized")
     spark.sql("CREATE DATABASE IF NOT EXISTS clin")
 
@@ -77,6 +82,43 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       `donors` = List(DONORS(), DONORS(`organization_id` = "OR00202")),
       `createdOn` = result.`createdOn`,
       `updatedOn` = result.`updatedOn`)
+  }
+
+  "variants job" should "aggregate transmissions and parental origin per lab" in {
+    val occurrences = Seq(
+      OccurrenceRawOutput(`transmission` = None      , `parental_origin` = Some("mother"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`transmission` = Some("AD"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("mother"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = None          , `organization_id` = "OG1"),
+      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG1")
+    )
+
+    val transmissionData = data + (normalized_occurrences.id -> occurrences.toDF())
+
+    val result = new Variants("BAT0").transform(transmissionData)
+      .as[VariantEnrichedOutput].collect().head
+
+    result.`parental_origins` shouldBe Map(
+      "mother" -> 2,
+      "father" -> 4
+    )
+
+    result.`parental_origins_by_lab` shouldBe Map(
+      "OG2" -> Map("mother" -> 2, "father" -> 3),
+      "OG1" -> Map("father" -> 1)
+    )
+
+    result.`transmissions` shouldBe Map(
+      "AR" -> 5,
+      "AD" -> 1
+    )
+
+    result.`transmissions_by_lab` shouldBe Map(
+      "OG2" -> Map("AR" -> 3, "AD" -> 1),
+      "OG1" -> Map("AR" -> 2)
+    )
   }
 
   "variants job" should "run" in {
