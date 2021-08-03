@@ -73,6 +73,16 @@ object FhirCustomOperations {
 
     }
 
+    def withTaskExtension: DataFrame = {
+      df
+        .withColumn("sequencing_experiment",
+          filter(
+            filter(col("extension"), c => c("url").like("%sequencing-experiment"))(0)("extension"),
+            c => c("url") === "experimentalStrategy"
+          )(0)("valueCoding")("code")
+        )
+    }
+
     def withPatientExtension: DataFrame = {
       val familyRelationshipType =
         ArrayType(StructType(List(StructField("patient2", StringType), StructField("patient1_to_patient2_relation", StringType))))

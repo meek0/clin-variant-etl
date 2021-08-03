@@ -16,7 +16,8 @@ object EtlConfiguration extends App {
     "spark.sql.extensions" -> "io.delta.sql.DeltaSparkSessionExtension",
     "spark.sql.catalog.spark_catalog" -> "org.apache.spark.sql.delta.catalog.DeltaCatalog",
     "spark.databricks.delta.retentionDurationCheck.enabled" -> "false",
-    "spark.delta.merge.repartitionBeforeWrite" -> "true"
+    "spark.delta.merge.repartitionBeforeWrite" -> "true",
+    "spark.sql.legacy.timeParserPolicy"-> "CORRECTED"
   )
 
   val clin_conf =
@@ -35,6 +36,7 @@ object EtlConfiguration extends App {
         DatasetConf("raw_practitionerRole"   , alias, "/raw/landing/fhir/PractitionerRole"          , JSON   , OverWrite),
         DatasetConf("raw_serviceRequest"     , alias, "/raw/landing/fhir/ServiceRequest"            , JSON   , OverWrite),
         DatasetConf("raw_specimen"           , alias, "/raw/landing/fhir/Specimen"                  , JSON   , OverWrite),
+        DatasetConf("raw_task"               , alias, "/raw/landing/fhir/Task"                      , JSON   , OverWrite),
 
         //public
         DatasetConf("1000_genomes"           , alias, "/public/1000_genomes"                        , PARQUET, OverWrite, TableConf("clin", "1000_genomes")),
@@ -67,6 +69,7 @@ object EtlConfiguration extends App {
         DatasetConf("practitioner_role"      , alias, "/normalized/fhir/PractitionerRole"           , DELTA  , Upsert   , TableConf("clin", "practitioner_role")),
         DatasetConf("service_request"        , alias, "/normalized/fhir/ServiceRequest"             , DELTA  , Upsert   , TableConf("clin", "service_request")),
         DatasetConf("specimen"               , alias, "/normalized/fhir/specimen"                   , DELTA  , Upsert   , TableConf("clin", "specimen")),
+        DatasetConf("task"                   , alias, "/normalized/fhir/task"                       , DELTA  , Upsert   , TableConf("clin", "task")),
 
         //clinical normalized
         DatasetConf("normalized_occurrences" , alias, "/normalized/occurrences"                     , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "occurrences"))),
