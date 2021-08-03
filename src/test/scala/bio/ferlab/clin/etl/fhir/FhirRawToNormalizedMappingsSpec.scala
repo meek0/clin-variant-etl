@@ -3,7 +3,6 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirCatalog.Raw
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.spark3.ClassGenerator
 import bio.ferlab.datalake.spark3.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 import org.apache.spark.sql.functions._
@@ -189,9 +188,32 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val result = job.transform(Map(inputDs.id -> inputDf))
 
     result.count() shouldBe 3
-    result.where("id='73260'").as[SpecimenOutput].collect().head shouldBe SpecimenOutput()
+    val head = result.where("id='73260'").as[SpecimenOutput].collect().head
+    head shouldBe SpecimenOutput()
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "SpecimenOutput", result.where("id='73260'"), "src/test/scala/")
+
+  }
+
+  "task raw job" should "return data in the expected format" in {
+
+    val inputDs = Raw.task
+    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Task/Task_0_19000101_000000.json")
+    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
+    val job = new RawToNormalizedETL(src, dst, mapping)
+    val result = job.transform(Map(inputDs.id -> inputDf))
+
+    result.show(false)
+
+    result.count() shouldBe 1
+    val head = result.as[TaskOutput].collect().head
+    head shouldBe TaskOutput()
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
+
+    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "TaskOutput", result, "src/test/scala/")
 
   }
 

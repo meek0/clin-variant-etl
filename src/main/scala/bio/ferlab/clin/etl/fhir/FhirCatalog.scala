@@ -19,6 +19,7 @@ object FhirCatalog {
     val practitionerRole   = DatasetConf("practitionerRole"  , alias, s"$path/PractitionerRole"  , JSON, OverWrite)
     val serviceRequest     = DatasetConf("serviceRequest"    , alias, s"$path/ServiceRequest"    , JSON, OverWrite)
     val specimen           = DatasetConf("specimen"          , alias, s"$path/Specimen"          , JSON, OverWrite)
+    val task               = DatasetConf("task"              , alias, s"$path/Specimen"          , JSON, OverWrite)
 
   }
 
@@ -34,7 +35,7 @@ object FhirCatalog {
     val practitioner_role   = DatasetConf("practitioner_role"  , alias, s"$path/PractitionerRole"  , DELTA, Upsert, TableConf("clin", "practitioner_role"))
     val service_request     = DatasetConf("service_request"    , alias, s"$path/ServiceRequest"    , DELTA, Upsert, TableConf("clin", "service_request"))
     val specimen            = DatasetConf("specimen"           , alias, s"$path/Specimen"          , DELTA, Upsert, TableConf("clin", "specimen"))
-
+    val task                = DatasetConf("task"               , alias, s"$path/Task"              , DELTA, Upsert, TableConf("clin", "task"))
   }
 
 }

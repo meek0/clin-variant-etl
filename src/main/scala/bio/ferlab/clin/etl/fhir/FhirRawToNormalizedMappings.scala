@@ -158,7 +158,20 @@ object FhirRawToNormalizedMappings {
       .withColumn("specimen_type", col("type")("coding")(0)("code"))
     ),
     Drop("meta", "parent", "subject", "receivedTime", "accessionIdentifier", "request", "type")
+  )
 
+  val taskMapping: List[Transformation]  = List(
+    Custom(_
+      .withColumn("organization_id", regexp_replace(col("owner.reference"), "Organization/", ""))
+      .withColumn("specimen_id", regexp_replace(col("input")(0)("valueReference")("reference"), "Specimen/", ""))
+      .withColumn("document_id", regexp_replace(col("output")(0)("valueReference")("reference"), "DocumentReference/", ""))
+      .withColumn("patient_id", regexp_replace(col("for")("reference"), "Patient/", ""))
+      .withColumn("service_request_id", regexp_replace(col("focus")("reference"), "ServiceRequest/", ""))
+      .withColumn("code", col("code")("coding")(0)("code"))
+      .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzzz"))
+      .withTaskExtension
+    ),
+    Drop("meta", "owner", "authoredOn", "extension", "input", "output", "focus", "for")
   )
 
   val mappings: List[(DatasetConf, DatasetConf, List[Transformation])] = List(
@@ -170,6 +183,7 @@ object FhirRawToNormalizedMappings {
     (Raw.practitioner      , Normalized.practitioner       , defaultTransformations ++ practitionerMappings),
     (Raw.practitionerRole  , Normalized.practitioner_role  , defaultTransformations ++ practitionerRoleMappings),
     (Raw.serviceRequest    , Normalized.service_request    , defaultTransformations ++ serviceRequestMappings),
-    (Raw.specimen          , Normalized.specimen           , defaultTransformations ++ specimenMapping)
+    (Raw.specimen          , Normalized.specimen           , defaultTransformations ++ specimenMapping),
+    (Raw.task              , Normalized.task               , defaultTransformations ++ taskMapping)
   )
 }
