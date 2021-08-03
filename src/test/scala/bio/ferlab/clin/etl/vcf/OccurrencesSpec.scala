@@ -18,7 +18,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
   val patient: DatasetConf = conf.getDataset("patient")
-  val biospecimen: DatasetConf = conf.getDataset("biospecimen")
+  val specimen: DatasetConf = conf.getDataset("specimen")
   val group: DatasetConf = conf.getDataset("group")
 
   val patientDf = Seq(
@@ -44,10 +44,9 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   ).toDF()
 
-  val biospecimenDf = Seq(
-    BiospecimenOutput(
-      `biospecimen_id`= "SP14909",
-      //`family_id` = "FM00001",
+  val specimenDf = Seq(
+    SpecimenOutput(
+      `aliquot_id` = "TCGA-02-0001-01B-02D-0182-06",
       `patient_id` = "PA0001"
     )
   ).toDF
@@ -66,7 +65,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   val data = Map(
     complete_joint_calling.id -> Seq(VCFInput()).toDF(),
     patient.id -> patientDf,
-    biospecimen.id -> biospecimenDf,
+    specimen.id -> specimenDf,
     group.id -> groupDf
   )
 

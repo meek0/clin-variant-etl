@@ -102,7 +102,7 @@ case class INFO_CSQ(`Allele`: String = "C",
                     `rs_dbSNP151`: Option[String] = None)
 
 
-case class GENOTYPES(`sampleId`: String = "14909",
+case class GENOTYPES(`sampleId`: String = "TCGA-02-0001-01B-02D-0182-06",
                      `conditionalQuality`: Int = 2,
                      `F1R2`: List[Int] = List(0, 0),
                      `PRI`: Option[List[Double]] = None,

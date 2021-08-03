@@ -145,6 +145,22 @@ object FhirRawToNormalizedMappings {
     Drop("meta", "code", "subject", "requester", "extension", "identifier")
   )
 
+  val specimenMapping: List[Transformation]  = List(
+    Custom(_
+      .withColumn("parent_id", regexp_replace(col("parent.reference")(0), "Specimen/", ""))
+      .withColumn("organization_id", regexp_replace(col("accessionIdentifier.assigner.reference"), "Organization/", ""))
+      .withColumn("specimen_id", when(col("accessionIdentifier.system").like("%specimen"), col("accessionIdentifier.value")))
+      .withColumn("sample_id", when(col("accessionIdentifier.system").like("%sample"), col("accessionIdentifier.value")))
+      .withColumn("aliquot_id", when(col("accessionIdentifier.system").like("%aliquot"), col("accessionIdentifier.value")))
+      .withColumn("patient_id", regexp_replace(col("subject.reference"), "Patient/", ""))
+      .withColumn("service_request_id", regexp_replace(col("request.reference")(0), "ServiceRequest/", ""))
+      .withColumn("received_time", to_timestamp(col("receivedTime"), "yyyy-MM-dd\'T\'HH:mm:sszzzz"))
+      .withColumn("specimen_type", col("type")("coding")(0)("code"))
+    ),
+    Drop("meta", "parent", "subject", "receivedTime", "accessionIdentifier", "request", "type")
+
+  )
+
   val mappings: List[(DatasetConf, DatasetConf, List[Transformation])] = List(
     (Raw.clinicalImpression, Normalized.clinical_impression, defaultTransformations ++ clinicalImpressionMappings),
     (Raw.group             , Normalized.group              , defaultTransformations ++ groupMappings),
@@ -153,6 +169,7 @@ object FhirRawToNormalizedMappings {
     (Raw.patient           , Normalized.patient            , defaultTransformations ++ patientMappings),
     (Raw.practitioner      , Normalized.practitioner       , defaultTransformations ++ practitionerMappings),
     (Raw.practitionerRole  , Normalized.practitioner_role  , defaultTransformations ++ practitionerRoleMappings),
-    (Raw.serviceRequest    , Normalized.service_request    , defaultTransformations ++ serviceRequestMappings)
+    (Raw.serviceRequest    , Normalized.service_request    , defaultTransformations ++ serviceRequestMappings),
+    (Raw.specimen          , Normalized.specimen           , defaultTransformations ++ specimenMapping)
   )
 }
