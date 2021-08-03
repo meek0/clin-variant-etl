@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.conf
 
 import bio.ferlab.datalake.spark3.config._
-import bio.ferlab.datalake.spark3.loader.Format.{DELTA, PARQUET, VCF}
+import bio.ferlab.datalake.spark3.loader.Format.{DELTA, JSON, PARQUET, VCF}
 import bio.ferlab.datalake.spark3.loader.LoadType.{Insert, OverWrite, Upsert}
 
 object EtlConfiguration extends App {
@@ -26,6 +26,15 @@ object EtlConfiguration extends App {
         //raw
         // /vcf/complete_joint_calling.vqsr.bcftools_norm_ref.vep_20191218.SeqCap_EZ_Exome_v3_capture.vcf.gz
         DatasetConf("complete_joint_calling" , alias, "/vcf/complete_joint_calling.*.vcf.gz"        , VCF    , OverWrite),
+        DatasetConf("raw_clinicalImpression" , alias, "/raw/landing/fhir/ClinicalImpression"        , JSON   , OverWrite),
+        DatasetConf("raw_group"              , alias, "/raw/landing/fhir/Group"                     , JSON   , OverWrite),
+        DatasetConf("raw_observation"        , alias, "/raw/landing/fhir/Observation"               , JSON   , OverWrite),
+        DatasetConf("raw_organization"       , alias, "/raw/landing/fhir/Organization"              , JSON   , OverWrite),
+        DatasetConf("raw_patient"            , alias, "/raw/landing/fhir/Patient"                   , JSON   , OverWrite),
+        DatasetConf("raw_practitioner"       , alias, "/raw/landing/fhir/Practitioner"              , JSON   , OverWrite),
+        DatasetConf("raw_practitionerRole"   , alias, "/raw/landing/fhir/PractitionerRole"          , JSON   , OverWrite),
+        DatasetConf("raw_serviceRequest"     , alias, "/raw/landing/fhir/ServiceRequest"            , JSON   , OverWrite),
+        DatasetConf("raw_specimen"           , alias, "/raw/landing/fhir/Specimen"                  , JSON   , OverWrite),
 
         //public
         DatasetConf("1000_genomes"           , alias, "/public/1000_genomes"                        , PARQUET, OverWrite, TableConf("clin", "1000_genomes")),
@@ -57,9 +66,7 @@ object EtlConfiguration extends App {
         DatasetConf("practitioner"           , alias, "/normalized/fhir/Practitioner"               , DELTA  , Upsert   , TableConf("clin", "practitioner")),
         DatasetConf("practitioner_role"      , alias, "/normalized/fhir/PractitionerRole"           , DELTA  , Upsert   , TableConf("clin", "practitioner_role")),
         DatasetConf("service_request"        , alias, "/normalized/fhir/ServiceRequest"             , DELTA  , Upsert   , TableConf("clin", "service_request")),
-
-        //??
-        DatasetConf("biospecimen"            , alias, "/normalized/fhir/biospecimen"                , DELTA  , Upsert   , TableConf("clin", "biospecimen")),
+        DatasetConf("specimen"               , alias, "/normalized/fhir/specimen"                   , DELTA  , Upsert   , TableConf("clin", "specimen")),
 
         //clinical normalized
         DatasetConf("normalized_occurrences" , alias, "/normalized/occurrences"                     , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "occurrences"))),

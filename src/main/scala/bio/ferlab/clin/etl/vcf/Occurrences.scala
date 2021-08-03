@@ -13,7 +13,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
   val patient: DatasetConf = conf.getDataset("patient")
-  val biospecimen: DatasetConf = conf.getDataset("biospecimen")
+  val specimen: DatasetConf = conf.getDataset("specimen")
   val group: DatasetConf = conf.getDataset("group")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -21,7 +21,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
       //TODO add vcf normalization
       complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None),
       patient.id -> patient.read,
-      biospecimen.id -> biospecimen.read,
+      specimen.id -> specimen.read,
       group.id -> group.read
     )
   }
@@ -51,17 +51,20 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
 
     val familyRelationshipDf = getFamilyRelationships(data(patient.id))
 
-    val bios = data(biospecimen.id)
-      .select("biospecimen_id", "patient_id", "sequencing_strategy")
+    val specimenDf = data(specimen.id)
+      .where(col("aliquot_id").isNotNull)
+      .select("aliquot_id", "patient_id")
+    //TODO get sequencing strategy from Task table
+      .withColumn("sequencing_strategy", lit("WXS"))
 
     val joinedRelation =
-      bios
+      specimenDf
         .join(patients, Seq("patient_id"))
         .join(familyRelationshipDf, Seq("patient_id"), "left")
 
     val occurrences = getOccurrences(data(complete_joint_calling.id), batchId)
     occurrences
-      .join(joinedRelation, Seq("biospecimen_id"), "inner")
+      .join(joinedRelation, Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo)
       .withColumn("mother_calls", motherCalls)
@@ -126,7 +129,7 @@ object Occurrences {
         alternate,
         name,
         firstCsq,
-        concat(lit("SP"), $"genotype.sampleId") as "biospecimen_id", //TODO double check this
+        $"genotype.sampleId" as "aliquot_id",
         $"genotype.alleleDepths" as "ad",
         $"genotype.depth" as "dp",
         $"genotype.conditionalQuality" as "gq",
