@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.model.{BiospecimenOutput, FamilyRelationshipOutput, OccurrenceRawOutput, VCFInput}
+import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -18,67 +18,56 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
   val patient: DatasetConf = conf.getDataset("patient")
-  val biospecimens: DatasetConf = conf.getDataset("biospecimens")
-  val family_relationships: DatasetConf = conf.getDataset("family_relationships")
+  val biospecimen: DatasetConf = conf.getDataset("biospecimen")
+  val group: DatasetConf = conf.getDataset("group")
 
   val patientDf = Seq(
     PatientOutput(
-      `patient_id` = "PA0001",
+      `id` = "PA0001",
       `family_id` = "FM00001",
-      `gender` = "male"
+      `gender` = "male",
+      `practitioner_id` = "PPR00101",
+      `organization_id` = "OR00201",
+      `family_relationship` = List()
     ),
     PatientOutput(
-      `patient_id` = "PA0002",
+      `id` = "PA0002",
       `family_id` = "FM00001",
-      `gender` = "male"
+      `gender` = "male",
+      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0001", "FTH"))
     ),
     PatientOutput(
-      `patient_id` = "PA0003",
+      `id` = "PA0003",
       `family_id` = "FM00001",
-      `gender` = "female"
+      `gender` = "female",
+      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0001", "MTH"))
     )
   ).toDF()
 
   val biospecimenDf = Seq(
     BiospecimenOutput(
       `biospecimen_id`= "SP14909",
-      `family_id` = "FM00001",
+      //`family_id` = "FM00001",
       `patient_id` = "PA0001"
     )
   ).toDF
 
-  val familyRelationshipsDf = Seq(
-    FamilyRelationshipOutput(
-      `patient1` = "PA0001",
-      `patient2` = "PA0002",
-      `patient1_to_patient2_relation` = "Child",
-      `patient2_to_patient1_relation` = "Father",
-    ),
-    FamilyRelationshipOutput(
-      `patient1` = "PA0001",
-      `patient2` = "PA0003",
-      `patient1_to_patient2_relation` = "Child",
-      `patient2_to_patient1_relation` = "Mother",
-    ),
-    FamilyRelationshipOutput(
-      `patient1` = "PA0002",
-      `patient2` = "PA0001",
-      `patient1_to_patient2_relation` = "Father",
-      `patient2_to_patient1_relation` = "Child",
-    ),
-    FamilyRelationshipOutput(
-      `patient1` = "PA0003",
-      `patient2` = "PA0001",
-      `patient1_to_patient2_relation` = "Mother",
-      `patient2_to_patient1_relation` = "Child",
+  val groupDf = Seq(
+    GroupOutput(
+      `id` = "FM00001",
+      `members` = List(
+        MEMBERS("PA0001", `affected_status` = true),
+        MEMBERS("PA0002", `affected_status` = true),
+        MEMBERS("PA0003", `affected_status` = true)
+      )
     )
-  ).toDF
+  ).toDF()
 
   val data = Map(
     complete_joint_calling.id -> Seq(VCFInput()).toDF(),
     patient.id -> patientDf,
-    biospecimens.id -> biospecimenDf,
-    family_relationships.id -> familyRelationshipsDf
+    biospecimen.id -> biospecimenDf,
+    group.id -> groupDf
   )
 
 
@@ -88,15 +77,4 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       OccurrenceRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
     )
   }
-
 }
-//TODO replace with bio.ferlab.clin.model.PatientOutput
-case class PatientOutput(`patient_id`: String = "PA0001",
-                         `family_id`: String = "FA0001",
-                         `practitioner_id`: String = "PPR00101",
-                         `organization_id`: String = "OR00201",
-                         `study_id`: String = "ET00010",
-                         `is_proband`: Boolean = true,
-                         `affected_status`: String = "true",
-                         `gender`: String = "male",
-                         `is_fetus`: Boolean = false)

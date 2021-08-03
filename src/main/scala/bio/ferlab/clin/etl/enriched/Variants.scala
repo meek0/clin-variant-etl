@@ -54,7 +54,6 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
 
 
     val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrences)
-    joinWithTransmissions.selectLocus(col("transmissions"), col("transmissions_by_lab")).show(false)
     val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrences)
     val joinWithFrequencies = variantsWithFrequencies(joinWithParentalOrigin, occurrences)
     val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df)

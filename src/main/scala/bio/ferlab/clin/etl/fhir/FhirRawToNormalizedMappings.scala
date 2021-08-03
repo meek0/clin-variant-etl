@@ -36,7 +36,12 @@ object FhirRawToNormalizedMappings {
     Custom(
       _
         //.withColumnRenamed("id", "group_id")
-        .withColumn("members", transform(col("member"), c => regexp_replace(c("entity")("reference"), "Patient/", "")))
+        .withColumn("members", transform(col("member"), c =>
+          struct(
+            regexp_replace(c("entity")("reference"), "Patient/", "") as "patient_id",
+            when(c("extension")(0)("valueCoding")("display") === "Affected", lit(true)).otherwise(lit(false)) as "affected_status"
+          ))
+        )
         .withColumn("family_structure_code", col("extension")(0)("valueCoding")("code"))
     ),
     Drop("member", "extension")
