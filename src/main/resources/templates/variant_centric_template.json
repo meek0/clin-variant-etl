@@ -1,0 +1,559 @@
+{
+  "index_patterns": ["variant_centric*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 5
+    },
+
+    "mappings": {
+      "properties": {
+        "alternate": {
+          "type": "keyword"
+        },
+        "assembly_version": {
+          "type": "keyword"
+        },
+        "batch_id": {
+          "type": "keyword"
+        },
+        "chromosome": {
+          "type": "keyword"
+        },
+        "clinvar": {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "clin_sig": {
+              "type": "keyword"
+            },
+            "clinvar_id": {
+              "type": "keyword"
+            },
+            "conditions": {
+              "type": "keyword"
+            },
+            "inheritance": {
+              "type": "keyword"
+            },
+            "interpretations": {
+              "type": "keyword"
+            }
+          }
+        },
+        "consequences": {
+          "properties": {
+            "aa_change": {
+              "type": "keyword"
+            },
+            "amino_acids": {
+              "type": "nested",
+              "properties": {
+                "reference": {
+                  "type": "keyword"
+                },
+                "variant": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "biotype": {
+              "type": "keyword"
+            },
+            "canonical": {
+              "type": "keyword"
+            },
+            "cdna_position": {
+              "type": "long"
+            },
+            "cds_position": {
+              "type": "long"
+            },
+            "coding_dna_change": {
+              "type": "keyword"
+            },
+            "codons": {
+              "type": "nested",
+              "properties": {
+                "reference": {
+                  "type": "keyword"
+                },
+                "variant": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "consequence": {
+              "type": "keyword"
+            },
+            "consequences": {
+              "type": "keyword"
+            },
+            "conservations": {
+              "properties": {
+                "phylo_p17way_primate_rankscore": {
+                  "type": "float"
+                }
+              }
+            },
+            "createdOn": {
+              "type": "date"
+            },
+            "ensembl_feature_id": {
+              "type": "keyword"
+            },
+            "ensembl_gene_id": {
+              "type": "keyword"
+            },
+            "exon": {
+              "type": "nested",
+              "properties": {
+                "rank": {
+                  "type": "long"
+                },
+                "total": {
+                  "type": "long"
+                }
+              }
+            },
+            "feature_type": {
+              "type": "keyword"
+            },
+            "hgvsc": {
+              "type": "keyword"
+            },
+            "hgvsp": {
+              "type": "keyword"
+            },
+            "impact": {
+              "type": "keyword"
+            },
+            "impact_score": {
+              "type": "long"
+            },
+            "intron": {
+              "type": "nested",
+              "properties": {
+                "rank": {
+                  "type": "long"
+                },
+                "total": {
+                  "type": "long"
+                }
+              }
+            },
+            "pick": {
+              "type": "boolean"
+            },
+            "predictions": {
+              "properties": {
+                "FATHMM_converted_rankscore": {
+                  "type": "float"
+                },
+                "cadd_score": {
+                  "type": "float"
+                },
+                "dann_score": {
+                  "type": "float"
+                },
+                "fathmm_converted_rank_score": {
+                  "type": "float"
+                },
+                "fathmm_pred": {
+                  "type": "keyword"
+                },
+                "lrt_converted_rankscore": {
+                  "type": "float"
+                },
+                "lrt_pred": {
+                  "type": "keyword"
+                },
+                "polyphen2_hvar_pred": {
+                  "type": "keyword"
+                },
+                "polyphen2_hvar_score": {
+                  "type": "float"
+                },
+                "revel_rankscore": {
+                  "type": "float"
+                },
+                "sift_converted_rank_score": {
+                  "type": "float"
+                },
+                "sift_pred": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "protein_position": {
+              "type": "long"
+            },
+            "strand": {
+              "type": "long"
+            },
+            "symbol": {
+              "type": "keyword"
+            },
+            "updatedOn": {
+              "type": "date"
+            }
+          }
+        },
+        "createdOn": {
+          "type": "date"
+        },
+        "dbsnp": {
+          "type": "keyword"
+        },
+        "dna_change": {
+          "type": "keyword"
+        },
+        "donors": {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "ad_alt": {
+              "type": "long"
+            },
+            "ad_ratio": {
+              "type": "float"
+            },
+            "ad_ref": {
+              "type": "long"
+            },
+            "ad_total": {
+              "type": "long"
+            },
+            "batch_id": {
+              "type": "keyword"
+            },
+            "biospecimen_id": {
+              "type": "keyword"
+            },
+            "calls": {
+              "type": "long"
+            },
+            "dp": {
+              "type": "long"
+            },
+            "family_id": {
+              "type": "keyword"
+            },
+            "gq": {
+              "type": "long"
+            },
+            "has_alt": {
+              "type": "boolean"
+            },
+            "hgvsg": {
+              "type": "keyword"
+            },
+            "last_update": {
+              "type": "date"
+            },
+            "organization_id": {
+              "type": "keyword"
+            },
+            "patient_id": {
+              "type": "keyword"
+            },
+            "practitioner_id": {
+              "type": "keyword"
+            },
+            "qd": {
+              "type": "long"
+            },
+            "sequencing_strategy": {
+              "type": "keyword"
+            },
+            "study_id": {
+              "type": "keyword"
+            },
+            "variant_class": {
+              "type": "keyword"
+            },
+            "variant_type": {
+              "type": "keyword"
+            },
+            "zygosity": {
+              "type": "keyword"
+            }
+          }
+        },
+        "end": {
+          "type": "long"
+        },
+        "ext_db": {
+          "properties": {
+            "is_clinvar": {
+              "type": "boolean"
+            },
+            "is_dbsnp": {
+              "type": "boolean"
+            },
+            "is_hpo": {
+              "type": "boolean"
+            },
+            "is_omim": {
+              "type": "boolean"
+            },
+            "is_orphanet": {
+              "type": "boolean"
+            },
+            "is_pubmed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "frequencies": {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "1000_genomes": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                }
+              }
+            },
+            "exac": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
+            "gnomad_genomes_2_1_1": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
+            "gnomad_genomes_3_0": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
+            "internal": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "het": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
+            "topmed_bravo": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "het": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            }
+          }
+        },
+        "genes": {
+          "type": "nested",
+          "include_in_parent": true,
+          "properties": {
+            "alias": {
+              "type": "keyword"
+            },
+            "biotype": {
+              "type": "keyword"
+            },
+            "ensembl_gene_id": {
+              "type": "keyword"
+            },
+            "entrez_gene_id": {
+              "type": "long"
+            },
+            "hgnc": {
+              "type": "keyword"
+            },
+            "hpo": {
+              "properties": {
+                "hpo_term_id": {
+                  "type": "keyword"
+                },
+                "hpo_term_label": {
+                  "type": "keyword"
+                },
+                "hpo_term_name": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "location": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "omim": {
+              "type": "nested",
+              "include_in_parent": true,
+              "properties": {
+                "inheritance": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "keyword"
+                },
+                "omim_id": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "omim_gene_id": {
+              "type": "keyword"
+            },
+            "orphanet": {
+              "type": "nested",
+              "include_in_parent": true,
+              "properties": {
+                "disorder_id": {
+                  "type": "long"
+                },
+                "inheritance": {
+                  "type": "keyword"
+                },
+                "panel": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "symbol": {
+              "type": "keyword"
+            }
+          }
+        },
+        "genes_symbol": {
+          "type": "keyword"
+        },
+        "hgvsg": {
+          "type": "keyword"
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "impact_score": {
+          "type": "short"
+        },
+        "is_multi_allelic": {
+          "type": "boolean"
+        },
+        "lab_frequencies": {
+          "properties": {
+            "OR00201": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "het": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            }
+          }
+        },
+        "last_annotation_update": {
+          "type": "date"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "omim": {
+          "type": "keyword"
+        },
+        "participant_number": {
+          "type": "long"
+        },
+        "pubmed": {
+          "type": "keyword"
+        },
+        "reference": {
+          "type": "keyword"
+        },
+        "start": {
+          "type": "long"
+        },
+        "updatedOn": {
+          "type": "date"
+        },
+        "variant_class": {
+          "type": "keyword"
+        },
+        "variant_type": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
