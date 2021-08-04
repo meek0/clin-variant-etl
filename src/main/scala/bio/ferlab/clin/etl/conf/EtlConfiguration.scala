@@ -27,14 +27,14 @@ object EtlConfiguration extends App {
         //raw
         // /vcf/complete_joint_calling.vqsr.bcftools_norm_ref.vep_20191218.SeqCap_EZ_Exome_v3_capture.vcf.gz
         DatasetConf("complete_joint_calling" , alias, "/vcf/complete_joint_calling.*.vcf.gz"        , VCF    , OverWrite),
-        DatasetConf("raw_clinicalImpression" , alias, "/raw/landing/fhir/ClinicalImpression"        , JSON   , OverWrite),
+        DatasetConf("raw_clinical_impression", alias, "/raw/landing/fhir/ClinicalImpression"        , JSON   , OverWrite),
         DatasetConf("raw_group"              , alias, "/raw/landing/fhir/Group"                     , JSON   , OverWrite),
         DatasetConf("raw_observation"        , alias, "/raw/landing/fhir/Observation"               , JSON   , OverWrite),
         DatasetConf("raw_organization"       , alias, "/raw/landing/fhir/Organization"              , JSON   , OverWrite),
         DatasetConf("raw_patient"            , alias, "/raw/landing/fhir/Patient"                   , JSON   , OverWrite),
         DatasetConf("raw_practitioner"       , alias, "/raw/landing/fhir/Practitioner"              , JSON   , OverWrite),
-        DatasetConf("raw_practitionerRole"   , alias, "/raw/landing/fhir/PractitionerRole"          , JSON   , OverWrite),
-        DatasetConf("raw_serviceRequest"     , alias, "/raw/landing/fhir/ServiceRequest"            , JSON   , OverWrite),
+        DatasetConf("raw_practitioner_role"  , alias, "/raw/landing/fhir/PractitionerRole"          , JSON   , OverWrite),
+        DatasetConf("raw_service_request"    , alias, "/raw/landing/fhir/ServiceRequest"            , JSON   , OverWrite),
         DatasetConf("raw_specimen"           , alias, "/raw/landing/fhir/Specimen"                  , JSON   , OverWrite),
         DatasetConf("raw_task"               , alias, "/raw/landing/fhir/Task"                      , JSON   , OverWrite),
 
@@ -60,16 +60,16 @@ object EtlConfiguration extends App {
         DatasetConf("topmed_bravo"           , alias, "/public/topmed_bravo"                        , PARQUET, OverWrite, TableConf("clin", "topmed_bravo")),
 
         //fhir
-        DatasetConf("clinical_impression"    , alias, "/normalized/fhir/ClinicalImpression"         , DELTA  , Upsert   , TableConf("clin", "clinical_impression")),
-        DatasetConf("group"                  , alias, "/normalized/fhir/Group"                      , DELTA  , Upsert   , TableConf("clin", "group")),
-        DatasetConf("observation"            , alias, "/normalized/fhir/Observation"                , DELTA  , Upsert   , TableConf("clin", "observation")),
-        DatasetConf("organization"           , alias, "/normalized/fhir/Organization"               , DELTA  , Upsert   , TableConf("clin", "organization")),
-        DatasetConf("patient"                , alias, "/normalized/fhir/Patient"                    , DELTA  , Upsert   , TableConf("clin", "patient")),
-        DatasetConf("practitioner"           , alias, "/normalized/fhir/Practitioner"               , DELTA  , Upsert   , TableConf("clin", "practitioner")),
-        DatasetConf("practitioner_role"      , alias, "/normalized/fhir/PractitionerRole"           , DELTA  , Upsert   , TableConf("clin", "practitioner_role")),
-        DatasetConf("service_request"        , alias, "/normalized/fhir/ServiceRequest"             , DELTA  , Upsert   , TableConf("clin", "service_request")),
-        DatasetConf("specimen"               , alias, "/normalized/fhir/specimen"                   , DELTA  , Upsert   , TableConf("clin", "specimen")),
-        DatasetConf("task"                   , alias, "/normalized/fhir/task"                       , DELTA  , Upsert   , TableConf("clin", "task")),
+        DatasetConf("normalized_clinical_impression"    , alias, "/normalized/fhir/ClinicalImpression", DELTA  , Upsert   , TableConf("clin", "clinical_impression")),
+        DatasetConf("normalized_group"                  , alias, "/normalized/fhir/Group"             , DELTA  , Upsert   , TableConf("clin", "group")),
+        DatasetConf("normalized_observation"            , alias, "/normalized/fhir/Observation"       , DELTA  , Upsert   , TableConf("clin", "observation")),
+        DatasetConf("normalized_organization"           , alias, "/normalized/fhir/Organization"      , DELTA  , Upsert   , TableConf("clin", "organization")),
+        DatasetConf("normalized_patient"                , alias, "/normalized/fhir/Patient"           , DELTA  , Upsert   , TableConf("clin", "patient")),
+        DatasetConf("normalized_practitioner"           , alias, "/normalized/fhir/Practitioner"      , DELTA  , Upsert   , TableConf("clin", "practitioner")),
+        DatasetConf("normalized_practitioner_role"      , alias, "/normalized/fhir/PractitionerRole"  , DELTA  , Upsert   , TableConf("clin", "practitioner_role")),
+        DatasetConf("normalized_service_request"        , alias, "/normalized/fhir/ServiceRequest"    , DELTA  , Upsert   , TableConf("clin", "service_request")),
+        DatasetConf("normalized_specimen"               , alias, "/normalized/fhir/specimen"          , DELTA  , Upsert   , TableConf("clin", "specimen")),
+        DatasetConf("normalized_task"                   , alias, "/normalized/fhir/task"              , DELTA  , Upsert   , TableConf("clin", "task")),
 
         //clinical normalized
         DatasetConf("normalized_occurrences" , alias, "/normalized/occurrences"                     , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin_normalized", "occurrences"))),

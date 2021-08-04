@@ -74,13 +74,28 @@ object FhirCustomOperations {
     }
 
     def withTaskExtension: DataFrame = {
+
+      val extensionsLike: String => Column = like => filter(col("extension"), c => c("url").like(like))(0)("extension")
+      val workflowExtensions = extensionsLike("%workflow")
+      val sequencingExperimentExtensions = extensionsLike("%sequencing-experiment")
+
       df
-        .withColumn("sequencing_experiment",
-          filter(
-            filter(col("extension"), c => c("url").like("%sequencing-experiment"))(0)("extension"),
-            c => c("url") === "experimentalStrategy"
-          )(0)("valueCoding")("code")
-        )
+        .withColumn("experiment",
+          struct(
+            filter(sequencingExperimentExtensions, c => c("url") === "experimentalStrategy")(0)("valueCoding")("code") as "sequencing_strategy",
+            filter(sequencingExperimentExtensions, c => c("url") === "runName")(0)("valueString") as "name",
+            filter(sequencingExperimentExtensions, c => c("url") === "runAlias")(0)("valueString") as "alias",
+            filter(sequencingExperimentExtensions, c => c("url") === "platform")(0)("valueString") as "platform",
+            filter(sequencingExperimentExtensions, c => c("url") === "captureKit")(0)("valueString") as "capture_kit",
+            filter(sequencingExperimentExtensions, c => c("url") === "sequencerId")(0)("valueString") as "sequencer_id",
+            to_timestamp(filter(sequencingExperimentExtensions, c => c("url") === "runDate")(0)("valueDateTime"), "yyyy-MM-dd\'T\'HH:mm:sszzzz") as "run_date"
+          ))
+        .withColumn("workflow",
+          struct(
+            filter(workflowExtensions, c => c("url") === "genomeBuild")(0)("valueCoding")("code") as "genome_build",
+            filter(workflowExtensions, c => c("url") === "workflowName")(0)("valueString") as "name",
+            filter(workflowExtensions, c => c("url") === "workflowVersion")(0)("valueString") as "version"
+          ))
     }
 
     def withPatientExtension: DataFrame = {
