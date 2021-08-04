@@ -17,10 +17,10 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
-  val patient: DatasetConf = conf.getDataset("patient")
-  val specimen: DatasetConf = conf.getDataset("specimen")
-  val group: DatasetConf = conf.getDataset("group")
-  val task: DatasetConf = conf.getDataset("task")
+  val patient: DatasetConf = conf.getDataset("normalized_patient")
+  val specimen: DatasetConf = conf.getDataset("normalized_specimen")
+  val group: DatasetConf = conf.getDataset("normalized_group")
+  val task: DatasetConf = conf.getDataset("normalized_task")
 
   val patientDf = Seq(
     PatientOutput(

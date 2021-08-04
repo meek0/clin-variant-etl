@@ -12,10 +12,10 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
-  val patient: DatasetConf = conf.getDataset("patient")
-  val specimen: DatasetConf = conf.getDataset("specimen")
-  val group: DatasetConf = conf.getDataset("group")
-  val task: DatasetConf = conf.getDataset("task")
+  val patient: DatasetConf = conf.getDataset("normalized_patient")
+  val specimen: DatasetConf = conf.getDataset("normalized_specimen")
+  val group: DatasetConf = conf.getDataset("normalized_group")
+  val task: DatasetConf = conf.getDataset("normalized_task")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
