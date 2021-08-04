@@ -14,7 +14,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   import spark.implicits._
 
   val data = Map(
-    "complete_joint_calling" -> Seq(VCFInput()).toDF()
+    "raw_variant_calling" -> Seq(VCFInput()).toDF()
   )
 
   "variants job" should "transform data in expected format" in {

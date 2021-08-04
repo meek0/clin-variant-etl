@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
-  val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
   val patient: DatasetConf = conf.getDataset("patient")
   val specimen: DatasetConf = conf.getDataset("specimen")
   val group: DatasetConf = conf.getDataset("group")
@@ -20,7 +20,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       //TODO add vcf normalization
-      complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location, referenceGenomePath = None),
       patient.id -> patient.read,
       specimen.id -> specimen.read,
       group.id -> group.read,
@@ -70,7 +70,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
         .join(patients, Seq("patient_id"))
         .join(familyRelationshipDf, Seq("patient_id"), "left")
 
-    val occurrences = getOccurrences(data(complete_joint_calling.id), batchId)
+    val occurrences = getOccurrences(data(raw_variant_calling.id), batchId)
     occurrences
       .join(joinedRelation, Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))

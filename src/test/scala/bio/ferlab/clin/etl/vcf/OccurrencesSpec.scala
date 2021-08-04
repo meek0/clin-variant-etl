@@ -16,7 +16,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   import spark.implicits._
 
-  val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
   val patient: DatasetConf = conf.getDataset("patient")
   val specimen: DatasetConf = conf.getDataset("specimen")
   val group: DatasetConf = conf.getDataset("group")
@@ -71,7 +71,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   ).toDF
 
   val data = Map(
-    complete_joint_calling.id -> Seq(VCFInput()).toDF(),
+    raw_variant_calling.id -> Seq(VCFInput()).toDF(),
     patient.id -> patientDf,
     specimen.id -> specimenDf,
     group.id -> groupDf,

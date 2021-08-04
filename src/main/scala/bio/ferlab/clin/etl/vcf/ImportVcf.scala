@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.datalake.spark3.config.ConfigurationLoader
+import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader}
 import org.apache.spark.sql.SparkSession
 
 object ImportVcf extends App {
@@ -16,24 +16,16 @@ object ImportVcf extends App {
     .enableHiveSupport()
     .appName(s"Import $runType").getOrCreate()
 
-  run(input, output, batchId, runType)
+  implicit val conf: Configuration = ConfigurationLoader.loadFromResources(config)
 
-  implicit val conf = ConfigurationLoader.loadFromResources(config)
-
-  def run(input: String, output: String, batchId: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
-    spark.sql("use clin")
-
-    runType match {
-      case "variants" => new Variants(batchId).run()
-      case "consequences" => new Consequences(batchId).run()
-      case "occurrences" => new Occurrences(batchId).run()
-      case "all" =>
-        new Occurrences(batchId).run()
-        new Variants(batchId).run()
-        new Consequences(batchId).run()
-      case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
-    }
-
-
+  runType match {
+    case "variants" => new Variants(batchId).run()
+    case "consequences" => new Consequences(batchId).run()
+    case "occurrences" => new Occurrences(batchId).run()
+    case "all" =>
+      new Occurrences(batchId).run()
+      new Variants(batchId).run()
+      new Consequences(batchId).run()
+    case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
   }
 }
