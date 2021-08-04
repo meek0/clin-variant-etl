@@ -31,5 +31,4 @@ case class OMIM(`name`: String = "Epileptic encephalopathy, early infantile, 69"
 
 case class DDD(`disease_name`: String = "OCULOAURICULAR SYNDROME")
 
-case class COSMIC(`tumour_types_germline`: List[String] =
-                  List("breast", "colon", "endometrial cancer under age 50"))
+case class COSMIC(`tumour_types_germline`: List[String] = List("breast", "colon", "endometrial cancer under age 50"))

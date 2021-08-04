@@ -10,17 +10,17 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class Variants(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_variants")
-  val complete_joint_calling: DatasetConf = conf.getDataset("complete_joint_calling")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       //TODO add vcf normalization
-      complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None)
+      raw_variant_calling.id -> vcf(raw_variant_calling.location, referenceGenomePath = None)
     )
   }
 
   override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
-    data(complete_joint_calling.id)
+    data(raw_variant_calling.id)
       .withColumn("annotation", firstCsq)
       .select(
         chromosome,

@@ -26,7 +26,7 @@ object EtlConfiguration extends App {
       sources = List(
         //raw
         // /vcf/complete_joint_calling.vqsr.bcftools_norm_ref.vep_20191218.SeqCap_EZ_Exome_v3_capture.vcf.gz
-        DatasetConf("complete_joint_calling" , alias, "/vcf/complete_joint_calling.*.vcf.gz"        , VCF    , OverWrite),
+        DatasetConf("raw_variant_calling"    , alias, "/vcf/complete_joint_calling.*.vcf.gz"        , VCF    , OverWrite),
         DatasetConf("raw_clinical_impression", alias, "/raw/landing/fhir/ClinicalImpression"        , JSON   , OverWrite),
         DatasetConf("raw_group"              , alias, "/raw/landing/fhir/Group"                     , JSON   , OverWrite),
         DatasetConf("raw_observation"        , alias, "/raw/landing/fhir/Observation"               , JSON   , OverWrite),

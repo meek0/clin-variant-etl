@@ -14,6 +14,7 @@ object FhirRawToNormalized extends App {
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     .config("spark.databricks.delta.retentionDurationCheck.enabled", value = false)
     .config("spark.delta.merge.repartitionBeforeWrite", value = true)
+    .config("spark.sql.legacy.timeParserPolicy", "CORRECTED")
     .enableHiveSupport()
     .appName(s"Fhir Raw to Normalized").getOrCreate()
 
