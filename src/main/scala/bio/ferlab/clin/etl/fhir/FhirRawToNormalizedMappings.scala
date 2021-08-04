@@ -1,8 +1,7 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.clin.etl.fhir.FhirCatalog.{Normalized, Raw}
 import bio.ferlab.clin.etl.fhir.FhirCustomOperations._
-import bio.ferlab.datalake.spark3.config.DatasetConf
+import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.transformation._
 import org.apache.spark.sql.functions._
 
@@ -174,16 +173,16 @@ object FhirRawToNormalizedMappings {
     Drop("meta", "owner", "authoredOn", "extension", "input", "output", "focus", "for")
   )
 
-  val mappings: List[(DatasetConf, DatasetConf, List[Transformation])] = List(
-    (Raw.clinicalImpression, Normalized.clinical_impression, defaultTransformations ++ clinicalImpressionMappings),
-    (Raw.group             , Normalized.group              , defaultTransformations ++ groupMappings),
-    (Raw.observation       , Normalized.observation        , defaultTransformations ++ observationMappings),
-    (Raw.organization      , Normalized.organization       , defaultTransformations ++ organizationMappings),
-    (Raw.patient           , Normalized.patient            , defaultTransformations ++ patientMappings),
-    (Raw.practitioner      , Normalized.practitioner       , defaultTransformations ++ practitionerMappings),
-    (Raw.practitionerRole  , Normalized.practitioner_role  , defaultTransformations ++ practitionerRoleMappings),
-    (Raw.serviceRequest    , Normalized.service_request    , defaultTransformations ++ serviceRequestMappings),
-    (Raw.specimen          , Normalized.specimen           , defaultTransformations ++ specimenMapping),
-    (Raw.task              , Normalized.task               , defaultTransformations ++ taskMapping)
+  def mappings(implicit c: Configuration): List[(DatasetConf, DatasetConf, List[Transformation])] = List(
+    (c.getDataset("raw_clinical_impression"), c.getDataset("normalized_clinical_impression"), defaultTransformations ++ clinicalImpressionMappings),
+    (c.getDataset("raw_group")              , c.getDataset("normalized_group")              , defaultTransformations ++ groupMappings),
+    (c.getDataset("raw_observation")        , c.getDataset("normalized_observation")        , defaultTransformations ++ observationMappings),
+    (c.getDataset("raw_organization")       , c.getDataset("normalized_organization")       , defaultTransformations ++ organizationMappings),
+    (c.getDataset("raw_patient")            , c.getDataset("normalized_patient")            , defaultTransformations ++ patientMappings),
+    (c.getDataset("raw_practitioner")       , c.getDataset("normalized_practitioner")       , defaultTransformations ++ practitionerMappings),
+    (c.getDataset("raw_practitioner_role")  , c.getDataset("normalized_practitioner_role")  , defaultTransformations ++ practitionerRoleMappings),
+    (c.getDataset("raw_service_request")    , c.getDataset("normalized_service_request")    , defaultTransformations ++ serviceRequestMappings),
+    (c.getDataset("raw_specimen")           , c.getDataset("normalized_specimen")           , defaultTransformations ++ specimenMapping),
+    (c.getDataset("raw_task")               , c.getDataset("normalized_task")               , defaultTransformations ++ taskMapping)
   )
 }

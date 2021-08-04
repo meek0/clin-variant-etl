@@ -15,6 +15,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   val patient: DatasetConf = conf.getDataset("patient")
   val specimen: DatasetConf = conf.getDataset("specimen")
   val group: DatasetConf = conf.getDataset("group")
+  val task: DatasetConf = conf.getDataset("task")
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
@@ -22,7 +23,8 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
       complete_joint_calling.id -> vcf(complete_joint_calling.location, referenceGenomePath = None),
       patient.id -> patient.read,
       specimen.id -> specimen.read,
-      group.id -> group.read
+      group.id -> group.read,
+      task.id -> task.read
     )
   }
 
@@ -51,11 +53,17 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
 
     val familyRelationshipDf = getFamilyRelationships(data(patient.id))
 
+    val taskDf = data(task.id)
+      .select(
+        col("specimen_id") as "aliquot_id",
+        col("experiment.sequencing_strategy") as "sequencing_strategy",
+        col("workflow.genome_build") as "genome_build"
+      )
+
     val specimenDf = data(specimen.id)
       .where(col("aliquot_id").isNotNull)
       .select("aliquot_id", "patient_id")
-    //TODO get sequencing strategy from Task table
-      .withColumn("sequencing_strategy", lit("WXS"))
+      .join(taskDf, Seq("aliquot_id"), "left")
 
     val joinedRelation =
       specimenDf
