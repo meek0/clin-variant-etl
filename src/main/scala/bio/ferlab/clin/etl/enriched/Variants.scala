@@ -15,9 +15,10 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
   val `1000_genomes`: DatasetConf = conf.getDataset("1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("topmed_bravo")
-  val gnomad_genomes_2_1: DatasetConf = conf.getDataset("gnomad_genomes_2_1_1")
-  val gnomad_exomes_2_1: DatasetConf = conf.getDataset("gnomad_exomes_2_1_1")
+  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("gnomad_genomes_2_1_1")
+  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("gnomad_exomes_2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("gnomad_genomes_3_0")
+  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("gnomad_genomes_3_1_1")
   val dbsnp: DatasetConf = conf.getDataset("dbsnp")
   val clinvar: DatasetConf = conf.getDataset("clinvar")
   val genes: DatasetConf = conf.getDataset("genes")
@@ -29,9 +30,10 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
       normalized_occurrences.id -> normalized_occurrences.read,
       `1000_genomes`.id -> `1000_genomes`.read,
       topmed_bravo.id -> topmed_bravo.read,
-      gnomad_genomes_2_1.id -> gnomad_genomes_2_1.read,
-      gnomad_exomes_2_1.id -> gnomad_exomes_2_1.read,
+      gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
+      gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1.read,
       gnomad_genomes_3_0.id -> gnomad_genomes_3_0.read,
+      gnomad_genomes_3_1_1.id -> gnomad_genomes_3_1_1.read,
       dbsnp.id -> dbsnp.read,
       clinvar.id -> clinvar.read,
       genes.id -> genes.read
@@ -48,15 +50,16 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
 
     val genomesDf = data(`1000_genomes`.id).selectLocus($"ac", $"af", $"an")
     val topmed_bravoDf = data(topmed_bravo.id).selectLocus($"ac", $"af", $"an", $"hom", $"het")
-    val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1.id).selectLocus($"ac", $"af", $"an", $"hom")
-    val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1.id).selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1_1.id).selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1_1.id).selectLocus($"ac", $"af", $"an", $"hom")
     val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac", $"af", $"an", $"hom")
+    val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac", $"af", $"an", $"nhomalt" as "hom")
 
 
     val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrences)
     val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrences)
     val joinWithFrequencies = variantsWithFrequencies(joinWithParentalOrigin, occurrences)
-    val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df)
+    val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df, gnomad_genomes_3_1_1Df)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data("dbsnp"))
     val joinClinvar = joinWithClinvar(joinDbSNP, data("clinvar"))
     val joinGenes = joinWithGenes(joinClinvar, data("genes"))
@@ -138,15 +141,25 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
                           topmed_bravoDf: DataFrame,
                           gnomad_genomes_2_1Df: DataFrame,
                           gnomad_exomes_2_1Df: DataFrame,
-                          gnomad_genomes_3_0Df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+                          gnomad_genomes_3_0Df: DataFrame,
+                          gnomad_genomes_3_1_1Df: DataFrame)(implicit spark: SparkSession): DataFrame = {
 
     broadcast(variants)
       .joinAndMerge(genomesDf, "1000_genomes", "left")
       .joinAndMerge(topmed_bravoDf, "topmed_bravo", "left")
       .joinAndMerge(gnomad_genomes_2_1Df, "gnomad_genomes_2_1_1", "left")
-      .joinAndMerge(gnomad_exomes_2_1Df, "exac", "left")
+      .joinAndMerge(gnomad_exomes_2_1Df, "gnomad_exomes_2_1_1", "left")
       .joinAndMerge(gnomad_genomes_3_0Df, "gnomad_genomes_3_0", "left")
-      .select(variants("*"), struct(col("1000_genomes"), col("topmed_bravo"), col("gnomad_genomes_2_1_1"), col("exac"), col("gnomad_genomes_3_0"), col("internal_frequencies") as "internal") as "frequencies")
+      .joinAndMerge(gnomad_genomes_3_1_1Df, "gnomad_genomes_3_1_1", "left")
+      .select(variants("*"),
+        struct(
+          col("1000_genomes"),
+          col("topmed_bravo"),
+          col("gnomad_genomes_2_1_1"),
+          col("gnomad_exomes_2_1_1"),
+          col("gnomad_genomes_3_0"),
+          col("gnomad_genomes_3_1_1"),
+          col("internal_frequencies") as "internal") as "frequencies")
       .drop("internal_frequencies")
   }
 

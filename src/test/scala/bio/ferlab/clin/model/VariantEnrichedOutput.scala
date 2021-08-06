@@ -82,8 +82,9 @@ case class DONORS(`dp`: Int = 1,
 case class FREQUENCIES(//`1000_genomes`: Freq = Freq(3446, 5008,  0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),
                        gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
-                       exac: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
+                       gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
                        gnomad_genomes_3_0: GnomadFreqOutput = GnomadFreqOutput(0, 53780, 0.0, 0),
+                       gnomad_genomes_3_1_1: GnomadFreqOutput = GnomadFreqOutput(10, 20, 0.5, 10),
                        internal: Freq = Freq(4, 4, 1.0, 2, 0))
 
 

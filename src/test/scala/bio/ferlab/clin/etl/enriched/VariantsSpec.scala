@@ -27,6 +27,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("gnomad_genomes_2_1_1")
   val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("gnomad_exomes_2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("gnomad_genomes_3_0")
+  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("gnomad_genomes_3_1_1")
   val dbsnp: DatasetConf = conf.getDataset("dbsnp")
   val clinvar: DatasetConf = conf.getDataset("clinvar")
   val genes: DatasetConf = conf.getDataset("genes")
@@ -38,9 +39,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val normalized_variantsDf: DataFrame = Seq(VariantRawOutput()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
   val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
-  val gnomad_genomes_2_1_1Df: DataFrame = Seq(GnomadGenomes21Output()).toDF
-  val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes21Output()).toDF
+  val gnomad_genomes_2_1_1Df: DataFrame = Seq(GnomadGenomes211Output()).toDF
+  val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes211Output()).toDF
   val gnomad_genomes_3_0Df: DataFrame = Seq(GnomadGenomes30Output()).toDF
+  val gnomad_genomes_3_1_1Df: DataFrame = Seq(GnomadGenomes311Output()).toDF
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
@@ -53,6 +55,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1Df,
     gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1Df,
     gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
+    gnomad_genomes_3_1_1.id -> gnomad_genomes_3_1_1Df,
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
     genes.id -> genesDf
