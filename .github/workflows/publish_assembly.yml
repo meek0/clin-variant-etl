@@ -1,0 +1,28 @@
+name: Publish assembly
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish-assembly:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Build Assembly
+        run: sbt assembly
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.CLIN_QA_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CLIN_QA_AWS_SECRET_ACCESS_KEY }}
+          aws-region: RegionOne
+      - upload assembly
+        run: aws --endpoint-url https://esc.calculquebec.ca:8080 s3 cp clin-variant-etl.jar s3://clin-qa-app-datalake/spark/clin-variant-etl.jar
