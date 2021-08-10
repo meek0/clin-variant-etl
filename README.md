@@ -37,14 +37,3 @@ kustomize build . | kubectl apply -f -
 kubectl get pods
 kubectl logs xxxxx
 ```
-
-
-
-TODO
-- Field clinvar_trait (still required?)
-- Field orphanet_group (not use?)
-- Transmission
-- Frequencies by lab
-
-
-
