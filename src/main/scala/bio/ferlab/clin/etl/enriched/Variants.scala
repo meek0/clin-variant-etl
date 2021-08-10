@@ -48,12 +48,14 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
       .where($"has_alt" === true)
       .as("occurrences")
 
-    val genomesDf = data(`1000_genomes`.id).selectLocus($"ac", $"af", $"an")
-    val topmed_bravoDf = data(topmed_bravo.id).selectLocus($"ac", $"af", $"an", $"hom", $"het")
-    val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1_1.id).selectLocus($"ac", $"af", $"an", $"hom")
-    val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1_1.id).selectLocus($"ac", $"af", $"an", $"hom")
-    val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac", $"af", $"an", $"hom")
-    val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac", $"af", $"an", $"nhomalt" as "hom")
+    val genomesDf = data(`1000_genomes`.id)
+      .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
+    val topmed_bravoDf = data(topmed_bravo.id)
+      .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"), $"het".cast("long"))
+    val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
+    val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
+    val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
+    val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
 
 
     val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrences)

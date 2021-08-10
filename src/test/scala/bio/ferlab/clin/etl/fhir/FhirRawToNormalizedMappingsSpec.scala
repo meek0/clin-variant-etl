@@ -161,7 +161,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val head = result.where("id='32130'").as[ServiceRequestOutput].head()
     head shouldBe ServiceRequestOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `note` = head.`note`)
 
   }
 
@@ -177,7 +177,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val head = result.where("id='73260'").as[SpecimenOutput].collect().head
     head shouldBe SpecimenOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `received_time` = head.`received_time`)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "SpecimenOutput", result.where("id='73260'"), "src/test/scala/")
 
@@ -197,10 +197,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val head = result.as[TaskOutput].collect().head
     head shouldBe TaskOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `authored_on` = head.`authored_on`, `experiment` = head.`experiment`)
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "TaskOutput2", result, "src/test/scala/")
-
   }
 
 }
