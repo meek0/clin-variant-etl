@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 
 object RunEnriched extends App {
 
-  val Array(input, output, lastBatch, runType, configFile) = args
+  val Array(lastBatch, runType, configFile) = args
 
   implicit val spark: SparkSession = SparkSession.builder
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
@@ -21,9 +21,9 @@ object RunEnriched extends App {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
 
-  run(input, output, lastBatch, runType)
+  run(lastBatch, runType)
 
-  def run(input: String, output: String, lastBatch: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
+  def run(lastBatch: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
     runType match {
       case "variants" => new Variants(lastBatch).run()
       case "consequences" => new Consequences(lastBatch).run()

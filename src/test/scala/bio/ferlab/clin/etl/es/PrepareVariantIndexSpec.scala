@@ -2,6 +2,8 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, StorageConf}
+import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.SaveMode
 import org.scalatest.BeforeAndAfterAll
@@ -14,23 +16,31 @@ class PrepareVariantIndexSpec extends AnyFlatSpec with WithSparkSession with Mat
 
   import spark.implicits._
 
+  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
+    .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
+
+  val enriched_variants = conf.getDataset("enriched_variants")
+  val enriched_consequences = conf.getDataset("enriched_consequences")
+
+  val data = Map(
+    enriched_variants.id -> Seq(VariantEnrichedOutput()).toDF,
+    enriched_consequences.id -> Seq(ConsequenceEnrichedOutput()).toDF
+  )
+
   override def beforeAll(): Unit = {
     FileUtils.deleteDirectory(new File("spark-warehouse"))
+    FileUtils.deleteDirectory(new File(enriched_consequences.location))
+    FileUtils.deleteDirectory(new File(enriched_variants.location))
     spark.sql("CREATE DATABASE IF NOT EXISTS clin")
     spark.sql("USE clin")
 
-    Seq(VariantEnrichedOutput(
-      `createdOn` = "BAT1",//Timestamp.valueOf("2020-01-01 12:00:00"),
-      `updatedOn` = "BAT1"))//Timestamp.valueOf("2020-01-01 12:00:00")))
-      .toDF
-      .write.format("delta").mode(SaveMode.Overwrite)
-      //.option("path", "spark-warehouse/clin.db/variants")
-      .saveAsTable("clin.variants")
+    data.foreach { case (id, df) =>
+      val ds = conf.getDataset(id)
 
-    Seq(ConsequenceEnrichedOutput()).toDF
-      .write.format("delta").mode(SaveMode.Overwrite)
-      //.option("path", "spark-warehouse/clin.db/consequences")
-      .saveAsTable("clin.consequences")
+      LoadResolver
+        .resolve(spark, conf)(ds.format, LoadType.OverWrite)
+        .apply(ds, df)
+    }
   }
 
   "run" should "produce json files in the right format" in {

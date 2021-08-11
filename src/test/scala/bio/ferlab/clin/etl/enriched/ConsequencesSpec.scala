@@ -50,7 +50,8 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   "consequences job" should "run" in {
     new Consequences("BAT0").run()
-    val result = spark.table("clin.consequences").as[ConsequenceEnrichedOutput].collect().head
+    enriched_consequences.read.show(false)
+    val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
       `createdOn` = result.`createdOn`,
       `updatedOn` = result.`updatedOn`)

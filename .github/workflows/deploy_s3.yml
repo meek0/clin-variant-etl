@@ -1,4 +1,4 @@
-name: Publish assembly
+name: Deploy as S3
 
 on:
   push:

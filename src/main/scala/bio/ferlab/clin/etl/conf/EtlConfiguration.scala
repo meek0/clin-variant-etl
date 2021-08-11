@@ -8,8 +8,12 @@ object EtlConfiguration extends App {
 
   val alias = "clin_storage"
 
-  val clin_storage = List(
-    StorageConf(alias, "s3a://clin")
+  val clin_qa_storage = List(
+    StorageConf(alias, "s3a://clin-qa-app-datalake")
+  )
+
+  val clin_prd_storage = List(
+    StorageConf(alias, "s3a://clin-prd-app-datalake")
   )
 
   val clin_spark_conf = Map(
@@ -22,7 +26,6 @@ object EtlConfiguration extends App {
 
   val clin_conf =
     Configuration(
-      storages = clin_storage,
       sources = List(
         //raw
         // /vcf/complete_joint_calling.vqsr.bcftools_norm_ref.vep_20191218.SeqCap_EZ_Exome_v3_capture.vcf.gz
@@ -53,7 +56,7 @@ object EtlConfiguration extends App {
         DatasetConf("gnomad_genomes_2_1_1"   , alias, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
         DatasetConf("gnomad_exomes_2_1_1"    , alias, "/public/gnomad/gnomad_exomes_2.1.1_liftover_grch38" , PARQUET, OverWrite, TableConf("clin", "gnomad_exomes_2_1_1")),
         DatasetConf("gnomad_genomes_3_0"     , alias, "/public/gnomad/gnomad_genomes_3.0"                  , PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_0")),
-        DatasetConf("gnomad_genomes_3_1_1"   , alias, "/public/gnomad/gnomad_genomes_3_1_1"                , PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
+        DatasetConf("gnomad_genomes_3_1_1"   , alias, "/public/gnomad/gnomad_genomes_3_1_1_full"           , PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
         DatasetConf("human_genes"            , alias, "/public/human_genes"                                , PARQUET, OverWrite, TableConf("clin", "human_genes")),
         DatasetConf("hpo_gene_set"           , alias, "/public/hpo_gene_set"                               , PARQUET, OverWrite, TableConf("clin", "hpo_gene_set")),
         DatasetConf("omim_gene_set"          , alias, "/public/omim_gene_set"                              , PARQUET, OverWrite, TableConf("clin", "omim_gene_set")),
@@ -85,8 +88,8 @@ object EtlConfiguration extends App {
       sparkconf = clin_spark_conf
     )
 
-  ConfigurationWriter.writeTo("src/main/resources/config/qa.conf", clin_conf)
-  ConfigurationWriter.writeTo("src/main/resources/config/production.conf", clin_conf)
+  ConfigurationWriter.writeTo("src/main/resources/config/qa.conf", clin_conf.copy(storages = clin_qa_storage))
+  ConfigurationWriter.writeTo("src/main/resources/config/production.conf", clin_conf.copy(storages = clin_prd_storage))
 
   ConfigurationWriter.writeTo("src/test/resources/config/test.conf", clin_conf)
 

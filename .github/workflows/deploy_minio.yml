@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy as Minio
 
 on:
   push:
@@ -26,5 +26,5 @@ jobs:
           access_key: ${{ secrets.CLIN_QA_AWS_ACCESS_KEY_ID }}
           secret_key: ${{ secrets.CLIN_QA_AWS_SECRET_ACCESS_KEY }}
           bucket: 'clin-qa-app-datalake'
-          source_dir: 'target/scala-2.12/clin-variant-etl.jar'
-          target_dir: '/spark/clin-variant-etl.jar'
+          source_dir: 'target/scala-2.12'
+          target_dir: '/spark'
