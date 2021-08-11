@@ -24,5 +24,5 @@ jobs:
           aws-access-key-id: ${{ secrets.CLIN_QA_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.CLIN_QA_AWS_SECRET_ACCESS_KEY }}
           aws-region: RegionOne
-      - upload assembly
+      - name: upload assembly
         run: aws --endpoint-url https://esc.calculquebec.ca:8080 s3 cp clin-variant-etl.jar s3://clin-qa-app-datalake/spark/clin-variant-etl.jar
