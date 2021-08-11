@@ -7,7 +7,7 @@ on:
 
 jobs:
   publish-assembly:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 11
@@ -23,6 +23,5 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.CLIN_QA_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.CLIN_QA_AWS_SECRET_ACCESS_KEY }}
-          aws-region: RegionOne
       - name: upload assembly
-        run: aws --endpoint-url https://esc.calculquebec.ca:8080 s3 cp clin-variant-etl.jar s3://clin-qa-app-datalake/spark/clin-variant-etl.jar
+        run: aws s3 --endpoint https://esc.calculquebec.ca:8080 cp target/scala-2.12/clin-variant-etl.jar s3://clin-qa-app-datalake/spark/clin-variant-etl.jar
