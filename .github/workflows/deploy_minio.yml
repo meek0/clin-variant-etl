@@ -19,7 +19,7 @@ jobs:
       - name: Build Assembly
         run: sbt assembly
 
-      - name: Minio Deploy
+      - name: Minio Deploy jar
         uses: hkdobrev/minio-deploy-action@v1
         with:
           endpoint: ${{ secrets.CLIN_QA_AWS_ENDPOINT }}
@@ -28,3 +28,13 @@ jobs:
           bucket: 'clin-qa-app-datalake'
           source_dir: 'target/scala-2.12'
           target_dir: '/spark'
+
+      - name: Minio Deploy templates
+        uses: hkdobrev/minio-deploy-action@v1
+        with:
+          endpoint: ${{ secrets.CLIN_QA_AWS_ENDPOINT }}
+          access_key: ${{ secrets.CLIN_QA_AWS_ACCESS_KEY_ID }}
+          secret_key: ${{ secrets.CLIN_QA_AWS_SECRET_ACCESS_KEY }}
+          bucket: 'clin-qa-app-datalake'
+          source_dir: 'src/main/resources/templates'
+          target_dir: '/jobs/templates'

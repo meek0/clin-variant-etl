@@ -59,7 +59,7 @@
             "biotype": {
               "type": "keyword"
             },
-            "canonical": {
+            "original_canonical": {
               "type": "keyword"
             },
             "cdna_position": {
@@ -275,6 +275,36 @@
               "type": "keyword"
             },
             "zygosity": {
+              "type": "keyword"
+            },
+            "mother_id": {
+              "type": "keyword"
+            },
+            "father_id": {
+              "type": "keyword"
+            },
+            "mother_calls": {
+              "type": "long"
+            },
+            "father_calls": {
+              "type": "long"
+            },
+            "mother_affected_status": {
+              "type": "boolean"
+            },
+            "father_affected_status": {
+              "type": "boolean"
+            },
+            "mother_zygosity": {
+              "type": "keyword"
+            },
+            "father_zygosity": {
+              "type": "keyword"
+            },
+            "parental_origin": {
+              "type": "keyword"
+            },
+            "transmission": {
               "type": "keyword"
             }
           }
@@ -500,7 +530,7 @@
         "is_multi_allelic": {
           "type": "boolean"
         },
-        "lab_frequencies": {
+        "frequencies_by_lab": {
           "properties": {
             "OR00201": {
               "properties": {

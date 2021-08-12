@@ -12,11 +12,12 @@ case class VariantIndexUpdate(`chromosome`: String = "1",
                               `frequencies_by_lab`: Map[String, Freq] = Map("OR00201" -> Freq(2, 2, 1.0, 1, 0), "OR00202" -> Freq(2, 2, 1.0, 1, 0)),
                               `frequencies`: Map[String, Freq] = Map("internal" -> Freq(4, 4, 1.0, 2, 0)),
                               `participant_number`: Long = 2,
-                              `transmissions`: Map[String, Long] = Map("AD" -> 1, "AR" -> 1),
-                              `transmissions_by_lab`: Map[String, Map[String, Long]] = Map(
-                                "OR00201" -> Map("AD" -> 1),
-                                "OR00202" -> Map("AR" -> 1)),
-                              `parental_origins`: Map[String, Long] = Map("mother" -> 1, "father" -> 1),
-                              `parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
-                                "OR00201" -> Map("mother" -> 1),
-                                "OR00202" -> Map("father" -> 1)))
+                              //`transmissions`: Map[String, Long] = Map("AD" -> 1, "AR" -> 1),
+                              //`transmissions_by_lab`: Map[String, Map[String, Long]] = Map(
+                              //  "OR00201" -> Map("AD" -> 1),
+                              //  "OR00202" -> Map("AR" -> 1)),
+                              //`parental_origins`: Map[String, Long] = Map("mother" -> 1, "father" -> 1),
+                              //`parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
+                              //  "OR00201" -> Map("mother" -> 1),
+                              //  "OR00202" -> Map("father" -> 1))
+                              )

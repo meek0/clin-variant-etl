@@ -36,14 +36,14 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `dbsnp`: String = "rs200676709",
                               `genes`: List[GENES] = List(GENES()),
                               `omim`: List[String] = List("618285"),
-                              `transmissions`: Map[String, Int] = Map("AD" -> 1, "AR" -> 1),
-                              `transmissions_by_lab`: Map[String, Map[String, Int]] = Map(
-                                "OR00201" -> Map("AD" -> 1),
-                                "OR00202" -> Map("AR" -> 1)),
-                              `parental_origins`: Map[String, Int] = Map("mother" -> 1, "father" -> 1),
-                              `parental_origins_by_lab`: Map[String, Map[String, Int]] = Map(
-                                "OR00201" -> Map("mother" -> 1),
-                                "OR00202" -> Map("father" -> 1)),
+                              //`transmissions`: Map[String, Int] = Map("AD" -> 1, "AR" -> 1),
+                              //`transmissions_by_lab`: Map[String, Map[String, Int]] = Map(
+                              //  "OR00201" -> Map("AD" -> 1),
+                              //  "OR00202" -> Map("AR" -> 1)),
+                              //`parental_origins`: Map[String, Int] = Map("mother" -> 1, "father" -> 1),
+                              //`parental_origins_by_lab`: Map[String, Map[String, Int]] = Map(
+                              //  "OR00201" -> Map("mother" -> 1),
+                              //  "OR00202" -> Map("father" -> 1)),
                               `ext_db`: EXT_DB = EXT_DB())
 
 
