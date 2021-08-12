@@ -54,5 +54,4 @@ object Indexer extends App {
       job.run(genesDf)
   }
 
-
 }

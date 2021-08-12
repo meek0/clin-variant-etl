@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 
 object ImportVcf extends App {
 
-  val Array(input, output, batchId, runType, config) = args
+  val Array(batchId, runType, config) = args
 
   implicit val spark: SparkSession = SparkSession.builder
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
