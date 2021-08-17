@@ -82,10 +82,8 @@ object FhirRawToNormalizedMappings {
     Custom (
       _
         .extractIdentifier(List("MR" -> "medical_record_number", "JHN" -> "jurisdictional_health_number"))
-        //.withColumnRenamed("id", "patient_id")
         .withColumn("practitioner_id", regexp_replace(col("generalPractitioner.reference")(0), "PractitionerRole/", ""))
         .withColumn("organization_id", regexp_replace(col("managingOrganization.reference"), "Organization/", ""))
-        .withPatientNames
         .withPatientExtension
     ),
     Drop("name", "text", "extension", "managingOrganization", "generalPractitioner", "identifier")
