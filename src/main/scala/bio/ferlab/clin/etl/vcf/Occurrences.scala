@@ -19,8 +19,7 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      //TODO add vcf normalization
-      raw_variant_calling.id -> vcf(raw_variant_calling.location, referenceGenomePath = None),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
       patient.id -> patient.read,
       specimen.id -> specimen.read,
       group.id -> group.read,

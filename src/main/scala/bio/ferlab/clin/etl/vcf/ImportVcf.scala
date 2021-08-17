@@ -1,22 +1,12 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader}
-import org.apache.spark.sql.SparkSession
+import bio.ferlab.datalake.spark3.public.SparkApp
 
-object ImportVcf extends App {
+object ImportVcf extends SparkApp {
 
-  val Array(batchId, runType, config) = args
+  val Array(_, batchId, runType) = args
 
-  implicit val spark: SparkSession = SparkSession.builder
-    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    .config("spark.databricks.delta.retentionDurationCheck.enabled", value = false)
-    .config("spark.delta.merge.repartitionBeforeWrite", value = true)
-    //    .config("", value = 20) //Avoid too many small files as output of merging delta
-    .enableHiveSupport()
-    .appName(s"Import $runType").getOrCreate()
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources(config)
+  implicit val (conf, spark) = init()
 
   runType match {
     case "variants" => new Variants(batchId).run()

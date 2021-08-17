@@ -1,15 +1,21 @@
 package bio.ferlab.clin.etl.external
 
-import org.apache.spark.sql.SparkSession
+import bio.ferlab.datalake.spark3.config.{DatasetConf, TableConf}
+import bio.ferlab.datalake.spark3.public.SparkApp
 
-object CreatePublicTables extends App {
+object CreatePublicTables extends SparkApp {
 
-  val Array(input) = args
+  val Array(_, input) = args
 
-  implicit val spark: SparkSession = SparkSession.builder
-    .enableHiveSupport()
-    .appName(s"Create Public Tables").getOrCreate()
-  spark.sql("use clin")
+  implicit val (conf, spark) = init()
+
+  conf
+    .sources
+    .collect { case ds: DatasetConf if ds.table.isDefined && ds.path.contains("/public") => ds.table.get}
+    .foreach { case TableConf(database, name) =>
+      spark.sql(s"CREATE TABLE IF NOT EXISTS $database")
+      spark.sql(s"DROP TABLE $database.$name")
+    }
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `cancer_hotspots` (
@@ -385,7 +391,33 @@ object CreatePublicTables extends App {
 
   spark.sql(
     s"""
-       |CREATE TABLE gnomad_genomes_3_1_1 (
+       |CREATE TABLE IF NOT EXISTS `gnomad_genomes_3_1_1` (
+       |`chromosome` STRING,
+       |`start` BIGINT,
+       |`end` BIGINT,
+       |`reference` STRING,
+       |`alternate` STRING,
+       |`qual` DOUBLE,
+       |`name` STRING,
+       |`ac` INT,
+       |`an` INT,
+       |`af` DOUBLE,
+       |`nhomalt` INT,
+       |`ac_raw` INT,
+       |`an_raw` INT,
+       |`af_raw` DOUBLE,
+       |`nhomalt_raw` INT
+       |)
+       |USING parquet
+       |PARTITIONED BY (chromosome)
+       |LOCATION '$input/gnomad/gnomad_genomes_3_1_1'
+       |""".stripMargin
+  )
+
+  /*
+  spark.sql(
+    s"""
+       |CREATE TABLE gnomad_genomes_3_1_1_full (
        |`chromosome` STRING,
        |`start` BIGINT,
        |`end` BIGINT,
@@ -1307,7 +1339,7 @@ object CreatePublicTables extends App {
        |PARTITIONED BY (chromosome)
        |LOCATION '$input/gnomad/gnomad_genomes_3_1_1'
        |""".stripMargin
-  )
+  )*/
 
   spark.sql(
     s"""CREATE TABLE IF NOT EXISTS `gnomad_exomes_2_1_1_liftover_grch38` (

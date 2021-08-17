@@ -14,8 +14,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
 
   override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      //TODO add vcf normalization
-      raw_variant_calling.id -> vcf(raw_variant_calling.location, referenceGenomePath = None)
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
     )
   }
 
