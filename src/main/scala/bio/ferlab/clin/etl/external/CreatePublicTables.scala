@@ -14,7 +14,7 @@ object CreatePublicTables extends SparkApp {
     .collect { case ds: DatasetConf if ds.table.isDefined && ds.path.contains("/public") => ds.table.get}
     .foreach { case TableConf(database, name) =>
       spark.sql(s"CREATE DATABASE IF NOT EXISTS $database")
-      spark.sql(s"DROP TABLE $database.$name")
+      spark.sql(s"DROP TABLE IF EXISTS $database.$name")
     }
 
   spark.sql(
