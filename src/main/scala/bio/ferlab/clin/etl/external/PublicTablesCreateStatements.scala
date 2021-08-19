@@ -117,7 +117,7 @@ object PublicTablesCreateStatements {
        |`master_id` STRING
        |)
        |USING parquet
-       |LOCATION '$input/cancer_hotspots'
+       |LOCATION '$input'
        |""".stripMargin
 
   val clinvar: String => String = input =>
@@ -157,7 +157,7 @@ object PublicTablesCreateStatements {
        |  `conditions` ARRAY<STRING>
        |)
        |USING parquet
-       |LOCATION '$input/clinvar'
+       |LOCATION '$input'
        |""".stripMargin
 
   val cosmic_gene_set: String => String = input =>
@@ -184,7 +184,7 @@ object PublicTablesCreateStatements {
        |  `synonyms` ARRAY<STRING>
        |)
        |USING parquet
-       |LOCATION '$input/cosmic_gene_set'
+       |LOCATION '$input'
        |""".stripMargin
 
   val dbsnp: String => String = input =>
@@ -198,7 +198,7 @@ object PublicTablesCreateStatements {
        |   `original_contig_name` STRING
        |)
        |USING parquet
-       |LOCATION '$input/dbsnp'
+       |LOCATION '$input'
        |""".stripMargin
 
   val ddd_gene_set: String => String = input =>
@@ -215,7 +215,7 @@ object PublicTablesCreateStatements {
        |  hgnc_id STRING
        |)
        |USING parquet
-       |LOCATION '$input/ddd_gene_set'
+       |LOCATION '$input'
        |""".stripMargin
 
   val topmed_bravo: String => String = input =>
@@ -236,7 +236,7 @@ object PublicTablesCreateStatements {
        |  `qual_filter` STRING
        |)
        |USING parquet
-       |LOCATION '$input/topmed_bravo'
+       |LOCATION '$input'
        |""".stripMargin
 
   val gnomad_genomes_3_0: String => String = input =>
@@ -371,7 +371,7 @@ object PublicTablesCreateStatements {
        |  `fin_female_hom` INT
        |)
        |USING parquet
-       |LOCATION '$input/gnomad/gnomad_genomes_3.0'
+       |LOCATION '$input'
        |""".stripMargin
 
   val gnomad_genomes_3_1_1: String => String = input =>
@@ -395,7 +395,7 @@ object PublicTablesCreateStatements {
        |)
        |USING parquet
        |PARTITIONED BY (chromosome)
-       |LOCATION '$input/gnomad/gnomad_genomes_3_1_1'
+       |LOCATION '$input'
        |""".stripMargin
 
   /*
@@ -1321,7 +1321,7 @@ spark.sql(
      |`old_multiallelic` STRING)
      |USING parquet
      |PARTITIONED BY (chromosome)
-     |LOCATION '$input/gnomad/gnomad_genomes_3_1_1'
+     |LOCATION '$input'
      |""".stripMargin
 )*/
 
@@ -1477,7 +1477,7 @@ spark.sql(
        |  `oth_male_hom` INT
        |)
        |USING parquet
-       |LOCATION '$input/gnomad/gnomad_exomes_2.1.1_liftover_grch38'
+       |LOCATION '$input'
        |""".stripMargin
 
   val gnomad_genomes_2_1_1: String => String = input =>
@@ -1600,7 +1600,7 @@ spark.sql(
        |  `oth_male_hom` INT
        |)
        |USING parquet
-       |LOCATION '$input/gnomad/gnomad_genomes_2.1.1_liftover_grch38'
+       |LOCATION '$input'
        |""".stripMargin
 
   val `1000_genomes`: String => String = input =>
@@ -1622,7 +1622,7 @@ spark.sql(
        |  `dp` INT
        |)
        |USING parquet
-       |LOCATION '$input/1000_genomes'
+       |LOCATION '$input'
        |""".stripMargin
 
   val dbnsfp_annovar: String => String = input =>
@@ -1686,7 +1686,7 @@ spark.sql(
        |`chromosome` STRING)
        |USING parquet
        |PARTITIONED BY (chromosome)
-       |LOCATION '$input/annovar/dbnsfp'
+       |LOCATION '$input'
        |""".stripMargin
 
   val dbnsfp_original: String => String = input =>
@@ -1815,7 +1815,7 @@ spark.sql(
        |  `chromosome` STRING)
        |USING parquet
        |PARTITIONED BY (chromosome)
-       |LOCATION '$input/dbnsfp/scores'
+       |LOCATION '$input'
        |""".stripMargin
 
   val dbnsfp_scores: String => String = input =>
@@ -1868,7 +1868,7 @@ spark.sql(
        |`chromosome` STRING)
        |USING parquet
        |PARTITIONED BY (chromosome)
-       |LOCATION '$input/dbnsfp/parquet/scores'
+       |LOCATION '$input'
        |""".stripMargin
 
   val human_genes: String => String = input =>
@@ -1892,7 +1892,7 @@ spark.sql(
        |  `omim_gene_id` STRING
        |)
        |USING parquet
-       |LOCATION '$input/human_genes'
+       |LOCATION '$input'
        |""".stripMargin
 
   val orphanet_gene_set: String => String = input =>
@@ -1927,7 +1927,7 @@ spark.sql(
        |  `type_of_inheritance` ARRAY<STRING>
        |)
        |USING parquet
-       |LOCATION '$input/orphanet_gene_set'
+       |LOCATION '$input'
        |""".stripMargin
 
   val hpo_gene_set: String => String = input =>
@@ -1944,7 +1944,7 @@ spark.sql(
        |  `ensembl_gene_id` STRING
        |)
        |USING parquet
-       |LOCATION '$input/hpo_gene_set'
+       |LOCATION '$input'
        |""".stripMargin
 
   val omim_gene_set: String => String = input =>
@@ -1964,6 +1964,6 @@ spark.sql(
        |  `phenotype` STRUCT<`name`: STRING, `omim_id`: STRING, `inheritance`: ARRAY<STRING>>
        |)
        |USING parquet
-       |LOCATION '$input/omim_gene_set'
+       |LOCATION '$input'
        |""".stripMargin
 }

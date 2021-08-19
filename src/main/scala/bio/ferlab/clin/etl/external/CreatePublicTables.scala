@@ -6,7 +6,7 @@ import bio.ferlab.datalake.spark3.public.SparkApp
 
 object CreatePublicTables extends SparkApp {
 
-  val Array(_, input) = args
+  val Array(_) = args
 
   implicit val (conf, spark) = init()
 
@@ -33,12 +33,14 @@ object CreatePublicTables extends SparkApp {
 
   conf
     .sources
-    .collect { case ds: DatasetConf if ds.table.isDefined && ds.path.contains("/public") => ds.table.get}
-    .foreach { case TableConf(database, name) =>
+    .collect { case ds: DatasetConf if ds.table.isDefined && ds.path.contains("/public") => ds}
+    .foreach { case ds @ DatasetConf(_, _, _, _, _, Some(TableConf(database, name)), _, _, _, _, _, _) =>
       spark.sql(s"CREATE DATABASE IF NOT EXISTS $database")
       spark.sql(s"DROP TABLE IF EXISTS $database.$name")
       spark.sql(s"USE $database")
-      spark.sql(createStatementMap(name)(input))
+      createStatementMap
+        .get(name)
+        .foreach(statement => spark.sql(statement(ds.location)))
     }
 
 
