@@ -27,7 +27,8 @@ object EtlConfiguration extends App {
     "spark.sql.catalog.spark_catalog" -> "org.apache.spark.sql.delta.catalog.DeltaCatalog",
     "spark.databricks.delta.retentionDurationCheck.enabled" -> "false",
     "spark.delta.merge.repartitionBeforeWrite" -> "true",
-    "spark.sql.legacy.timeParserPolicy"-> "CORRECTED"
+    "spark.sql.legacy.timeParserPolicy"-> "CORRECTED",
+    "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN"
   )
 
   val sources =
@@ -68,16 +69,16 @@ object EtlConfiguration extends App {
       DatasetConf("topmed_bravo"           , clin_datalake, "/public/topmed_bravo"                               , PARQUET, OverWrite, TableConf("clin", "topmed_bravo")),
 
       //fhir
-      DatasetConf("normalized_clinical_impression"    , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "clinical_impression")),
-      DatasetConf("normalized_group"                  , clin_datalake, "/normalized/fhir/Group"             , DELTA  , OverWrite   , TableConf("clin", "group")),
-      DatasetConf("normalized_observation"            , clin_datalake, "/normalized/fhir/Observation"       , DELTA  , OverWrite   , TableConf("clin", "observation")),
-      DatasetConf("normalized_organization"           , clin_datalake, "/normalized/fhir/Organization"      , DELTA  , OverWrite   , TableConf("clin", "organization")),
-      DatasetConf("normalized_patient"                , clin_datalake, "/normalized/fhir/Patient"           , DELTA  , OverWrite   , TableConf("clin", "patient")),
-      DatasetConf("normalized_practitioner"           , clin_datalake, "/normalized/fhir/Practitioner"      , DELTA  , OverWrite   , TableConf("clin", "practitioner")),
-      DatasetConf("normalized_practitioner_role"      , clin_datalake, "/normalized/fhir/PractitionerRole"  , DELTA  , OverWrite   , TableConf("clin", "practitioner_role")),
-      DatasetConf("normalized_service_request"        , clin_datalake, "/normalized/fhir/ServiceRequest"    , DELTA  , OverWrite   , TableConf("clin", "service_request")),
-      DatasetConf("normalized_specimen"               , clin_datalake, "/normalized/fhir/specimen"          , DELTA  , OverWrite   , TableConf("clin", "specimen")),
-      DatasetConf("normalized_task"                   , clin_datalake, "/normalized/fhir/task"              , DELTA  , OverWrite   , TableConf("clin", "task")),
+      DatasetConf("normalized_clinical_impression"    , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
+      DatasetConf("normalized_group"                  , clin_datalake, "/normalized/fhir/Group"             , DELTA  , OverWrite   , TableConf("clin", "fhir_group")),
+      DatasetConf("normalized_observation"            , clin_datalake, "/normalized/fhir/Observation"       , DELTA  , OverWrite   , TableConf("clin", "fhir_observation")),
+      DatasetConf("normalized_organization"           , clin_datalake, "/normalized/fhir/Organization"      , DELTA  , OverWrite   , TableConf("clin", "fhir_organization")),
+      DatasetConf("normalized_patient"                , clin_datalake, "/normalized/fhir/Patient"           , DELTA  , OverWrite   , TableConf("clin", "fhir_patient")),
+      DatasetConf("normalized_practitioner"           , clin_datalake, "/normalized/fhir/Practitioner"      , DELTA  , OverWrite   , TableConf("clin", "fhir_practitioner")),
+      DatasetConf("normalized_practitioner_role"      , clin_datalake, "/normalized/fhir/PractitionerRole"  , DELTA  , OverWrite   , TableConf("clin", "fhir_practitioner_role")),
+      DatasetConf("normalized_service_request"        , clin_datalake, "/normalized/fhir/ServiceRequest"    , DELTA  , OverWrite   , TableConf("clin", "fhir_service_request")),
+      DatasetConf("normalized_specimen"               , clin_datalake, "/normalized/fhir/specimen"          , DELTA  , OverWrite   , TableConf("clin", "fhir_specimen")),
+      DatasetConf("normalized_task"                   , clin_datalake, "/normalized/fhir/task"              , DELTA  , OverWrite   , TableConf("clin", "fhir_task")),
 
       //clinical normalized
       DatasetConf("normalized_occurrences" , clin_datalake, "/normalized/occurrences"                     , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_occurrences"))),
