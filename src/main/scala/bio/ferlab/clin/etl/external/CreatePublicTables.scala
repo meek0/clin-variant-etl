@@ -28,7 +28,8 @@ object CreatePublicTables extends SparkApp {
     "human_genes" -> human_genes,
     "orphanet_gene_set" -> orphanet_gene_set,
     "hpo_gene_set" -> hpo_gene_set,
-    "omim_gene_set" -> omim_gene_set
+    "omim_gene_set" -> omim_gene_set,
+    "genes" -> genes
   )
 
   conf

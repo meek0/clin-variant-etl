@@ -51,7 +51,12 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
     val genomesDf = data(`1000_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
     val topmed_bravoDf = data(topmed_bravo.id)
-      .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"), $"het".cast("long"))
+      .selectLocus(
+        $"ac".cast("long"),
+        $"af",
+        $"an".cast("long"),
+        $"homozygotes".cast("long") as "hom",
+        $"heterozygotes".cast("long") as "het")
     val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
