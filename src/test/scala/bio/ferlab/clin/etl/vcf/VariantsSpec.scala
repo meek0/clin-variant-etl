@@ -43,10 +43,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       `normalized_variants_oid` = result.`normalized_variants_oid`)
   }
 
-  "variants job" should "upsert using locus as key" in {
+  "variants job" should "scd1 using locus as key" in {
 
-    val firstLoad = Seq(VCFInput("1"), VCFInput("2")).toDF()
-    val secondLoad = Seq(VCFInput("1"), VCFInput("3")).toDF()
+    val firstLoad = Seq(VCFInput("chr1"), VCFInput("chr2")).toDF()
+    val secondLoad = Seq(VCFInput("chr1"), VCFInput("chr3")).toDF()
     val date1 = LocalDateTime.of(2021, 1, 1, 1, 1, 1)
     val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
 

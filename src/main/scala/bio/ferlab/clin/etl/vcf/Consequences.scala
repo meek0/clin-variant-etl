@@ -9,11 +9,28 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
+import scala.util.Try
 
 class Consequences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
+
+  override def run(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+    val maxCreatedOnValue: LocalDateTime = if (lastRunDateTime == minDateTime) {
+      Try(destination.read)
+        .map(df => df.select(max(col("updated_on"))).limit(1).as[Timestamp].collect().head.toLocalDateTime)
+        .getOrElse(lastRunDateTime)
+    } else {
+      lastRunDateTime
+    }
+    val inputs = extract(maxCreatedOnValue, currentRunDateTime)
+    val output = transform(inputs, maxCreatedOnValue, currentRunDateTime)
+    val finalDf = load(output, maxCreatedOnValue, currentRunDateTime)
+    publish()
+    finalDf
+  }
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {

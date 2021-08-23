@@ -84,7 +84,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "transform data in expected format" in {
 
-    val result = new Variants("BAT0").transform(data)
+    val result = new Variants().transform(data)
       .as[VariantEnrichedOutput].collect().head
 
     result shouldBe VariantEnrichedOutput(
@@ -106,7 +106,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
     val transmissionData = data + (normalized_occurrences.id -> occurrences.toDF())
 
-    val result = new Variants("BAT0").transform(transmissionData)
+    val result = new Variants().transform(transmissionData)
       .as[VariantEnrichedOutput].collect().head
 
     result.`parental_origins` shouldBe Map(
@@ -132,7 +132,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "run" in {
 
-    new Variants("BAT0").run()
+    new Variants().run()
 
     val result = spark.table("clin.variants").as[VariantEnrichedOutput].collect().head
 
