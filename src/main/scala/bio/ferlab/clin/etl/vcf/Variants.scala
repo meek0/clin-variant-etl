@@ -4,21 +4,27 @@ import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
-import org.apache.spark.sql.functions.{array_distinct, col, lit}
+import org.apache.spark.sql.functions.{array_distinct, col, concat, concat_ws, lit, sha1}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import java.sql.Timestamp
+import java.time.LocalDateTime
 
 class Variants(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
 
-  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
     )
   }
 
-  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+  override def transform(data: Map[String, DataFrame],
+                         lastRunDateTime: LocalDateTime = minDateTime,
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     data(raw_variant_calling.id)
       .withColumn("annotation", firstCsq)
       .select(
@@ -35,14 +41,17 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         variant_class,
         pubmed,
         lit(batchId) as "batch_id",
-        lit(null).cast("string") as "last_batch_id",
-        /*current_timestamp()*/lit(batchId) as "createdOn",
-        /*current_timestamp()*/lit(batchId) as "updatedOn"
+        lit(Timestamp.valueOf(currentRunDateTime)) as "created_on",
+        lit(Timestamp.valueOf(currentRunDateTime)) as "updated_on"
       )
+      .withColumn(destination.oid, col("created_on"))
+      .withColumn("locus", concat_ws("-", locus:_*))
       .drop("annotation")
   }
 
-  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  override def load(data: DataFrame,
+                    lastRunDateTime: LocalDateTime = minDateTime,
+                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))

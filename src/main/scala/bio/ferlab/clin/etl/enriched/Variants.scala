@@ -1,32 +1,36 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.VcfUtils.{ac, an, het, hom, participant_number}
-import bio.ferlab.clin.etl.vcf.Occurrences
+import bio.ferlab.clin.etl.utils.VcfUtils._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import java.sql.Timestamp
+import java.time.LocalDateTime
 
 class Variants(lastBatchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
-  val `1000_genomes`: DatasetConf = conf.getDataset("1000_genomes")
-  val topmed_bravo: DatasetConf = conf.getDataset("topmed_bravo")
-  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("gnomad_genomes_2_1_1")
-  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("gnomad_exomes_2_1_1")
-  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("gnomad_genomes_3_0")
-  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("gnomad_genomes_3_1_1")
-  val dbsnp: DatasetConf = conf.getDataset("dbsnp")
-  val clinvar: DatasetConf = conf.getDataset("clinvar")
-  val genes: DatasetConf = conf.getDataset("genes")
+  val `1000_genomes`: DatasetConf = conf.getDataset("normalized_1000_genomes")
+  val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
+  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
+  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_2_1_1")
+  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
+  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_1_1")
+  val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
+  val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
+  val genes: DatasetConf = conf.getDataset("enriched_genes")
 
-  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
 
     Map(
-      normalized_variants.id -> normalized_variants.read.where(col("updatedOn") >= lastBatchId),
+      normalized_variants.id -> normalized_variants.read.where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
       normalized_occurrences.id -> normalized_occurrences.read,
       `1000_genomes`.id -> `1000_genomes`.read,
       topmed_bravo.id -> topmed_bravo.read,
@@ -40,7 +44,9 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
     )
   }
 
-  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+  override def transform(data: Map[String, DataFrame],
+                         lastRunDateTime: LocalDateTime = minDateTime,
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val variants = data(normalized_variants.id)
     val occurrences = data(normalized_occurrences.id)
@@ -67,13 +73,17 @@ class Variants(lastBatchId: String)(implicit configuration: Configuration) exten
     val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrences)
     val joinWithFrequencies = variantsWithFrequencies(joinWithParentalOrigin, occurrences)
     val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df, gnomad_genomes_3_1_1Df)
-    val joinDbSNP = joinWithDbSNP(joinWithPop, data("dbsnp"))
-    val joinClinvar = joinWithClinvar(joinDbSNP, data("clinvar"))
-    val joinGenes = joinWithGenes(joinClinvar, data("genes"))
+    val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
+    val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
+    val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     addExtDb(joinGenes)
+      .withColumn("locus", concat_ws("-", locus:_*))
+      .withColumn(destination.oid, col("created_on"))
   }
 
-  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  override def load(data: DataFrame,
+                    lastRunDateTime: LocalDateTime = minDateTime,
+                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))

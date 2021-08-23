@@ -25,6 +25,6 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
         "ENST00000335137", "ENST00000335137", None, "Transcript", 1, "protein_coding", "SNV", EXON(Some(1), Some(1)), INTRON(None, None),
         Some("ENST00000335137.4:c.807T>C"), Some("ENSP00000334393.3:p.Ser269%3D"), "chr1:g.69897T>C", Some(807), Some(843), Some(269),
         AMINO_ACIDS(Some("S"), None), CODONS(Some("tcT"), Some("tcC")), true, true, None, Some("807T>C"), 2, "BAT1",
-        `createdOn` = result.`createdOn`, `updatedOn` = result.`updatedOn`)
+        `created_on` = result.`created_on`, `updated_on` = result.`updated_on`)
   }
 }

@@ -10,7 +10,7 @@ val spark_version = "3.1.2"
 val deltaCoreVersion = "1.0.0"
 val scalatestVersion = "3.2.9"
 val glowVersion = "1.0.1"
-val datalakeSpark3Version = "0.0.54"
+val datalakeSpark3Version = "0.0.59"
 
 resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
 resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2

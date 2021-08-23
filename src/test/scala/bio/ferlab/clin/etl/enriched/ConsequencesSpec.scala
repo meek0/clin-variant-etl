@@ -19,7 +19,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
 
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
-  val dbnsfp_original: DatasetConf = conf.getDataset("dbnsfp_original")
+  val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
 
   val data = Map(
@@ -44,8 +44,8 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   "consequences job" should "transform data in expected format" in {
     val result = new Consequences("BAT0").transform(data).as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
-      `createdOn` = result.`createdOn`,
-      `updatedOn` = result.`updatedOn`)
+      `created_on` = result.`created_on`,
+      `updated_on` = result.`updated_on`)
   }
 
   "consequences job" should "run" in {
@@ -53,8 +53,8 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     enriched_consequences.read.show(false)
     val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
-      `createdOn` = result.`createdOn`,
-      `updatedOn` = result.`updatedOn`)
+      `created_on` = result.`created_on`,
+      `updated_on` = result.`updated_on`)
   }
 }
 

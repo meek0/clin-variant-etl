@@ -4,6 +4,8 @@ import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
 import org.apache.spark.sql.SparkSession
 
+import java.sql.Timestamp
+
 object Indexer extends App {
 
   println(s"ARGS: " + args.mkString("[", ", ", "]"))
@@ -36,10 +38,10 @@ object Indexer extends App {
   jobType match {
     case "variants" =>
       val job = new Indexer("upsert", templatePath, alias, s"${indexName}_$release_id")
-      val insertDf = VariantIndex.getInsert(lastBatch)
+      val insertDf = VariantIndex.getInsert(Timestamp.valueOf(lastBatch))
       job.run(insertDf)
 
-      val updateDf = VariantIndex.getUpdate(lastBatch)
+      val updateDf = VariantIndex.getUpdate(Timestamp.valueOf(lastBatch))
       job.run(updateDf)
 
     case "genes" =>

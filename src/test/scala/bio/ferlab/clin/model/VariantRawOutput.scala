@@ -1,5 +1,8 @@
 package bio.ferlab.clin.model
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
+
 case class VariantRawOutput(`chromosome`: String = "1",
                             `start`: Long = 69897,
                             `end`: Long = 69898,
@@ -13,6 +16,8 @@ case class VariantRawOutput(`chromosome`: String = "1",
                             `variant_class`: String = "SNV",
                             `pubmed`: Option[List[String]] = None,
                             `batch_id`: String = "BAT1",
-                            `last_batch_id`: Option[String] = None,
-                            `createdOn`: String = "BAT1", //Timestamp = Timestamp.valueOf(LocalDateTime.now()),
-                            `updatedOn`: String = "BAT1") //Timestamp = Timestamp.valueOf(LocalDateTime.now()))
+                            //`last_batch_id`: Option[String] = None,
+                            `created_on`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
+                            `updated_on`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
+                            `normalized_variants_oid`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
+                            `locus`: String = "1-69897-T-C")

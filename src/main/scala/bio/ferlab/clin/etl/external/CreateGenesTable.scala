@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.external
 
-import bio.ferlab.datalake.spark3.public.{ImportGenesTable, SparkApp}
+import bio.ferlab.datalake.spark3.public.SparkApp
+import bio.ferlab.datalake.spark3.public.enriched.Genes
 
 object CreateGenesTable extends SparkApp {
 
@@ -11,5 +12,5 @@ object CreateGenesTable extends SparkApp {
 
   spark.sql("use clin")
 
-  new ImportGenesTable().run()
+  new Genes().run()
 }

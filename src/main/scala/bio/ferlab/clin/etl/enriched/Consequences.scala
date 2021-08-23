@@ -8,30 +8,38 @@ import org.apache.spark.sql.functions.{col, struct}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
+
 class Consequences(lastBatchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
-  val dbnsfp_original: DatasetConf = conf.getDataset("dbnsfp_original")
+  val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
 
-  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      normalized_consequences.id -> normalized_consequences.read.where(col("updatedOn") >= lastBatchId),
+      normalized_consequences.id -> normalized_consequences.read.where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
       dbnsfp_original.id -> dbnsfp_original.read
     )
   }
 
-  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+  override def transform(data: Map[String, DataFrame],
+                         lastRunDateTime: LocalDateTime = minDateTime,
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     val consequences = data(normalized_consequences.id)
     val dbnsfp = data(dbnsfp_original.id)
     val csq = consequences
-      .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_transcript_id", "ensembl_regulatory_id")
+      .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_regulatory_id")
       .withColumn("consequence", formatted_consequences)
 
     joinWithDBNSFP(csq, dbnsfp)
   }
 
-  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  override def load(data: DataFrame,
+                    lastRunDateTime: LocalDateTime = minDateTime,
+                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))
@@ -62,6 +70,7 @@ class Consequences(lastBatchId: String)(implicit configuration: Configuration) e
     csq
       .join(dbnsfpRenamed, Seq("chromosome", "start", "reference", "alternate", "ensembl_feature_id"), "left")
       .select(csq("*"), dbnsfpRenamed("predictions"), dbnsfpRenamed("conservations"))
+      .withColumn(destination.oid, col("created_on"))
 
   }
 }

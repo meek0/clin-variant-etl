@@ -95,7 +95,7 @@
                 }
               }
             },
-            "createdOn": {
+            "created_on": {
               "type": "date"
             },
             "ensembl_feature_id": {
@@ -193,12 +193,12 @@
             "symbol": {
               "type": "keyword"
             },
-            "updatedOn": {
+            "updated_on": {
               "type": "date"
             }
           }
         },
-        "createdOn": {
+        "created_on": {
           "type": "date"
         },
         "dbsnp": {
@@ -574,7 +574,7 @@
         "start": {
           "type": "long"
         },
-        "updatedOn": {
+        "updated_on": {
           "type": "date"
         },
         "variant_class": {

@@ -22,15 +22,15 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
-  val `1000_genomes`: DatasetConf = conf.getDataset("1000_genomes")
-  val topmed_bravo: DatasetConf = conf.getDataset("topmed_bravo")
-  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("gnomad_genomes_2_1_1")
-  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("gnomad_exomes_2_1_1")
-  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("gnomad_genomes_3_0")
-  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("gnomad_genomes_3_1_1")
-  val dbsnp: DatasetConf = conf.getDataset("dbsnp")
-  val clinvar: DatasetConf = conf.getDataset("clinvar")
-  val genes: DatasetConf = conf.getDataset("genes")
+  val `1000_genomes`: DatasetConf = conf.getDataset("normalized_1000_genomes")
+  val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
+  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
+  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_2_1_1")
+  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
+  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_1_1")
+  val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
+  val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
+  val genes: DatasetConf = conf.getDataset("enriched_genes")
 
   val normalized_occurrencesDf: DataFrame = Seq(
     OccurrenceRawOutput(`transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -89,8 +89,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
     result shouldBe VariantEnrichedOutput(
       `donors` = expectedDonors,
-      `createdOn` = result.`createdOn`,
-      `updatedOn` = result.`updatedOn`)
+      `created_on` = result.`created_on`,
+      `updated_on` = result.`updated_on`)
   }
 
   "variants job" should "aggregate transmissions and parental origin per lab" in {
@@ -138,8 +138,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
     result shouldBe VariantEnrichedOutput(
       `donors` = expectedDonors,
-      `createdOn` = result.`createdOn`,
-      `updatedOn` = result.`updatedOn`)
+      `created_on` = result.`created_on`,
+      `updated_on` = result.`updated_on`)
   }
 }
 

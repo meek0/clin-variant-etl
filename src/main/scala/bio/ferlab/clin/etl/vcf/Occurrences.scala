@@ -8,6 +8,8 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import java.time.LocalDateTime
+
 class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
@@ -17,7 +19,8 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
 
-  override def extract()(implicit spark: SparkSession): Map[String, DataFrame] = {
+  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
       patient.id -> patient.read,
@@ -27,7 +30,9 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
     )
   }
 
-  override def transform(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+  override def transform(data: Map[String, DataFrame],
+                         lastRunDateTime: LocalDateTime = minDateTime,
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     val groupDf = data(group.id)
       .withColumn("member", explode(col("members")))
       .select(
@@ -86,7 +91,9 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
       .withGenotypeTransmission("transmission", col("father_calls"), col("mother_calls"))
   }
 
-  override def load(data: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  override def load(data: DataFrame,
+                    lastRunDateTime: LocalDateTime = minDateTime,
+                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions(col("chromosome"), col("start"))

@@ -3,12 +3,12 @@ package bio.ferlab.clin.etl.external
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
-import bio.ferlab.datalake.spark3.public.ImportGenesTable
+import bio.ferlab.datalake.spark3.public.enriched.Genes
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
-import org.scalatest.{BeforeAndAfterAll, GivenWhenThen}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterAll, GivenWhenThen}
 
 class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSparkSession with Matchers with BeforeAndAfterAll {
   import spark.implicits._
@@ -21,13 +21,13 @@ class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSpark
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
 
-  val destination      : DatasetConf = conf.getDataset("genes")
-  val omim_gene_set    : DatasetConf = conf.getDataset("omim_gene_set")
-  val orphanet_gene_set: DatasetConf = conf.getDataset("orphanet_gene_set")
-  val hpo_gene_set     : DatasetConf = conf.getDataset("hpo_gene_set")
-  val human_genes      : DatasetConf = conf.getDataset("human_genes")
-  val ddd_gene_set     : DatasetConf = conf.getDataset("ddd_gene_set")
-  val cosmic_gene_set  : DatasetConf = conf.getDataset("cosmic_gene_set")
+  val destination      : DatasetConf = conf.getDataset("enriched_genes")
+  val omim_gene_set    : DatasetConf = conf.getDataset("normalized_omim_gene_set")
+  val orphanet_gene_set: DatasetConf = conf.getDataset("normalized_orphanet_gene_set")
+  val hpo_gene_set     : DatasetConf = conf.getDataset("normalized_hpo_gene_set")
+  val human_genes      : DatasetConf = conf.getDataset("normalized_human_genes")
+  val ddd_gene_set     : DatasetConf = conf.getDataset("normalized_ddd_gene_set")
+  val cosmic_gene_set  : DatasetConf = conf.getDataset("normalized_cosmic_gene_set")
 
   val inputData = Map(
     omim_gene_set.id     -> Seq(
@@ -40,7 +40,7 @@ class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSpark
     cosmic_gene_set.id   -> Seq(CosmicGeneSetOutput(`symbol` = "OR4F5")).toDF
   )
 
-  val job = new ImportGenesTable()
+  val job = new Genes()
 
   it should "transform data into genes table" in {
 

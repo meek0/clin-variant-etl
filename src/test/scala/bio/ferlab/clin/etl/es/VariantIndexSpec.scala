@@ -5,12 +5,12 @@ import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, StorageConf}
 import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.SaveMode
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.File
+import java.sql.Timestamp
 
 class VariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
@@ -21,13 +21,20 @@ class VariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   val enriched_variants = conf.getDataset("enriched_variants")
   val enriched_consequences = conf.getDataset("enriched_consequences")
+  val bat0 = Timestamp.valueOf("2021-01-26 14:50:08.108")
+  val bat1 = Timestamp.valueOf("2021-02-26 14:50:08.108")
+  val bat2 = Timestamp.valueOf("2021-03-26 14:50:08.108")
 
   val data = Map(
     enriched_variants.id -> Seq(VariantEnrichedOutput("1"), VariantEnrichedOutput(
       "2",
       `batch_id` = "BAT2",
-      `createdOn` = "BAT0",
-      `updatedOn` = "BAT2")).toDF,
+      //`created_on` = "BAT0",
+      //`updated_on` = "BAT2"
+      `created_on` = bat0,
+      `updated_on` = bat2
+      )
+    ).toDF,
     enriched_consequences.id -> Seq(ConsequenceEnrichedOutput(), ConsequenceEnrichedOutput("2")).toDF
   )
 
@@ -48,7 +55,7 @@ class VariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   "run" should "produce json files in the right format" in {
 
-    val result = VariantIndex.getInsert("BAT1")
+    val result = VariantIndex.getInsert(bat1)
     result.count() shouldBe 1
     result.as[VariantIndexOutput].collect().head shouldBe VariantIndexOutput("1")
 
@@ -56,7 +63,7 @@ class VariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   "run update" should "produce json files in the right format" in {
 
-    val result = VariantIndex.getUpdate("BAT1")
+    val result = VariantIndex.getUpdate(bat1)
     result.count() shouldBe 1
     result.as[VariantIndexUpdate].collect().head shouldBe VariantIndexUpdate("2")
   }

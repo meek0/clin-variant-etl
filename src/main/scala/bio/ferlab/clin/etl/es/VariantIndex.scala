@@ -5,22 +5,24 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import java.sql.Timestamp
+
 object VariantIndex {
 
-  def getInsert(lastExecution: String)
+  def getInsert(lastExecution: Timestamp)
                (implicit spark: SparkSession, conf: Configuration): DataFrame = {
     spark.sql("use clin")
     val enriched_variants = conf.getDataset("enriched_variants")
     val enriched_consequences = conf.getDataset("enriched_consequences")
 
-    val newVariants = enriched_variants.read.where(col("createdOn") >= lastExecution)
+    val newVariants = enriched_variants.read.where(col("created_on") >= lastExecution)
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab")
     val consequences = enriched_consequences.read.as("consequences")
 
     joinWithConsequences(newVariants, consequences)
   }
 
-  def getUpdate(lastExecution: String)
+  def getUpdate(lastExecution: Timestamp)
                (implicit spark: SparkSession, conf: Configuration): DataFrame = {
     spark.sql("use clin")
     val enriched_variants = conf.getDataset("enriched_variants")
@@ -28,7 +30,7 @@ object VariantIndex {
 
     val updatedVariants =
       enriched_variants.read
-        .where(col("updatedOn") >= lastExecution and col("createdOn") =!= col("updatedOn"))
+        .where(col("updated_on") >= lastExecution and col("created_on") =!= col("updated_on"))
     val consequences = enriched_consequences.read.as("consequences")
 
     val finalDf = joinWithConsequences(updatedVariants, consequences)
