@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.conf
 
 import bio.ferlab.datalake.spark3.config._
 import bio.ferlab.datalake.spark3.loader.Format.{DELTA, JSON, PARQUET, VCF}
-import bio.ferlab.datalake.spark3.loader.LoadType.{Insert, OverWrite, Scd1, Upsert}
+import bio.ferlab.datalake.spark3.loader.LoadType.{Insert, OverWrite, Scd1}
 
 object EtlConfiguration extends App {
 

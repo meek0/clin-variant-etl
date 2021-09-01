@@ -8,6 +8,8 @@ object ImportVcf extends SparkApp {
 
   implicit val (conf, spark) = init()
 
+  spark.sparkContext.setLogLevel("ERROR")
+
   runType match {
     case "variants" => new Variants(batchId).run()
     case "consequences" => new Consequences(batchId).run()
