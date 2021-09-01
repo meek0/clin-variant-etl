@@ -396,7 +396,6 @@ object PublicTablesCreateStatements {
        |`nhomalt_raw` INT
        |)
        |USING parquet
-       |PARTITIONED BY (chromosome)
        |LOCATION '$input'
        |""".stripMargin
 
@@ -1322,7 +1321,6 @@ spark.sql(
      |`af_fin_xy` DOUBLE,
      |`old_multiallelic` STRING)
      |USING parquet
-     |PARTITIONED BY (chromosome)
      |LOCATION '$input'
      |""".stripMargin
 )*/
@@ -1687,7 +1685,6 @@ spark.sql(
        |`GTEx_V8_tissue`  ARRAY<STRING>,
        |`chromosome` STRING)
        |USING parquet
-       |PARTITIONED BY (chromosome)
        |LOCATION '$input'
        |""".stripMargin
 
@@ -1816,7 +1813,7 @@ spark.sql(
        |`GTEx_V8_tissue` ARRAY<STRING>,
        |`chromosome` STRING)
        |USING parquet
-       |PARTITIONED BY (chromosome) LOCATION '$input'
+       |LOCATION '$input'
        |""".stripMargin
 
   val dbnsfp_scores: String => String = input =>
@@ -1868,7 +1865,6 @@ spark.sql(
        |`gerp_rs_rankscore` DOUBLE,
        |`chromosome` STRING)
        |USING parquet
-       |PARTITIONED BY (chromosome)
        |LOCATION '$input'
        |""".stripMargin
 
