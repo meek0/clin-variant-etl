@@ -1,12 +1,13 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.clin.etl.utils.VcfUtils._
 import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -93,7 +94,8 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
-    addExtDb(joinGenes)
+    joinGenes
+      .withExternalReference
       .withColumn("locus", concat_ws("-", locus:_*))
       .withColumn(destination.oid, col("created_on"))
   }
@@ -200,7 +202,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame)(implicit spark: SparkSession): DataFrame = {
     variants
       .joinByLocus(dbsnp, "left")
-      .select(variants("*"), dbsnp("name") as "dbsnp")
+      .select(variants.drop("name")("*"), dbsnp("name") as "dbsnp")
   }
 
   def joinWithClinvar(variants: DataFrame, clinvar: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -225,6 +227,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .select("variant.*", "genes", "omim")
   }
 
+  @Deprecated
   private def addExtDb(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     variants
@@ -238,6 +241,29 @@ class Variants()(implicit configuration: Configuration) extends ETL {
           exists($"genes", gene => gene("omim").isNotNull).as("is_omim")
       )
     )
+  }
+}
+
+object Variants {
+  implicit class DataFrameOps(df: DataFrame) {
+    def withExternalReference(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      val conditionValueMap: List[(Column, String)] = List(
+        $"clinvar".isNotNull -> "Clinvar",
+        $"pubmed".isNotNull -> "Pubmed",
+        exists($"genes", gene => gene("hpo").isNotNull and size(gene("hpo")) > 0) -> "HPO",
+        exists($"genes", gene => gene("orphanet").isNotNull and size(gene("orphanet")) > 0) -> "Orphanet",
+        exists($"genes", gene => gene("omim").isNotNull and size(gene("omim")) > 0) -> "OMIM"
+      )
+      conditionValueMap.foldLeft {
+        df.withColumn("external_reference", when($"dbsnp".isNotNull, array(lit("DBSNP"))).otherwise(array()))
+      } { case (d, (condition, value)) => d
+        .withColumn("external_reference",
+          when(condition, array_union($"external_reference", array(lit(value))))
+            .otherwise($"external_reference"))
+      }
+    }
   }
 }
 

@@ -13,7 +13,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `reference`: String = "T",
                               `alternate`: String = "C",
                               `end`: Long = 69898,
-                              `name`: String = "rs200676709",
+                              //`name`: String = "rs200676709",
                               `is_multi_allelic`: Boolean = false,
                               `old_multi_allelic`: Option[String] = None,
                               `genes_symbol`: List[String] = List("OR4F5"),
@@ -44,7 +44,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               //`parental_origins_by_lab`: Map[String, Map[String, Int]] = Map(
                               //  "OR00201" -> Map("mother" -> 1),
                               //  "OR00202" -> Map("father" -> 1)),
-                              `ext_db`: EXT_DB = EXT_DB())
+                              `external_reference`: List[String] = List("DBSNP", "Clinvar", "HPO", "Orphanet", "OMIM"))
 
 
 case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_variant"),

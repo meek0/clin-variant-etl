@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.vcf
 import bio.ferlab.clin.model.{VCFInput, VariantRawOutput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
+import bio.ferlab.datalake.spark3.file.HadoopFileSystem
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -21,9 +22,12 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
+  val job1 = new Variants("BAT1")
+  val job2 = new Variants("BAT2")
 
   override def beforeAll(): Unit = {
     spark.sql(s"CREATE DATABASE IF NOT EXISTS ${raw_variant_calling.table.map(_.database).getOrElse("clin")}")
+    HadoopFileSystem.remove(job1.destination.location)
   }
 
 
@@ -33,7 +37,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "transform data in expected format" in {
 
-    val resultDf = new Variants("BAT1").transform(data).as[VariantRawOutput]
+    val resultDf = job1.transform(data).as[VariantRawOutput]
     resultDf.show(false)
     val result = resultDf.collect().head
 
@@ -50,10 +54,9 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     val date1 = LocalDateTime.of(2021, 1, 1, 1, 1, 1)
     val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
 
-    val job1 = new Variants("BAT1")
     val job1Df = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
     job1.load(job1Df)
-    val job2 = new Variants("BAT2")
+
     val job2Df = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
     job2Df.show(false)
     job2.load(job2Df)

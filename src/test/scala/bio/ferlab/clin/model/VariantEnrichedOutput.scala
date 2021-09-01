@@ -13,7 +13,7 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `end`: Long = 69898,
                                  `reference`: String = "T",
                                  `alternate`: String = "C",
-                                 `name`: String = "rs200676709",
+                                 //`name`: String = "rs200676709",
                                  `is_multi_allelic`: Boolean = false,
                                  `old_multi_allelic`: Option[String] = None,
                                  `genes_symbol`: List[String] = List("OR4F5"),
@@ -44,7 +44,7 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
                                    "OR00201" -> Map("mother" -> 1),
                                    "OR00202" -> Map("father" -> 1)),
-                                 `ext_db`: EXT_DB = EXT_DB())
+                                 `external_reference`: List[String] = List("DBSNP", "Clinvar", "HPO", "Orphanet", "OMIM"))
 
 
 case class DONORS(`dp`: Int = 1,
@@ -121,11 +121,3 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `orphanet`: List[ORPHANET] = List(ORPHANET()),
                  `hpo`: List[HPO] = List(HPO()),
                  `omim`: List[OMIM] = List(OMIM()))
-
-
-case class EXT_DB(`is_pubmed`: Boolean = false,
-                  `is_dbsnp`: Boolean = true,
-                  `is_clinvar`: Boolean = true,
-                  `is_hpo`: Boolean = true,
-                  `is_orphanet`: Boolean = true,
-                  `is_omim`: Boolean = true)
