@@ -10,7 +10,7 @@ val spark_version = "3.1.2"
 val deltaCoreVersion = "1.0.0"
 val scalatestVersion = "3.2.9"
 val glowVersion = "1.0.1"
-val datalakeSpark3Version = "0.0.60"
+val datalakeSpark3Version = "0.0.65"
 
 resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
 resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2
@@ -19,7 +19,7 @@ resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/re
 libraryDependencies += "bio.ferlab" %% "datalake-spark3" % datalakeSpark3Version
 libraryDependencies += "org.apache.spark" %% "spark-sql" % spark_version % Provided
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provided
-libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.1" % Provided
+libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.0" % Provided
 libraryDependencies += "io.projectglow" %% "glow-spark3" % glowVersion exclude ("org.apache.hadoop", "hadoop-client")
 libraryDependencies += "io.delta" %% "delta-core" % deltaCoreVersion
 
