@@ -110,7 +110,7 @@ object EtlConfiguration extends App {
   )
 
   ConfigurationWriter.writeTo("src/main/resources/config/qa.conf", qa_conf)
-  ConfigurationWriter.writeTo("src/main/resources/config/production.conf", prd_conf)
+  ConfigurationWriter.writeTo("src/main/resources/config/prod.conf", prd_conf)
 
   ConfigurationWriter.writeTo("src/test/resources/config/test.conf", test_conf)
 
