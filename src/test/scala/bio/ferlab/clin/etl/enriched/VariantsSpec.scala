@@ -22,7 +22,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
-  val `1000_genomes`: DatasetConf = conf.getDataset("normalized_1000_genomes")
+  val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
   val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_2_1_1")
@@ -50,7 +50,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
     normalized_occurrences.id -> normalized_occurrencesDf,
-    `1000_genomes`.id -> genomesDf,
+    thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
     gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1Df,
     gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1Df,

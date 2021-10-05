@@ -44,7 +44,8 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
                                    "OR00201" -> Map("mother" -> 1),
                                    "OR00202" -> Map("father" -> 1)),
-                                 `external_reference`: List[String] = List("DBSNP", "Clinvar", "HPO", "Orphanet", "OMIM"))
+                                 `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
+                                 `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
 
 
 case class DONORS(`dp`: Int = 1,
@@ -79,7 +80,7 @@ case class DONORS(`dp`: Int = 1,
                   `parental_origin`: Option[String] = None,
                   `transmission`: Option[String] = None)
 
-case class FREQUENCIES(//`1000_genomes`: Freq = Freq(3446, 5008,  0.688099),
+case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFreq(3446, 5008,  0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),
                        gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
                        gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),

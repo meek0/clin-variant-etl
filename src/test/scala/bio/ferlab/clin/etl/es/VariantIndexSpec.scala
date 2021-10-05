@@ -58,7 +58,7 @@ class VariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     val result = VariantIndex.getInsert(bat1)
     result.count() shouldBe 1
     result.as[VariantIndexOutput].collect().head shouldBe VariantIndexOutput("1")
-
+    result.write.mode("overwrite").json(this.getClass.getClassLoader.getResource(".").getFile + "/es_index/variant_centric")
   }
 
   "run update" should "produce json files in the right format" in {

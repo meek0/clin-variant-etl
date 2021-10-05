@@ -17,7 +17,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   override val destination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
-  val `1000_genomes`: DatasetConf = conf.getDataset("normalized_1000_genomes")
+  val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
   val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_2_1_1")
@@ -33,7 +33,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     Map(
       normalized_variants.id -> normalized_variants.read.where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
       normalized_occurrences.id -> normalized_occurrences.read,
-      `1000_genomes`.id -> `1000_genomes`.read,
+      thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
       gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1.read,
@@ -55,7 +55,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .where($"has_alt" === true)
       .as("occurrences")
 
-    val genomesDf = data(`1000_genomes`.id)
+    val genomesDf = data(`thousand_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
     val topmed_bravoDf = data(topmed_bravo.id)
       .selectLocus(
@@ -78,7 +78,8 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     joinGenes
-      .withExternalReference
+      .withGeneExternalReference
+      .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus:_*))
       .withColumn(destination.oid, col("created_on"))
   }
@@ -164,7 +165,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
                           gnomad_genomes_3_1_1Df: DataFrame)(implicit spark: SparkSession): DataFrame = {
 
     broadcast(variants)
-      .joinAndMerge(genomesDf, "1000_genomes", "left")
+      .joinAndMerge(genomesDf, "thousand_genomes", "left")
       .joinAndMerge(topmed_bravoDf, "topmed_bravo", "left")
       .joinAndMerge(gnomad_genomes_2_1Df, "gnomad_genomes_2_1_1", "left")
       .joinAndMerge(gnomad_exomes_2_1Df, "gnomad_exomes_2_1_1", "left")
@@ -172,7 +173,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .joinAndMerge(gnomad_genomes_3_1_1Df, "gnomad_genomes_3_1_1", "left")
       .select(variants("*"),
         struct(
-          col("1000_genomes"),
+          col("thousand_genomes"),
           col("topmed_bravo"),
           col("gnomad_genomes_2_1_1"),
           col("gnomad_exomes_2_1_1"),
@@ -229,24 +230,38 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
 object Variants {
   implicit class DataFrameOps(df: DataFrame) {
-    def withExternalReference(implicit spark: SparkSession): DataFrame = {
+    def withGeneExternalReference(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
+      val outputColumn = "gene_external_reference"
 
       val conditionValueMap: List[(Column, String)] = List(
-        $"clinvar".isNotNull -> "Clinvar",
-        $"pubmed".isNotNull -> "Pubmed",
-        exists($"genes", gene => gene("hpo").isNotNull and size(gene("hpo")) > 0) -> "HPO",
         exists($"genes", gene => gene("orphanet").isNotNull and size(gene("orphanet")) > 0) -> "Orphanet",
         exists($"genes", gene => gene("omim").isNotNull and size(gene("omim")) > 0) -> "OMIM"
       )
       conditionValueMap.foldLeft {
-        df.withColumn("external_reference", when($"dbsnp".isNotNull, array(lit("DBSNP"))).otherwise(array()))
+        df.withColumn(outputColumn, when(exists($"genes", gene => gene("hpo").isNotNull and size(gene("hpo")) > 0), array(lit("HPO"))).otherwise(array()))
       } { case (d, (condition, value)) => d
-        .withColumn("external_reference",
-          when(condition, array_union($"external_reference", array(lit(value))))
-            .otherwise($"external_reference"))
+        .withColumn(outputColumn,
+          when(condition, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
       }
     }
+
+    def withVariantExternalReference(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+      val outputColumn = "variant_external_reference"
+
+      val conditionValueMap: List[(Column, String)] = List(
+        $"clinvar".isNotNull -> "Clinvar",
+        $"pubmed".isNotNull -> "Pubmed"
+      )
+      conditionValueMap.foldLeft {
+        df.withColumn(outputColumn, when($"dbsnp".isNotNull, array(lit("DBSNP"))).otherwise(array()))
+      } { case (d, (condition, value)) => d
+        .withColumn(outputColumn,
+          when(condition, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
+      }
+    }
+
   }
 }
 

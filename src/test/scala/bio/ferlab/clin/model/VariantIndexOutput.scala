@@ -13,7 +13,6 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `reference`: String = "T",
                               `alternate`: String = "C",
                               `end`: Long = 69898,
-                              //`name`: String = "rs200676709",
                               `is_multi_allelic`: Boolean = false,
                               `old_multi_allelic`: Option[String] = None,
                               `genes_symbol`: List[String] = List("OR4F5"),
@@ -36,15 +35,8 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `dbsnp`: String = "rs200676709",
                               `genes`: List[GENES] = List(GENES()),
                               `omim`: List[String] = List("618285"),
-                              //`transmissions`: Map[String, Int] = Map("AD" -> 1, "AR" -> 1),
-                              //`transmissions_by_lab`: Map[String, Map[String, Int]] = Map(
-                              //  "OR00201" -> Map("AD" -> 1),
-                              //  "OR00202" -> Map("AR" -> 1)),
-                              //`parental_origins`: Map[String, Int] = Map("mother" -> 1, "father" -> 1),
-                              //`parental_origins_by_lab`: Map[String, Map[String, Int]] = Map(
-                              //  "OR00201" -> Map("mother" -> 1),
-                              //  "OR00202" -> Map("father" -> 1)),
-                              `external_reference`: List[String] = List("DBSNP", "Clinvar", "HPO", "Orphanet", "OMIM"))
+                              `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
+                              `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
 
 
 case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_variant"),

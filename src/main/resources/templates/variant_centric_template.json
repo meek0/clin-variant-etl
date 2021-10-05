@@ -2,7 +2,7 @@
   "index_patterns": ["variant_centric*"],
   "template": {
     "settings": {
-      "number_of_shards": 5
+      "number_of_shards": 2
     },
 
     "mappings": {
@@ -312,33 +312,17 @@
         "end": {
           "type": "long"
         },
-        "ext_db": {
-          "properties": {
-            "is_clinvar": {
-              "type": "boolean"
-            },
-            "is_dbsnp": {
-              "type": "boolean"
-            },
-            "is_hpo": {
-              "type": "boolean"
-            },
-            "is_omim": {
-              "type": "boolean"
-            },
-            "is_orphanet": {
-              "type": "boolean"
-            },
-            "is_pubmed": {
-              "type": "boolean"
-            }
-          }
+        "variant_external_reference": {
+          "type": "keyword"
+        },
+        "gene_external_reference": {
+          "type": "keyword"
         },
         "frequencies": {
           "type": "nested",
           "include_in_parent": true,
           "properties": {
-            "1000_genomes": {
+            "thousand_genomes": {
               "properties": {
                 "ac": {
                   "type": "long"
@@ -351,7 +335,26 @@
                 }
               }
             },
-            "exac": {
+            "topmed_bravo": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "het": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
+            "gnomad_genomes_2_1_1": {
               "properties": {
                 "ac": {
                   "type": "long"
@@ -367,7 +370,7 @@
                 }
               }
             },
-            "gnomad_genomes_2_1_1": {
+            "gnomad_exomes_2_1_1": {
               "properties": {
                 "ac": {
                   "type": "long"
@@ -399,7 +402,7 @@
                 }
               }
             },
-            "internal": {
+            "gnomad_genomes_3_1_1": {
               "properties": {
                 "ac": {
                   "type": "long"
@@ -410,15 +413,12 @@
                 "an": {
                   "type": "long"
                 },
-                "het": {
-                  "type": "long"
-                },
                 "hom": {
                   "type": "long"
                 }
               }
             },
-            "topmed_bravo": {
+            "internal": {
               "properties": {
                 "ac": {
                   "type": "long"
@@ -555,9 +555,6 @@
         },
         "last_annotation_update": {
           "type": "date"
-        },
-        "name": {
-          "type": "keyword"
         },
         "omim": {
           "type": "keyword"

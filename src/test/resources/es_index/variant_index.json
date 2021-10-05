@@ -4,40 +4,16 @@
   "reference": "T",
   "alternate": "C",
   "end": 69898,
-  "name": "rs200676709",
   "is_multi_allelic": false,
   "genes_symbol": ["OR4F5"],
   "hgvsg": "chr1:g.69897T>C",
   "variant_class": "SNV",
   "batch_id": "BAT1",
   "assembly_version": "GRCh38",
-  "last_annotation_update": "2021-02-18",
-  "consequences": [{
-    "consequences": ["downstream_gene_variant"],
-    "impact": "MODIFIER",
-    "symbol": "DDX11L1",
-    "ensembl_gene_id": "ENSG00000223972",
-    "ensembl_feature_id": "ENST00000450305",
-    "feature_type": "Transcript",
-    "strand": 1,
-    "biotype": "transcribed_unprocessed_pseudogene",
-    "exon": {},
-    "intron": {},
-    "amino_acids": {},
-    "codons": {},
-    "pick": false,
-    "canonical": false,
-    "impact_score": 1,
-    "consequence": ["downstream gene"],
-    "predictions": {
-      "cadd_score": 0.95178,
-      "dann_score": 0.66795
-    },
-    "conservations": {
-      "phylo_p17way_primate_rankscore": 0.94297
-    }
-  }],
-  "impact_score": 1,
+  "last_annotation_update": "2021-10-05",
+  "created_on": "2021-02-26T14:50:08.108-05:00",
+  "updated_on": "2021-02-26T14:50:08.108-05:00",
+  "variant_type": "germline",
   "donors": [{
     "dp": 1,
     "gq": 2,
@@ -53,51 +29,98 @@
     "variant_class": "SNV",
     "batch_id": "BAT1",
     "last_update": "2020-11-29",
-    "biospecimen_id": "SP14909",
+    "variant_type": "germline",
+    "aliquot_id": "TCGA-02-0001-01B-02D-0182-06",
     "patient_id": "PA0001",
-    "family_id": "FA0001",
+    "family_id": "FM00001",
     "practitioner_id": "PPR00101",
     "organization_id": "OR00201",
     "sequencing_strategy": "WXS",
-    "study_id": "ET00010"
+    "mother_id": "PA0003",
+    "father_id": "PA0002"
+  }, {
+    "dp": 1,
+    "gq": 2,
+    "calls": [1, 1],
+    "qd": 8.07,
+    "has_alt": true,
+    "ad_ref": 0,
+    "ad_alt": 1,
+    "ad_total": 1,
+    "ad_ratio": 1.0,
+    "zygosity": "HOM",
+    "hgvsg": "chr1:g.69897T>C",
+    "variant_class": "SNV",
+    "batch_id": "BAT1",
+    "last_update": "2020-11-29",
+    "variant_type": "germline",
+    "aliquot_id": "TCGA-02-0001-01B-02D-0182-06",
+    "patient_id": "PA0001",
+    "family_id": "FM00001",
+    "practitioner_id": "PPR00101",
+    "organization_id": "OR00202",
+    "sequencing_strategy": "WXS",
+    "mother_id": "PA0003",
+    "father_id": "PA0002"
   }],
-  "dna_change": "T>C",
+  "frequencies_by_lab": {
+    "OR00201": {
+      "ac": 2,
+      "an": 2,
+      "af": 1.0,
+      "hom": 1,
+      "het": 0
+    },
+    "OR00202": {
+      "ac": 2,
+      "an": 2,
+      "af": 1.0,
+      "hom": 1,
+      "het": 0
+    }
+  },
   "frequencies": {
-    "1000_genomes": {
+    "thousand_genomes": {
       "ac": 3446,
-      "af": 0.688099,
-      "an": 5008
+      "an": 5008,
+      "af": 0.688099
     },
     "topmed_bravo": {
       "ac": 2,
-      "af": 1.59276E-5,
       "an": 125568,
+      "af": 1.59276E-5,
       "hom": 0,
       "het": 2
     },
     "gnomad_genomes_2_1_1": {
       "ac": 1,
-      "af": 3.7962189659099535E-5,
       "an": 26342,
+      "af": 3.7962189659099535E-5,
       "hom": 0
     },
-    "exac": {
+    "gnomad_exomes_2_1_1": {
       "ac": 0,
-      "af": 0.0,
       "an": 2,
+      "af": 0.0,
       "hom": 0
     },
     "gnomad_genomes_3_0": {
       "ac": 0,
-      "af": 0.0,
       "an": 53780,
+      "af": 0.0,
       "hom": 0
     },
+    "gnomad_genomes_3_1_1": {
+      "ac": 10,
+      "an": 20,
+      "af": 0.5,
+      "hom": 10
+    },
     "internal": {
-      "ac": 2,
-      "an": 2,
+      "ac": 4,
+      "an": 4,
       "af": 1.0,
-      "hom": 1,
+      "hom": 2,
       "het": 0
     }
   },
@@ -109,6 +132,8 @@
     "interpretations": ["", "Likely_benign"]
   },
   "dbsnp": "rs200676709",
+  "participant_number": 2,
+  "dna_change": "T>C",
   "genes": [{
     "symbol": "OR4F5",
     "entrez_gene_id": 777,
@@ -121,7 +146,8 @@
     "biotype": "protein_coding",
     "orphanet": [{
       "disorder_id": 17827,
-      "panel": "Immunodeficiency due to a classical component pathway complement deficiency"
+      "panel": "Immunodeficiency due to a classical component pathway complement deficiency",
+      "inheritance": ["Autosomal recessive"]
     }],
     "hpo": [{
       "hpo_term_id": "HP:0001347",
@@ -131,16 +157,40 @@
     "omim": [{
       "name": "Epileptic encephalopathy, early infantile, 69",
       "omim_id": "618285",
-      "inheritance": ["AD"]
+      "inheritance": ["Autosomal dominant"],
+      "inheritance_code": ["AD"]
     }]
   }],
   "omim": ["618285"],
-  "ext_db": {
-    "is_pubmed": false,
-    "is_dbsnp": true,
-    "is_clinvar": true,
-    "is_hpo": true,
-    "is_orphanet": true,
-    "is_omim": true
-  }
+  "variant_external_reference": ["DBSNP", "Clinvar"],
+  "gene_external_reference": ["HPO", "Orphanet", "OMIM"],
+  "consequences": [{
+    "consequences": ["downstream_gene_variant"],
+    "impact": "MODIFIER",
+    "symbol": "DDX11L1",
+    "ensembl_gene_id": "ENSG00000223972",
+    "ensembl_transcript_id": "ENST00000450305",
+    "ensembl_feature_id": "ENST00000450305",
+    "feature_type": "Transcript",
+    "strand": 1,
+    "biotype": "transcribed_unprocessed_pseudogene",
+    "exon": {},
+    "intron": {},
+    "amino_acids": {},
+    "codons": {},
+    "pick": false,
+    "original_canonical": false,
+    "impact_score": 1,
+    "created_on": "2021-02-26T14:50:08.108-05:00",
+    "updated_on": "2021-02-26T14:50:08.108-05:00",
+    "consequence": ["downstream gene"],
+    "predictions": {
+      "cadd_score": 0.95178,
+      "dann_score": 0.66795
+    },
+    "conservations": {
+      "phylo_p17way_primate_rankscore": 0.94297
+    }
+  }],
+  "impact_score": 1
 }
