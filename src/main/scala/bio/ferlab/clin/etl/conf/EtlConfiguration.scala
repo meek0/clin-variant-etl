@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.conf
 
-import bio.ferlab.datalake.spark3.config._
-import bio.ferlab.datalake.spark3.loader.Format.{DELTA, JSON, PARQUET, VCF}
-import bio.ferlab.datalake.spark3.loader.LoadType.{Insert, OverWrite, Scd1}
+import bio.ferlab.datalake.commons.config.Format.{DELTA, JSON, PARQUET, VCF}
+import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, Scd1}
+import bio.ferlab.datalake.commons.config._
 
 object EtlConfiguration extends App {
 

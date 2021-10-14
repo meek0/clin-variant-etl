@@ -2,8 +2,8 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
-import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
+import bio.ferlab.datalake.commons.config._
+import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterAll

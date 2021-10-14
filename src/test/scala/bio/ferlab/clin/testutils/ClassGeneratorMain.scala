@@ -1,7 +1,7 @@
 package bio.ferlab.clin.testutils
 
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.practitionerMappings
-import bio.ferlab.datalake.spark3.config.{Configuration, StorageConf}
+import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 
 object ClassGeneratorMain extends App with WithSparkSession {

@@ -1,8 +1,9 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.vcf.Occurrences.{getFamilyRelationships, getOccurrences}
-import bio.ferlab.datalake.spark3.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
@@ -22,7 +23,8 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
+      raw_variant_calling.id ->
+        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
       patient.id -> patient.read,
       specimen.id -> specimen.read,
       group.id -> group.read,
@@ -74,7 +76,9 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
         .join(patients, Seq("patient_id"))
         .join(familyRelationshipDf, Seq("patient_id"), "left")
 
-    val occurrences = getOccurrences(data(raw_variant_calling.id), batchId)
+
+    val occurrences = getOccurrences(data(raw_variant_calling.id).where("contigName='chr12'"), batchId)
+    occurrences.show(false)
     occurrences
       .join(joinedRelation, Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
@@ -94,6 +98,10 @@ class Occurrences(batchId: String)(implicit configuration: Configuration) extend
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+    if(lastRunDateTime == minDateTime) {
+      spark.sql(s"DROP TABLE ${destination.table.get.fullName}")
+    }
+
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions(col("chromosome"), col("start"))

@@ -2,8 +2,8 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.spark3.config.{Configuration, ConfigurationLoader, StorageConf}
-import bio.ferlab.datalake.spark3.loader.{LoadResolver, LoadType}
+import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, LoadType, StorageConf}
+import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec

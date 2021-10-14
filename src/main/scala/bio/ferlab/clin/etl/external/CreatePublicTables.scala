@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.external
 
 import bio.ferlab.clin.etl.external.PublicTablesCreateStatements._
-import bio.ferlab.datalake.spark3.config.{DatasetConf, TableConf}
+import bio.ferlab.datalake.commons.config.{DatasetConf, TableConf}
 import bio.ferlab.datalake.spark3.public.SparkApp
 
 object CreatePublicTables extends SparkApp {

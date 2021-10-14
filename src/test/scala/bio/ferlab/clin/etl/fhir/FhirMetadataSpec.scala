@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.spark3.config.{Configuration, StorageConf}
+import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._

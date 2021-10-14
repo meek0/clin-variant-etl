@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.datalake.spark3.config.{DatasetConf, TableConf}
-import bio.ferlab.datalake.spark3.loader.Format._
-import bio.ferlab.datalake.spark3.loader.LoadType._
+import bio.ferlab.datalake.commons.config.{DatasetConf, TableConf}
+import bio.ferlab.datalake.commons.config.Format._
+import bio.ferlab.datalake.commons.config.LoadType._
 
 
 object FhirCatalog {
