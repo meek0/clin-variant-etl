@@ -5,13 +5,13 @@ import org.apache.spark.sql.SparkSession
 
 object RunEnriched extends SparkApp {
 
-  val Array(_, lastBatch, runType) = args
+  val Array(_, runType) = args
 
   implicit val (conf, spark) = init()
 
-  run(lastBatch, runType)
+  run(runType)
 
-  def run(lastBatch: String, runType: String = "all")(implicit spark: SparkSession): Unit = {
+  def run(runType: String = "all")(implicit spark: SparkSession): Unit = {
     runType match {
       case "variants" => new Variants().run()
       case "consequences" => new Consequences().run()
