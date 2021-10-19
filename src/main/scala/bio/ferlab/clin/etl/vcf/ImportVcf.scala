@@ -12,12 +12,12 @@ object ImportVcf extends SparkApp {
 
   runType match {
     case "variants" => new Variants(batchId).run()
-    case "consequences" => new Consequences(batchId).run()
+    case "consequences" => new Consequences(batchId, chromosome).run()
     case "occurrences" => new Occurrences(batchId, chromosome).run()
     case "all" =>
       new Occurrences(batchId, chromosome).run()
       new Variants(batchId).run()
-      new Consequences(batchId).run()
+      new Consequences(batchId, chromosome).run()
     case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
   }
 }
