@@ -22,6 +22,11 @@ libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provide
 libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.0" % Provided
 libraryDependencies += "io.projectglow" %% "glow-spark3" % glowVersion exclude ("org.apache.hadoop", "hadoop-client")
 libraryDependencies += "io.delta" %% "delta-core" % deltaCoreVersion
+dependencyOverrides ++= Seq(
+  //"org.antlr" % "antlr4" % "4.9.2",
+  "org.antlr" % "antlr4-runtime" % "4.8",
+  "org.antlr" % "antlr4-tool" % "4.7.1"
+)
 
 /* Test */
 libraryDependencies += "org.scalatest" %% "scalatest" % scalatestVersion % Test
