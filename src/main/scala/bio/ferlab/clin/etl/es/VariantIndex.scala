@@ -21,6 +21,7 @@ object VariantIndex {
       .load(enriched_variants.location)
       .where(col("created_on") >= lastExecution)
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab")
+      .as("variants")
 
     val consequences =
       spark
@@ -43,12 +44,14 @@ object VariantIndex {
         .format(enriched_variants.format.sparkFormat)
         .load(enriched_variants.location)
         .where(col("updated_on") >= lastExecution and col("created_on") =!= col("updated_on"))
+        .as("variants")
 
     val consequences =
       spark
         .read
         .format(enriched_consequences.format.sparkFormat)
-        .load(enriched_consequences.location).as("consequences")
+        .load(enriched_consequences.location)
+        .as("consequences")
 
     val finalDf = joinWithConsequences(updatedVariants, consequences)
       .withColumn("frequencies", map(lit("internal"), col("frequencies.internal")))
