@@ -13,6 +13,8 @@ object Indexer extends App {
 
   val Array(
   esNodes,          // http://0.0.0.0
+  username,         // basic auth username
+  password,         // basic auth password
   alias,            // alias to create
   release_id,       // release id
   templateFileName, //variant_centric_template.json
@@ -22,7 +24,10 @@ object Indexer extends App {
   ) = args
 
   implicit val spark: SparkSession = SparkSession.builder
+    .config("es.net.http.auth.user", username)
+    .config("es.net.http.auth.pass", password)
     .config("es.index.auto.create", "true")
+    .config("es.net.ssl", "true")
     .config("es.nodes", esNodes)
     .appName(s"Indexer")
     .getOrCreate()
