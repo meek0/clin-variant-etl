@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
   implicit val localConf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
 
   val job1 = new Consequences("BAT1")
   val job2 = new Consequences("BAT2")

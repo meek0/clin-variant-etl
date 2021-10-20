@@ -28,7 +28,12 @@ object Indexer extends App {
     .config("es.net.http.auth.pass", password)
     .config("es.index.auto.create", "true")
     .config("es.net.ssl", "true")
+    .config("es.net.ssl.cert.allow.self.signed", "true")
     .config("es.nodes", esNodes)
+    .config("es.nodes.wan.only", "true")
+    .config("es.wan.only", "true")
+    .config("spark.es.nodes.wan.only", "true")
+    .config("es.port", "443")
     .appName(s"Indexer")
     .getOrCreate()
 
@@ -36,19 +41,20 @@ object Indexer extends App {
 
   spark.sparkContext.setLogLevel("ERROR")
 
-  val templatePath = s"${conf.storages.head.path}/jobs/templates/$templateFileName"
+  val templatePath = s"${conf.storages.find(_.id == "clin_datalake").get.path}/jobs/templates/$templateFileName"
 
   val indexName = alias
-  implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head)
+  implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(username), Some(password))
 
   jobType match {
     case "variants" =>
-      val job = new Indexer("upsert", templatePath, s"${indexName}_$release_id")
+      val job = new Indexer("index", templatePath, s"${indexName}_$release_id")
       val insertDf = VariantIndex.getInsert(Timestamp.valueOf(lastBatch))
       job.run(insertDf)
 
-      val updateDf = VariantIndex.getUpdate(Timestamp.valueOf(lastBatch))
-      job.run(updateDf)
+      //TODO create a column id in order to support upsert
+      //val updateDf = VariantIndex.getUpdate(Timestamp.valueOf(lastBatch))
+      //job.run(updateDf)
 
     case "genes" =>
       val job = new Indexer("index", templatePath, s"${indexName}_$release_id")

@@ -17,7 +17,7 @@ class VariantIndexSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   import spark.implicits._
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
 
   val enriched_variants = conf.getDataset("enriched_variants")
   val enriched_consequences = conf.getDataset("enriched_consequences")

@@ -17,7 +17,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   import spark.implicits._
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
 
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")

@@ -6,7 +6,7 @@ import bio.ferlab.datalake.commons.config._
 
 object EtlConfiguration extends App {
 
-  val clin_datalake = "clin_storage"
+  val clin_datalake = "clin_datalake"
   val clin_import = "clin_import"
 
   val clin_qa_database = "clin_qa"

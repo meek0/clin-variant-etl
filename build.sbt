@@ -11,6 +11,7 @@ val deltaCoreVersion = "1.0.0"
 val scalatestVersion = "3.2.9"
 val glowVersion = "1.0.1"
 val datalakeSpark3Version = "0.1.2"
+val elasticsearchVersion = "7.15.0"
 
 resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
 resolvers += "Sonatype OSS Releases" at "https://s01.oss.sonatype.org/content/repositories/releases" //faster than waiting for https://repo1.maven.org/maven2
@@ -22,6 +23,7 @@ libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.2.0" % Provide
 libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.2.0" % Provided
 libraryDependencies += "io.projectglow" %% "glow-spark3" % glowVersion exclude ("org.apache.hadoop", "hadoop-client")
 libraryDependencies += "io.delta" %% "delta-core" % deltaCoreVersion
+libraryDependencies += "org.elasticsearch" %% "elasticsearch-spark-30" % elasticsearchVersion
 dependencyOverrides ++= Seq(
   //"org.antlr" % "antlr4" % "4.9.2",
   "org.antlr" % "antlr4-runtime" % "4.8",

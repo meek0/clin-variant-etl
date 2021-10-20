@@ -20,7 +20,7 @@ class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSpark
 
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
 
   val destination      : DatasetConf = conf.getDataset("enriched_genes")
   val omim_gene_set    : DatasetConf = conf.getDataset("normalized_omim_gene_set")

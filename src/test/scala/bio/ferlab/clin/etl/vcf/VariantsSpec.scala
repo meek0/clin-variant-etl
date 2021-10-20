@@ -16,7 +16,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(
-      StorageConf("clin_storage", this.getClass.getClassLoader.getResource(".").getFile),
+      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile),
       StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile)
     ))
 
