@@ -12,27 +12,43 @@ object VariantIndex {
 
   def getInsert(lastExecution: Timestamp)
                (implicit spark: SparkSession, conf: Configuration): DataFrame = {
-    spark.sql("use clin")
     val enriched_variants = conf.getDataset("enriched_variants")
     val enriched_consequences = conf.getDataset("enriched_consequences")
 
-    val newVariants = enriched_variants.read.where(col("created_on") >= lastExecution)
+    val newVariants = spark
+      .read
+      .format(enriched_variants.format.sparkFormat)
+      .load(enriched_variants.location)
+      .where(col("created_on") >= lastExecution)
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab")
-    val consequences = enriched_consequences.read.as("consequences")
+
+    val consequences =
+      spark
+        .read
+        .format(enriched_consequences.format.sparkFormat)
+        .load(enriched_consequences.location)
+        .as("consequences")
 
     joinWithConsequences(newVariants, consequences)
   }
 
   def getUpdate(lastExecution: Timestamp)
                (implicit spark: SparkSession, conf: Configuration): DataFrame = {
-    spark.sql("use clin")
     val enriched_variants = conf.getDataset("enriched_variants")
     val enriched_consequences = conf.getDataset("enriched_consequences")
 
     val updatedVariants =
-      enriched_variants.read
+      spark
+        .read
+        .format(enriched_variants.format.sparkFormat)
+        .load(enriched_variants.location)
         .where(col("updated_on") >= lastExecution and col("created_on") =!= col("updated_on"))
-    val consequences = enriched_consequences.read.as("consequences")
+
+    val consequences =
+      spark
+        .read
+        .format(enriched_consequences.format.sparkFormat)
+        .load(enriched_consequences.location).as("consequences")
 
     val finalDf = joinWithConsequences(updatedVariants, consequences)
       .withColumn("frequencies", map(lit("internal"), col("frequencies.internal")))
