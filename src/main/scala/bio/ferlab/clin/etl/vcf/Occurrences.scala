@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class Occurrences(batchId: String, chromosome: String = "all")(implicit configuration: Configuration) extends ETL {
+class Occurrences(batchId: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
@@ -77,10 +77,7 @@ class Occurrences(batchId: String, chromosome: String = "all")(implicit configur
         .join(familyRelationshipDf, Seq("patient_id"), "left")
 
 
-    val occurrences = chromosome match {
-      case "all" => getOccurrences(data(raw_variant_calling.id), batchId)
-      case c: String => getOccurrences(data(raw_variant_calling.id).where(s"contigName='chr$c'"), batchId)
-    }
+    val occurrences = getOccurrences(data(raw_variant_calling.id), batchId)
     occurrences
       .join(joinedRelation, Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
@@ -100,6 +97,9 @@ class Occurrences(batchId: String, chromosome: String = "all")(implicit configur
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+    if (loadType == "first_load" && destination.table.nonEmpty) {
+      spark.sql(s"DROP TABLE ${destination.table.get.fullName}")
+    }
     super.load(data
       .repartition(5, col("chromosome"))
       .sortWithinPartitions(col("chromosome"), col("start"))

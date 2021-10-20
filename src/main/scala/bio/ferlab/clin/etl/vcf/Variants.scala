@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Variants(batchId: String)(implicit configuration: Configuration) extends ETL {
+class Variants(batchId: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
@@ -52,6 +52,9 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+    if (loadType == "first_load" && destination.table.nonEmpty) {
+      spark.sql(s"DROP TABLE ${destination.table.get.fullName}")
+    }
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))
