@@ -80,12 +80,6 @@
           "consequences": {
             "type": "keyword"
           },
-          "consequences_oid": {
-            "type": "long"
-          },
-          "created_on": {
-            "type": "long"
-          },
           "ensembl_feature_id": {
             "type": "keyword"
           },
@@ -130,9 +124,6 @@
               }
             }
           },
-          "normalized_consequences_oid": {
-            "type": "long"
-          },
           "original_canonical": {
             "type": "boolean"
           },
@@ -147,14 +138,8 @@
           },
           "symbol": {
             "type": "keyword"
-          },
-          "updated_on": {
-            "type": "long"
           }
         }
-      },
-      "created_on": {
-        "type": "long"
       },
       "dbsnp": {
         "type": "keyword"
@@ -512,9 +497,6 @@
       "locus": {
         "type": "keyword"
       },
-      "normalized_variants_oid": {
-        "type": "long"
-      },
       "omim": {
         "type": "keyword"
       },
@@ -530,9 +512,6 @@
       "start": {
         "type": "long"
       },
-      "updated_on": {
-        "type": "long"
-      },
       "variant_class": {
         "type": "keyword"
       },
@@ -541,9 +520,6 @@
       },
       "variant_type": {
         "type": "keyword"
-      },
-      "variants_oid": {
-        "type": "long"
       }
     }
   }
