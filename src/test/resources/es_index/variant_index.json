@@ -131,7 +131,7 @@
     "inheritance": ["germline"],
     "interpretations": ["", "Likely_benign"]
   },
-  "dbsnp": "rs200676709",
+  "rsnumber": "rs200676709",
   "participant_number": 2,
   "dna_change": "T>C",
   "genes": [{
@@ -166,7 +166,7 @@
   "gene_external_reference": ["HPO", "Orphanet", "OMIM"],
   "consequences": [{
     "consequences": ["downstream_gene_variant"],
-    "impact": "MODIFIER",
+    "vep_impact": "MODIFIER",
     "symbol": "DDX11L1",
     "ensembl_gene_id": "ENSG00000223972",
     "ensembl_transcript_id": "ENST00000450305",

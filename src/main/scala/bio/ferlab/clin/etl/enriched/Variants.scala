@@ -187,7 +187,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame)(implicit spark: SparkSession): DataFrame = {
     variants
       .joinByLocus(dbsnp, "left")
-      .select(variants.drop("name")("*"), dbsnp("name") as "dbsnp")
+      .select(variants.drop("name")("*"), dbsnp("name") as "rsnumber")
   }
 
   def joinWithClinvar(variants: DataFrame, clinvar: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -256,7 +256,7 @@ object Variants {
         $"pubmed".isNotNull -> "Pubmed"
       )
       conditionValueMap.foldLeft {
-        df.withColumn(outputColumn, when($"dbsnp".isNotNull, array(lit("DBSNP"))).otherwise(array()))
+        df.withColumn(outputColumn, when($"rsnumber".isNotNull, array(lit("DBSNP"))).otherwise(array()))
       } { case (d, (condition, value)) => d
         .withColumn(outputColumn,
           when(condition, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
