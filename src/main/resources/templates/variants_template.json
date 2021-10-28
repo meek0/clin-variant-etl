@@ -38,6 +38,7 @@
         }
       },
       "consequences": {
+        "type" : "nested",
         "properties": {
           "aa_change": {
             "type": "keyword"
@@ -79,6 +80,13 @@
           },
           "consequences": {
             "type": "keyword"
+          },
+          "conservations": {
+            "properties": {
+              "phylo_p17way_primate_rankscore": {
+                "type": "long"
+              }
+            }
           },
           "ensembl_feature_id": {
             "type": "keyword"
@@ -130,6 +138,44 @@
           "pick": {
             "type": "boolean"
           },
+          "predictions": {
+            "properties": {
+              "sift_converted_rank_score": {
+                "type": "float"
+              },
+              "sift_pred": {
+                "type": "keyword"
+              },
+              "polyphen2_hvar_score": {
+                "type": "float"
+              },
+              "polyphen2_hvar_pred": {
+                "type": "keyword"
+              },
+              "FATHMM_converted_rankscore": {
+                "type": "float"
+              },
+              "fathmm_pred": {
+                "type": "keyword"
+              },
+              "cadd_score": {
+                "type": "float"
+              },
+              "dann_score": {
+                "type": "float"
+              },
+              "revel_rankscore": {
+                "type": "float"
+              },
+              "lrt_converted_rankscore": {
+                "type": "float"
+              },
+              "lrt_pred": {
+                "type": "keyword"
+              }
+            }
+          },
+
           "protein_position": {
             "type": "long"
           },
@@ -393,6 +439,7 @@
         "type": "keyword"
       },
       "genes": {
+        "type" : "nested",
         "properties": {
           "alias": {
             "type": "keyword"
