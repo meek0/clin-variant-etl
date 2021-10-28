@@ -34,6 +34,7 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
     val csq = consequences
       .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_regulatory_id")
       .withColumn("consequence", formatted_consequences)
+      .withColumnRenamed("impact", "vep_impact")
 
     joinWithDBNSFP(csq, dbnsfp)
   }
