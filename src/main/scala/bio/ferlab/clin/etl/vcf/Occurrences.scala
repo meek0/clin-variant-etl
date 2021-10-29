@@ -25,6 +25,7 @@ class Occurrences(batchId: String, loadType: String = "incremental")(implicit co
     Map(
       raw_variant_calling.id ->
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
+      //.where("chromosome='22'")
       patient.id -> patient.read,
       specimen.id -> specimen.read,
       group.id -> group.read,
@@ -157,7 +158,6 @@ object Occurrences {
         is_multi_allelic,
         old_multi_allelic
       )
-      .where("chromosome='22'")
       .withColumn("ad_ref", $"ad"(0))
       .withColumn("ad_alt", $"ad"(1))
       .withColumn("ad_total", $"ad_ref" + $"ad_alt")

@@ -20,6 +20,7 @@ class Consequences(batchId: String, loadType: String = "incremental")(implicit c
     Map(
       raw_variant_calling.id ->
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
+          //.where("chromosome='22'")
     )
   }
 
@@ -37,7 +38,6 @@ class Consequences(batchId: String, loadType: String = "incremental")(implicit c
         name,
         csq
       )
-      .where("chromosome='22'")
       .withColumn("annotation", explode($"annotations"))
       .drop("annotations")
       .select($"*",

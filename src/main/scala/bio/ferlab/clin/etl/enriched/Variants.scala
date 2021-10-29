@@ -34,8 +34,11 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     Map(
       normalized_variants.id -> normalized_variants.read
         .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime))
-        .where("chromosome='22'"),
-      normalized_occurrences.id -> normalized_occurrences.read.where("chromosome='22'"),
+        //.where("chromosome='22'")
+      ,
+      normalized_occurrences.id -> normalized_occurrences.read
+        //.where("chromosome='22'")
+        ,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,

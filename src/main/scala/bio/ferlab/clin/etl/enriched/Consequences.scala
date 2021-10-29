@@ -22,7 +22,9 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_consequences.id -> normalized_consequences.read
-        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where("chromosome='22'"),
+        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime))
+        //.where("chromosome='22'")
+        ,
       dbnsfp_original.id -> dbnsfp_original.read
     )
   }

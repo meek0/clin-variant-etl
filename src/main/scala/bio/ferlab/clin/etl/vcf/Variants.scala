@@ -19,6 +19,7 @@ class Variants(batchId: String, loadType: String = "incremental")(implicit confi
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
+      //.where("chromosome='22'")
     )
   }
 
@@ -44,7 +45,6 @@ class Variants(batchId: String, loadType: String = "incremental")(implicit confi
         lit(Timestamp.valueOf(currentRunDateTime)) as "created_on",
         lit(Timestamp.valueOf(currentRunDateTime)) as "updated_on"
       )
-      .where("chromosome='22'")
       .withColumn(destination.oid, col("created_on"))
       .withColumn("locus", concat_ws("-", locus:_*))
       .drop("annotation")

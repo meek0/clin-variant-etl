@@ -26,6 +26,7 @@ object CreatePublicTables extends SparkApp {
     "dbnsfp_original" -> dbnsfp_original,
     "dbnsfp_scores" -> dbnsfp_scores,
     "human_genes" -> human_genes,
+    "ensembl_mapping" -> ensembl_mapping,
     "orphanet_gene_set" -> orphanet_gene_set,
     "hpo_gene_set" -> hpo_gene_set,
     "omim_gene_set" -> omim_gene_set,

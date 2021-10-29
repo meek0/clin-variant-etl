@@ -1892,6 +1892,30 @@ spark.sql(
        |LOCATION '$input'
        |""".stripMargin
 
+  val ensembl_mapping: String => String = input =>
+    s"""
+       |CREATE TABLE IF NOT EXISTS `ensembl_mapping` (
+       |`ensembl_gene_id` STRING,
+       |`ensembl_transcript_id` STRING,
+       |`tags` ARRAY<STRING>,
+       |`refseq` ARRAY<STRUCT<`id`: STRING, `database`: STRING>>,
+       |`entrez` ARRAY<STRUCT<`id`: STRING, `database`: STRING>>,
+       |`uniprot` ARRAY<STRUCT<`id`: STRING, `database`: STRING>>,
+       |`species` STRING,
+       |`tax_id` STRING,
+       |`primary_accessions` ARRAY<STRING>,
+       |`secondary_accessions` ARRAY<STRING>,
+       |`refseq_mrna_id` STRING,
+       |`refseq_protein_id` STRING,
+       |`is_canonical` BOOLEAN,
+       |`is_mane_select` BOOLEAN,
+       |`is_mane_plus` BOOLEAN,
+       |`genome_build` STRING,
+       |`ensembl_release_id` INT)
+       |USING parquet
+       |LOCATION '$input'
+       |""".stripMargin
+
   val orphanet_gene_set: String => String = input =>
     s"""CREATE TABLE IF NOT EXISTS `orphanet_gene_set` (
        |`orpha_code` BIGINT COMMENT 'a unique and time-stable numerical identifier attributed randomly by the database upon creation of the entity. Currently, the ORPHACode is made up of one to six digits. In the future, number of digits can expand.',
