@@ -532,7 +532,7 @@
       "hgvsg": {
         "type": "keyword"
       },
-      "impact_score": {
+      "max_impact_score": {
         "type": "long"
       },
       "is_multi_allelic": {

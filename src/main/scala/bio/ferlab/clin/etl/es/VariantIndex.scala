@@ -68,8 +68,8 @@ object VariantIndex {
       .agg(
         first(struct("variants.*")) as "variant",
         collect_list(struct("consequences.*")) as "consequences",
-        max("impact_score") as "impact_score")
-      .select($"variant.*", $"consequences", $"impact_score")
+        max("impact_score") as "max_impact_score")
+      .select($"variant.*", $"consequences", $"max_impact_score")
   }
 
 }
