@@ -5,20 +5,20 @@ import org.apache.spark.sql.SparkSession
 
 object RunEnriched extends SparkApp {
 
-  val Array(_, runType) = args
+  val Array(_, jobName) = args
 
   implicit val (conf, spark) = init()
 
-  run(runType)
+  run(jobName)
 
-  def run(runType: String = "all")(implicit spark: SparkSession): Unit = {
-    runType match {
+  def run(jobName: String = "all")(implicit spark: SparkSession): Unit = {
+    jobName match {
       case "variants" => new Variants().run()
       case "consequences" => new Consequences().run()
       case "all" =>
         new Variants().run()
         new Consequences().run()
-      case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
+      case s: String => throw new IllegalArgumentException(s"jobName [$s] unknown.")
     }
 
   }

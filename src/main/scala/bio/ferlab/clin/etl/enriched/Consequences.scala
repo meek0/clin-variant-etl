@@ -29,8 +29,12 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
   override def transform(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
     val consequences = data(normalized_consequences.id)
-    val dbnsfp = data(dbnsfp_original.id)
+    val chromosomes = consequences.select("chromosome").distinct().as[String].collect()
+
+    val dbnsfp = data(dbnsfp_original.id).where(col("chromosome").isin(chromosomes:_*))
+
     val csq = consequences
       .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_regulatory_id")
       .withColumn("consequence", formatted_consequences)
