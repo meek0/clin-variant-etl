@@ -97,9 +97,7 @@ class Occurrences(batchId: String, loadType: String = "incremental")(implicit co
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    if (loadType == "first_load" && destination.table.nonEmpty) {
-      spark.sql(s"DROP TABLE ${destination.table.get.fullName}")
-    }
+    println(s"COUNT: ${data.count()}")
     super.load(data
       .repartition(5, col("chromosome"))
       .sortWithinPartitions(col("chromosome"), col("start"))
@@ -159,6 +157,7 @@ object Occurrences {
         is_multi_allelic,
         old_multi_allelic
       )
+      .where("chromosome='22'")
       .withColumn("ad_ref", $"ad"(0))
       .withColumn("ad_alt", $"ad"(1))
       .withColumn("ad_total", $"ad_ref" + $"ad_alt")

@@ -44,6 +44,7 @@ class Variants(batchId: String, loadType: String = "incremental")(implicit confi
         lit(Timestamp.valueOf(currentRunDateTime)) as "created_on",
         lit(Timestamp.valueOf(currentRunDateTime)) as "updated_on"
       )
+      .where("chromosome='22'")
       .withColumn(destination.oid, col("created_on"))
       .withColumn("locus", concat_ws("-", locus:_*))
       .drop("annotation")
@@ -52,9 +53,7 @@ class Variants(batchId: String, loadType: String = "incremental")(implicit confi
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    if (loadType == "first_load" && destination.table.nonEmpty) {
-      spark.sql(s"DROP TABLE ${destination.table.get.fullName}")
-    }
+    println(s"COUNT: ${data.count()}")
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))

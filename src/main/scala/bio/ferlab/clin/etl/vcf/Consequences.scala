@@ -18,7 +18,8 @@ class Consequences(batchId: String, loadType: String = "incremental")(implicit c
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
+      raw_variant_calling.id ->
+        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
     )
   }
 
@@ -36,6 +37,7 @@ class Consequences(batchId: String, loadType: String = "incremental")(implicit c
         name,
         csq
       )
+      .where("chromosome='22'")
       .withColumn("annotation", explode($"annotations"))
       .drop("annotations")
       .select($"*",
@@ -76,9 +78,7 @@ class Consequences(batchId: String, loadType: String = "incremental")(implicit c
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    if (loadType == "first_load" && destination.table.nonEmpty) {
-      spark.sql(s"DROP TABLE ${destination.table.get.fullName}")
-    }
+    println(s"COUNT: ${data.count()}")
     super.load(data
       .repartition(5, col("chromosome"))
       .sortWithinPartitions("start"))
