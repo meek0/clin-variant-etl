@@ -135,6 +135,15 @@
           "original_canonical": {
             "type": "boolean"
           },
+          "canonical": {
+            "type": "boolean"
+          },
+          "mane_plus": {
+            "type": "boolean"
+          },
+          "mane_select": {
+            "type": "boolean"
+          },
           "pick": {
             "type": "boolean"
           },
