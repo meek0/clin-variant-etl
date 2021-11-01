@@ -6,6 +6,9 @@
 
   "mappings": {
     "properties": {
+      "hash" : {
+        "type" : "keyword"
+      },
       "alternate": {
         "type": "keyword"
       },
@@ -203,6 +206,7 @@
         "type": "keyword"
       },
       "donors": {
+        "type" : "nested",
         "properties": {
           "ad_alt": {
             "type": "long"

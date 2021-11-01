@@ -87,6 +87,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .withGeneExternalReference
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus:_*))
+      .withColumn("hash", sha1(col("locus")))
       .withColumn(destination.oid, col("created_on"))
   }
 
