@@ -5,7 +5,7 @@ import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
-import org.apache.spark.sql.functions.{col, struct}
+import org.apache.spark.sql.functions.{coalesce, col, lit, struct}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -17,15 +17,17 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
   override val destination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
+  val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_consequences.id -> normalized_consequences.read
         .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime))
-        //.where("chromosome='22'")
-        ,
-      dbnsfp_original.id -> dbnsfp_original.read
+      //.where("chromosome='22'")
+      ,
+      dbnsfp_original.id -> dbnsfp_original.read,
+      normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read
     )
   }
 
@@ -34,6 +36,9 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val consequences = data(normalized_consequences.id)
+
+    val ensembl_mapping = data(normalized_ensembl_mapping.id)
+
     val chromosomes = consequences.select("chromosome").distinct().as[String].collect()
 
     val dbnsfp = data(dbnsfp_original.id).where(col("chromosome").isin(chromosomes:_*))
@@ -43,7 +48,12 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
       .withColumn("consequence", formatted_consequences)
       .withColumnRenamed("impact", "vep_impact")
 
-    joinWithDBNSFP(csq, dbnsfp)
+    val csqWithDBNSF = joinWithDBNSFP(csq, dbnsfp)
+
+    joinWithEnsemblMapping(csqWithDBNSF, ensembl_mapping)
+      .withColumnRenamed("is_canonical", "canonical")
+      .withColumnRenamed("is_mane_select", "mane_select")
+      .withColumnRenamed("is_mane_plus", "mane_plus")
   }
 
   override def load(data: DataFrame,
@@ -52,6 +62,13 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))
+  }
+
+  def joinWithEnsemblMapping(targetDf: DataFrame, ensembl_mapping: DataFrame): DataFrame = {
+    targetDf
+      .join(ensembl_mapping, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
+      .withColumn("canonical", coalesce(col("is_canonical"), lit(false)))
+      .drop("is_canonical")
   }
 
   def joinWithDBNSFP(csq: DataFrame, dbnsfp: DataFrame)(implicit spark: SparkSession): DataFrame = {

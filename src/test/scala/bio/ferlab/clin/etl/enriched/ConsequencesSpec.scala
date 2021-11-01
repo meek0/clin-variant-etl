@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model.{ConsequenceEnrichedOutput, ConsequenceRawOutput, Dbnsfp_originalOutput}
+import bio.ferlab.clin.model.{ConsequenceEnrichedOutput, ConsequenceRawOutput, Dbnsfp_originalOutput, EnsemblMappingOutput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -22,10 +22,12 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
+  val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
 
   val data = Map(
     normalized_consequences.id -> Seq(ConsequenceRawOutput()).toDF(),
-    dbnsfp_original.id -> Seq(Dbnsfp_originalOutput()).toDF
+    dbnsfp_original.id -> Seq(Dbnsfp_originalOutput()).toDF,
+    normalized_ensembl_mapping.id -> Seq(EnsemblMappingOutput()).toDF
   )
 
   override def beforeAll(): Unit = {
@@ -51,6 +53,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   "consequences job" should "run" in {
     new Consequences().run()
+
     enriched_consequences.read.show(false)
     val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
