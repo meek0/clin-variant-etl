@@ -17,8 +17,8 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   implicit val localConf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
 
-  val job1 = new Consequences("BAT1")
-  val job2 = new Consequences("BAT2")
+  val job1 = new Consequences("BAT1", "chr1")
+  val job2 = new Consequences("BAT2", "chr1")
 
   import spark.implicits._
   val raw_variant_calling: DatasetConf = localConf.getDataset("raw_variant_calling")

@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences(batchId: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
+class Consequences(batchId: String, contig: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
@@ -20,7 +20,7 @@ class Consequences(batchId: String, loadType: String = "incremental")(implicit c
     Map(
       raw_variant_calling.id ->
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-          //.where("chromosome='22'")
+          .where(s"contigName='$contig'")
     )
   }
 

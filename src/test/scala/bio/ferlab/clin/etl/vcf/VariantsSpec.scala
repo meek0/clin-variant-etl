@@ -23,8 +23,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
-  val job1 = new Variants("BAT1")
-  val job2 = new Variants("BAT2")
+  val job1 = new Variants("BAT1", "chr1")
+  val job2 = new Variants("BAT2", "chr1")
 
   override def beforeAll(): Unit = {
     spark.sql(s"CREATE DATABASE IF NOT EXISTS ${raw_variant_calling.table.map(_.database).getOrElse("clin")}")

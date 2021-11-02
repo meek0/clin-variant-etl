@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class Occurrences(batchId: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
+class Occurrences(batchId: String, contig: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
@@ -24,8 +24,8 @@ class Occurrences(batchId: String, loadType: String = "incremental")(implicit co
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id ->
-        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
-      //.where("chromosome='22'")
+        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
+          .where(s"contigName='$contig'"),
       patient.id -> patient.read,
       specimen.id -> specimen.read,
       group.id -> group.read,

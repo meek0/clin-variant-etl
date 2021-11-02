@@ -12,19 +12,29 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences()(implicit configuration: Configuration) extends ETL {
+class Consequences(chromosome: String, loadType: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
 
+  override def run()(implicit spark: SparkSession): DataFrame = {
+    loadType match {
+      case "first_load" =>
+        fs.remove(destination.location)
+        destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
+        run(minDateTime, LocalDateTime.now())
+      case _ =>
+        run(minDateTime, LocalDateTime.now())
+    }
+  }
+
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_consequences.id -> normalized_consequences.read
-        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime))
-      //.where("chromosome='22'")
+        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where(s"chromosome='$chromosome'")
       ,
       dbnsfp_original.id -> dbnsfp_original.read,
       normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read

@@ -5,7 +5,7 @@ import org.apache.spark.sql.SparkSession
 
 object RunEnriched extends SparkApp {
 
-  val Array(_, jobName) = args
+  val Array(_, jobName, chromosome, loadType) = args
 
   implicit val (conf, spark) = init()
 
@@ -13,11 +13,11 @@ object RunEnriched extends SparkApp {
 
   def run(jobName: String = "all")(implicit spark: SparkSession): Unit = {
     jobName match {
-      case "variants" => new Variants().run()
-      case "consequences" => new Consequences().run()
+      case "variants" => new Variants(chromosome, loadType).run()
+      case "consequences" => new Consequences(chromosome, loadType).run()
       case "all" =>
-        new Variants().run()
-        new Consequences().run()
+        new Variants(chromosome, loadType).run()
+        new Consequences(chromosome, loadType).run()
       case s: String => throw new IllegalArgumentException(s"jobName [$s] unknown.")
     }
 

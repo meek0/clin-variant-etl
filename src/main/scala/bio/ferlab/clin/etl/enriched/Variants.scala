@@ -13,7 +13,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Variants()(implicit configuration: Configuration) extends ETL {
+class Variants(chromosome: String, loadType: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
@@ -28,17 +28,24 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
+  override def run()(implicit spark: SparkSession): DataFrame = {
+    loadType match {
+      case "first_load" =>
+        fs.remove(destination.location)
+        destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
+        run(minDateTime, LocalDateTime.now())
+      case _ =>
+        run(minDateTime, LocalDateTime.now())
+    }
+  }
+
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
 
     Map(
       normalized_variants.id -> normalized_variants.read
-        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime))
-        //.where("chromosome='22'")
-      ,
-      normalized_occurrences.id -> normalized_occurrences.read
-        //.where("chromosome='22'")
-        ,
+        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where(s"chromosome='$chromosome'"),
+      normalized_occurrences.id -> normalized_occurrences.read.where(s"chromosome='$chromosome'"),
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
