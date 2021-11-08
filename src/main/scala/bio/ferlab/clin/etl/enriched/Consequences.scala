@@ -1,7 +1,8 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
 import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
@@ -19,10 +20,10 @@ class Consequences(chromosome: String, loadType: String)(implicit configuration:
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
 
-  override def run()(implicit spark: SparkSession): DataFrame = {
+  override def run(runType: RunType)(implicit spark: SparkSession): DataFrame = {
     loadType match {
       case "first_load" =>
-        fs.remove(destination.location)
+        FileSystemResolver.resolve(conf.getStorage(destination.storageid).filesystem).remove(destination.location)
         destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
         run(minDateTime, LocalDateTime.now())
       case _ =>

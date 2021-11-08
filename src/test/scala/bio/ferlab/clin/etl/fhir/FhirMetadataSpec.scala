@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
@@ -12,7 +13,7 @@ object FhirMetadataSpec extends App with WithSparkSession {
 
   val output: String = getClass.getClassLoader.getResource(".").getFile
 
-  implicit val conf: Configuration = Configuration(List(StorageConf("raw", output), StorageConf("normalized", output)))
+  implicit val conf: Configuration = Configuration(List(StorageConf("raw", output, LOCAL), StorageConf("normalized", output, LOCAL)))
   import spark.implicits._
 
     val orgDs = FhirCatalog.Normalized.organization

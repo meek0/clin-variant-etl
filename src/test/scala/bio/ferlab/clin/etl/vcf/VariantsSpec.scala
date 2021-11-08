@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.vcf
 import bio.ferlab.clin.model.{VCFInput, VariantRawOutput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.scalatest.BeforeAndAfterAll
@@ -16,8 +17,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(
-      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile),
-      StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile)
+      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
+      StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)
     ))
 
   import spark.implicits._

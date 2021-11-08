@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.model.{ConsequenceEnrichedOutput, ConsequenceRawOutput, Dbnsfp_originalOutput, EnsemblMappingOutput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.commons.io.FileUtils
@@ -17,7 +18,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   import spark.implicits._
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
@@ -39,7 +40,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
       val ds = conf.getDataset(id)
 
       LoadResolver
-        .resolve(spark, conf)(ds.format, LoadType.OverWrite)
+        .write(spark, conf)(ds.format, LoadType.OverWrite)
         .apply(ds, df)
     }
   }

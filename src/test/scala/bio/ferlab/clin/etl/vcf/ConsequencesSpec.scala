@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.vcf
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.scalatest.BeforeAndAfterAll
@@ -15,7 +16,7 @@ import java.time.LocalDateTime
 class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
   implicit val localConf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val job1 = new Consequences("BAT1", "chr1")
   val job2 = new Consequences("BAT2", "chr1")

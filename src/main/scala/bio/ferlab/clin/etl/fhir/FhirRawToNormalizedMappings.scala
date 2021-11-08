@@ -20,7 +20,7 @@ object FhirRawToNormalizedMappings {
   )
 
   val clinicalImpressionMappings: List[Transformation] = List(
-    Date("yyyy-MM-dd", "date"),
+    ToDate("yyyy-MM-dd", "date"),
     Custom(
       _
         //.withColumnRenamed("id", "clinical_impression_id")
@@ -78,7 +78,7 @@ object FhirRawToNormalizedMappings {
 
   val patientMappings: List[Transformation]  = List(
     Custom(_.withColumnRenamed("birthDate", "birth_date")),
-    Date("yyyy-MM-dd", "birth_date"),
+    ToDate("yyyy-MM-dd", "birth_date"),
     Custom (
       _
         .extractIdentifier(List("MR" -> "medical_record_number", "JHN" -> "jurisdictional_health_number"))
@@ -121,7 +121,7 @@ object FhirRawToNormalizedMappings {
 
   val serviceRequestMappings: List[Transformation]  = List(
     Custom(_.withColumnRenamed("authoredOn", "authored_on")),
-    Date("yyyy-MM-dd", "authored_on"),
+    ToDate("yyyy-MM-dd", "authored_on"),
     Custom(
       _
         .extractIdentifier(List("MR" -> "medical_record_number"))

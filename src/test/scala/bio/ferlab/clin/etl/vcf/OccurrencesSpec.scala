@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.vcf
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -12,7 +13,7 @@ import java.time.LocalDate
 class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   import spark.implicits._
 

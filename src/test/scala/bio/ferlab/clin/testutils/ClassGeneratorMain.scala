@@ -2,13 +2,14 @@ package bio.ferlab.clin.testutils
 
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.practitionerMappings
 import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 
 object ClassGeneratorMain extends App with WithSparkSession {
 
   val output: String = getClass.getClassLoader.getResource(".").getFile
 
-  implicit val conf: Configuration = Configuration(List(StorageConf("clin", output)))
+  implicit val conf: Configuration = Configuration(List(StorageConf("clin", output, LOCAL)))
 
   //val job = new RawToNormalizedETL(Raw.practitioner, Normalized.practitioner, practitionerMappings)
 //

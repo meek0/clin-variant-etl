@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
@@ -17,7 +18,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   import spark.implicits._
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
@@ -71,7 +72,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       val ds = conf.getDataset(id)
 
       LoadResolver
-        .resolve(spark, conf)(ds.format, LoadType.OverWrite)
+        .write(spark, conf)(ds.format, LoadType.OverWrite)
         .apply(ds, df)
     }
   }

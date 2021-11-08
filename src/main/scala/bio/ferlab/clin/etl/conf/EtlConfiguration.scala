@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.conf
 import bio.ferlab.datalake.commons.config.Format.{DELTA, JSON, PARQUET, VCF}
 import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, Scd1}
 import bio.ferlab.datalake.commons.config._
+import bio.ferlab.datalake.commons.file.FileSystemType.S3
 
 object EtlConfiguration extends App {
 
@@ -13,13 +14,13 @@ object EtlConfiguration extends App {
   val clin_prd_database = "clin"
 
   val clin_qa_storage = List(
-    StorageConf(clin_import, "s3a://clin-qa-app-files-import"),
-    StorageConf(clin_datalake, "s3a://clin-qa-app-datalake")
+    StorageConf(clin_import, "s3a://clin-qa-app-files-import", S3),
+    StorageConf(clin_datalake, "s3a://clin-qa-app-datalake", S3)
   )
 
   val clin_prd_storage = List(
-    StorageConf(clin_import, "s3a://clin-prd-app-files-import"),
-    StorageConf(clin_datalake, "s3a://clin-prd-app-datalake")
+    StorageConf(clin_import, "s3a://clin-prd-app-files-import", S3),
+    StorageConf(clin_datalake, "s3a://clin-prd-app-datalake", S3)
   )
 
   val clin_spark_conf = Map(

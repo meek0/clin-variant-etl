@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.external
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
+import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.public.enriched.Genes
 import org.apache.spark.sql.functions
@@ -20,7 +21,7 @@ class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSpark
 
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile)))
+    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val destination      : DatasetConf = conf.getDataset("enriched_genes")
   val omim_gene_set    : DatasetConf = conf.getDataset("normalized_omim_gene_set")
