@@ -65,7 +65,7 @@ class Occurrences(batchId: String, contig: String, loadType: String = "increment
         col("specimen_id") as "aliquot_id",
         col("experiment.sequencing_strategy") as "sequencing_strategy",
         col("workflow.genome_build") as "genome_build"
-      )
+      ).dropDuplicates("aliquot_id", "sequencing_strategy", "genome_build")
 
     val specimenDf = data(specimen.id)
       .where(col("aliquot_id").isNotNull)

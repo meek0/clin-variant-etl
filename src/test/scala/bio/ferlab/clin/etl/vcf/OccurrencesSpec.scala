@@ -66,7 +66,15 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   val taskDf = Seq(
     TaskOutput(
+      `id` = "73254",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
+      `document_id` = "1",
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS")
+    ),
+    TaskOutput(
+      `id` = "73255",
+      `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
+      `document_id` = "2",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS")
     )
   ).toDF
