@@ -1,9 +1,9 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader}
+import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
 
@@ -46,15 +46,19 @@ object Indexer extends App {
   val indexName = alias
   implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(username), Some(password))
 
+  val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
+  val ds: DatasetConf = indexName match {
+    case "variants" => conf.getDataset("es_index_variant_centric")
+    case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
+    case "gene_suggestions" => conf.getDataset("es_index_gene_suggestions")
+  }
+
+  val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
+
   jobType match {
     case "variants" =>
       val job = new Indexer("index", templatePath, s"${indexName}_$release_id")
-      val insertDf = VariantIndex.getInsert(Timestamp.valueOf(lastBatch))
-      job.run(insertDf)
-
-      //TODO create a column id in order to support upsert
-      //val updateDf = VariantIndex.getUpdate(Timestamp.valueOf(lastBatch))
-      //job.run(updateDf)
+      job.run(df)
 
     case "genes" =>
       val job = new Indexer("index", templatePath, s"${indexName}_$release_id")
