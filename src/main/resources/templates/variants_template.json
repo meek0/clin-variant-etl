@@ -563,6 +563,12 @@
       "participant_number": {
         "type": "long"
       },
+      "participant_total_number": {
+        "type": "long"
+      },
+      "participant_frequency": {
+        "type": "float"
+      },
       "pubmed": {
         "type": "keyword"
       },

@@ -34,8 +34,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
   val normalized_occurrencesDf: DataFrame = Seq(
-    OccurrenceRawOutput(`transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-    OccurrenceRawOutput(`transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+    OccurrenceRawOutput(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    OccurrenceRawOutput(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
   ).toDF
   val normalized_variantsDf: DataFrame = Seq(VariantRawOutput()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
@@ -79,8 +79,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val expectedDonors =
     List(
-      DONORS(`transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-      DONORS(`transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+      DONORS(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+      DONORS(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
     )
 
   "variants job" should "transform data in expected format" in {
@@ -91,18 +91,21 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     result shouldBe VariantEnrichedOutput(
       `donors` = expectedDonors,
       `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`)
+      `updated_on` = result.`updated_on`,
+      `participant_total_number` = 2,
+      `participant_number` = 2,
+      `participant_frequency` = 1.0)
   }
 
   "variants job" should "aggregate transmissions and parental origin per lab" in {
     val occurrences = Seq(
-      OccurrenceRawOutput(`transmission` = None      , `parental_origin` = Some("mother"), `organization_id` = "OG2"),
-      OccurrenceRawOutput(`transmission` = Some("AD"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
-      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
-      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
-      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("mother"), `organization_id` = "OG2"),
-      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = None          , `organization_id` = "OG1"),
-      OccurrenceRawOutput(`transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG1")
+      OccurrenceRawOutput(`patient_id` = "PA0001", `transmission` = None      , `parental_origin` = Some("mother"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`patient_id` = "PA0002", `transmission` = Some("AD"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`patient_id` = "PA0003", `transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`patient_id` = "PA0004", `transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`patient_id` = "PA0005", `transmission` = Some("AR"), `parental_origin` = Some("mother"), `organization_id` = "OG2"),
+      OccurrenceRawOutput(`patient_id` = "PA0006", `transmission` = Some("AR"), `parental_origin` = None          , `organization_id` = "OG1"),
+      OccurrenceRawOutput(`patient_id` = "PA0007", `transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG1")
     )
 
     val transmissionData = data + (normalized_occurrences.id -> occurrences.toDF())
@@ -140,7 +143,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     result shouldBe VariantEnrichedOutput(
       `donors` = expectedDonors,
       `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`)
+      `updated_on` = result.`updated_on`,
+      `participant_total_number` = 2,
+      `participant_number` = 2,
+      `participant_frequency` = 1.0)
   }
 }
 

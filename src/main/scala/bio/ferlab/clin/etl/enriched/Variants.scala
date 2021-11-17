@@ -64,10 +64,12 @@ class Variants(chromosome: String, loadType: String)(implicit configuration: Con
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val variants = data(normalized_variants.id)
+
     val occurrences = data(normalized_occurrences.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
-      .where($"has_alt" === true)
       .as("occurrences")
+
+    val occurrencesWithAlt = occurrences.where($"has_alt" === true)
 
     val genomesDf = data(`thousand_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
@@ -84,8 +86,8 @@ class Variants(chromosome: String, loadType: String)(implicit configuration: Con
     val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
 
 
-    val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrences)
-    val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrences)
+    val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrencesWithAlt)
+    val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrencesWithAlt)
     val joinWithFrequencies = variantsWithFrequencies(joinWithParentalOrigin, occurrences)
     val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df, gnomad_genomes_3_1_1Df)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
@@ -136,6 +138,8 @@ class Variants(chromosome: String, loadType: String)(implicit configuration: Con
   def variantsWithFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
+    val participant_total_number: Long = occurrences.select("patient_id").dropDuplicates().count()
+
     variants
       .joinByLocus(occurrences, "inner")
       .groupBy(locus :+ col("organization_id"): _*)
@@ -166,6 +170,8 @@ class Variants(chromosome: String, loadType: String)(implicit configuration: Con
         $"internal_frequencies",
         $"participant_number"
       )
+      .withColumn("participant_total_number", lit(participant_total_number))
+      .withColumn("participant_frequency", col("participant_number") / col("participant_total_number"))
       .withColumn("assembly_version", lit("GRCh38"))
       .withColumn("last_annotation_update", current_date())
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
