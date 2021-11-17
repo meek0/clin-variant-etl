@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class Occurrences(batchId: String, contig: String, loadType: String = "incremental")(implicit configuration: Configuration) extends ETL {
+class Occurrences(batchId: String, contig: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
@@ -100,7 +100,7 @@ class Occurrences(batchId: String, contig: String, loadType: String = "increment
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     println(s"COUNT: ${data.count()}")
     super.load(data
-      .repartition(5, col("chromosome"))
+      .repartition(10, col("chromosome"))
       .sortWithinPartitions(col("chromosome"), col("start"))
     )
   }
