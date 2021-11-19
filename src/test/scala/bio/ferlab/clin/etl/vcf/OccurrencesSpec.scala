@@ -28,8 +28,8 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       `id` = "PA0001",
       `family_id` = "FM00001",
       `gender` = "male",
-      `practitioner_id` = "PPR00101",
-      `organization_id` = "OR00201",
+      `practitioner_role_id` = "PPR00101",
+      `organization_id` = Some("OR00201"),
       `family_relationship` = List()
     ),
     PatientOutput(

@@ -42,10 +42,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    //val output = spark.table(s"${dst.table.get.fullName}")
     output.show(false)
-
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "GroupOutput", output, "src/test/scala/")
 
     output.count() shouldBe 6
     val head = output.where(col("id") === "ASHK-A").as[GroupOutput].head()
@@ -65,7 +62,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 2
-    val head = output.where("id='OB0001'").as[ObservationOutput].head()
+    val head = output.where("id='OB00001'").as[ObservationOutput].head()
     head shouldBe ObservationOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
@@ -81,8 +78,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    output.count() shouldBe 7
-    val head = output.where("id='OR00207'").as[OrganizationOutput].head()
+    output.count() shouldBe 8
+    val head = output.where("id='CHUSJ'").as[OrganizationOutput].head()
     head shouldBe OrganizationOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
@@ -98,11 +95,10 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    //val output = spark.table(s"${dst.table.get.fullName}")
-    output.where("id='QA-PA-00002'").as[PatientOutput].show(false)
+    output.where("id='PA00004'").as[PatientOutput].show(false)
 
-    output.count() shouldBe 9
-    val head = output.where("id='QA-PA-00002'").as[PatientOutput].head()
+    output.count() shouldBe 3
+    val head = output.where("id='PA00004'").as[PatientOutput].head()
     head shouldBe PatientOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
@@ -117,9 +113,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    output.count() shouldBe 6
-    val head = output.where("id='PR00108'").as[PartitionerOutput].head()
-    head shouldBe PartitionerOutput()
+    output.count() shouldBe 2
+    val head = output.where("id='PR00101'").as[PractitionerOutput].head()
+    head shouldBe PractitionerOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
@@ -133,14 +129,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    //val output = spark.table(s"${dst.table.get.fullName}")
-    //output.where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'").show(false)
-
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "PartitionerRoleOutput", output, "src/test/scala/")
-
-    output.count() shouldBe 3
-    val head = output.where("id='PROLE-c4becdcf-87e1-4fa7-ae87-9bbf555b1c4f'").as[PartitionerRoleOutput].head()
-    head shouldBe PartitionerRoleOutput()
+    output.count() shouldBe 2
+    val head = output.where("id='PRR00101'").as[PractitionerRoleOutput].head()
+    head shouldBe PractitionerRoleOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
@@ -154,12 +145,10 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val result = job.transform(Map(inputDs.id -> inputDf))
 
-    result.where("id='32130'").show(false)
+    result.where("id='SR0004'").show(false)
 
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ServiceRequestOutput", output, "src/test/scala/")
-
-    result.count() shouldBe 3
-    val head = result.where("id='32130'").as[ServiceRequestOutput].head()
+    result.count() shouldBe 6
+    val head = result.where("id='SR0004'").as[ServiceRequestOutput].head()
     head shouldBe ServiceRequestOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `note` = head.`note`)
@@ -174,13 +163,11 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val result = job.transform(Map(inputDs.id -> inputDf))
 
-    result.count() shouldBe 3
-    val head = result.where("id='73260'").as[SpecimenOutput].collect().head
+    result.count() shouldBe 5
+    val head = result.where("id='32738'").as[SpecimenOutput].collect().head
     head shouldBe SpecimenOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `received_time` = head.`received_time`)
-
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "SpecimenOutput", result.where("id='73260'"), "src/test/scala/")
 
   }
 
@@ -190,7 +177,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Task/Task_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val job = new RawToNormalizedETL(src, dst, mapping)
-    val result = job.transform(Map(inputDs.id -> inputDf))
+    val result = job.transform(Map(inputDs.id -> inputDf)).where("id='31980'")
 
     result.show(false)
 
@@ -199,8 +186,6 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     head shouldBe TaskOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `authored_on` = head.`authored_on`, `experiment` = head.`experiment`)
-
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "TaskOutput2", result, "src/test/scala/")
   }
 
 }

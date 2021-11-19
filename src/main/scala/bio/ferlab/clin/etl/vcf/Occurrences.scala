@@ -49,7 +49,7 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
         col("family_id"),
         col("is_proband"),
         col("gender"),
-        col("practitioner_id"),
+        col("practitioner_role_id"),
         col("organization_id")
       )
       .join(groupDf, Seq("patient_id"), "left")

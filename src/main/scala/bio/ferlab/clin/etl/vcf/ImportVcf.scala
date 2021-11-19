@@ -2,6 +2,9 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.datalake.commons.config.RunType
 import bio.ferlab.datalake.spark3.public.SparkApp
+import bio.ferlab.datalake.spark3.transformation.Transformation
+import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.functions._
 
 object ImportVcf extends SparkApp {
 

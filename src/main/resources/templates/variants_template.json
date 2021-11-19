@@ -286,7 +286,7 @@
           "patient_id": {
             "type": "keyword"
           },
-          "practitioner_id": {
+          "practitioner_role_id": {
             "type": "keyword"
           },
           "qd": {
