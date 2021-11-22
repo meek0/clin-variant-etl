@@ -32,10 +32,12 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab",
         "normalized_variants_oid", "variants_oid", "created_on", "updated_on")
       .as("variants")
+      .repartition(100)
 
     val consequences = data(enriched_consequences.id)
       .drop("normalized_consequences_oid", "consequences_oid", "created_on", "updated_on")
       .as("consequences")
+      .repartition(100)
 
     joinWithConsequences(variants, consequences)
   }
@@ -46,8 +48,6 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
     val path = s"${destination.rootPath}${destination.path}_${releaseId}"
     println(s"SAVING data on: ${path}")
     data
-      //avoids many small files created by the following partitionBy() operation
-      .repartition(10, col("chromosome"))
       .write
       .partitionBy(destination.partitionby:_*)
       .mode(SaveMode.Overwrite)
@@ -57,7 +57,8 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
     data
   }
 
-  private def joinWithConsequences(variantDF: DataFrame, consequencesDf: DataFrame)
+  private def joinWithConsequences(variantDF: DataFrame,
+                                   consequencesDf: DataFrame)
                                   (implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
