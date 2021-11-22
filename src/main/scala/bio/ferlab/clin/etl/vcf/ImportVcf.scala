@@ -26,9 +26,9 @@ object ImportVcf extends SparkApp {
   println(s"runType: $rt")
 
   jobName match {
-    case "variants" => new Variants(batchId, chromosome).run()
-    case "consequences" => new Consequences(batchId, chromosome).run()
-    case "occurrences" => new Occurrences(batchId, chromosome).run()
+    case "variants" => new Variants(batchId, chromosome).run(rt)
+    case "consequences" => new Consequences(batchId, chromosome).run(rt)
+    case "occurrences" => new Occurrences(batchId, chromosome).run(rt)
     case "all" =>
       new Occurrences(batchId, chromosome).run(rt)
       new Variants(batchId, chromosome).run(rt)
