@@ -16,13 +16,14 @@ case class ObservationOutput(`id`: String = "OB00001",
                              `version_id`: String = "1",
                              `updated_on`: Timestamp = Timestamp.valueOf("2021-11-16 00:18:52.146"),
                              `created_on`: Timestamp = Timestamp.valueOf("2021-11-16 00:18:52.146"),
-                             `age_at_onset`: Option[String] = None,
-                             `hpo_category`: Option[String] = None,
+                             //`age_at_onset`: Option[String] = None,
+                             //`hpo_category`: Option[String] = None,
                              `observation_code`: String = "CGH",
                              `patient_id`: String = "PA00001",
-                             `concept_code`: Option[String] = None,
-                             `concept_description`: Option[String] = None,
+                             //`concept_code`: Option[String] = None,
+                             //`concept_description`: Option[String] = None,
                              `interpretation_code`: String = "A",
-                             `interpretation_description`: String = "Abnormal",
-                             `category_description`: Option[String] = None)
+                             `interpretation_description`: String = "Abnormal"//,
+                             //`category_description`: Option[String] = None
+                            )
 

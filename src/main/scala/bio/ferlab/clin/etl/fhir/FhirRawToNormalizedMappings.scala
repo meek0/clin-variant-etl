@@ -50,16 +50,16 @@ object FhirRawToNormalizedMappings {
     Custom(
       _
         //.withColumnRenamed("id", "observation_id")
-        .withObservationExtension
+        //.withObservationExtension
         .withColumn("observation_code", col("code.coding.code")(0))
         .withColumn("patient_id", patient_id)
-        .withColumn("concept_code", col("valueCodeableConcept.coding.code")(0))
-        .withColumn("concept_description", col("valueCodeableConcept.coding.display")(0))
+        //.withColumn("concept_code", col("valueCodeableConcept.coding.code")(0))
+        //.withColumn("concept_description", col("valueCodeableConcept.coding.display")(0))
         .withColumn("interpretation", col("interpretation")(0))
         .withColumn("interpretation_code", col("interpretation.coding.code")(0))
         .withColumn("interpretation_description", col("interpretation.coding.display")(0))
         .withColumn("note", transform(col("note"), c => c("text")))
-        .withColumn("category_description", col("category")(0)("coding")(0)("display"))
+        //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
     ),
     Drop("extension", "code", "interpretation", "valueCodeableConcept", "subject", "category", "valueBoolean", "valueString")
   )
