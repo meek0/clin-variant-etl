@@ -6,8 +6,8 @@
 
   "mappings": {
     "properties": {
-      "hash" : {
-        "type" : "keyword"
+      "hash": {
+        "type": "keyword"
       },
       "alternate": {
         "type": "keyword"
@@ -41,7 +41,7 @@
         }
       },
       "consequences": {
-        "type" : "nested",
+        "type": "nested",
         "properties": {
           "aa_change": {
             "type": "keyword"
@@ -206,7 +206,7 @@
         "type": "keyword"
       },
       "donors": {
-        "type" : "nested",
+        "type": "nested",
         "properties": {
           "ad_alt": {
             "type": "long"
@@ -426,25 +426,25 @@
         }
       },
       "frequencies_by_lab": {
+        "type": "nested",
         "properties": {
-          "CHUSJ": {
-            "properties": {
-              "ac": {
-                "type": "long"
-              },
-              "af": {
-                "type": "float"
-              },
-              "an": {
-                "type": "long"
-              },
-              "het": {
-                "type": "long"
-              },
-              "hom": {
-                "type": "long"
-              }
-            }
+          "lab_name": {
+            "type": "keyword"
+          },
+          "ac": {
+            "type": "long"
+          },
+          "af": {
+            "type": "float"
+          },
+          "an": {
+            "type": "long"
+          },
+          "het": {
+            "type": "long"
+          },
+          "hom": {
+            "type": "long"
           }
         }
       },
@@ -452,15 +452,14 @@
         "type": "keyword"
       },
       "genes": {
-        "type" : "nested",
+        "type": "nested",
         "properties": {
           "alias": {
-            "type": "keyword"
-          },
-          "biotype": {
-            "type": "keyword"
+            "type": "keyword",
+            "index": false
           },
           "cosmic": {
+            "type": "nested",
             "properties": {
               "tumour_types_germline": {
                 "type": "keyword"
@@ -468,6 +467,7 @@
             }
           },
           "ddd": {
+            "type": "nested",
             "properties": {
               "disease_name": {
                 "type": "keyword"
@@ -475,15 +475,19 @@
             }
           },
           "ensembl_gene_id": {
-            "type": "keyword"
+            "type": "keyword",
+            "index": false
           },
           "entrez_gene_id": {
-            "type": "long"
+            "type": "long",
+            "index": false
           },
           "hgnc": {
-            "type": "keyword"
+            "type": "keyword",
+            "index": false
           },
           "hpo": {
+            "type": "nested",
             "properties": {
               "hpo_term_id": {
                 "type": "keyword"
@@ -492,7 +496,8 @@
                 "type": "keyword"
               },
               "hpo_term_name": {
-                "type": "keyword"
+                "type": "keyword",
+                "index": false
               }
             }
           },
@@ -503,6 +508,7 @@
             "type": "keyword"
           },
           "omim": {
+            "type": "nested",
             "properties": {
               "inheritance": {
                 "type": "keyword"
@@ -522,6 +528,7 @@
             "type": "keyword"
           },
           "orphanet": {
+            "type": "nested",
             "properties": {
               "disorder_id": {
                 "type": "long"

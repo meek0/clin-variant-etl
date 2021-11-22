@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, LoadType, StorageConf}
+import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.commons.io.FileUtils
@@ -57,6 +57,8 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with M
     val result = new PrepareVariantCentric("re_000").transform(data)
     result.count() shouldBe 2
     result.as[VariantIndexOutput].collect() should contain allElementsOf Seq(VariantIndexOutput("1"))
+
+    new PrepareVariantCentric("re_000").load(result)
     result.write.mode("overwrite").json(this.getClass.getClassLoader.getResource(".").getFile + "/es_index/variant_centric")
   }
 

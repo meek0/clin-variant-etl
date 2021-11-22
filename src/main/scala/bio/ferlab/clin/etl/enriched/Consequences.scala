@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.datalake.commons.config.RunType.FIRST_LOAD
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.file.FileSystemResolver
@@ -13,7 +14,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences(chromosome: String, loadType: String)(implicit configuration: Configuration) extends ETL {
+class Consequences(chromosome: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
@@ -21,8 +22,8 @@ class Consequences(chromosome: String, loadType: String)(implicit configuration:
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
 
   override def run(runType: RunType)(implicit spark: SparkSession): DataFrame = {
-    loadType match {
-      case "first_load" =>
+    runType match {
+      case FIRST_LOAD =>
         FileSystemResolver.resolve(conf.getStorage(destination.storageid).filesystem).remove(destination.location)
         destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
         run(minDateTime, LocalDateTime.now())

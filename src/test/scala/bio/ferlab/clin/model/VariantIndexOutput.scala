@@ -27,7 +27,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `max_impact_score`: Int = 1,
                               `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
-                              `frequencies_by_lab`: Map[String, Freq] = Map("OR00201" -> Freq(2, 2, 1.0, 1, 0), "OR00202" -> Freq(2, 2, 1.0, 1, 0)),
+                              `frequencies_by_lab`: List[LabFrequency] = List(LabFrequency("OR00201", 2, 2, 1.0, 1, 0), LabFrequency("OR00202", 2, 2, 1.0, 1, 0)),
                               `participant_number`: Long = 2,
                               `participant_total_number`: Long = 7,
                               `participant_frequency`: Double = 0.28571428571,
@@ -66,4 +66,11 @@ case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_var
                         `consequence`: List[String] = List("downstream gene"),
                         `predictions`: PREDICTIONS = PREDICTIONS(),
                         `conservations`: CONSERVATIONS = CONSERVATIONS())
+
+case class LabFrequency(lab_name: String = "OR00201",
+                        ac: Long = 10,
+                        an: Long = 20,
+                        af: Double = 0.5,
+                        hom: Long = 10,
+                        het: Long = 10)
 

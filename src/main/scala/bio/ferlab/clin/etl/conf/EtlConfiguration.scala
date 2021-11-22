@@ -92,6 +92,7 @@ object EtlConfiguration extends App {
       DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences")), keys = List("ensembl_transcript_id")),
 
       //es index
+      DatasetConf("es_index_gene_centric"          , clin_datalake, "/es_index/gene_centric"             , PARQUET, OverWrite, partitionby = List()            , table = Some(TableConf("clin", "gene_centric"))),
       DatasetConf("es_index_gene_suggestions"      , clin_datalake, "/es_index/gene_suggestions"         , PARQUET, OverWrite, partitionby = List()            , table = Some(TableConf("clin", "gene_suggestions"))),
       DatasetConf("es_index_variant_centric"       , clin_datalake, "/es_index/variant_centric"          , PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_centric"))),
       DatasetConf("es_index_variant_suggestions"   , clin_datalake, "/es_index/variant_suggestions"      , PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_suggestions"))),

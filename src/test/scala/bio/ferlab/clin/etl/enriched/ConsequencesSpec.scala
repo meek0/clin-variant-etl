@@ -46,14 +46,14 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   }
 
   "consequences job" should "transform data in expected format" in {
-    val result = new Consequences("1", "first_load").transform(data).as[ConsequenceEnrichedOutput].collect().head
+    val result = new Consequences("1").transform(data).as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`)
   }
 
   "consequences job" should "run" in {
-    new Consequences("1", "first_load").run()
+    new Consequences("1").run()
 
     enriched_consequences.read.show(false)
     val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head

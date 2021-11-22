@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.clin.etl.utils.VcfUtils._
+import bio.ferlab.datalake.commons.config.RunType.FIRST_LOAD
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.file.FileSystemResolver
@@ -14,7 +15,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Variants(chromosome: String, loadType: String)(implicit configuration: Configuration) extends ETL {
+class Variants(chromosome: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
@@ -30,8 +31,8 @@ class Variants(chromosome: String, loadType: String)(implicit configuration: Con
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
   override def run(runType: RunType)(implicit spark: SparkSession): DataFrame = {
-    loadType match {
-      case "first_load" =>
+    runType match {
+      case FIRST_LOAD =>
         FileSystemResolver.resolve(conf.getStorage(destination.storageid).filesystem).remove(destination.location)
         destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
         run(minDateTime, LocalDateTime.now())

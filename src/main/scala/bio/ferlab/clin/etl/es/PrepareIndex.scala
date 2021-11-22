@@ -1,22 +1,23 @@
 package bio.ferlab.clin.etl.es
 
+import bio.ferlab.datalake.commons.config.RunType
 import bio.ferlab.datalake.spark3.public.SparkApp
-import org.apache.spark.sql.SparkSession
 
 object PrepareIndex extends SparkApp {
 
-  val Array(_, jobName, releaseId, loadType) = args
+  val Array(_, jobName, releaseId, runType) = args
 
   implicit val (conf, spark) = init()
 
-  run(jobName)
-
-  def run(jobName: String = "all")(implicit spark: SparkSession): Unit = {
-    jobName match {
-      case "variants" => new PrepareVariantCentric(releaseId).run()
-    }
+  val rt = runType match {
+    case "first_load" => RunType.FIRST_LOAD
+    case "sample_load" => RunType.SAMPLE_LOAD
+    case _ => RunType.INCREMENTAL_LOAD
   }
 
+  jobName match {
+    case "variants" => new PrepareVariantCentric(releaseId).run(rt)
+  }
 
 }
 
