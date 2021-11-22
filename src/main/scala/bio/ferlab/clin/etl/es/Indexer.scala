@@ -43,25 +43,26 @@ object Indexer extends App {
 
   val templatePath = s"${conf.storages.find(_.id == "clin_datalake").get.path}/jobs/templates/$templateFileName"
 
-  val indexName = alias
   implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(username), Some(password))
 
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
-  val ds: DatasetConf = indexName match {
+  val ds: DatasetConf = jobType match {
     case "variants" => conf.getDataset("es_index_variant_centric")
     case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
     case "gene_suggestions" => conf.getDataset("es_index_gene_suggestions")
   }
 
-  val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
+  println(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
+  //val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
+  val df = spark.read.parquet(s"${ds.location}_${release_id}")
 
   jobType match {
     case "variants" =>
-      val job = new Indexer("index", templatePath, s"${indexName}_$release_id")
+      val job = new Indexer("index", templatePath, s"${alias}_$release_id")
       job.run(df)
 
     case "genes" =>
-      val job = new Indexer("index", templatePath, s"${indexName}_$release_id")
+      val job = new Indexer("index", templatePath, s"${alias}_$release_id")
 
       val genesDf = conf
         .getDataset("genes")
