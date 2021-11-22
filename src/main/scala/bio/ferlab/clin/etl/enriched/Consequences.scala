@@ -94,7 +94,7 @@ class Consequences(chromosome: String, loadType: String)(implicit configuration:
             $"SIFT_pred" as "sift_pred",
             $"Polyphen2_HVAR_rankscore" as "polyphen2_hvar_score",
             $"Polyphen2_HVAR_pred" as "polyphen2_hvar_pred",
-            $"FATHMM_converted_rankscore",
+            $"FATHMM_converted_rankscore" as "fathmm_converted_rankscore",
             $"FATHMM_pred" as "fathmm_pred",
             $"CADD_raw_rankscore" as "cadd_score",
             $"DANN_rankscore" as "dann_score",

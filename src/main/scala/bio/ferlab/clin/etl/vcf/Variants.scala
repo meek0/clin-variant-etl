@@ -19,7 +19,8 @@ class Variants(batchId: String, contig: String)(implicit configuration: Configur
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .where(s"contigName='$contig'")
+        .where(col("contigName").isin(validContigNames:_*))
+        //.where(s"contigName='$contig'")
     )
   }
 

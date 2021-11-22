@@ -164,7 +164,7 @@
               "polyphen2_hvar_pred": {
                 "type": "keyword"
               },
-              "FATHMM_converted_rankscore": {
+              "fathmm_converted_rankscore": {
                 "type": "float"
               },
               "fathmm_pred": {
