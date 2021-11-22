@@ -152,7 +152,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         participant_number,
         first(struct(variants("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
-      .withColumn("lab_frequency", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
+      .withColumn("frequencies_by_lab", struct($"organization_id" as "lab_name", $"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .groupByLocus()
       .agg(
         first(col("variant")) as "variant",
@@ -162,7 +162,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         sum(col("het")) as "het",
         sum(col("hom")) as "hom",
         sum(col("participant_number")) as "participant_number",
-        map_from_entries(collect_list(struct($"organization_id", $"lab_frequency"))) as "frequencies_by_lab",
+        collect_list(col("frequencies_by_lab")) as "frequencies_by_lab",
       )
       .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
       .select($"variant.*",
