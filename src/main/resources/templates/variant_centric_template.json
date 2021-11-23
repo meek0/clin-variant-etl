@@ -1,5 +1,5 @@
 {
-  "index_patterns": ["clin_*_variants*"],
+  "index_patterns": ["clin_*_variant_centric*"],
   "settings": {
     "number_of_shards": 2
   },

@@ -16,7 +16,8 @@ object PrepareIndex extends SparkApp {
   }
 
   jobName match {
-    case "variants" => new PrepareVariantCentric(releaseId).run(rt)
+    case "variant_centric" => new PrepareVariantCentric(releaseId).run(rt)
+    case "variant_suggestions" => new PrepareVariantSuggestions(releaseId).run(rt)
   }
 
 }

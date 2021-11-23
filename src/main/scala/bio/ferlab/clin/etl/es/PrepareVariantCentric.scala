@@ -44,18 +44,8 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
 
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    val path = s"${destination.rootPath}${destination.path}_${releaseId}"
-    println(s"SAVING data on: ${path}")
-    data
-      .write
-      .partitionBy(destination.partitionby:_*)
-      .mode(SaveMode.Overwrite)
-      .option("format", destination.format.sparkFormat)
-      .option("path", path)
-      .saveAsTable(s"${destination.table.get.fullName}_${releaseId}")
-    data
-  }
+                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame =
+    loadForReleaseId(data, destination, releaseId)
 
   private def joinWithConsequences(variantDF: DataFrame,
                                    consequencesDf: DataFrame)
