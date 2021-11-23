@@ -50,6 +50,16 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
     val consequences = data(normalized_consequences.id)
 
     val ensembl_mapping = data(normalized_ensembl_mapping.id)
+      .withColumn("uniprot_id", col("uniprot")(0)("id"))
+      .select(
+        $"ensembl_transcript_id",
+        $"ensembl_gene_id",
+        $"uniprot_id",
+        $"refseq_mrna_id",
+        $"refseq_protein_id",
+        $"is_mane_select" as "mane_select",
+        $"is_mane_plus" as "mane_plus",
+        $"is_canonical")
 
     val chromosomes = consequences.select("chromosome").distinct().as[String].collect()
 
@@ -60,12 +70,9 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
       .withColumn("consequence", formatted_consequences)
       .withColumnRenamed("impact", "vep_impact")
 
-    val csqWithDBNSF = joinWithDBNSFP(csq, dbnsfp)
-
-    joinWithEnsemblMapping(csqWithDBNSF, ensembl_mapping)
-      .withColumnRenamed("is_canonical", "canonical")
-      .withColumnRenamed("is_mane_select", "mane_select")
-      .withColumnRenamed("is_mane_plus", "mane_plus")
+    joinWithDBNSFP(csq, dbnsfp)
+      .join(ensembl_mapping, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
+      .withColumn("canonical", coalesce(col("is_canonical"), lit(false)))
   }
 
   override def load(data: DataFrame,
@@ -74,13 +81,6 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))
-  }
-
-  def joinWithEnsemblMapping(targetDf: DataFrame, ensembl_mapping: DataFrame): DataFrame = {
-    targetDf
-      .join(ensembl_mapping, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
-      .withColumn("canonical", coalesce(col("is_canonical"), lit(false)))
-      .drop("is_canonical")
   }
 
   def joinWithDBNSFP(csq: DataFrame, dbnsfp: DataFrame)(implicit spark: SparkSession): DataFrame = {

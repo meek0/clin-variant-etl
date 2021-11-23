@@ -4,7 +4,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
@@ -23,7 +23,10 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
 
     Map(
-      es_index_variant_centric.id -> es_index_variant_centric.read
+      es_index_variant_centric.id ->
+        es_index_variant_centric
+          .copy(table = es_index_variant_centric.table.map(t => t.copy(name = s"${t.name}_$releaseId")))
+          .read
     )
   }
 

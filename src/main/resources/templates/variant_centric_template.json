@@ -103,16 +103,6 @@
           "ensembl_transcript_id": {
             "type": "keyword"
           },
-          "entrez": {
-            "properties": {
-              "database": {
-                "type": "keyword"
-              },
-              "id": {
-                "type": "keyword"
-              }
-            }
-          },
           "exon": {
             "properties": {
               "rank": {
@@ -124,9 +114,6 @@
             }
           },
           "feature_type": {
-            "type": "keyword"
-          },
-          "genome_build": {
             "type": "keyword"
           },
           "hgvsc": {
@@ -200,32 +187,13 @@
               }
             }
           },
-          "primary_accessions": {
-            "type": "keyword"
-          },
           "protein_position": {
             "type": "long"
-          },
-          "refseq": {
-            "properties": {
-              "database": {
-                "type": "keyword"
-              },
-              "id": {
-                "type": "keyword"
-              }
-            }
           },
           "refseq_mrna_id": {
             "type": "keyword"
           },
           "refseq_protein_id": {
-            "type": "keyword"
-          },
-          "secondary_accessions": {
-            "type": "keyword"
-          },
-          "species": {
             "type": "keyword"
           },
           "strand": {
@@ -234,21 +202,8 @@
           "symbol": {
             "type": "keyword"
           },
-          "tags": {
+          "uniprot_id": {
             "type": "keyword"
-          },
-          "tax_id": {
-            "type": "keyword"
-          },
-          "uniprot": {
-            "properties": {
-              "database": {
-                "type": "keyword"
-              },
-              "id": {
-                "type": "keyword"
-              }
-            }
           },
           "vep_impact": {
             "type": "keyword"
