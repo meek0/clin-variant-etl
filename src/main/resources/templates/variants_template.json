@@ -6,9 +6,6 @@
 
   "mappings": {
     "properties": {
-      "hash": {
-        "type": "keyword"
-      },
       "alternate": {
         "type": "keyword"
       },
@@ -59,6 +56,9 @@
           "biotype": {
             "type": "keyword"
           },
+          "canonical": {
+            "type": "boolean"
+          },
           "cdna_position": {
             "type": "long"
           },
@@ -97,8 +97,21 @@
           "ensembl_gene_id": {
             "type": "keyword"
           },
+          "ensembl_release_id": {
+            "type": "long"
+          },
           "ensembl_transcript_id": {
             "type": "keyword"
+          },
+          "entrez": {
+            "properties": {
+              "database": {
+                "type": "keyword"
+              },
+              "id": {
+                "type": "keyword"
+              }
+            }
           },
           "exon": {
             "properties": {
@@ -113,13 +126,13 @@
           "feature_type": {
             "type": "keyword"
           },
+          "genome_build": {
+            "type": "keyword"
+          },
           "hgvsc": {
             "type": "keyword"
           },
           "hgvsp": {
-            "type": "keyword"
-          },
-          "vep_impact": {
             "type": "keyword"
           },
           "impact_score": {
@@ -135,16 +148,13 @@
               }
             }
           },
-          "original_canonical": {
-            "type": "boolean"
-          },
-          "canonical": {
-            "type": "boolean"
-          },
           "mane_plus": {
             "type": "boolean"
           },
           "mane_select": {
+            "type": "boolean"
+          },
+          "original_canonical": {
             "type": "boolean"
           },
           "pick": {
@@ -152,23 +162,8 @@
           },
           "predictions": {
             "properties": {
-              "sift_converted_rank_score": {
+              "FATHMM_converted_rankscore": {
                 "type": "float"
-              },
-              "sift_pred": {
-                "type": "keyword"
-              },
-              "polyphen2_hvar_score": {
-                "type": "float"
-              },
-              "polyphen2_hvar_pred": {
-                "type": "keyword"
-              },
-              "fathmm_converted_rankscore": {
-                "type": "float"
-              },
-              "fathmm_pred": {
-                "type": "keyword"
               },
               "cadd_score": {
                 "type": "float"
@@ -176,31 +171,89 @@
               "dann_score": {
                 "type": "float"
               },
-              "revel_rankscore": {
+              "fathmm_converted_rankscore": {
                 "type": "float"
+              },
+              "fathmm_pred": {
+                "type": "keyword"
               },
               "lrt_converted_rankscore": {
                 "type": "float"
               },
               "lrt_pred": {
                 "type": "keyword"
+              },
+              "polyphen2_hvar_pred": {
+                "type": "keyword"
+              },
+              "polyphen2_hvar_score": {
+                "type": "float"
+              },
+              "revel_rankscore": {
+                "type": "float"
+              },
+              "sift_converted_rank_score": {
+                "type": "float"
+              },
+              "sift_pred": {
+                "type": "keyword"
               }
             }
           },
-
+          "primary_accessions": {
+            "type": "keyword"
+          },
           "protein_position": {
             "type": "long"
+          },
+          "refseq": {
+            "properties": {
+              "database": {
+                "type": "keyword"
+              },
+              "id": {
+                "type": "keyword"
+              }
+            }
+          },
+          "refseq_mrna_id": {
+            "type": "keyword"
+          },
+          "refseq_protein_id": {
+            "type": "keyword"
+          },
+          "secondary_accessions": {
+            "type": "keyword"
+          },
+          "species": {
+            "type": "keyword"
           },
           "strand": {
             "type": "long"
           },
           "symbol": {
             "type": "keyword"
+          },
+          "tags": {
+            "type": "keyword"
+          },
+          "tax_id": {
+            "type": "keyword"
+          },
+          "uniprot": {
+            "properties": {
+              "database": {
+                "type": "keyword"
+              },
+              "id": {
+                "type": "keyword"
+              }
+            }
+          },
+          "vep_impact": {
+            "type": "keyword"
           }
         }
-      },
-      "rsnumber": {
-        "type": "keyword"
       },
       "dna_change": {
         "type": "keyword"
@@ -291,6 +344,9 @@
           },
           "qd": {
             "type": "float"
+          },
+          "transmission": {
+            "type": "keyword"
           },
           "variant_class": {
             "type": "keyword"
@@ -428,9 +484,6 @@
       "frequencies_by_lab": {
         "type": "nested",
         "properties": {
-          "lab_name": {
-            "type": "keyword"
-          },
           "ac": {
             "type": "long"
           },
@@ -445,6 +498,9 @@
           },
           "hom": {
             "type": "long"
+          },
+          "lab_name": {
+            "type": "keyword"
           }
         }
       },
@@ -457,6 +513,9 @@
           "alias": {
             "type": "keyword",
             "index": false
+          },
+          "biotype": {
+            "type": "keyword"
           },
           "cosmic": {
             "type": "nested",
@@ -549,11 +608,11 @@
       "genes_symbol": {
         "type": "keyword"
       },
-      "hgvsg": {
+      "hash": {
         "type": "keyword"
       },
-      "max_impact_score": {
-        "type": "long"
+      "hgvsg": {
+        "type": "keyword"
       },
       "is_multi_allelic": {
         "type": "boolean"
@@ -564,8 +623,14 @@
       "locus": {
         "type": "keyword"
       },
+      "max_impact_score": {
+        "type": "long"
+      },
       "omim": {
         "type": "keyword"
+      },
+      "participant_frequency": {
+        "type": "float"
       },
       "participant_number": {
         "type": "long"
@@ -573,13 +638,13 @@
       "participant_total_number": {
         "type": "long"
       },
-      "participant_frequency": {
-        "type": "float"
-      },
       "pubmed": {
         "type": "keyword"
       },
       "reference": {
+        "type": "keyword"
+      },
+      "rsnumber": {
         "type": "keyword"
       },
       "start": {
