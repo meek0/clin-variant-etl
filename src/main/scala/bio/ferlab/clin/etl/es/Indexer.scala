@@ -3,9 +3,8 @@ package bio.ferlab.clin.etl.es
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
-
-import java.sql.Timestamp
 
 object Indexer extends App {
 
@@ -23,21 +22,29 @@ object Indexer extends App {
   configFile // config/qa.conf or config/prod.conf
   ) = args
 
+  implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
+
+  val esConfigs = Map(
+    "es.net.http.auth.user" -> username,
+    "es.net.http.auth.pass" -> password,
+    "es.index.auto.create" -> "true",
+    "es.net.ssl" -> "true",
+    "es.net.ssl.cert.allow.self.signed" -> "true",
+    "es.nodes" -> esNodes,
+    "es.nodes.wan.only" -> "true",
+    "es.wan.only" -> "true",
+    "spark.es.nodes.wan.only" -> "true",
+    "es.port" -> "443")
+
+  val sparkConfigs: SparkConf =
+    (conf.sparkconf ++ esConfigs)
+      .foldLeft(new SparkConf()){ case (c, (k, v)) => c.set(k, v) }
+
   implicit val spark: SparkSession = SparkSession.builder
-    .config("es.net.http.auth.user", username)
-    .config("es.net.http.auth.pass", password)
-    .config("es.index.auto.create", "true")
-    .config("es.net.ssl", "true")
-    .config("es.net.ssl.cert.allow.self.signed", "true")
-    .config("es.nodes", esNodes)
-    .config("es.nodes.wan.only", "true")
-    .config("es.wan.only", "true")
-    .config("spark.es.nodes.wan.only", "true")
-    .config("es.port", "443")
+    .config(sparkConfigs)
+    .enableHiveSupport()
     .appName(s"Indexer")
     .getOrCreate()
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
 
   spark.sparkContext.setLogLevel("ERROR")
 
@@ -52,9 +59,7 @@ object Indexer extends App {
     case "gene_suggestions" => conf.getDataset("es_index_gene_suggestions")
   }
 
-  println(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
-  //val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
-  val df = spark.read.parquet(s"${ds.location}_${release_id}")
+  val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
   jobType match {
     case "variants" =>
