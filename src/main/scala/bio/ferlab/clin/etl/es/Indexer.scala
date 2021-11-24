@@ -2,7 +2,6 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
-import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -54,28 +53,15 @@ object Indexer extends App {
 
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
   val ds: DatasetConf = jobType match {
-    case "variants" => conf.getDataset("es_index_variant_centric")
-    case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
+    case "gene_centric" => conf.getDataset("es_index_gene_centric")
     case "gene_suggestions" => conf.getDataset("es_index_gene_suggestions")
+    case "variant_centric" => conf.getDataset("es_index_variant_centric")
+    case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
   }
 
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
-  jobType match {
-    case _ =>
-      val job = new Indexer("index", templatePath, s"${alias}_$release_id")
-      job.run(df)
-
-    case "genes" =>
-      val job = new Indexer("index", templatePath, s"${alias}_$release_id")
-
-      val genesDf = conf
-        .getDataset("genes")
-        .read
-        .select("chromosome", "symbol", "entrez_gene_id", "omim_gene_id", "hgnc",
-          "ensembl_gene_id", "location", "name", "alias", "biotype")
-
-      job.run(genesDf)
-  }
+  new Indexer("index", templatePath, s"${alias}_$release_id")
+    .run(df)
 
 }
