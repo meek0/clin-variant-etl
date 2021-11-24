@@ -62,7 +62,7 @@ object Indexer extends App {
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
   jobType match {
-    case "variants" =>
+    case _ =>
       val job = new Indexer("index", templatePath, s"${alias}_$release_id")
       job.run(df)
 
