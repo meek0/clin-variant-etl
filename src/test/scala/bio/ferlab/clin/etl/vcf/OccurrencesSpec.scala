@@ -46,13 +46,6 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   ).toDF()
 
-  val specimenDf = Seq(
-    SpecimenOutput(
-      `aliquot_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `patient_id` = "PA0001"
-    )
-  ).toDF
-
   val groupDf = Seq(
     GroupOutput(
       `id` = "FM00001",
@@ -67,22 +60,21 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   val taskDf = Seq(
     TaskOutput(
       `id` = "73254",
+      `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `document_id` = "1",
-      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111")
     ),
     TaskOutput(
       `id` = "73255",
+      `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `document_id` = "2",
-      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111")
     )
   ).toDF
 
   val data = Map(
     raw_variant_calling.id -> Seq(VCFInput()).toDF(),
     patient.id -> patientDf,
-    specimen.id -> specimenDf,
     group.id -> groupDf,
     task.id -> taskDf
   )

@@ -82,7 +82,8 @@ object FhirCustomOperations {
             filter(sequencingExperimentExtensions, c => c("url") === "platform")(0)("valueString") as "platform",
             filter(sequencingExperimentExtensions, c => c("url") === "captureKit")(0)("valueString") as "capture_kit",
             filter(sequencingExperimentExtensions, c => c("url") === "sequencerId")(0)("valueString") as "sequencer_id",
-            to_timestamp(filter(sequencingExperimentExtensions, c => c("url") === "runDate")(0)("valueDateTime"), "yyyy-MM-dd\'T\'HH:mm:sszzzz") as "run_date"
+            filter(sequencingExperimentExtensions, c => c("url") === "labAliquotId")(0)("valueString") as "aliquot_id",
+            to_date(filter(sequencingExperimentExtensions, c => c("url") === "runDate")(0)("valueDateTime"), "yyyy-MM-dd") as "run_date"
           ))
         .withColumn("workflow",
           struct(

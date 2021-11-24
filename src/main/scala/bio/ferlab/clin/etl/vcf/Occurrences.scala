@@ -16,7 +16,6 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
   override val destination: DatasetConf = conf.getDataset("normalized_occurrences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
-  val specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
 
@@ -27,7 +26,6 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
           .where(s"contigName='$contig'"),
       patient.id -> patient.read,
-      specimen.id -> specimen.read,
       group.id -> group.read,
       task.id -> task.read
     )
@@ -62,21 +60,17 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
 
     val taskDf = data(task.id)
       .select(
-        col("specimen_id") as "aliquot_id",
+        col("experiment.aliquot_id") as "aliquot_id",
         col("experiment.sequencing_strategy") as "sequencing_strategy",
-        col("workflow.genome_build") as "genome_build"
-      ).dropDuplicates("aliquot_id", "sequencing_strategy", "genome_build")
-
-    val specimenDf = data(specimen.id)
-      .where(col("aliquot_id").isNotNull)
-      .select("aliquot_id", "patient_id")
-      .join(taskDf, Seq("aliquot_id"), "left")
+        col("workflow.genome_build") as "genome_build",
+        col("patient_id"),
+        col("analysis_code")
+      ).dropDuplicates("aliquot_id", "patient_id", "analysis_code")
 
     val joinedRelation =
-      specimenDf
+      taskDf
         .join(patients, Seq("patient_id"))
         .join(familyRelationshipDf, Seq("patient_id"), "left")
-
 
     val occurrences = getOccurrences(data(raw_variant_calling.id), batchId)
     occurrences

@@ -156,16 +156,21 @@ object FhirRawToNormalizedMappings {
 
   val taskMapping: List[Transformation]  = List(
     Custom(_
-      .withColumn("organization_id", regexp_replace(col("owner.reference"), "Organization/", ""))
-      .withColumn("specimen_id", regexp_replace(col("input")(0)("valueReference")("reference"), "Specimen/", ""))
-      .withColumn("document_id", regexp_replace(col("output")(0)("valueReference")("reference"), "DocumentReference/", ""))
-      .withColumn("patient_id", regexp_replace(col("for")("reference"), "Patient/", ""))
+      .withColumn("analysis_code", col("code")("coding")(0)("code"))
       .withColumn("service_request_id", regexp_replace(col("focus")("reference"), "ServiceRequest/", ""))
-      .withColumn("code", col("code")("coding")(0)("code"))
+      .withColumn("patient_id", regexp_replace(col("for")("reference"), "Patient/", ""))
+      .withColumn("organization_id", regexp_replace(col("owner")("reference"), "Organization/", ""))
+
+      .withColumn("specimen_id", regexp_replace(col("input")(0)("valueReference")("reference"), "Specimen/", ""))
+      .withColumn("documents", transform(col("output"), c =>
+        struct(
+          regexp_replace(c("valueReference")("reference"), "DocumentReference/", "") as "id",
+          c("type")("text") as "document_type"
+        )))
       .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzzz"))
       .withTaskExtension
     ),
-    Drop("meta", "owner", "authoredOn", "extension", "input", "output", "focus", "for")
+    Drop("meta", "owner", "authoredOn", "extension", "input", "output", "focus", "for", "code")
   )
 
   def mappings(implicit c: Configuration): List[(DatasetConf, DatasetConf, List[Transformation])] = List(

@@ -4,6 +4,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.datalake.spark3.ClassGenerator
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -177,7 +178,7 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Task/Task_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val job = new RawToNormalizedETL(src, dst, mapping)
-    val result = job.transform(Map(inputDs.id -> inputDf)).where("id='31980'")
+    val result = job.transform(Map(inputDs.id -> inputDf)).where("id='109351'")
 
     result.show(false)
 
