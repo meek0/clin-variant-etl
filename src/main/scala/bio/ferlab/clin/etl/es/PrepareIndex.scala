@@ -16,6 +16,8 @@ object PrepareIndex extends SparkApp {
   }
 
   jobName match {
+    case "gene_centric" => new PrepareGeneCentric(releaseId).run(rt)
+    case "gene_suggestions" => new PrepareGeneSuggestions(releaseId).run(rt)
     case "variant_centric" => new PrepareVariantCentric(releaseId).run(rt)
     case "variant_suggestions" => new PrepareVariantSuggestions(releaseId).run(rt)
   }
