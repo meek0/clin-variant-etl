@@ -16,6 +16,10 @@
         "type": "keyword",
         "index": false
       },
+      "clinvar_id": {
+        "type": "keyword",
+        "index": false
+      },
       "locus": {
         "type": "keyword",
         "index": false
