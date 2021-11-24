@@ -26,7 +26,7 @@ class PrepareVariantSuggestionsSpec extends AnyFlatSpec with WithSparkSession wi
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
 
   val data: Map[String, DataFrame] = Map(
-    es_index_variant_centric.id -> Seq(VariantIndexOutput()).toDF()
+    es_index_variant_centric.id -> Seq(VariantIndexOutput(`clinvar` = CLINVAR(`clinvar_id` = null), `consequences` = List(CONSEQUENCES(), CONSEQUENCES(`symbol` = null)))).toDF()
   )
 
   "transform PrepareVariantSuggestions" should "produce suggestions for variants" in {

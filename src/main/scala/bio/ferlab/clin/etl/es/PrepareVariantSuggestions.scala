@@ -49,18 +49,23 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
       .withColumn("ensembl_gene_ids", col("consequences.ensembl_gene_id"))
       .withColumn("ensembl_feature_ids", col("consequences.ensembl_feature_id"))
       .withColumn("symbols", col("consequences.symbol"))
-      .withColumn("symbol_aa_change", functions.transform(col("consequences"), c => concat_ws(" ", c("symbol"), c("aa_change"))))
+      .withColumn("symbol_aa_change", array_remove(functions.transform(col("consequences"), c => concat_ws(" ", c("symbol"), c("aa_change"))), ""))
       .withColumn("type", lit("variant"))
       .withColumn("high_priority_suggest", struct(
         lit(high_priority_weight) as "weight",
-        array(col("hgvsg"), col("rsnumber"), col("locus"), col("clinvar_id")) as "input"
+        array_distinct(array_remove(functions.transform(
+          array(col("hgvsg"), col("rsnumber"), col("locus"), col("clinvar_id")),
+          c => when(c.isNull, lit("")).otherwise(c)), ""))
+          as "input"
       ))
       .withColumn("low_priority_weight", struct(
         lit(low_priority_weight) as "weight",
-        array_distinct(
+        array_distinct(array_remove(functions.transform(
           array_union(col("symbols"),
             array_union(col("ensembl_feature_ids"),
-              array_union(col("symbol_aa_change"), col("ensembl_gene_ids"))))) as "input"
+              array_union(col("symbol_aa_change"), col("ensembl_gene_ids")))),
+          c => when(c.isNull, lit("")).otherwise(c)), ""))
+          as "input"
       ))
       .withColumn("suggest", array(col("high_priority_suggest"), col("low_priority_weight")))
       .drop("consequences", "ensembl_gene_ids", "ensembl_feature_ids", "symbols", "low_priority_weight", "high_priority_suggest")
