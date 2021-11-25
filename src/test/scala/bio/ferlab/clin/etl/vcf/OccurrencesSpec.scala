@@ -22,6 +22,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
+  val service_request: DatasetConf = conf.getDataset("normalized_service_request")
 
   val patientDf = Seq(
     PatientOutput(
@@ -72,11 +73,17 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   ).toDF
 
+  val serviceRequestDf = Seq(
+    ServiceRequestOutput(),
+    ServiceRequestOutput(`id` = "111")
+  ).toDF()
+
   val data = Map(
     raw_variant_calling.id -> Seq(VCFInput()).toDF(),
     patient.id -> patientDf,
     group.id -> groupDf,
-    task.id -> taskDf
+    task.id -> taskDf,
+    service_request.id -> serviceRequestDf
   )
 
 

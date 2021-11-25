@@ -18,6 +18,7 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
+  val service_request: DatasetConf = conf.getDataset("normalized_service_request")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -27,13 +28,19 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
           .where(s"contigName='$contig'"),
       patient.id -> patient.read,
       group.id -> group.read,
-      task.id -> task.read
+      task.id -> task.read,
+      service_request.id -> service_request.read
     )
   }
 
   override def transform(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+    val serviceRequestDf = data(service_request.id)
+      .select(
+        col("id") as "service_request_id",
+        col("service_request_code") as "analysis_code"
+      )
     val groupDf = data(group.id)
       .withColumn("member", explode(col("members")))
       .select(
@@ -64,11 +71,12 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
         col("experiment.sequencing_strategy") as "sequencing_strategy",
         col("workflow.genome_build") as "genome_build",
         col("patient_id"),
-        col("analysis_code")
-      ).dropDuplicates("aliquot_id", "patient_id", "analysis_code")
+        col("service_request_id")
+      ).dropDuplicates("aliquot_id", "patient_id")
 
     val joinedRelation =
       taskDf
+        .join(serviceRequestDf, Seq("service_request_id"), "left").drop("service_request_id")
         .join(patients, Seq("patient_id"))
         .join(familyRelationshipDf, Seq("patient_id"), "left")
 

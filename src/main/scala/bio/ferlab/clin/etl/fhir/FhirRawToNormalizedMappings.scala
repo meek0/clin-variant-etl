@@ -167,7 +167,7 @@ object FhirRawToNormalizedMappings {
           regexp_replace(c("valueReference")("reference"), "DocumentReference/", "") as "id",
           c("type")("text") as "document_type"
         )))
-      .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzzz"))
+      .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzz"))
       .withTaskExtension
     ),
     Drop("meta", "owner", "authoredOn", "extension", "input", "output", "focus", "for", "code")
