@@ -1,12 +1,11 @@
 package bio.ferlab.clin.testutils
 
 import bio.ferlab.clin.etl.fhir.FhirCatalog.{Normalized, Raw}
-import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.{defaultTransformations, observationMappings, organizationMappings, patientMappings, practitionerMappings, practitionerRoleMappings, serviceRequestMappings, specimenMapping, taskMapping}
+import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.{defaultTransformations, taskMapping}
 import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.ClassGenerator
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
-import org.apache.spark.sql.functions.col
 
 object ClassGeneratorMain extends App with WithSparkSession {
 
@@ -23,7 +22,7 @@ object ClassGeneratorMain extends App with WithSparkSession {
   val job = new RawToNormalizedETL(inputDs, outputDs , defaultTransformations ++ taskMapping)
   val df = job.transform(data)
 //
-  df.show(false)
+  //df.show(false)
   //df.printSchema()
 
   //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "OrganizationOutput", df, "src/test/scala/")
