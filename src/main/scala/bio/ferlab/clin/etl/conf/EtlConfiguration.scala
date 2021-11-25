@@ -11,11 +11,17 @@ object EtlConfiguration extends App {
   val clin_import = "clin_import"
 
   val clin_qa_database = "clin_qa"
+  val clin_staging_database = "clin_staging"
   val clin_prd_database = "clin"
 
   val clin_qa_storage = List(
     StorageConf(clin_import, "s3a://clin-qa-app-files-import", S3),
     StorageConf(clin_datalake, "s3a://clin-qa-app-datalake", S3)
+  )
+
+  val clin_staging_storage = List(
+    StorageConf(clin_import, "s3a://clin-staging-app-files-import", S3),
+    StorageConf(clin_datalake, "s3a://clin-staging-app-datalake", S3)
   )
 
   val clin_prd_storage = List(
@@ -105,6 +111,12 @@ object EtlConfiguration extends App {
     sparkconf = clin_spark_conf
   )
 
+  val staging_conf = Configuration(
+    storages = clin_staging_storage,
+    sources = sources.map(ds => ds.copy(table = ds.table.map(t => TableConf(clin_staging_database, t.name)))),
+    sparkconf = clin_spark_conf
+  )
+
   val prd_conf = Configuration(
     storages = clin_prd_storage,
     sources = sources.map(ds => ds.copy(table = ds.table.map(t => TableConf(clin_prd_database, t.name)))),
@@ -118,6 +130,7 @@ object EtlConfiguration extends App {
   )
 
   ConfigurationWriter.writeTo("src/main/resources/config/qa.conf", qa_conf)
+  ConfigurationWriter.writeTo("src/main/resources/config/staging.conf", staging_conf)
   ConfigurationWriter.writeTo("src/main/resources/config/prod.conf", prd_conf)
 
   ConfigurationWriter.writeTo("src/test/resources/config/test.conf", test_conf)
