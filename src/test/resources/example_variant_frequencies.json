@@ -1,0 +1,96 @@
+{
+  "chromosome": "1",
+  "start": 69897,
+  "reference": "T",
+  "alternate": "C",
+  [...],
+  "frequencies_by_analysis": {
+    "ID": {
+      "total": {
+        "ac": 3,
+        "an": 4,
+        "af": 0.75,
+        "pc": 2,
+        "pn": 4,
+        "pf": 0.5,
+        "hom": 1
+      },
+      "non_affected": {
+        "ac": 0,
+        "an": 0,
+        "af": 0.0,
+        "pc": 0,
+        "pn": 1,
+        "pf": 0.0,
+        "hom": 0
+      },
+      "affected": {
+        "ac": 3,
+        "an": 4,
+        "af": 0.75,
+        "pc": 2,
+        "pn": 3,
+        "pf": 0.6666666666666666,
+        "hom": 1
+      }
+    },
+    "MMPG": {
+      "total": {
+        "ac": 2,
+        "an": 8,
+        "af": 0.25,
+        "pc": 1,
+        "pn": 4,
+        "pf": 0.25,
+        "hom": 1
+      },
+      "non_affected": {
+        "ac": 2,
+        "an": 2,
+        "af": 1.0,
+        "pc": 1,
+        "pn": 1,
+        "pf": 1.0,
+        "hom": 1
+      },
+      "affected": {
+        "ac": 0,
+        "an": 6,
+        "af": 0.0,
+        "pc": 0,
+        "pn": 3,
+        "pf": 0.0,
+        "hom": 0
+      }
+    }
+  },
+  "frequency_RQDM": {
+    "affected": {
+      "ac": 3,
+      "an": 10,
+      "af": 0.3,
+      "pc": 2,
+      "pn": 6,
+      "pf": 0.3333333333333333,
+      "hom": 1
+    },
+    "non_affected": {
+      "ac": 2,
+      "an": 2,
+      "af": 1.0,
+      "pc": 1,
+      "pn": 2,
+      "pf": 0.5,
+      "hom": 1
+    },
+    "total": {
+      "ac": 5,
+      "an": 12,
+      "af": 0.4166666666666667,
+      "pc": 3,
+      "pn": 8,
+      "pf": 0.375,
+      "hom": 2
+    }
+  }
+}

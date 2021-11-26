@@ -317,7 +317,7 @@
       "end": {
         "type": "long"
       },
-      "frequencies": {
+      "external_frequencies": {
         "properties": {
           "gnomad_exomes_2_1_1": {
             "properties": {
@@ -376,25 +376,6 @@
                 "type": "float"
               },
               "an": {
-                "type": "long"
-              },
-              "hom": {
-                "type": "long"
-              }
-            }
-          },
-          "internal": {
-            "properties": {
-              "ac": {
-                "type": "long"
-              },
-              "af": {
-                "type": "float"
-              },
-              "an": {
-                "type": "long"
-              },
-              "het": {
                 "type": "long"
               },
               "hom": {

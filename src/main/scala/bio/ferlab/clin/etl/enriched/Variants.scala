@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
+import bio.ferlab.clin.etl.utils.VcfUtils
 import bio.ferlab.clin.etl.utils.VcfUtils._
 import bio.ferlab.datalake.commons.config.RunType.FIRST_LOAD
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
@@ -81,6 +82,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         $"an".cast("long"),
         $"homozygotes".cast("long") as "hom",
         $"heterozygotes".cast("long") as "het")
+
     val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
@@ -139,40 +141,106 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
   def variantsWithFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val participant_total_number: Long = occurrences.select("patient_id").dropDuplicates().count()
+    val frequency: String =>  Column = {
+      case "" =>
+        struct(
+          $"ac",
+          $"an",
+          coalesce($"ac" / $"an", lit(0.0)) as "af",
+          $"pc",
+          $"pn",
+          coalesce($"pc" / $"pn", lit(0.0)) as "pf",
+          $"hom"
+        )
+      case prefix: String =>
+        struct(
+          col(s"${prefix}_ac") as "ac",
+          col(s"${prefix}_an") as "an",
+          coalesce(col(s"${prefix}_ac") / col(s"${prefix}_an"), lit(0.0)) as "af",
+          col(s"${prefix}_pc") as "pc",
+          col(s"${prefix}_pn") as "pn",
+          coalesce(col(s"${prefix}_pc") / col(s"${prefix}_pn"), lit(0.0)) as "pf",
+          col(s"${prefix}_hom") as "hom"
+        )
+    }
 
     variants
-      .joinByLocus(occurrences, "inner")
-      .groupBy(locus :+ col("organization_id"): _*)
+      .joinByLocus(occurrences.filter(col("filters") === Array("PASS")), "inner")
+      .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
+      .groupBy(locus :+ col("analysis_code"):+ col("affected_status_str"): _*)
       .agg(
+        first($"affected_status") as "affected_status",
         ac,
         an,
         het,
         hom,
-        participant_number,
+        pc,
+        pn,
         first(struct(variants("*"), $"variant_type")) as "variant",
         collect_list(struct("occurrences.*")) as "donors")
-      .withColumn("frequencies_by_lab", struct($"organization_id" as "lab_name", $"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
-      .groupByLocus()
+      .withColumn("frequency_by_status", frequency(""))
+      .groupBy(locus :+ col("analysis_code"): _*)
       .agg(
+        map_from_entries(collect_list(struct($"affected_status_str", $"frequency_by_status"))) as "frequency_by_status",
+
+        sum(when($"affected_status", $"ac").otherwise(0)) as "affected_ac",
+        sum(when($"affected_status", $"an").otherwise(0)) as "affected_an",
+        sum(when($"affected_status", $"pc").otherwise(0)) as "affected_pc",
+        sum(when($"affected_status", $"pn").otherwise(0)) as "affected_pn",
+        sum(when($"affected_status", $"hom").otherwise(0)) as "affected_hom",
+
+        sum(when($"affected_status", 0).otherwise($"ac")) as "non_affected_ac",
+        sum(when($"affected_status", 0).otherwise($"an")) as "non_affected_an",
+        sum(when($"affected_status", 0).otherwise($"pc")) as "non_affected_pc",
+        sum(when($"affected_status", 0).otherwise($"pn")) as "non_affected_pn",
+        sum(when($"affected_status", 0).otherwise($"hom")) as "non_affected_hom",
+
+        sum($"ac") as "ac",
+        sum($"an") as "an",
+        sum($"pc") as "pc",
+        sum($"pn") as "pn",
+        sum($"hom") as "hom",
         first(col("variant")) as "variant",
         flatten(collect_list(col("donors"))) as "donors",
-        sum(col("ac")) as "ac",
-        sum(col("an")) as "an",
-        sum(col("het")) as "het",
-        sum(col("hom")) as "hom",
-        sum(col("participant_number")) as "participant_number",
-        collect_list(col("frequencies_by_lab")) as "frequencies_by_lab",
       )
-      .withColumn("internal_frequencies", struct($"ac", $"an", $"ac" / $"an" as "af", $"hom", $"het"))
+      .withColumn("frequency_by_status_total", map_from_entries(array(struct(lit("total"), frequency("")))))
+      .withColumn("frequency_by_status", map_concat($"frequency_by_status_total", $"frequency_by_status"))
+      .groupBy(locus: _*)
+      .agg(
+        map_from_entries(collect_list(struct($"analysis_code", $"frequency_by_status"))) as "frequencies_by_analysis",
+        sum($"affected_ac") as "affected_ac",
+        sum($"affected_an") as "affected_an",
+        sum($"affected_pc") as "affected_pc",
+        sum($"affected_pn") as "affected_pn",
+        sum($"affected_hom") as "affected_hom",
+
+        sum($"non_affected_ac") as "non_affected_ac",
+        sum($"non_affected_an") as "non_affected_an",
+        sum($"non_affected_pc") as "non_affected_pc",
+        sum($"non_affected_pn") as "non_affected_pn",
+        sum($"non_affected_hom") as "non_affected_hom",
+
+        sum($"ac") as "ac",
+        sum($"an") as "an",
+        sum($"pc") as "pc",
+        sum($"pn") as "pn",
+        sum($"hom") as "hom",
+        first(col("variant")) as "variant",
+        flatten(collect_list(col("donors"))) as "donors",
+      )
+      .withColumn("frequency_RQDM", struct(
+        frequency("affected") as "affected",
+        frequency("non_affected") as "non_affected",
+        frequency("") as "total"
+      ))
+      .drop("ac", "an", "pc", "pn", "hom")
+      .drop("non_affected_ac", "non_affected_an", "non_affected_pc", "non_affected_pn", "non_affected_hom")
+      .drop("affected_ac", "affected_an", "affected_pc", "affected_pn", "affected_hom")
       .select($"variant.*",
         $"donors",
-        $"frequencies_by_lab",
-        $"internal_frequencies",
-        $"participant_number"
+        $"frequencies_by_analysis",
+        $"frequency_RQDM"
       )
-      .withColumn("participant_total_number", lit(participant_total_number))
-      .withColumn("participant_frequency", col("participant_number") / col("participant_total_number"))
       .withColumn("assembly_version", lit("GRCh38"))
       .withColumn("last_annotation_update", current_date())
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
@@ -200,9 +268,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
           col("gnomad_genomes_2_1_1"),
           col("gnomad_exomes_2_1_1"),
           col("gnomad_genomes_3_0"),
-          col("gnomad_genomes_3_1_1"),
-          col("internal_frequencies") as "internal") as "frequencies")
-      .drop("internal_frequencies")
+          col("gnomad_genomes_3_1_1")) as "external_frequencies")
   }
 
   def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -231,22 +297,6 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         flatten(collect_set(genes("omim.omim_id"))) as "omim"
       )
       .select("variant.*", "genes", "omim")
-  }
-
-  @Deprecated
-  private def addExtDb(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-    variants
-      .withColumn(
-        "ext_db", struct(
-          $"pubmed".isNotNull.as("is_pubmed"),
-          $"dbsnp".isNotNull.as("is_dbsnp"),
-          $"clinvar".isNotNull.as("is_clinvar"),
-          exists($"genes", gene => gene("hpo").isNotNull).as("is_hpo"),
-          exists($"genes", gene => gene("orphanet").isNotNull).as("is_orphanet"),
-          exists($"genes", gene => gene("omim").isNotNull).as("is_omim")
-      )
-    )
   }
 }
 

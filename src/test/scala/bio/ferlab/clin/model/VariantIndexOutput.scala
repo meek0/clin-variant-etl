@@ -28,12 +28,10 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `max_impact_score`: Int = 1,
                               `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
-                              `frequencies_by_lab`: List[LabFrequency] = List(LabFrequency("OR00201", 2, 2, 1.0, 1, 0), LabFrequency("OR00202", 2, 2, 1.0, 1, 0)),
-                              `participant_number`: Long = 2,
-                              `participant_total_number`: Long = 7,
-                              `participant_frequency`: Double = 0.28571428571,
+                              `frequencies_by_analysis`: Map[String, Map[String, Frequency]] = Map("MM-PG" -> Map("affected" -> Frequency(), "total" -> Frequency())),
+                              `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
+                              `external_frequencies`: FREQUENCIES = FREQUENCIES(),
                               `dna_change`: String = "T>C",
-                              `frequencies`: FREQUENCIES = FREQUENCIES(),
                               `clinvar`: CLINVAR = CLINVAR(),
                               `rsnumber`: String = "rs200676709",
                               `genes`: List[GENES] = List(GENES()),
@@ -68,10 +66,15 @@ case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_var
                         `predictions`: PREDICTIONS = PREDICTIONS(),
                         `conservations`: CONSERVATIONS = CONSERVATIONS())
 
-case class LabFrequency(lab_name: String = "OR00201",
-                        ac: Long = 10,
-                        an: Long = 20,
-                        af: Double = 0.5,
-                        hom: Long = 10,
-                        het: Long = 10)
+case class AnalysisFrequencies(affected: Frequency = Frequency(4,4,1.0,2,2,1.0,2),
+                               non_affected: Frequency = Frequency(0,0,0.0,0,0,0.0,0),
+                               total: Frequency = Frequency(4,4,1.0,2,2,1.0,2))
+
+case class Frequency(ac: Long = 4,
+                     an: Long = 4,
+                     af: Double = 1.0,
+                     pc: Long = 2,
+                     pn: Long = 2,
+                     pf: Double = 1.0,
+                     hom: Long = 2)
 

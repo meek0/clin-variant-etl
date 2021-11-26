@@ -32,7 +32,7 @@ class VcfUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     val occurrences = Seq("HET", "HET", "HOM REF", "HOM","HOM", "UNK").toDF("zygosity")
     occurrences
       .select(
-        participant_number
+        VcfUtils.pc
       ).as[Long].collect() should contain only 4
 
   }

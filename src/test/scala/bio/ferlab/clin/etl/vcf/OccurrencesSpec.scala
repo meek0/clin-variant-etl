@@ -31,19 +31,22 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       `gender` = "male",
       `practitioner_role_id` = "PPR00101",
       `organization_id` = Some("OR00201"),
-      `family_relationship` = List()
+      `family_relationship` = List(),
+      `is_proband` = true
     ),
     PatientOutput(
       `id` = "PA0002",
       `family_id` = "FM00001",
       `gender` = "male",
-      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0001", "FTH"))
+      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0001", "FTH")),
+      `is_proband` = false
     ),
     PatientOutput(
       `id` = "PA0003",
       `family_id` = "FM00001",
       `gender` = "female",
-      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0001", "MTH"))
+      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0001", "MTH")),
+      `is_proband` = false
     )
   ).toDF()
 

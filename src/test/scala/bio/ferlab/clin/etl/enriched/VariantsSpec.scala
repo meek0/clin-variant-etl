@@ -84,18 +84,25 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       DONORS(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
     )
 
+  val expectedFrequencies = Map("MN-PG" -> Map("affected" -> Frequency(), "total" -> Frequency()))
+
   "variants job" should "transform data in expected format" in {
 
     val result = new Variants("1").transform(data)
       .as[VariantEnrichedOutput].collect().head
 
-    result shouldBe VariantEnrichedOutput(
-      `donors` = expectedDonors,
-      `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`,
-      `participant_total_number` = 2,
-      `participant_number` = 2,
-      `participant_frequency` = 1.0)
+    result.`donors` should contain allElementsOf expectedDonors
+
+    result.copy(
+      `frequencies_by_analysis` = Map(),
+      `frequency_RQDM` = AnalysisFrequencies(),
+      `donors` = List()) shouldBe
+      VariantEnrichedOutput(
+        `frequencies_by_analysis` = Map(),
+        `frequency_RQDM` = AnalysisFrequencies(),
+        `donors` = List(),
+        `created_on` = result.`created_on`,
+        `updated_on` = result.`updated_on`)
   }
 
   "variants job" should "aggregate transmissions and parental origin per lab" in {
@@ -135,19 +142,59 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     )
   }
 
+  "variants job" should "compute frequencies by analysis" in {
+
+    val occurrencesDf = Seq(
+      OccurrenceRawOutput(patient_id = "PA0001", analysis_code = "ID"  , filters = List("PASS"), calls = List(0, 1)    , zygosity = "HET", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0002", analysis_code = "ID"  , filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0003", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0004", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0005", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0006", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0007", analysis_code = "MMPG", filters = List()      , calls = List(0, 1)    , zygosity = "HET", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0008", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0009", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
+    ).toDF()
+
+    val inputData = data ++ Map(normalized_occurrences.id -> occurrencesDf)
+    val df = new Variants("").transform(inputData)
+    val result = df.as[VariantEnrichedOutput].collect().head
+
+    result.`frequencies_by_analysis` shouldBe Map(
+      "ID" -> Map(
+        "total" -> Frequency(3, 4, 0.75, 2, 4, 0.5, 1),
+        "non_affected" -> Frequency(0, 0, 0.0, 0, 1, 0.0, 0),
+        "affected" -> Frequency(3, 4, 0.75, 2, 3, 0.6666666666666666, 1)),
+      "MMPG" -> Map(
+        "total" -> Frequency(2, 8, 0.25, 1, 4, 0.25, 1),
+        "non_affected" -> Frequency(2, 2, 1.0, 1, 1, 1.0, 1),
+        "affected" -> Frequency(0, 6, 0.0, 0, 3, 0.0, 0))
+    )
+
+    result.`frequency_RQDM` shouldBe AnalysisFrequencies(
+      Frequency(3, 10, 0.3, 2, 6, 0.3333333333333333, 1),
+      Frequency(2, 2, 1.0, 1, 2, 0.5, 1),
+      Frequency(5, 12, 0.4166666666666667, 3, 8, 0.375, 2)
+    )
+  }
+
   "variants job" should "run" in {
 
     new Variants("1").run(FIRST_LOAD)
 
-    val result = spark.table("clin.variants").as[VariantEnrichedOutput].collect().head
+    val result = spark.table("clin.variants")
+      .as[VariantEnrichedOutput].collect().head
 
-    result shouldBe VariantEnrichedOutput(
-      `donors` = expectedDonors,
+    result.`donors` should contain allElementsOf expectedDonors
+
+    result.copy(
+      `donors` = List(),
+      `frequencies_by_analysis` = Map()
+    ) shouldBe VariantEnrichedOutput(
+      `donors` = List(),
+      `frequencies_by_analysis` = Map(),
       `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`,
-      `participant_total_number` = 2,
-      `participant_number` = 2,
-      `participant_frequency` = 1.0)
+      `updated_on` = result.`updated_on`)
   }
 }
 
