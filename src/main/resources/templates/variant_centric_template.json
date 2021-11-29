@@ -135,6 +135,9 @@
               }
             }
           },
+          "is_canonical": {
+            "type": "boolean"
+          },
           "mane_plus": {
             "type": "boolean"
           },
@@ -234,6 +237,9 @@
           "aliquot_id": {
             "type": "keyword"
           },
+          "analysis_code": {
+            "type": "keyword"
+          },
           "batch_id": {
             "type": "keyword"
           },
@@ -258,7 +264,13 @@
           "father_zygosity": {
             "type": "keyword"
           },
+          "filters": {
+            "type": "keyword"
+          },
           "gender": {
+            "type": "keyword"
+          },
+          "genome_build": {
             "type": "keyword"
           },
           "gq": {
@@ -300,7 +312,13 @@
           "qd": {
             "type": "float"
           },
+          "sequencing_strategy": {
+            "type": "keyword"
+          },
           "transmission": {
+            "type": "keyword"
+          },
+          "parental_origin": {
             "type": "keyword"
           },
           "variant_class": {
@@ -417,6 +435,143 @@
           }
         }
       },
+      "frequencies_by_analysis": {
+        "properties": {
+          "DI": {
+            "properties": {
+              "affected": {
+                "properties": {
+                  "ac": {
+                    "type": "long"
+                  },
+                  "af": {
+                    "type": "float"
+                  },
+                  "an": {
+                    "type": "long"
+                  },
+                  "hom": {
+                    "type": "long"
+                  },
+                  "pc": {
+                    "type": "long"
+                  },
+                  "pf": {
+                    "type": "float"
+                  },
+                  "pn": {
+                    "type": "long"
+                  }
+                }
+              },
+              "non_affected": {
+                "properties": {
+                  "ac": {
+                    "type": "long"
+                  },
+                  "af": {
+                    "type": "float"
+                  },
+                  "an": {
+                    "type": "long"
+                  },
+                  "hom": {
+                    "type": "long"
+                  },
+                  "pc": {
+                    "type": "long"
+                  },
+                  "pf": {
+                    "type": "float"
+                  },
+                  "pn": {
+                    "type": "long"
+                  }
+                }
+              },
+              "total": {
+                "properties": {
+                  "ac": {
+                    "type": "long"
+                  },
+                  "af": {
+                    "type": "float"
+                  },
+                  "an": {
+                    "type": "long"
+                  },
+                  "hom": {
+                    "type": "long"
+                  },
+                  "pc": {
+                    "type": "long"
+                  },
+                  "pf": {
+                    "type": "float"
+                  },
+                  "pn": {
+                    "type": "long"
+                  }
+                }
+              }
+            }
+          },
+          "MM-PG": {
+            "properties": {
+              "affected": {
+                "properties": {
+                  "ac": {
+                    "type": "long"
+                  },
+                  "af": {
+                    "type": "float"
+                  },
+                  "an": {
+                    "type": "long"
+                  },
+                  "hom": {
+                    "type": "long"
+                  },
+                  "pc": {
+                    "type": "long"
+                  },
+                  "pf": {
+                    "type": "float"
+                  },
+                  "pn": {
+                    "type": "long"
+                  }
+                }
+              },
+              "total": {
+                "properties": {
+                  "ac": {
+                    "type": "long"
+                  },
+                  "af": {
+                    "type": "float"
+                  },
+                  "an": {
+                    "type": "long"
+                  },
+                  "hom": {
+                    "type": "long"
+                  },
+                  "pc": {
+                    "type": "long"
+                  },
+                  "pf": {
+                    "type": "float"
+                  },
+                  "pn": {
+                    "type": "long"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "frequencies_by_lab": {
         "type": "nested",
         "properties": {
@@ -437,6 +592,85 @@
           },
           "lab_name": {
             "type": "keyword"
+          }
+        }
+      },
+      "frequency_RQDM": {
+        "properties": {
+          "affected": {
+            "properties": {
+              "ac": {
+                "type": "long"
+              },
+              "af": {
+                "type": "float"
+              },
+              "an": {
+                "type": "long"
+              },
+              "hom": {
+                "type": "long"
+              },
+              "pc": {
+                "type": "long"
+              },
+              "pf": {
+                "type": "float"
+              },
+              "pn": {
+                "type": "long"
+              }
+            }
+          },
+          "non_affected": {
+            "properties": {
+              "ac": {
+                "type": "long"
+              },
+              "af": {
+                "type": "float"
+              },
+              "an": {
+                "type": "long"
+              },
+              "hom": {
+                "type": "long"
+              },
+              "pc": {
+                "type": "long"
+              },
+              "pf": {
+                "type": "float"
+              },
+              "pn": {
+                "type": "long"
+              }
+            }
+          },
+          "total": {
+            "properties": {
+              "ac": {
+                "type": "long"
+              },
+              "af": {
+                "type": "float"
+              },
+              "an": {
+                "type": "long"
+              },
+              "hom": {
+                "type": "long"
+              },
+              "pc": {
+                "type": "long"
+              },
+              "pf": {
+                "type": "float"
+              },
+              "pn": {
+                "type": "long"
+              }
+            }
           }
         }
       },

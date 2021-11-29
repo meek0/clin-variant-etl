@@ -17,6 +17,10 @@ object RunEnriched extends SparkApp {
     case _ => RunType.INCREMENTAL_LOAD
   }
 
+  println(s"Job: $jobName")
+  println(s"chromosome: $chromosome")
+  println(s"runType: $rt")
+
   jobName match {
     case "variants" => new Variants(chromosome).run(rt)
     case "consequences" => new Consequences(chromosome).run(rt)

@@ -66,6 +66,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val variants = data(normalized_variants.id)
+      .drop("normalized_variants_oid")
 
     val occurrences = data(normalized_occurrences.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")

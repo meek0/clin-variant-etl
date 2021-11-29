@@ -1,5 +1,5 @@
 {
-  "index_patterns": ["gene_centric*"],
+  "index_patterns": ["clin_*_gene_centric*"],
   "settings": {
     "number_of_shards": 5
   },

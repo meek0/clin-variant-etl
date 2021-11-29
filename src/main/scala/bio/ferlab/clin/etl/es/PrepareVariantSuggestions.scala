@@ -50,7 +50,9 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
       .withColumn("ensembl_gene_ids", col("consequences.ensembl_gene_id"))
       .withColumn("ensembl_feature_ids", col("consequences.ensembl_feature_id"))
       .withColumn("symbols", col("consequences.symbol"))
-      .withColumn("symbol_aa_change", array_remove(functions.transform(col("consequences"), c => concat_ws(" ", c("symbol"), c("aa_change"))), ""))
+      .withColumn("symbol_aa_change",
+        array_distinct(
+          array_remove(functions.transform(col("consequences"), c => concat_ws(" ", c("symbol"), c("aa_change"))), "")))
       .withColumn("suggest", array(
         struct(
           lit(high_priority_weight) as "weight",

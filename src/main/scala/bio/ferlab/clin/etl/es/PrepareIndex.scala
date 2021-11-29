@@ -17,6 +17,10 @@ object PrepareIndex extends SparkApp {
     case _ => RunType.INCREMENTAL_LOAD
   }
 
+  println(s"Job: $jobName")
+  println(s"releaseId: $releaseId")
+  println(s"runType: $rt")
+
   jobName match {
     case "gene_centric" => new PrepareGeneCentric(releaseId).run(rt)
     case "gene_suggestions" => new PrepareGeneSuggestions(releaseId).run(rt)
