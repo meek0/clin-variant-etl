@@ -35,6 +35,7 @@ object EtlConfiguration extends App {
     "spark.databricks.delta.retentionDurationCheck.enabled" -> "false",
     "spark.delta.merge.repartitionBeforeWrite" -> "true",
     "spark.sql.legacy.timeParserPolicy"-> "CORRECTED",
+    "spark.sql.legacy.parquet.datetimeRebaseModeInWrite" -> "CORRECTED",
     "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN"
   )
 
