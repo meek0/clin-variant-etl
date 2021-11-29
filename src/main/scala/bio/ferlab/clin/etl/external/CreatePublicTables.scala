@@ -10,6 +10,8 @@ object CreatePublicTables extends SparkApp {
 
   implicit val (conf, spark) = init()
 
+  spark.sparkContext.setLogLevel("ERROR")
+
   val createStatementMap = Map(
     "cancer_hotspots" -> cancer_hotspots,
     "clinvar" -> clinvar,

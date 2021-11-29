@@ -10,6 +10,8 @@ object FhirRawToNormalized extends SparkApp {
 
   implicit val (conf, spark) = init()
 
+  spark.sparkContext.setLogLevel("ERROR")
+
   val rt = runType match {
     case "first_load" => RunType.FIRST_LOAD
     case "sample_load" => RunType.SAMPLE_LOAD
