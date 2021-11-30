@@ -517,7 +517,7 @@
               }
             }
           },
-          "MM-PG": {
+          "MM_PG": {
             "properties": {
               "affected": {
                 "properties": {

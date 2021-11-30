@@ -124,7 +124,7 @@ object FhirRawToNormalizedMappings {
       _
         //.extractIdentifier(List("MR" -> "medical_record_number"))
         .withColumn("specimens", transform(col("specimen"), c => regexp_replace(c("reference"), "Specimen/", "")))
-        .withColumn("service_request_code", col("code.coding.code")(0))
+        .withColumn("service_request_code", regexp_replace(col("code.coding.code")(0), "\\W+", "_"))
         .withColumn("service_request_description", col("code.coding.display")(0))
         .withColumn("patient_id", patient_id)
         .withColumn("practitioner_id", regexp_replace(col("requester.reference"), "Practitioner/", ""))
