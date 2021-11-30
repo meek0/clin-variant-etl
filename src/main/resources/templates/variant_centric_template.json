@@ -436,6 +436,7 @@
         }
       },
       "frequencies_by_analysis": {
+        "type": "nested",
         "properties": {
           "DI": {
             "properties": {
@@ -569,29 +570,6 @@
                 }
               }
             }
-          }
-        }
-      },
-      "frequencies_by_lab": {
-        "type": "nested",
-        "properties": {
-          "ac": {
-            "type": "long"
-          },
-          "af": {
-            "type": "float"
-          },
-          "an": {
-            "type": "long"
-          },
-          "het": {
-            "type": "long"
-          },
-          "hom": {
-            "type": "long"
-          },
-          "lab_name": {
-            "type": "keyword"
           }
         }
       },
