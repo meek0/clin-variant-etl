@@ -142,6 +142,17 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
   def variantsWithFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
+    val emptyFrequency =
+      struct(
+        lit(0) as "ac",
+        lit(0) as "an",
+        lit(0.0) as "af",
+        lit(0) as "pc",
+        lit(0) as "pn",
+        lit(0.0) as "pf",
+        lit(0) as "hom"
+      )
+
     val frequency: String =>  Column = {
       case "" =>
         struct(
@@ -206,6 +217,8 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       )
       .withColumn("frequency_by_status_total", map_from_entries(array(struct(lit("total"), frequency("")))))
       .withColumn("frequency_by_status", map_concat($"frequency_by_status_total", $"frequency_by_status"))
+      .withColumn("frequency_by_status", when(array_contains(map_keys($"frequency_by_status"), "non_affected"), $"frequency_by_status")
+        .otherwise(map_concat($"frequency_by_status", map_from_entries(array(struct(lit("non_affected"), emptyFrequency))))))
       .groupBy(locus: _*)
       .agg(
         map_from_entries(collect_list(struct($"analysis_code", $"frequency_by_status"))) as "frequencies_by_analysis",

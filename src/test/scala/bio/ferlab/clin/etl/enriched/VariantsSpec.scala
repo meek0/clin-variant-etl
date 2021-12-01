@@ -150,7 +150,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       OccurrenceRawOutput(patient_id = "PA0003", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
       OccurrenceRawOutput(patient_id = "PA0004", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
       OccurrenceRawOutput(patient_id = "PA0005", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0006", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0006", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
       OccurrenceRawOutput(patient_id = "PA0007", analysis_code = "MMPG", filters = List()      , calls = List(0, 1)    , zygosity = "HET", affected_status = false),
       OccurrenceRawOutput(patient_id = "PA0008", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
       OccurrenceRawOutput(patient_id = "PA0009", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
@@ -167,13 +167,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
         "affected" -> Frequency(3, 4, 0.75, 2, 3, 0.6666666666666666, 1)),
       "MMPG" -> Map(
         "total" -> Frequency(2, 8, 0.25, 1, 4, 0.25, 1),
-        "non_affected" -> Frequency(2, 2, 1.0, 1, 1, 1.0, 1),
-        "affected" -> Frequency(0, 6, 0.0, 0, 3, 0.0, 0))
+        "non_affected" -> Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+        "affected" -> Frequency(2, 8, 0.25, 1, 4, 0.25, 1))
     )
 
     result.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(3, 10, 0.3, 2, 6, 0.3333333333333333, 1),
-      Frequency(2, 2, 1.0, 1, 2, 0.5, 1),
+      Frequency(5, 12, 0.4166666666666667, 3, 7, 0.42857142857142855, 2),
+      Frequency(0, 0, 0.0, 0, 1, 0.0, 0),
       Frequency(5, 12, 0.4166666666666667, 3, 8, 0.375, 2)
     )
   }
