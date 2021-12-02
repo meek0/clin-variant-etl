@@ -517,7 +517,7 @@
               }
             }
           },
-          "MM_PG": {
+          "MMG": {
             "properties": {
               "affected": {
                 "properties": {
@@ -776,15 +776,6 @@
       },
       "omim": {
         "type": "keyword"
-      },
-      "participant_frequency": {
-        "type": "float"
-      },
-      "participant_number": {
-        "type": "long"
-      },
-      "participant_total_number": {
-        "type": "long"
       },
       "pubmed": {
         "type": "keyword"

@@ -15,10 +15,10 @@ object Indexer extends App {
   password,         // basic auth password
   alias,            // alias to create
   release_id,       // release id
-  templateFileName, //variant_centric_template.json
-  jobType,          //variants or genes
-  lastBatch, // BAT1, BAT2 ...etc
-  configFile // config/qa.conf or config/prod.conf
+  templateFileName, // variant_centric_template.json
+  jobType,          // variants or genes
+  lastBatch,        // BAT1, BAT2 ...etc
+  configFile        // config/qa.conf or config/prod.conf
   ) = args
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
