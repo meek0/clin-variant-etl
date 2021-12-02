@@ -438,136 +438,81 @@
       "frequencies_by_analysis": {
         "type": "nested",
         "properties": {
-          "DI": {
+          "analysis_code": {
+            "type": "keyword"
+          },
+          "affected": {
             "properties": {
-              "affected": {
-                "properties": {
-                  "ac": {
-                    "type": "long"
-                  },
-                  "af": {
-                    "type": "float"
-                  },
-                  "an": {
-                    "type": "long"
-                  },
-                  "hom": {
-                    "type": "long"
-                  },
-                  "pc": {
-                    "type": "long"
-                  },
-                  "pf": {
-                    "type": "float"
-                  },
-                  "pn": {
-                    "type": "long"
-                  }
-                }
+              "ac": {
+                "type": "long"
               },
-              "non_affected": {
-                "properties": {
-                  "ac": {
-                    "type": "long"
-                  },
-                  "af": {
-                    "type": "float"
-                  },
-                  "an": {
-                    "type": "long"
-                  },
-                  "hom": {
-                    "type": "long"
-                  },
-                  "pc": {
-                    "type": "long"
-                  },
-                  "pf": {
-                    "type": "float"
-                  },
-                  "pn": {
-                    "type": "long"
-                  }
-                }
+              "af": {
+                "type": "float"
               },
-              "total": {
-                "properties": {
-                  "ac": {
-                    "type": "long"
-                  },
-                  "af": {
-                    "type": "float"
-                  },
-                  "an": {
-                    "type": "long"
-                  },
-                  "hom": {
-                    "type": "long"
-                  },
-                  "pc": {
-                    "type": "long"
-                  },
-                  "pf": {
-                    "type": "float"
-                  },
-                  "pn": {
-                    "type": "long"
-                  }
-                }
+              "an": {
+                "type": "long"
+              },
+              "hom": {
+                "type": "long"
+              },
+              "pc": {
+                "type": "long"
+              },
+              "pf": {
+                "type": "float"
+              },
+              "pn": {
+                "type": "long"
               }
             }
           },
-          "MMG": {
+          "non_affected": {
             "properties": {
-              "affected": {
-                "properties": {
-                  "ac": {
-                    "type": "long"
-                  },
-                  "af": {
-                    "type": "float"
-                  },
-                  "an": {
-                    "type": "long"
-                  },
-                  "hom": {
-                    "type": "long"
-                  },
-                  "pc": {
-                    "type": "long"
-                  },
-                  "pf": {
-                    "type": "float"
-                  },
-                  "pn": {
-                    "type": "long"
-                  }
-                }
+              "ac": {
+                "type": "long"
               },
-              "total": {
-                "properties": {
-                  "ac": {
-                    "type": "long"
-                  },
-                  "af": {
-                    "type": "float"
-                  },
-                  "an": {
-                    "type": "long"
-                  },
-                  "hom": {
-                    "type": "long"
-                  },
-                  "pc": {
-                    "type": "long"
-                  },
-                  "pf": {
-                    "type": "float"
-                  },
-                  "pn": {
-                    "type": "long"
-                  }
-                }
+              "af": {
+                "type": "float"
+              },
+              "an": {
+                "type": "long"
+              },
+              "hom": {
+                "type": "long"
+              },
+              "pc": {
+                "type": "long"
+              },
+              "pf": {
+                "type": "float"
+              },
+              "pn": {
+                "type": "long"
+              }
+            }
+          },
+          "total": {
+            "properties": {
+              "ac": {
+                "type": "long"
+              },
+              "af": {
+                "type": "float"
+              },
+              "an": {
+                "type": "long"
+              },
+              "hom": {
+                "type": "long"
+              },
+              "pc": {
+                "type": "long"
+              },
+              "pf": {
+                "type": "float"
+              },
+              "pn": {
+                "type": "long"
               }
             }
           }

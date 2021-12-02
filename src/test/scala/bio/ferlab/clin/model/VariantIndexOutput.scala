@@ -28,7 +28,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `max_impact_score`: Int = 1,
                               `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
-                              `frequencies_by_analysis`: Map[String, Map[String, Frequency]] = Map("MM_PG" -> Map("affected" -> Frequency(), "total" -> Frequency())),
+                              `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                               `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                               `external_frequencies`: FREQUENCIES = FREQUENCIES(),
                               `dna_change`: String = "T>C",
@@ -65,6 +65,11 @@ case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_var
                         `consequence`: List[String] = List("downstream gene"),
                         `predictions`: PREDICTIONS = PREDICTIONS(),
                         `conservations`: CONSERVATIONS = CONSERVATIONS())
+
+case class AnalysisCodeFrequencies(analysis_code: String = "MM_PG",
+                                   affected: Frequency = Frequency(),
+                                   non_affected: Frequency = Frequency(0,0,0.0,0,0,0.0,0),
+                                   total: Frequency = Frequency())
 
 case class AnalysisFrequencies(affected: Frequency = Frequency(4,4,1.0,2,2,1.0,2),
                                non_affected: Frequency = Frequency(0,0,0.0,0,0,0.0,0),

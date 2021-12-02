@@ -72,7 +72,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
       .as("occurrences")
 
-    val occurrencesWithAlt = occurrences.where($"has_alt" === true)
+    //val occurrencesWithAlt = occurrences.where($"has_alt" === true)
 
     val genomesDf = data(`thousand_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
@@ -90,9 +90,9 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
 
 
-    val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrencesWithAlt)
-    val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrencesWithAlt)
-    val joinWithFrequencies = variantsWithFrequencies(joinWithParentalOrigin, occurrences)
+    //val joinWithTransmissions = variantsWithAggregate("transmission", variants, occurrencesWithAlt)
+    //val joinWithParentalOrigin = variantsWithAggregate("parental_origin", joinWithTransmissions, occurrencesWithAlt)
+    val joinWithFrequencies = variantsWithFrequencies(variants, occurrences)
     val joinWithPop = joinWithPopulations(joinWithFrequencies, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df, gnomad_genomes_3_1_1Df)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
@@ -122,21 +122,19 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         .agg(
           map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count"))), c => c(aggregate).isNotNull)) as s"${aggregate}s",
         )
-
-    val aggregateByLab =
-      occurrences
-        .groupBy(locus :+ col(aggregate) :+ col("organization_id"): _*)
-        .agg(count(aggregate) as s"${aggregate}_count_by_lab")
-        .groupBy(locus :+ col("organization_id"): _*)
-        .agg(
-          map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count_by_lab"))), c => c(aggregate).isNotNull)) as s"${aggregate}s_by_lab",
-        )
-        .groupBy(locus : _*)
-        .agg(map_from_entries(collect_list(struct(col("organization_id"), col(s"${aggregate}s_by_lab")))) as s"${aggregate}s_by_lab")
-
+    //val aggregateByLab =
+    //  occurrences
+    //    .groupBy(locus :+ col(aggregate) :+ col("organization_id"): _*)
+    //    .agg(count(aggregate) as s"${aggregate}_count_by_lab")
+    //    .groupBy(locus :+ col("organization_id"): _*)
+    //    .agg(
+    //      map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count_by_lab"))), c => c(aggregate).isNotNull)) as s"${aggregate}s_by_lab",
+    //    )
+    //    .groupBy(locus : _*)
+    //    .agg(map_from_entries(collect_list(struct(col("organization_id"), col(s"${aggregate}s_by_lab")))) as s"${aggregate}s_by_lab")
     variants
       .joinByLocus(aggregateVariantLevel, "left")
-      .joinByLocus(aggregateByLab, "left")
+      //.joinByLocus(aggregateByLab, "left")
   }
 
   def variantsWithFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -221,7 +219,12 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         .otherwise(map_concat($"frequency_by_status", map_from_entries(array(struct(lit("non_affected"), emptyFrequency))))))
       .groupBy(locus: _*)
       .agg(
-        map_from_entries(collect_list(struct($"analysis_code", $"frequency_by_status"))) as "frequencies_by_analysis",
+        collect_list(struct(
+          $"analysis_code" as "analysis_code",
+          col("frequency_by_status")("affected") as "affected",
+          col("frequency_by_status")("non_affected") as "non_affected",
+          col("frequency_by_status")("total") as "total"
+        )) as "frequencies_by_analysis",
         sum($"affected_ac") as "affected_ac",
         sum($"affected_an") as "affected_an",
         sum($"affected_pc") as "affected_pc",

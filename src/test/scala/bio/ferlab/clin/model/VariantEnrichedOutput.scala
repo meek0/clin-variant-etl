@@ -28,7 +28,7 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `updated_on`: Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"),
                                  `variant_type`: String = "germline",
                                  `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
-                                 `frequencies_by_analysis`: Map[String, Map[String, Frequency]] = Map("MM_PG" -> Map("affected" -> Frequency(), "total" -> Frequency())),
+                                 `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                                  `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                                  `external_frequencies`: FREQUENCIES = FREQUENCIES(),
                                  `clinvar`: CLINVAR = CLINVAR(),
@@ -36,14 +36,14 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `dna_change`: String = "T>C",
                                  `genes`: List[GENES] = List(GENES()),
                                  `omim`: List[String] = List("618285"),
-                                 `transmissions`: Map[String, Long] = Map("AD" -> 1, "AR" -> 1),
-                                 `transmissions_by_lab`: Map[String, Map[String, Long]] = Map(
-                                   "OR00201" -> Map("AD" -> 1),
-                                   "OR00202" -> Map("AR" -> 1)),
-                                 `parental_origins`: Map[String, Long] = Map("mother" -> 1, "father" -> 1),
-                                 `parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
-                                   "OR00201" -> Map("mother" -> 1),
-                                   "OR00202" -> Map("father" -> 1)),
+                                 //`transmissions`: Map[String, Long] = Map("AD" -> 1, "AR" -> 1),
+                                 //`transmissions_by_lab`: Map[String, Map[String, Long]] = Map(
+                                 //  "OR00201" -> Map("AD" -> 1),
+                                 //  "OR00202" -> Map("AR" -> 1)),
+                                 //`parental_origins`: Map[String, Long] = Map("mother" -> 1, "father" -> 1),
+                                 //`parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
+                                 //  "OR00201" -> Map("mother" -> 1),
+                                 //  "OR00202" -> Map("father" -> 1)),
                                  `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
                                  `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
 
