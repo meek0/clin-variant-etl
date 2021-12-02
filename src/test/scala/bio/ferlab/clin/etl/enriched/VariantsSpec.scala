@@ -160,6 +160,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     val df = new Variants("").transform(inputData)
     val result = df.as[VariantEnrichedOutput].collect().head
 
+    result.`donors`.length shouldBe 3
+
     result.`frequencies_by_analysis` shouldBe Map(
       "ID" -> Map(
         "total" -> Frequency(3, 4, 0.75, 2, 4, 0.5, 1),

@@ -189,7 +189,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         pc,
         pn,
         first(struct(variants("*"), $"variant_type")) as "variant",
-        collect_list(struct("occurrences.*")) as "donors")
+        filter(collect_list(struct("occurrences.*")), c => c("zygosity").isin("HOM", "HET")) as "donors")
       .withColumn("frequency_by_status", frequency(""))
       .groupBy(locus :+ col("analysis_code"): _*)
       .agg(
