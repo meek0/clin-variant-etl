@@ -179,6 +179,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
       .groupBy(locus :+ col("analysis_code"):+ col("affected_status_str"): _*)
       .agg(
+        first($"analysis_display_name") as "analysis_display_name",
         first($"affected_status") as "affected_status",
         ac,
         an,
@@ -210,6 +211,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         sum($"pc") as "pc",
         sum($"pn") as "pn",
         sum($"hom") as "hom",
+        first($"analysis_display_name") as "analysis_display_name",
         first(col("variant")) as "variant",
         flatten(collect_list(col("donors"))) as "donors",
       )
@@ -220,6 +222,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       .groupBy(locus: _*)
       .agg(
         collect_list(struct(
+          $"analysis_display_name" as "analysis_display_name",
           $"analysis_code" as "analysis_code",
           col("frequency_by_status")("affected") as "affected",
           col("frequency_by_status")("non_affected") as "non_affected",

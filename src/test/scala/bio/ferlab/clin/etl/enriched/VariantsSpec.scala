@@ -105,55 +105,18 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
         `updated_on` = result.`updated_on`)
   }
 
-  //"variants job" should "aggregate transmissions and parental origin per lab" in {
-    //val occurrences = Seq(
-    //  OccurrenceRawOutput(`patient_id` = "PA0001", `transmission` = None      , `parental_origin` = Some("mother"), `organization_id` = "OG2"),
-    //  OccurrenceRawOutput(`patient_id` = "PA0002", `transmission` = Some("AD"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
-    //  OccurrenceRawOutput(`patient_id` = "PA0003", `transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
-    //  OccurrenceRawOutput(`patient_id` = "PA0004", `transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG2"),
-    //  OccurrenceRawOutput(`patient_id` = "PA0005", `transmission` = Some("AR"), `parental_origin` = Some("mother"), `organization_id` = "OG2"),
-    //  OccurrenceRawOutput(`patient_id` = "PA0006", `transmission` = Some("AR"), `parental_origin` = None          , `organization_id` = "OG1"),
-    //  OccurrenceRawOutput(`patient_id` = "PA0007", `transmission` = Some("AR"), `parental_origin` = Some("father"), `organization_id` = "OG1")
-    //)
-//
-    //val transmissionData = data + (normalized_occurrences.id -> occurrences.toDF())
-//
-    //val result = new Variants("1").transform(transmissionData)
-    //  .as[VariantEnrichedOutput].collect().head
-//
-    //result.`parental_origins` shouldBe Map(
-    //  "mother" -> 2,
-    //  "father" -> 4
-    //)
-
-    //result.`parental_origins_by_lab` shouldBe Map(
-    //  "OG2" -> Map("mother" -> 2, "father" -> 3),
-    //  "OG1" -> Map("father" -> 1)
-    //)
-
-    //result.`transmissions` shouldBe Map(
-    //  "AR" -> 5,
-    //  "AD" -> 1
-    //)
-
-    //result.`transmissions_by_lab` shouldBe Map(
-    //  "OG2" -> Map("AR" -> 3, "AD" -> 1),
-    //  "OG1" -> Map("AR" -> 2)
-    //)
-  //}
-
   "variants job" should "compute frequencies by analysis" in {
 
     val occurrencesDf = Seq(
-      OccurrenceRawOutput(patient_id = "PA0001", analysis_code = "ID"  , filters = List("PASS"), calls = List(0, 1)    , zygosity = "HET", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0002", analysis_code = "ID"  , filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0003", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0004", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0005", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0006", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0007", analysis_code = "MMPG", filters = List()      , calls = List(0, 1)    , zygosity = "HET", affected_status = false),
-      OccurrenceRawOutput(patient_id = "PA0008", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
-      OccurrenceRawOutput(patient_id = "PA0009", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
+      OccurrenceRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(0, 1)    , zygosity = "HET", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List()      , calls = List(0, 1)    , zygosity = "HET", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
     ).toDF()
 
     val inputData = data ++ Map(normalized_occurrences.id -> occurrencesDf)
@@ -165,12 +128,14 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     result.`frequencies_by_analysis` shouldBe List(
       AnalysisCodeFrequencies(
         analysis_code = "ID",
+        analysis_display_name = "Intel Disorder",
         affected = Frequency(3, 4, 0.75, 2, 3, 0.6666666666666666, 1),
         non_affected = Frequency(0, 0, 0.0, 0, 1, 0.0, 0),
         total = Frequency(3, 4, 0.75, 2, 4, 0.5, 1)
       ),
       AnalysisCodeFrequencies(
         analysis_code = "MMPG",
+        analysis_display_name = "Maladies muscu",
         affected = Frequency(2, 8, 0.25, 1, 4, 0.25, 1),
         non_affected = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
         total = Frequency(2, 8, 0.25, 1, 4, 0.25, 1)

@@ -39,7 +39,8 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
     val serviceRequestDf = data(service_request.id)
       .select(
         col("id") as "service_request_id",
-        col("service_request_code") as "analysis_code"
+        col("service_request_code") as "analysis_code",
+        col("service_request_description") as "analysis_display_name"
       )
     val groupDf = data(group.id)
       .withColumn("member", explode(col("members")))

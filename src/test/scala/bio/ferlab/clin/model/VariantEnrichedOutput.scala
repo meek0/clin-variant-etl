@@ -36,14 +36,6 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `dna_change`: String = "T>C",
                                  `genes`: List[GENES] = List(GENES()),
                                  `omim`: List[String] = List("618285"),
-                                 //`transmissions`: Map[String, Long] = Map("AD" -> 1, "AR" -> 1),
-                                 //`transmissions_by_lab`: Map[String, Map[String, Long]] = Map(
-                                 //  "OR00201" -> Map("AD" -> 1),
-                                 //  "OR00202" -> Map("AR" -> 1)),
-                                 //`parental_origins`: Map[String, Long] = Map("mother" -> 1, "father" -> 1),
-                                 //`parental_origins_by_lab`: Map[String, Map[String, Long]] = Map(
-                                 //  "OR00201" -> Map("mother" -> 1),
-                                 //  "OR00202" -> Map("father" -> 1)),
                                  `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
                                  `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
 
@@ -71,6 +63,7 @@ case class DONORS(`dp`: Int = 1,
                   `sequencing_strategy`: String = "WXS",
                   `aliquot_id`: String = "11111",
                   `analysis_code`: String = "MM_PG",
+                  `analysis_display_name`: String = "Maladies musculaires (Panel global)",
                   `mother_id`: String = "PA0003",
                   `father_id`: String = "PA0002",
                   `mother_calls`: Option[List[Int]] = None,
