@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.fhir
 
+import bio.ferlab.clin.testutils.ClassGeneratorMain.conf
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
@@ -16,7 +17,7 @@ object FhirMetadataSpec extends App with WithSparkSession {
   implicit val conf: Configuration = Configuration(List(StorageConf("raw", output, LOCAL), StorageConf("normalized", output, LOCAL)))
   import spark.implicits._
 
-    val orgDs = FhirCatalog.Normalized.organization
+    val orgDs = conf.getDataset("normalized_organization")
     val orgsLdm: List[String] = spark.read.format("delta")
       .load(orgDs.location)
       .withColumn("alias", explode(col("alias")))
@@ -41,12 +42,12 @@ object FhirMetadataSpec extends App with WithSparkSession {
 
     val biospecimens = spark.read.option("header", "true").csv(s"$output/raw/landing/fhir/Biospecimen")
 
-    val patientDs = FhirCatalog.Normalized.patient
+    val patientDs = conf.getDataset("normalized_patient")
     val patientDf =
       spark.read.format("delta").load(patientDs.location)
         .withColumnRenamed("id", "patient_id")
 
-    val sr = FhirCatalog.Normalized.service_request
+    val sr = conf.getDataset("normalized_service_request")
     val serviceRequestDf =
       spark.read.format("delta").load(sr.location)
         .withColumnRenamed("id", "service_request_id")
