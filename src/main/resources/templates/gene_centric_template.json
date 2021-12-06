@@ -36,6 +36,20 @@
       "entrez_gene_id" : {
         "type" : "long"
       },
+      "number_of_patients" : {
+        "type" : "long"
+      },
+      "number_of_variants_per_patient" : {
+        "type" : "nested",
+        "properties" : {
+          "patient_id" : {
+            "type" : "keyword"
+          },
+          "count" : {
+            "type" : "long"
+          }
+        }
+      },
       "hash" : {
         "type" : "keyword"
       },
