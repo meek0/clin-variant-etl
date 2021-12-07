@@ -121,19 +121,19 @@ object Occurrences {
         $"fr.patient2" as "patient2",
         $"fr.patient1_to_patient2_relation" as "patient1_to_patient2_relation"
       ).filter($"patient1_to_patient2_relation".isin("MTH", "FTH"))
-      .groupBy("patient2")
+      .groupBy("patient1")
       .agg(
         map_from_entries(
           collect_list(
             struct(
               $"patient1_to_patient2_relation" as "relation",
-              $"patient1" as "patient_id"
+              $"patient2" as "patient_id"
             )
           )
         ) as "relations"
       )
       .select(
-        $"patient2" as "patient_id",
+        $"patient1" as "patient_id",
         $"relations.MTH" as "mother_id",
         $"relations.FTH" as "father_id"
       )
