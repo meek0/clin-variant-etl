@@ -1,7 +1,7 @@
 {
   "index_patterns": ["clin_*_gene_centric*"],
   "settings": {
-    "number_of_shards": 5
+    "number_of_shards": 1
   },
   "mappings": {
     "properties" : {
@@ -80,6 +80,9 @@
         "type" : "nested",
         "properties" : {
           "inheritance" : {
+            "type" : "keyword"
+          },
+          "inheritance_code": {
             "type" : "keyword"
           },
           "name" : {
