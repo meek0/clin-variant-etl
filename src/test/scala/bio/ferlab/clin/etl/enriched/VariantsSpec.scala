@@ -108,22 +108,22 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   "variants job" should "compute frequencies by analysis" in {
 
     val occurrencesDf = Seq(
-      OccurrenceRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(0, 1)    , zygosity = "HET", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List()      , calls = List(0, 1)    , zygosity = "HET", affected_status = false),
-      OccurrenceRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
-      OccurrenceRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS"), calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
+      OccurrenceRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(0, 1)    , zygosity = "HET", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      OccurrenceRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("LowDepth"), calls = List(0, 1)    , zygosity = "HET", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
+      OccurrenceRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
     ).toDF()
 
     val inputData = data ++ Map(normalized_occurrences.id -> occurrencesDf)
     val df = new Variants("").transform(inputData)
     val result = df.as[VariantEnrichedOutput].collect().head
 
-    result.`donors`.length shouldBe 3
+    result.`donors`.length shouldBe 4
 
     result.`frequencies_by_analysis` shouldBe List(
       AnalysisCodeFrequencies(

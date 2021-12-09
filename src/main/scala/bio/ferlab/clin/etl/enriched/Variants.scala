@@ -175,7 +175,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     }
 
     variants
-      .joinByLocus(occurrences.filter(col("filters") === Array("PASS")), "inner")
+      .joinByLocus(occurrences, "inner")
       .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
       .groupBy(locus :+ col("analysis_code"):+ col("affected_status_str"): _*)
       .agg(
