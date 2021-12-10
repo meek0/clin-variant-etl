@@ -160,7 +160,7 @@ object Occurrences {
         array_contains($"genotype.calls", 1) as "has_alt",
         is_multi_allelic,
         old_multi_allelic,
-        $"INFO_FILTERS" as "filters"
+        flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
       )
       .withColumn("ad_ref", $"ad"(0))
       .withColumn("ad_alt", $"ad"(1))
