@@ -7,7 +7,7 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
@@ -150,6 +150,7 @@ object Occurrences {
         reference,
         alternate,
         name,
+        csq,
         firstCsq,
         $"genotype.sampleId" as "aliquot_id",
         $"genotype.alleleDepths" as "ad",
@@ -162,6 +163,8 @@ object Occurrences {
         old_multi_allelic,
         $"INFO_FILTERS" as "filters"
       )
+      .withColumn("symbols", $"annotations.symbol")
+      .drop("annotations")
       .withColumn("ad_ref", $"ad"(0))
       .withColumn("ad_alt", $"ad"(1))
       .withColumn("ad_total", $"ad_ref" + $"ad_alt")
