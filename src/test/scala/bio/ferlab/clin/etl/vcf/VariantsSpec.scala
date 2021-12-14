@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.model.{VCFInput, VariantRawOutput}
+import bio.ferlab.clin.model.{FAMILY_RELATIONSHIP, PanelOutput, PatientOutput, VCFInput, VariantRawOutput}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
@@ -24,6 +24,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
+  val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val job1 = new Variants("BAT1", "chr1")
   val job2 = new Variants("BAT2", "chr1")
 
@@ -32,9 +33,18 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     HadoopFileSystem.remove(job1.destination.location)
   }
 
+  val normalized_panelsDf = Seq(
+    PanelOutput(
+      `symbol` = "OR4F5",
+      `panels` = List("DYSTM", "MITN"),
+      `version` = List("MITN_v1", "NM_152490.5")
+    )
+  ).toDF()
+
 
   val data = Map(
-    raw_variant_calling.id -> Seq(VCFInput()).toDF()
+    raw_variant_calling.id -> Seq(VCFInput()).toDF(),
+    normalized_panels.id -> normalized_panelsDf
   )
 
   "variants job" should "transform data in expected format" in {
@@ -56,10 +66,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     val date1 = LocalDateTime.of(2021, 1, 1, 1, 1, 1)
     val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
 
-    val job1Df = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
+    val job1Df = job1.transform(Map(raw_variant_calling.id -> firstLoad, normalized_panels.id -> normalized_panelsDf), currentRunDateTime = date1)
     job1.load(job1Df)
 
-    val job2Df = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
+    val job2Df = job2.transform(Map(raw_variant_calling.id -> secondLoad, normalized_panels.id -> normalized_panelsDf), currentRunDateTime = date2)
     job2Df.show(false)
     job2.load(job2Df)
     val resultDf = job2.destination.read

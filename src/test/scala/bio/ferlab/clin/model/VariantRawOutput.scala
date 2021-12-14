@@ -20,4 +20,5 @@ case class VariantRawOutput(`chromosome`: String = "1",
                             `created_on`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
                             `updated_on`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
                             `normalized_variants_oid`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
-                            `locus`: String = "1-69897-T-C")
+                            `locus`: String = "1-69897-T-C",
+                            `panels`: List[String] = List("DYSTM", "MITN"))
