@@ -73,7 +73,6 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     val occurrences = data(normalized_occurrences.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
       .as("occurrences")
-    
     //val occurrencesWithAlt = occurrences.where($"has_alt" === true)
 
     val genomesDf = data(`thousand_genomes`.id)
@@ -125,7 +124,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         .agg(
           map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count"))), c => c(aggregate).isNotNull)) as s"${aggregate}s",
         )
-    //val aggregateByLab =array_contains
+    //val aggregateByLab =
     //  occurrences
     //    .groupBy(locus :+ col(aggregate) :+ col("organization_id"): _*)
     //    .agg(count(aggregate) as s"${aggregate}_count_by_lab")
