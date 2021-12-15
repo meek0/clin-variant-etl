@@ -37,7 +37,7 @@ class Panels()(implicit configuration: Configuration) extends ETL {
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     println(s"COUNT: ${data.count()}")
     super.load(data
-      .repartition(1, col("symbol")))
+      .repartition(1))
   }
 }
 
