@@ -94,7 +94,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_occurrences"         , clin_datalake, "/normalized/occurrences"            , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_occurrences"))),
       DatasetConf("normalized_variants"            , clin_datalake, "/normalized/variants"               , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_variants")), keys = List("locus")),
       DatasetConf("normalized_consequences"        , clin_datalake, "/normalized/consequences"           , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
-      DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite, partitionby = List("symbol")    , table = Some(TableConf("clin", "normalized_panels"))),
+      DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite, partitionby = List()    , table = Some(TableConf("clin", "normalized_panels"))),
 
       //clinical enriched
       DatasetConf("enriched_occurrences"           , clin_datalake, "/enriched/occurrences"              , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "occurrences"))),
