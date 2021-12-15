@@ -37,7 +37,8 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `genes`: List[GENES] = List(GENES()),
                                  `omim`: List[String] = List("618285"),
                                  `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
-                                 `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
+                                 `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
+                                 `panels`: List[String] = List("DYSTM", "MITN"))
 
 
 case class DONORS(`dp`: Int = 1,

@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
-class Panels ()(implicit configuration: Configuration) extends ETL {
+class Panels()(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_panels")
   val raw_panels: DatasetConf = conf.getDataset("raw_panels")

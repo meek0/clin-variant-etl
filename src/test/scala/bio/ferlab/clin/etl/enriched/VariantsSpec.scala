@@ -33,6 +33,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
+  val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
   val normalized_occurrencesDf: DataFrame = Seq(
     OccurrenceRawOutput(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -48,6 +49,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
+  val normalized_panelsDf = Seq(PanelOutput()).toDF()
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -60,7 +62,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     gnomad_genomes_3_1_1.id -> gnomad_genomes_3_1_1Df,
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
-    genes.id -> genesDf
+    genes.id -> genesDf,
+    normalized_panels.id -> normalized_panelsDf
   )
 
   override def beforeAll(): Unit = {

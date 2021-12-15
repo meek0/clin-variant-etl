@@ -2,10 +2,9 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
-import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
-import org.apache.spark.sql.functions.{array_distinct, col, collect_list, concat_ws, expr, lit, struct}
+import org.apache.spark.sql.functions.{array_distinct, col, concat_ws, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
@@ -15,22 +14,19 @@ class Variants(batchId: String, contig: String)(implicit configuration: Configur
 
   override val destination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
-  val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .where(col("contigName").isin(validContigNames:_*)),
+        .where(col("contigName").isin(validContigNames:_*))
         //.where(s"contigName='$contig'")
-      normalized_panels.id -> normalized_panels.read
     )
   }
 
   override def transform(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
     data(raw_variant_calling.id)
       .withColumn("annotation", firstCsq)
       .select(
@@ -53,9 +49,6 @@ class Variants(batchId: String, contig: String)(implicit configuration: Configur
       .withColumn(destination.oid, col("created_on"))
       .withColumn("locus", concat_ws("-", locus:_*))
       .drop("annotation")
-      .join(data(normalized_panels.id), expr("array_contains(genes_symbol, symbol)"), "left")
-      .drop("symbol")
-      .drop("version")
   }
 
   override def load(data: DataFrame,

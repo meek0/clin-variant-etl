@@ -7,7 +7,6 @@ package bio.ferlab.clin.model
 
 
 
-case class PanelOutput(`symbol`: String = "TRIM5",
+case class PanelOutput(`symbol`: String = "OR4F5",
                        `panels`: List[String] = List("DYSTM", "MITN"),
                        `version`: List[String] = List("MITN_v1", "NM_152490.5"))
-

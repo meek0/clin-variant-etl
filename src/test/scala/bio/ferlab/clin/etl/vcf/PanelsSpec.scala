@@ -39,10 +39,7 @@ class PanelsSpec extends AnyFlatSpec with WithSparkSession with Matchers with Be
     
     val result = resultDf.collect().head
 
-    result shouldBe PanelOutput(
-      `symbol` = result.`symbol`,
-      `panels` = result.`panels`,
-      `version` = result.`version`)
+    result shouldBe PanelOutput()
   }
 
 }

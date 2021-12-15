@@ -30,6 +30,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
+  val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
   override def run(runType: RunType)(implicit spark: SparkSession): DataFrame = {
     runType match {
@@ -57,7 +58,8 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       gnomad_genomes_3_1_1.id -> gnomad_genomes_3_1_1.read,
       dbsnp.id -> dbsnp.read,
       clinvar.id -> clinvar.read,
-      genes.id -> genes.read
+      genes.id -> genes.read,
+      normalized_panels.id -> normalized_panels.read
     )
   }
 
@@ -71,7 +73,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     val occurrences = data(normalized_occurrences.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
       .as("occurrences")
-
+    
     //val occurrencesWithAlt = occurrences.where($"has_alt" === true)
 
     val genomesDf = data(`thousand_genomes`.id)
@@ -97,7 +99,8 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
-    joinGenes
+    val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
+    joinPanels
       .withGeneExternalReference
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus:_*))
@@ -122,7 +125,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
         .agg(
           map_from_entries(filter(collect_list(struct(col(aggregate), col(s"${aggregate}_count"))), c => c(aggregate).isNotNull)) as s"${aggregate}s",
         )
-    //val aggregateByLab =
+    //val aggregateByLab =array_contains
     //  occurrences
     //    .groupBy(locus :+ col(aggregate) :+ col("organization_id"): _*)
     //    .agg(count(aggregate) as s"${aggregate}_count_by_lab")
@@ -318,6 +321,13 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       )
       .select("variant.*", "genes", "omim")
   }
+  
+  def joinWithPanels(variants: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    variants
+      .join(panels, array_contains(variants("genes_symbol"), panels("symbol")), "left")
+      .drop("symbol", "version")
+  }
+  
 }
 
 object Variants {
