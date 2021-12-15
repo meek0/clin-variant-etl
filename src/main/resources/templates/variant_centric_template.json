@@ -707,6 +707,9 @@
       "genes_symbol": {
         "type": "keyword"
       },
+      "panels": {
+        "type": "keyword"
+      },
       "hash": {
         "type": "keyword"
       },

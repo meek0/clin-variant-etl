@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.conf
 
-import bio.ferlab.datalake.commons.config.Format.{DELTA, JSON, PARQUET, VCF}
+import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, JSON, PARQUET, VCF}
 import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, Scd1}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
@@ -39,6 +39,8 @@ object EtlConfiguration extends App {
     "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN"
   )
 
+  val tsv_with_headers = Map("sep" -> "\t", "header" -> "true")
+
   val sources =
     List(
       //s3://clin-{env}-app-files-import/201106_A00516_0169_AHFM3HDSXY/201106_A00516_0169_AHFM3HDSXY.hard-filtered.formatted.norm.VEP.vcf.gz
@@ -53,6 +55,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_service_request"            , clin_datalake, "/raw/landing/fhir/ServiceRequest"                       , JSON   , OverWrite),
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
+      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20211208.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
 
       //public
       DatasetConf("normalized_1000_genomes"        , clin_datalake, "/public/1000_genomes"                               , PARQUET, OverWrite, TableConf("clin", "1000_genomes")),
@@ -75,7 +78,6 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_omim_gene_set"       , clin_datalake, "/public/omim_gene_set"                              , PARQUET, OverWrite, TableConf("clin", "omim_gene_set")),
       DatasetConf("normalized_orphanet_gene_set"   , clin_datalake, "/public/orphanet_gene_set"                          , PARQUET, OverWrite, TableConf("clin", "orphanet_gene_set")),
       DatasetConf("normalized_topmed_bravo"        , clin_datalake, "/public/topmed_bravo"                               , PARQUET, OverWrite, TableConf("clin", "topmed_bravo")),
-
       //fhir
       DatasetConf("normalized_clinical_impression" , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
       DatasetConf("normalized_group"               , clin_datalake, "/normalized/fhir/Group"             , DELTA  , OverWrite   , TableConf("clin", "fhir_group")),
@@ -92,6 +94,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_occurrences"         , clin_datalake, "/normalized/occurrences"            , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_occurrences"))),
       DatasetConf("normalized_variants"            , clin_datalake, "/normalized/variants"               , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_variants")), keys = List("locus")),
       DatasetConf("normalized_consequences"        , clin_datalake, "/normalized/consequences"           , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "normalized_consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
+      DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite, partitionby = List("symbol")    , table = Some(TableConf("clin", "normalized_panels"))),
 
       //clinical enriched
       DatasetConf("enriched_occurrences"           , clin_datalake, "/enriched/occurrences"              , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "occurrences"))),
