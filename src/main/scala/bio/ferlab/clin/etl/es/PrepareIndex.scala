@@ -11,6 +11,7 @@ object PrepareIndex extends SparkApp {
 
   spark.sparkContext.setLogLevel("ERROR")
 
+  //TODO include the following code in [[SparkApp]]
   val rt = runType match {
     case "first_load" => RunType.FIRST_LOAD
     case "sample_load" => RunType.SAMPLE_LOAD

@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.external
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL

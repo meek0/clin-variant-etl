@@ -2,9 +2,6 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.datalake.commons.config.RunType
 import bio.ferlab.datalake.spark3.public.SparkApp
-import bio.ferlab.datalake.spark3.transformation.Transformation
-import org.apache.spark.sql.{Column, DataFrame}
-import org.apache.spark.sql.functions._
 
 object ImportVcf extends SparkApp {
 
@@ -14,6 +11,7 @@ object ImportVcf extends SparkApp {
 
   spark.sparkContext.setLogLevel("ERROR")
 
+  //TODO include the following code in [[SparkApp]]
   val rt = runType match {
     case "first_load" => RunType.FIRST_LOAD
     case "sample_load" => RunType.SAMPLE_LOAD
