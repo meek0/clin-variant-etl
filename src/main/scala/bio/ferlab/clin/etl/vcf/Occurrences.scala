@@ -1,13 +1,14 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.vcf.Occurrences.{getFamilyRelationships, getOccurrences}
+import bio.ferlab.clin.etl.vcf.Occurrences.{getCompoundHet, getFamilyRelationships, getOccurrences, getPossiblyCompoundHet}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, _}
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession, functions}
 
 import java.time.LocalDateTime
 
@@ -82,7 +83,6 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
         .join(familyRelationshipDf, Seq("patient_id"), "left")
 
     val occurrences = getOccurrences(data(raw_variant_calling.id), batchId)
-    occurrences
       .join(joinedRelation, Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo)
@@ -96,6 +96,13 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
       .withColumn("father_zygosity", zygosity(col("father_calls")))
       .withParentalOrigin("parental_origin", col("father_calls"), col("mother_calls"))
       .withGenotypeTransmission("transmission", col("father_calls"), col("mother_calls"))
+
+    val het = occurrences.where(col("zygosity") === "HET")
+    val hc: DataFrame = getCompoundHet(het)
+    val possiblyHC: DataFrame = getPossiblyCompoundHet(het)
+    occurrences
+      .join(hc, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
+      .join(possiblyHC, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
   }
 
   override def load(data: DataFrame,
@@ -176,5 +183,40 @@ object Occurrences {
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
       .drop("annotation")
+  }
+
+
+  def getPossiblyCompoundHet(het: DataFrame): DataFrame = {
+    val hcWindow = Window.partitionBy("patient_id", "symbol").orderBy("start").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+    val possiblyHC = het
+      .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), explode(col("symbols")) as "symbol")
+      .withColumn("possibly_hc_count", count(lit(1)).over(hcWindow))
+      .where(col("possibly_hc_count") > 1)
+      .withColumn("possibly_hc_component", struct(col("symbol") as "symbol", col("possibly_hc_count") as "count"))
+      .groupBy(col("patient_id") :: locus: _*)
+      .agg(collect_set("possibly_hc_component") as "possibly_hc_component")
+      .withColumn("is_possibly_hc", lit(true))
+    possiblyHC
+  }
+
+  def getCompoundHet(het: DataFrame): DataFrame = {
+    val withParentalOrigin = het.where(col("parental_origin").isNotNull)
+
+    val hcWindow = Window.partitionBy("patient_id", "symbol", "parental_origin").orderBy("start")
+    val hc = withParentalOrigin
+      .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), col("symbols"), col("parental_origin"))
+      .withColumn("locus", concat_ws("-", locus: _*))
+      .withColumn("symbol", explode(col("symbols")))
+      .withColumn("coords", collect_set(col("locus")).over(hcWindow))
+      .withColumn("merged_coords", last("coords", ignoreNulls = true).over(hcWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
+      .withColumn("struct_coords", struct(col("parental_origin"), col("merged_coords").alias("coords")))
+      .withColumn("all_coords", collect_set("struct_coords").over(Window.partitionBy("patient_id", "symbol").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
+      .withColumn("complement_coords", functions.filter(col("all_coords"), x => x.getItem("parental_origin") =!= col("parental_origin"))(0))
+      .withColumn("is_hc", col("complement_coords").isNotNull)
+      .where(col("is_hc"))
+      .withColumn("hc_complement", struct(col("symbol") as "symbol", col("complement_coords.coords") as "locus"))
+      .groupBy(col("patient_id") :: locus: _*)
+      .agg(first("is_hc") as "is_hc", collect_set("hc_complement") as "hc_complement")
+    hc
   }
 }

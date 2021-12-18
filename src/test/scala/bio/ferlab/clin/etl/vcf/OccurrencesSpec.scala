@@ -4,6 +4,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -24,7 +25,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
 
-  val patientDf = Seq(
+  val patientDf: DataFrame = Seq(
     PatientOutput(
       `id` = "PA0001",
       `family_id` = "FM00001",
@@ -50,7 +51,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   ).toDF()
 
-  val groupDf = Seq(
+  val groupDf: DataFrame = Seq(
     GroupOutput(
       `id` = "FM00001",
       `members` = List(
@@ -61,7 +62,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   ).toDF()
 
-  val taskDf = Seq(
+  val taskDf: DataFrame = Seq(
     TaskOutput(
       `id` = "73254",
       `patient_id` = "PA0001",
@@ -76,7 +77,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     )
   ).toDF
 
-  val serviceRequestDf = Seq(
+  val serviceRequestDf: DataFrame = Seq(
     ServiceRequestOutput(),
     ServiceRequestOutput(`id` = "111")
   ).toDF()
@@ -96,4 +97,76 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       OccurrenceRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
     )
   }
+
+  "getCompoundHet" should "return compound het for one patient and one gene" in {
+
+    val input = Seq(
+      CompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
+      CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1"), "father")
+    ).toDF()
+
+    Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
+      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1030-C-G")))),
+      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T"))))
+    )
+  }
+  it should "return compound het for one patient and multiple genes" in {
+
+    val input = Seq(
+      CompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
+      CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1", "BRAF2"), "father"),
+      CompoundHetInput("PA001", "1", 1050, "C", "G", Seq("BRAF1", "BRAF2"), null),
+      CompoundHetInput("PA001", "1", 1070, "C", "G", Seq("BRAF2"), "father")
+    ).toDF()
+
+    Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
+      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF2", Seq("1-1030-C-G", "1-1070-C-G")), HCComponent("BRAF1", Seq("1-1030-C-G")))),
+      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T")), HCComponent("BRAF2", Seq("1-1000-A-T")))),
+      CompoundHetOutput("PA001", "1", 1070, "C", "G", is_hc = true, Seq(HCComponent("BRAF2", Seq("1-1000-A-T"))))
+    )
+
+  }
+  it should "return compound het for two patients and one gene" in {
+
+    val input = Seq(
+      CompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
+      CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1"), "father"),
+      CompoundHetInput("PA001", "1", 1050, "C", "G", Seq("BRAF1"), null),
+      CompoundHetInput("PA002", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
+      CompoundHetInput("PA002", "1", 1050, "C", "G", Seq("BRAF1"), "father"),
+    ).toDF()
+
+    Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
+      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1030-C-G")))),
+      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T")))),
+      CompoundHetOutput("PA002", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1050-C-G")))),
+      CompoundHetOutput("PA002", "1", 1050, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T"))))
+    )
+
+  }
+
+  "getPossiblyCompoundHet" should "return possibly compound het for many patients" in {
+    val input = Seq(
+      PossiblyCompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2")),
+      PossiblyCompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1", "BRAF2")),
+      PossiblyCompoundHetInput("PA001", "1", 1070, "C", "G", Seq("BRAF2")),
+      PossiblyCompoundHetInput("PA001", "1", 1090, "C", "G", Seq("BRAF3")),
+      PossiblyCompoundHetInput("PA002", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2")),
+      PossiblyCompoundHetInput("PA002", "1", 1030, "C", "G", Seq("BRAF1"))
+    ).toDF()
+
+    val result = Occurrences.getPossiblyCompoundHet(input).as[PossiblyCompoundHetOutput]
+    result.collect() should contain theSameElementsAs Seq(
+      PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2),PossiblyHCComponent("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2),PossiblyHCComponent("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA001", "1", 1070, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA002", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2))),
+      PossiblyCompoundHetOutput("PA002", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2))),
+    )
+
+
+  }
+
+
+
 }
