@@ -332,6 +332,32 @@
           },
           "zygosity": {
             "type": "keyword"
+          },
+          "is_hc": {
+            "type": "boolean"
+          },
+          "hc_component": {
+            "properties": {
+              "symbol": {
+                "type": "keyword"
+              },
+              "locus":  {
+                "type": "keyword"
+              }
+            }
+          },
+          "is_possibly_hc": {
+            "type": "boolean"
+          },
+          "is_possibly_hc_component": {
+            "properties": {
+              "symbol":  {
+                "type": "keyword"
+              },
+              "count":  {
+                "type": "integer"
+              }
+            }
           }
         }
       },

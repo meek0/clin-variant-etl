@@ -5,8 +5,11 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, pubmed}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{col, collect_set, concat_ws, count, explode, first, last, lit, struct}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession, functions}
 
 import java.time.LocalDateTime
 
