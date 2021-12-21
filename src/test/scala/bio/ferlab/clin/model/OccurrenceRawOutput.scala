@@ -51,6 +51,5 @@ case class OccurrenceRawOutput(`chromosome`: String = "1",
                                `mother_zygosity`: Option[String] = None,
                                `father_zygosity`: Option[String] = None,
                                `parental_origin`: Option[String] = None,
-                               `transmission`: Option[String] = Some("unknown_parents_genotype"),
-                               `symbols`: Seq[String] = Seq("OR4F5")
+                               `transmission`: Option[String] = Some("unknown_parents_genotype")
                               )

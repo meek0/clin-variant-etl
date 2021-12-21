@@ -106,8 +106,8 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     ).toDF()
 
     Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
-      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1030-C-G")))),
-      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T"))))
+      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1030-C-G")))),
+      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T"))))
     )
   }
   it should "return compound het for one patient and multiple genes" in {
@@ -120,9 +120,9 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     ).toDF()
 
     Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
-      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF2", Seq("1-1030-C-G", "1-1070-C-G")), HCComponent("BRAF1", Seq("1-1030-C-G")))),
-      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T")), HCComponent("BRAF2", Seq("1-1000-A-T")))),
-      CompoundHetOutput("PA001", "1", 1070, "C", "G", is_hc = true, Seq(HCComponent("BRAF2", Seq("1-1000-A-T"))))
+      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF2", Seq("1-1030-C-G", "1-1070-C-G")), HCComplement("BRAF1", Seq("1-1030-C-G")))),
+      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T")), HCComplement("BRAF2", Seq("1-1000-A-T")))),
+      CompoundHetOutput("PA001", "1", 1070, "C", "G", is_hc = true, Seq(HCComplement("BRAF2", Seq("1-1000-A-T"))))
     )
 
   }
@@ -137,10 +137,10 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     ).toDF()
 
     Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
-      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1030-C-G")))),
-      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T")))),
-      CompoundHetOutput("PA002", "1", 1000, "A", "T", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1050-C-G")))),
-      CompoundHetOutput("PA002", "1", 1050, "C", "G", is_hc = true, Seq(HCComponent("BRAF1", Seq("1-1000-A-T"))))
+      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1030-C-G")))),
+      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T")))),
+      CompoundHetOutput("PA002", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1050-C-G")))),
+      CompoundHetOutput("PA002", "1", 1050, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T"))))
     )
 
   }
@@ -157,11 +157,11 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     val result = Occurrences.getPossiblyCompoundHet(input).as[PossiblyCompoundHetOutput]
     result.collect() should contain theSameElementsAs Seq(
-      PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2),PossiblyHCComponent("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2),PossiblyHCComponent("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA001", "1", 1070, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA002", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2))),
-      PossiblyCompoundHetOutput("PA002", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComponent("BRAF1", 2))),
+      PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2),PossiblyHCComplement("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2),PossiblyHCComplement("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA001", "1", 1070, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA002", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2))),
+      PossiblyCompoundHetOutput("PA002", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2))),
     )
 
 
