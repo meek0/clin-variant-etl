@@ -101,6 +101,7 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
     val hc: DataFrame = getCompoundHet(het)
     val possiblyHC: DataFrame = getPossiblyCompoundHet(het)
     occurrences
+      .drop("symbols")
       .join(hc, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
       .join(possiblyHC, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
   }
@@ -108,7 +109,6 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    println(s"COUNT: ${data.count()}")
     super.load(data
       .repartition(10, col("chromosome"))
       .sortWithinPartitions(col("chromosome"), col("start"))
@@ -192,9 +192,9 @@ object Occurrences {
       .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), explode(col("symbols")) as "symbol")
       .withColumn("possibly_hc_count", count(lit(1)).over(hcWindow))
       .where(col("possibly_hc_count") > 1)
-      .withColumn("possibly_hc_component", struct(col("symbol") as "symbol", col("possibly_hc_count") as "count"))
+      .withColumn("possibly_hc_complement", struct(col("symbol") as "symbol", col("possibly_hc_count") as "count"))
       .groupBy(col("patient_id") :: locus: _*)
-      .agg(collect_set("possibly_hc_component") as "possibly_hc_component")
+      .agg(collect_set("possibly_hc_complement") as "possibly_hc_complement")
       .withColumn("is_possibly_hc", lit(true))
     possiblyHC
   }
