@@ -6,3 +6,4 @@ derby.log
 spark-warehouse
 .bsp
 .DS_Store
+hive

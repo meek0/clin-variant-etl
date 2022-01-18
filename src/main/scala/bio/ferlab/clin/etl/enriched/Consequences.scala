@@ -1,9 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.RunType.FIRST_LOAD
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
-import bio.ferlab.datalake.spark3.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
@@ -20,17 +18,6 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
-
-  override def run(runType: RunType)(implicit spark: SparkSession): DataFrame = {
-    runType match {
-      case FIRST_LOAD =>
-        FileSystemResolver.resolve(conf.getStorage(destination.storageid).filesystem).remove(destination.location)
-        destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
-        run(minDateTime, LocalDateTime.now())
-      case _ =>
-        run(minDateTime, LocalDateTime.now())
-    }
-  }
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {

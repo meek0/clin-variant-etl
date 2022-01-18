@@ -6,9 +6,9 @@ import bio.ferlab.datalake.spark3.public.SparkApp
 
 object CreatePublicTables extends SparkApp {
 
-  val Array(_) = args
+  val Array(_, _) = args
 
-  implicit val (conf, spark) = init()
+  implicit val (conf, _, spark) = init()
 
   spark.sparkContext.setLogLevel("ERROR")
 

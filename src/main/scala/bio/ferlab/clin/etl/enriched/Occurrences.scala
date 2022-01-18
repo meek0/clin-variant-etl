@@ -1,15 +1,10 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.RunType.FIRST_LOAD
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RunType}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
-import bio.ferlab.datalake.spark3.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, pubmed}
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{col, collect_set, concat_ws, count, explode, first, last, lit, struct}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession, functions}
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
@@ -17,17 +12,6 @@ class Occurrences(chromosome: String)(implicit configuration: Configuration) ext
 
   override val destination: DatasetConf = conf.getDataset("enriched_occurrences")
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
-
-  override def run(runType: RunType)(implicit spark: SparkSession): DataFrame = {
-    runType match {
-      case FIRST_LOAD =>
-        FileSystemResolver.resolve(conf.getStorage(destination.storageid).filesystem).remove(destination.location)
-        destination.table.foreach(t => spark.sql(s"DROP TABLE IF EXISTS ${t.fullName}"))
-        run(minDateTime, LocalDateTime.now())
-      case _ =>
-        run(minDateTime, LocalDateTime.now())
-    }
-  }
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {

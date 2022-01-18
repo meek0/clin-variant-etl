@@ -3,8 +3,8 @@ package bio.ferlab.clin.testutils
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.{defaultTransformations, serviceRequestMappings}
 import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.ClassGenerator
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
+import bio.ferlab.datalake.spark3.utils.ClassGenerator
 
 object ClassGeneratorMain extends App with WithSparkSession {
 

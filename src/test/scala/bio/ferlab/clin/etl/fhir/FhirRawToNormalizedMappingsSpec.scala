@@ -4,7 +4,6 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.ClassGenerator
 import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AnyFlatSpec

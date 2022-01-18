@@ -2,7 +2,6 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.commons.config.RunType.FIRST_LOAD
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
@@ -153,7 +152,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "run" in {
 
-    new Variants("1").run(FIRST_LOAD)
+    new Variants("1").run(RunStep.initial_load)
 
     val result = spark.table("clin.variants")
       .as[VariantEnrichedOutput].collect().head

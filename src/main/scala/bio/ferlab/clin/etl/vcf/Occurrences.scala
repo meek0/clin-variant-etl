@@ -95,7 +95,7 @@ class Occurrences(batchId: String, contig: String)(implicit configuration: Confi
       .withColumn("mother_zygosity", zygosity(col("mother_calls")))
       .withColumn("father_zygosity", zygosity(col("father_calls")))
       .withParentalOrigin("parental_origin", col("father_calls"), col("mother_calls"))
-      .withGenotypeTransmission("transmission", col("father_calls"), col("mother_calls"))
+      .withGenotypeTransmission("transmission")
 
     val het = occurrences.where(col("zygosity") === "HET")
     val hc: DataFrame = getCompoundHet(het)

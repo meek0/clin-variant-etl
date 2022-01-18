@@ -4,16 +4,10 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.ClassGenerator
-import bio.ferlab.datalake.spark3.loader.LoadResolver
-import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import java.io.File
-import java.sql.Timestamp
 
 class PrepareVariantSuggestionsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
