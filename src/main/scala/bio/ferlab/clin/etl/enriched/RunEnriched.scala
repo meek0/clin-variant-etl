@@ -4,7 +4,7 @@ import bio.ferlab.datalake.spark3.public.SparkApp
 
 object RunEnriched extends SparkApp {
 
-  val Array(_, jobName, chromosome, runType) = args
+  val Array(_, _, jobName, chromosome) = args
 
   implicit val (conf, steps, spark) = init()
 

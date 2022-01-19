@@ -4,7 +4,7 @@ import bio.ferlab.datalake.spark3.public.SparkApp
 
 object ImportExternal extends SparkApp {
 
-  val Array(_, jobName, runType) = args
+  val Array(_, _, jobName) = args
 
   implicit val (conf, steps, spark) = init()
 
