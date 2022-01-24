@@ -11,14 +11,14 @@ import org.scalatest.matchers.should.Matchers
 import java.sql.Date
 import java.time.LocalDate
 
-class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
     .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   import spark.implicits._
 
-  val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val group: DatasetConf = conf.getDataset("normalized_group")
@@ -92,9 +92,9 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
 
   "occurrences transform" should "transform data in expected format" in {
-    val result = new Occurrences("BAT1", "chr1").transform(data)
-    result.as[OccurrenceRawOutput].collect() should contain allElementsOf Seq(
-      OccurrenceRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
+    val result = new SNV("BAT1", "chr1").transform(data)
+    result.as[SNVRawOutput].collect() should contain allElementsOf Seq(
+      SNVRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
     )
   }
 
@@ -105,7 +105,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1"), "father")
     ).toDF()
 
-    Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
+    SNV.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
       CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1030-C-G")))),
       CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T"))))
     )
@@ -119,7 +119,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       CompoundHetInput("PA001", "1", 1070, "C", "G", Seq("BRAF2"), "father")
     ).toDF()
 
-    Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
+    SNV.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
       CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF2", Seq("1-1030-C-G", "1-1070-C-G")), HCComplement("BRAF1", Seq("1-1030-C-G")))),
       CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T")), HCComplement("BRAF2", Seq("1-1000-A-T")))),
       CompoundHetOutput("PA001", "1", 1070, "C", "G", is_hc = true, Seq(HCComplement("BRAF2", Seq("1-1000-A-T"))))
@@ -136,7 +136,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       CompoundHetInput("PA002", "1", 1050, "C", "G", Seq("BRAF1"), "father"),
     ).toDF()
 
-    Occurrences.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
+    SNV.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
       CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1030-C-G")))),
       CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T")))),
       CompoundHetOutput("PA002", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1050-C-G")))),
@@ -155,7 +155,7 @@ class OccurrencesSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       PossiblyCompoundHetInput("PA002", "1", 1030, "C", "G", Seq("BRAF1"))
     ).toDF()
 
-    val result = Occurrences.getPossiblyCompoundHet(input).as[PossiblyCompoundHetOutput]
+    val result = SNV.getPossiblyCompoundHet(input).as[PossiblyCompoundHetOutput]
     result.collect() should contain theSameElementsAs Seq(
       PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2),PossiblyHCComplement("BRAF2", 3))),
       PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2),PossiblyHCComplement("BRAF2", 3))),

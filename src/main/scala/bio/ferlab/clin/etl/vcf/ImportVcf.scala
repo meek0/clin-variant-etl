@@ -19,9 +19,11 @@ object ImportVcf extends SparkApp {
   jobName match {
     case "variants" => new Variants(batchId, chromosome).run(steps)
     case "consequences" => new Consequences(batchId, chromosome).run(steps)
-    case "occurrences" => new Occurrences(batchId, chromosome).run(steps)
+    case "snv" => new SNV(batchId, chromosome).run(steps)
+    case "cnv" => new CNV(batchId, chromosome).run(steps)
     case "all" =>
-      new Occurrences(batchId, chromosome).run(steps)
+      new SNV(batchId, chromosome).run(steps)
+      new CNV(batchId, chromosome).run(steps)
       new Variants(batchId, chromosome).run(steps)
       new Consequences(batchId, chromosome).run(steps)
     case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")

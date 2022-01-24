@@ -23,7 +23,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   import spark.implicits._
 
-  val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val job1 = new Variants("BAT1", "chr1")
   val job2 = new Variants("BAT2", "chr1")
 

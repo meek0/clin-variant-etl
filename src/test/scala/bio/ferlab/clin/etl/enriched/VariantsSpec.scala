@@ -22,7 +22,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
-  val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
+  val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
@@ -35,8 +35,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
   val normalized_occurrencesDf: DataFrame = Seq(
-    OccurrenceRawOutput(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-    OccurrenceRawOutput(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+    SNVRawOutput(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    SNVRawOutput(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
   ).toDF
   val normalized_variantsDf: DataFrame = Seq(VariantRawOutput()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
@@ -52,7 +52,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
-    normalized_occurrences.id -> normalized_occurrencesDf,
+    normalized_snv.id -> normalized_occurrencesDf,
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
     gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1Df,
@@ -110,18 +110,18 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   "variants job" should "compute frequencies by analysis" in {
 
     val occurrencesDf = Seq(
-      OccurrenceRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(0, 1)    , zygosity = "HET", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      OccurrenceRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("LowDepth"), calls = List(0, 1)    , zygosity = "HET", affected_status = false),
-      OccurrenceRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
-      OccurrenceRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
+      SNVRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(0, 1)    , zygosity = "HET", affected_status = true),
+      SNVRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      SNVRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      SNVRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      SNVRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
+      SNVRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
+      SNVRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("LowDepth"), calls = List(0, 1)    , zygosity = "HET", affected_status = false),
+      SNVRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
+      SNVRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
     ).toDF()
 
-    val inputData = data ++ Map(normalized_occurrences.id -> occurrencesDf)
+    val inputData = data ++ Map(normalized_snv.id -> occurrencesDf)
     val df = new Variants("").transform(inputData)
     val result = df.as[VariantEnrichedOutput].collect().head
 

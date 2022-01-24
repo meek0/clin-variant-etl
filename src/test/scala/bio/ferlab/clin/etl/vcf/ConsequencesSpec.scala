@@ -22,7 +22,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   val job2 = new Consequences("BAT2", "chr1")
 
   import spark.implicits._
-  val raw_variant_calling: DatasetConf = localConf.getDataset("raw_variant_calling")
+  val raw_variant_calling: DatasetConf = localConf.getDataset("raw_snv")
 
   val data = Map(
     raw_variant_calling.id -> Seq(VCFInput()).toDF()

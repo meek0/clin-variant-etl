@@ -8,15 +8,15 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class Occurrences(chromosome: String)(implicit configuration: Configuration) extends ETL {
+class SNV(chromosome: String)(implicit configuration: Configuration) extends ETL {
 
-  override val destination: DatasetConf = conf.getDataset("enriched_occurrences")
-  val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
+  override val destination: DatasetConf = conf.getDataset("enriched_snv")
+  val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      normalized_occurrences.id -> normalized_occurrences.read.where(s"chromosome='$chromosome'")
+      normalized_snv.id -> normalized_snv.read.where(s"chromosome='$chromosome'")
     )
   }
 
@@ -24,7 +24,7 @@ class Occurrences(chromosome: String)(implicit configuration: Configuration) ext
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
-    data(normalized_occurrences.id)
+    data(normalized_snv.id)
       .where(col("zygosity").isin("HOM", "HET"))
   }
 

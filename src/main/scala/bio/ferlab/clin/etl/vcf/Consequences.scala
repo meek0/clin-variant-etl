@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 class Consequences(batchId: String, contig: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_consequences")
-  val raw_variant_calling: DatasetConf = conf.getDataset("raw_variant_calling")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
