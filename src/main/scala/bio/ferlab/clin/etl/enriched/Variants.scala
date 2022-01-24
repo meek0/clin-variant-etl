@@ -17,7 +17,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
 
   override val destination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
-  val normalized_occurrences: DatasetConf = conf.getDataset("normalized_occurrences")
+  val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
@@ -35,7 +35,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     Map(
       normalized_variants.id -> normalized_variants.read
         .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where(s"chromosome='$chromosome'"),
-      normalized_occurrences.id -> normalized_occurrences.read.where(s"chromosome='$chromosome'"),
+      normalized_snv.id -> normalized_snv.read.where(s"chromosome='$chromosome'"),
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
@@ -56,7 +56,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     val variants = data(normalized_variants.id)
       .drop("normalized_variants_oid")
 
-    val occurrences = data(normalized_occurrences.id)
+    val occurrences = data(normalized_snv.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
       .as("occurrences")
     //val occurrencesWithAlt = occurrences.where($"has_alt" === true)
