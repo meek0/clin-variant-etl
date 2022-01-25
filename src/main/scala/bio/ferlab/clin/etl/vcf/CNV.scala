@@ -40,7 +40,6 @@ object CNV {
         .withColumn("genotype", explode(col("genotypes"))).select(
         chromosome,
         start,
-        end,
         reference,
         alternate,
         name,
