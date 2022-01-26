@@ -82,7 +82,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_orphanet_gene_set"   , clin_datalake, "/public/orphanet_gene_set"                          , PARQUET, OverWrite, TableConf("clin", "orphanet_gene_set")),
       DatasetConf("normalized_topmed_bravo"        , clin_datalake, "/public/topmed_bravo"                               , PARQUET, OverWrite, TableConf("clin", "topmed_bravo")),
       DatasetConf("normalized_refseq_feature"      , clin_datalake, "/public/refseq_feature"                             , PARQUET, OverWrite, TableConf("clin", "refseq_feature")),
-      DatasetConf("normalized_refseq_annotation"   , clin_datalake, "/public/normalized_refseq_annotation"               , PARQUET, OverWrite, partitionby = List("chromosome"), table= Some(TableConf("clin", "normalized_refseq_annotation"))),
+      DatasetConf("normalized_refseq_annotation"   , clin_datalake, "/public/refseq_annotation"                          , PARQUET, OverWrite, partitionby = List("chromosome"), table= Some(TableConf("clin", "refseq_annotation"))),
       //fhir
       DatasetConf("normalized_clinical_impression" , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
       DatasetConf("normalized_group"               , clin_datalake, "/normalized/fhir/Group"             , DELTA  , OverWrite   , TableConf("clin", "fhir_group")),
