@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.conf
 
-import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, JSON, PARQUET, VCF}
+import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, GFF, JSON, PARQUET, VCF}
 import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, Scd1}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
@@ -57,6 +57,8 @@ object EtlConfiguration extends App {
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
       DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20211208.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_refseq_feature"             , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_feature_table.txt.gz", CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_refseq_annotation"          , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"      , GFF    , OverWrite),
 
       //public
       DatasetConf("normalized_1000_genomes"        , clin_datalake, "/public/1000_genomes"                               , PARQUET, OverWrite, TableConf("clin", "1000_genomes")),
@@ -79,6 +81,8 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_omim_gene_set"       , clin_datalake, "/public/omim_gene_set"                              , PARQUET, OverWrite, TableConf("clin", "omim_gene_set")),
       DatasetConf("normalized_orphanet_gene_set"   , clin_datalake, "/public/orphanet_gene_set"                          , PARQUET, OverWrite, TableConf("clin", "orphanet_gene_set")),
       DatasetConf("normalized_topmed_bravo"        , clin_datalake, "/public/topmed_bravo"                               , PARQUET, OverWrite, TableConf("clin", "topmed_bravo")),
+      DatasetConf("normalized_refseq_feature"      , clin_datalake, "/public/refseq_feature"                             , PARQUET, OverWrite, TableConf("clin", "refseq_feature")),
+      DatasetConf("normalized_refseq_annotation"   , clin_datalake, "/public/normalized_refseq_annotation"               , PARQUET, OverWrite, partitionby = List("chromosome"), table= Some(TableConf("clin", "normalized_refseq_annotation"))),
       //fhir
       DatasetConf("normalized_clinical_impression" , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
       DatasetConf("normalized_group"               , clin_datalake, "/normalized/fhir/Group"             , DELTA  , OverWrite   , TableConf("clin", "fhir_group")),
