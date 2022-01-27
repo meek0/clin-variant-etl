@@ -1,117 +1,121 @@
 {
-  "index_patterns": ["clin_*_gene_centric*"],
-  "settings": {
-    "number_of_shards": 1
-  },
-  "mappings": {
-    "properties" : {
-      "alias" : {
-        "type" : "keyword"
-      },
-      "biotype" : {
-        "type" : "keyword"
-      },
-      "chromosome" : {
-        "type" : "keyword"
-      },
-      "cosmic" : {
-        "type" : "nested",
-        "properties" : {
-          "tumour_types_germline" : {
-            "type" : "keyword"
+  "index_patterns": [
+    "clin_*_gene_centric*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 1
+    },
+    "mappings": {
+      "properties": {
+        "alias": {
+          "type": "keyword"
+        },
+        "biotype": {
+          "type": "keyword"
+        },
+        "chromosome": {
+          "type": "keyword"
+        },
+        "cosmic": {
+          "type": "nested",
+          "properties": {
+            "tumour_types_germline": {
+              "type": "keyword"
+            }
           }
-        }
-      },
-      "ddd" : {
-        "type" : "nested",
-        "properties" : {
-          "disease_name" : {
-            "type" : "keyword"
+        },
+        "ddd": {
+          "type": "nested",
+          "properties": {
+            "disease_name": {
+              "type": "keyword"
+            }
           }
-        }
-      },
-      "ensembl_gene_id" : {
-        "type" : "keyword"
-      },
-      "entrez_gene_id" : {
-        "type" : "long"
-      },
-      "number_of_patients" : {
-        "type" : "long"
-      },
-      "number_of_variants_per_patient" : {
-        "type" : "nested",
-        "properties" : {
-          "patient_id" : {
-            "type" : "keyword"
-          },
-          "count" : {
-            "type" : "long"
+        },
+        "ensembl_gene_id": {
+          "type": "keyword"
+        },
+        "entrez_gene_id": {
+          "type": "long"
+        },
+        "number_of_patients": {
+          "type": "long"
+        },
+        "number_of_variants_per_patient": {
+          "type": "nested",
+          "properties": {
+            "patient_id": {
+              "type": "keyword"
+            },
+            "count": {
+              "type": "long"
+            }
           }
-        }
-      },
-      "hash" : {
-        "type" : "keyword"
-      },
-      "hgnc" : {
-        "type" : "keyword"
-      },
-      "hpo" : {
-        "type" : "nested",
-        "properties" : {
-          "hpo_term_id" : {
-            "type" : "keyword"
-          },
-          "hpo_term_label" : {
-            "type" : "keyword"
-          },
-          "hpo_term_name" : {
-            "type" : "keyword"
+        },
+        "hash": {
+          "type": "keyword"
+        },
+        "hgnc": {
+          "type": "keyword"
+        },
+        "hpo": {
+          "type": "nested",
+          "properties": {
+            "hpo_term_id": {
+              "type": "keyword"
+            },
+            "hpo_term_label": {
+              "type": "keyword"
+            },
+            "hpo_term_name": {
+              "type": "keyword"
+            }
           }
-        }
-      },
-      "location" : {
-        "type" : "keyword"
-      },
-      "name" : {
-        "type" : "keyword"
-      },
-      "omim" : {
-        "type" : "nested",
-        "properties" : {
-          "inheritance" : {
-            "type" : "keyword"
-          },
-          "inheritance_code": {
-            "type" : "keyword"
-          },
-          "name" : {
-            "type" : "keyword"
-          },
-          "omim_id" : {
-            "type" : "keyword"
+        },
+        "location": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "omim": {
+          "type": "nested",
+          "properties": {
+            "inheritance": {
+              "type": "keyword"
+            },
+            "inheritance_code": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "keyword"
+            },
+            "omim_id": {
+              "type": "keyword"
+            }
           }
-        }
-      },
-      "omim_gene_id" : {
-        "type" : "keyword"
-      },
-      "orphanet" : {
-        "type" : "nested",
-        "properties" : {
-          "disorder_id" : {
-            "type" : "long"
-          },
-          "inheritance" : {
-            "type" : "keyword"
-          },
-          "panel" : {
-            "type" : "keyword"
+        },
+        "omim_gene_id": {
+          "type": "keyword"
+        },
+        "orphanet": {
+          "type": "nested",
+          "properties": {
+            "disorder_id": {
+              "type": "long"
+            },
+            "inheritance": {
+              "type": "keyword"
+            },
+            "panel": {
+              "type": "keyword"
+            }
           }
+        },
+        "symbol": {
+          "type": "keyword"
         }
-      },
-      "symbol" : {
-        "type" : "keyword"
       }
     }
   }
