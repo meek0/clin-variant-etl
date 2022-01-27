@@ -1,6 +1,8 @@
 {
   "index_patterns": [
-    "clin_*_gene_centric*"
+    "clin_qa_blue_gene_centric*",
+    "clin_qa_green_gene_centric*",
+    "clin_staging_gene_centric*"
   ],
   "template": {
     "settings": {
