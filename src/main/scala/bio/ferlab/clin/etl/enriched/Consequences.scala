@@ -60,6 +60,7 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
     joinWithDBNSFP(csq, dbnsfp)
       .join(ensembl_mapping, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
       .withColumn("canonical", coalesce(col("is_canonical"), lit(false)))
+      .drop("is_canonical")
   }
 
   override def load(data: DataFrame,
