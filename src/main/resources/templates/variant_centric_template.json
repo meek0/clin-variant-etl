@@ -140,19 +140,10 @@
                 }
               }
             },
-            "is_canonical": {
-              "type": "boolean"
-            },
             "mane_plus": {
               "type": "boolean"
             },
             "mane_select": {
-              "type": "boolean"
-            },
-            "original_canonical": {
-              "type": "boolean"
-            },
-            "pick": {
               "type": "boolean"
             },
             "predictions": {
