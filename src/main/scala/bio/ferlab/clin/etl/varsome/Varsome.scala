@@ -16,10 +16,10 @@ import java.time.LocalDateTime
 
 object Varsome extends SparkApp {
 
-  val varsomeToken = sys.env("varsome_token")
-  val varsomeUrl = sys.env("varsome_url")
 
   implicit val (conf, steps, spark) = init()
+  val varsomeToken = spark.conf.get("varsome.token")
+  val varsomeUrl = spark.conf.get("varsome.url")
   if (steps.contains(reset)) {
     new Varsome(Reload, varsomeUrl, varsomeToken).run()
   } else {
