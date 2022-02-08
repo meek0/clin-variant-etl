@@ -63,7 +63,7 @@ class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String)
 
   override def transform(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val input = data(normalized_variants.id)
+    val input = data(normalized_variants.id).persist()
     val numPartitions = (input.count() / 1000) + 1
 
     input.select(concat_ws("-", locus: _*) as "locus")

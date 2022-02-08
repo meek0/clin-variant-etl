@@ -21,11 +21,5 @@ object VarsomeUtils {
 
 
   val varsomeSchema = new ArrayType(ScalaReflection.schemaFor[VarsomeEntity].dataType.asInstanceOf[StructType], false)
-  //  val varsomeSchema = new ArrayType(new StructType()
-  //    .add("chromosome", StringType)
-  //    .add("ref", StringType)
-  //    .add("alt", StringType)
-  //    .add("variant_id", StringType)
-  //    .add("pos", LongType), false)
 
 }

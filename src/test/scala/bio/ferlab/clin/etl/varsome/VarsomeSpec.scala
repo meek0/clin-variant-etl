@@ -166,7 +166,3 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with B
   }
 
 }
-
-//Array(
-// VarsomeOutput(15,73027478,T,C,10190150730274780002,2022-02-08 08:26:23.924351,Some(VariantPublication(List(Publication(List(gene2phenotype, ClinVar, CGD),12016587), Publication(List(UniProt Variants),15666242)),List(GenePublication(Some(1959),Some(BBS4),List(Publication(List(CGD),7711739), Publication(List(gene2phenotype, CGD),11381270)))))),None))
-// VarsomeOutput(15,73027478,C,T,10190150730274780002,2022-02-08 08:26:23.924351,Some(VariantPublication(List(Publication(List(gene2phenotype, ClinVar, CGD),12016587), Publication(List(UniProt Variants),15666242)),List(GenePublication(Some(1959),Some(BBS4),List(Publication(List(CGD),7711739), Publication(List(gene2phenotype, CGD),11381270)))))),None))
