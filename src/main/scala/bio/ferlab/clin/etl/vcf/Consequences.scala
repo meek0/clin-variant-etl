@@ -79,7 +79,6 @@ class Consequences(batchId: String, contig: String)(implicit configuration: Conf
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    println(s"COUNT: ${data.count()}")
     super.load(data
       .repartition(5, col("chromosome"))
       .sortWithinPartitions("start"))

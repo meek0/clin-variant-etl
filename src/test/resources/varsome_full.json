@@ -1,0 +1,90 @@
+[
+  {
+    "original_variant": "15-73027478-T-C",
+    "chromosome": "chr15",
+    "alt": "C",
+    "ref": "T",
+    "pos": 73027478,
+    "variant_id": "10190150730274780002",
+    "publications": {
+      "publications": [
+        {
+          "referenced_by": [
+            "gene2phenotype",
+            "ClinVar",
+            "CGD"
+          ],
+          "pub_med_id": 12016587
+        },
+        {
+          "referenced_by": [
+            "UniProt Variants"
+          ],
+          "pub_med_id": 15666242
+        }
+      ],
+      "genes": [
+        {
+          "publications": [
+            {
+              "referenced_by": [
+                "CGD"
+              ],
+              "pub_med_id": 7711739
+            },
+            {
+              "referenced_by": [
+                "gene2phenotype",
+                "CGD"
+              ],
+              "pub_med_id": 11381270
+            }
+          ],
+          "gene_id": 1959,
+          "gene_symbol": "BBS4"
+        }
+      ]
+    },
+    "acmg_annotation": {
+      "verdict": {
+        "classifications": [
+          "BA1",
+          "BP6_Very Strong"
+        ],
+        "ACMG_rules": {
+          "clinical_score": 1.242361132330188,
+          "verdict": "Benign",
+          "approx_score": -11,
+          "pathogenic_subscore": "Uncertain Significance",
+          "benign_subscore": "Benign"
+        }
+      },
+      "classifications": [
+        {
+          "met_criteria": true,
+          "user_explain": [
+            "GnomAD exomes allele frequency = 0.573 is greater than 0.05 threshold (good gnomAD exomes coverage = 75.8)."
+          ],
+          "name": "BA1"
+        },
+        {
+          "strength": "Very Strong",
+          "met_criteria": true,
+          "user_explain": [
+            "UniProt Variants classifies this variant as Benign, citing 3 articles (%%PUBMED:15770229%%, %%PUBMED:15666242%% and %%PUBMED:14702039%%), associated with Bardet-Biedl syndrome, Bardet-Biedl syndrome 1 and Bardet-Biedl syndrome 4.",
+            "Using strength Strong because ClinVar classifies this variant as Benign, 2 stars (multiple consistent, 9 submissions), citing %%PUBMED:12016587%%, associated with Allhighlypenetrant, Bardet-Biedl Syndrome, Bardet-Biedl Syndrome 1 and Bardet-Biedl Syndrome 4.",
+            "Using strength Very Strong because of the combined evidence from ClinVar and UniProt Variants."
+          ],
+          "name": "BP6"
+        }
+      ],
+      "transcript": "NM_033028.5",
+      "gene_symbol": "BBS4",
+      "transcript_reason": "canonical",
+      "version_name": "11.1.6",
+      "coding_impact": "missense",
+      "gene_id": 1959
+    }
+  }
+
+]

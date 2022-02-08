@@ -54,7 +54,6 @@ class Variants(batchId: String, contig: String)(implicit configuration: Configur
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    println(s"COUNT: ${data.count()}")
     super.load(data
       .repartition(1, col("chromosome"))
       .sortWithinPartitions("start"))
