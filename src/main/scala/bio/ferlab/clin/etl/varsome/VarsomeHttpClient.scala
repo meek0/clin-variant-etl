@@ -25,16 +25,17 @@ case class VarsomeHttpClient(varsomeUrl: String, varsomeToken: String) {
   }
 
   def getEntities(locuses: Seq[String]): VarsomeResponse = {
-    val locusesBody=locuses.map(l=> s""""$l"""").mkString(",")
+    val locusesBody = locuses.map(l => s""""$l"""").mkString(",")
     val body = s"[$locusesBody]"
     val request = new HttpPost(s"$varsomeUrl/lookup/batch/hg38?add-ACMG-annotation=1&add-source-databases=none&add-all-data=0&expand-pubmed-articles=0&add-region-databases=0")
     request.setEntity(new StringEntity(body))
     val response = http.execute(request)
     val status = response.getStatusLine
+    val responseBody = EntityUtils.toString(response.getEntity, "UTF-8")
     if (!status.getStatusCode.equals(200)) {
-      throw new IllegalStateException(s"Varsome returned an error :${status.getStatusCode + " : " + status.getReasonPhrase}")
+      throw new IllegalStateException(s"Varsome returned an error :code=${status.getStatusCode}, reason=${status.getReasonPhrase}, request body=$body, response body = $responseBody")
     }
-    VarsomeResponse(EntityUtils.toString(response.getEntity, "UTF-8"))
+    VarsomeResponse(responseBody)
   }
 
 }
