@@ -18,8 +18,8 @@ object Varsome extends SparkApp {
 
 
   implicit val (conf, steps, spark) = init()
-  val varsomeToken = spark.conf.get("varsome.token")
-  val varsomeUrl = spark.conf.get("varsome.url")
+  val varsomeToken = spark.conf.get("spark.varsome.token")
+  val varsomeUrl = spark.conf.get("spark.varsome.url")
   if (steps.contains(reset)) {
     new Varsome(Reload, varsomeUrl, varsomeToken).run()
   } else {
