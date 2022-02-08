@@ -35,7 +35,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     Map(
       normalized_variants.id -> normalized_variants.read
         .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where(s"chromosome='$chromosome'"),
-      normalized_snv.id -> normalized_snv.read.where(s"chromosome='$chromosome'"),
+      normalized_snv.id -> normalized_snv.read.where(s"chromosome='$chromosome'"), // we need ALL occurrences for frequencies calculation
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
@@ -59,7 +59,6 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
     val occurrences = data(normalized_snv.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
       .as("occurrences")
-    //val occurrencesWithAlt = occurrences.where($"has_alt" === true)
 
     val genomesDf = data(`thousand_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))

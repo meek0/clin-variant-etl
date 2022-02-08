@@ -1,0 +1,11 @@
+[
+  {
+    "original_variant": "chr1-1000-A-T",
+    "chromosome": "chr1",
+    "alt": "T",
+    "ref": "A",
+    "pos": 1000,
+    "variant_id": "1234"
+  }
+
+]
