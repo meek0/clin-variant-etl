@@ -7,22 +7,13 @@ import scala.io.Source
 
 object HttpServerUtils {
 
-  def getPort:Int = {
-    val socket = new ServerSocket(0)
-    socket.setReuseAddress(true)
-    val port = socket.getLocalPort
-    port
-  }
-
   def withHttpServer[T](path: String, handler: HttpHandler)(block: String => T): T = {
-    val port = getPort
-    val address = new InetSocketAddress("localhost",port)
-    val server = HttpServer.create(address, 0)
+    val server = HttpServer.create(new InetSocketAddress("localhost",0), 0)
     server.setExecutor(null); // creates a default executor
     server.start()
     server.createContext(path, handler)
     try {
-      block(s"http://${address.getHostName}:${port}")
+      block(s"http://${server.getAddress.getHostName}:${server.getAddress.getPort}")
     } finally {
       server.stop(0)
     }
