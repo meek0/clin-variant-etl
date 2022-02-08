@@ -41,6 +41,7 @@ class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String)
   override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = {
     val variants = normalized_variants.read
       .select("chromosome", "start", "reference", "alternate")
+      .where(length(col("reference")) <= 200 && length(col("alternate")) <= 200) //Varsome limit variant length to 200 bases
     jobType match {
       case Reload => Map(normalized_variants.id -> variants)
       case ForBatch(batchId) =>
