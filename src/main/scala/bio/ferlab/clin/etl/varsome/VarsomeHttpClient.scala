@@ -1,12 +1,11 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.etl.varsome.Varsome.{varsomeToken, varsomeUrl}
-import org.apache.http.{HttpHeaders, HttpRequest, HttpRequestInterceptor}
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
 import org.apache.http.protocol.HttpContext
 import org.apache.http.util.EntityUtils
+import org.apache.http.{HttpHeaders, HttpRequest, HttpRequestInterceptor}
 
 case class VarsomeHttpClient(varsomeUrl: String, varsomeToken: String) {
 
@@ -25,8 +24,9 @@ case class VarsomeHttpClient(varsomeUrl: String, varsomeToken: String) {
     client.build()
   }
 
-  def getEntities(locuses: String): VarsomeResponse = {
-    val body = s"[$locuses]"
+  def getEntities(locuses: Seq[String]): VarsomeResponse = {
+    val locusesBody=locuses.map(l=> s""""$l"""").mkString(",")
+    val body = s"[$locusesBody]"
     val request = new HttpPost(s"$varsomeUrl/lookup/batch/hg38?add-ACMG-annotation=1&add-source-databases=none&add-all-data=0&expand-pubmed-articles=0&add-region-databases=0")
     request.setEntity(new StringEntity(body))
     val response = http.execute(request)

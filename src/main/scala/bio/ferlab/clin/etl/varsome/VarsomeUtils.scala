@@ -9,7 +9,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 object VarsomeUtils {
 
   val transformPartition: (String, String) => Iterator[Row] => Iterator[VarsomeResponse] = (url, token) => rows => {
-    val locuses: String = rows.map(r => r.getAs[String]("locus")).toSeq.mkString(",")
+    val locuses = rows.map(r => r.getAs[String]("locus")).toSeq
     val response = VarsomeHttpClient(url, token).getEntities(locuses)
     Iterator(response)
   }
