@@ -4,6 +4,9 @@
  */
 package bio.ferlab.clin.model
 
+import bio.ferlab.clin.etl.varsome.{Classification, Publication}
+import bio.ferlab.clin.model.VarsomeOutput.{defaultClassifications, defaultPublications}
+
 import java.sql.{Date, Timestamp}
 import java.time.LocalDate
 
@@ -38,7 +41,9 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `omim`: List[String] = List("618285"),
                                  `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
                                  `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
-                                 `panels`: List[String] = List("DYSTM", "MITN"))
+                                 `panels`: List[String] = List("DYSTM", "MITN"),
+                                 `varsome`: Option[VARSOME] = Some(VARSOME())
+                                )
 
 
 case class DONORS(`dp`: Int = 1,
@@ -76,7 +81,7 @@ case class DONORS(`dp`: Int = 1,
                   `parental_origin`: Option[String] = None,
                   `transmission`: Option[String] = None)
 
-case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFreq(3446, 5008,  0.688099),
+case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFreq(3446, 5008, 0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),
                        gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
                        gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
@@ -117,3 +122,27 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `orphanet`: List[ORPHANET] = List(ORPHANET()),
                  `hpo`: List[HPO] = List(HPO()),
                  `omim`: List[OMIM] = List(OMIM()))
+
+case class VARSOME(
+                    `variant_id`: Option[String] = Some("10190150730274780002"),
+                    `publications`: Seq[Publication] = defaultPublications,
+                    `has_publication`:Boolean = true,
+                    `acmg`: Option[ACMG] = Some(ACMG())
+                  )
+
+case class ACMG(
+                 `verdict`: Option[VERDICT] = Some(VERDICT()),
+                 `classifications`: Seq[Classification] = defaultClassifications,
+                 `transcript`: Option[String] = Some("NM_033028.5"),
+                 `gene_symbol`: Option[String] = Some("BBS4"),
+                 `transcript_reason`: Option[String] = Some("canonical"),
+                 `coding_impact`: Option[String] = Some("missense")
+               )
+
+case class VERDICT(
+                    `clinical_score`: Option[Double] = Some(1.242361132330188),
+                    `verdict`: Option[String] = Some("Benign"),
+                    `approx_score`: Option[Int] = Some(-11),
+                    `pathogenic_subscore`: Option[String] = Some("Uncertain Significance"),
+                    `benign_subscore`: Option[String] = Some("Benign")
+                  )

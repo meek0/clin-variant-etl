@@ -33,6 +33,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
+  val varsome: DatasetConf = conf.getDataset("normalized_varsome")
 
   val normalized_occurrencesDf: DataFrame = Seq(
     SNVRawOutput(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -48,7 +49,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
-  val normalized_panelsDf = Seq(PanelOutput()).toDF()
+  val normalized_panelsDf: DataFrame = Seq(PanelOutput()).toDF()
+  val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -62,7 +64,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
-    normalized_panels.id -> normalized_panelsDf
+    normalized_panels.id -> normalized_panelsDf,
+    varsome.id -> varsomeDf
   )
 
   override def beforeAll(): Unit = {
@@ -110,15 +113,15 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   "variants job" should "compute frequencies by analysis" in {
 
     val occurrencesDf = Seq(
-      SNVRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(0, 1)    , zygosity = "HET", affected_status = true),
-      SNVRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      SNVRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      SNVRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      SNVRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(0, 0)    , zygosity = "WT" , affected_status = true),
-      SNVRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS")    , calls = List(1, 1)    , zygosity = "HOM", affected_status = true),
-      SNVRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("LowDepth"), calls = List(0, 1)    , zygosity = "HET", affected_status = false),
-      SNVRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = false),
-      SNVRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID"  , filters = List("PASS")    , calls = List(-1, -1)  , zygosity = "UNK", affected_status = true)
+      SNVRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(0, 1), zygosity = "HET", affected_status = true),
+      SNVRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(1, 1), zygosity = "HOM", affected_status = true),
+      SNVRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0), zygosity = "WT", affected_status = true),
+      SNVRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0), zygosity = "WT", affected_status = true),
+      SNVRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0), zygosity = "WT", affected_status = true),
+      SNVRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1), zygosity = "HOM", affected_status = true),
+      SNVRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("LowDepth"), calls = List(0, 1), zygosity = "HET", affected_status = false),
+      SNVRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(-1, -1), zygosity = "UNK", affected_status = false),
+      SNVRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(-1, -1), zygosity = "UNK", affected_status = true)
     ).toDF()
 
     val inputData = data ++ Map(normalized_snv.id -> occurrencesDf)

@@ -773,6 +773,86 @@
         },
         "variant_type": {
           "type": "keyword"
+        },
+        "varsome": {
+            "properties": {
+              "has_publication":{
+                "type": "boolean"
+              },
+              "publications": {
+                "type": "nested",
+                "properties": {
+                  "referenced_by": {
+                    "type": "keyword"
+                  },
+                  "pub_med_id": {
+                    "type": "keyword",
+                    "index": false
+                  }
+                }
+              },
+              "acmg": {
+                "properties": {
+                  "verdict": {
+                    "properties": {
+                      "clinical_score": {
+                        "type": "double",
+                        "index": false
+                      },
+                      "verdict": {
+                        "type": "keyword"
+                      },
+                      "pathogenic_subscore": {
+                        "type": "keyword",
+                        "index": false
+                      },
+                      "benign_subscore": {
+                        "type": "keyword",
+                        "index": false
+                      },
+                      "approx_score": {
+                        "type": "integer",
+                        "index": false
+                      }
+                    }
+                  },
+                  "classifications": {
+                    "type": "nested",
+                    "properties": {
+                      "met_criteria": {
+                        "type": "boolean"
+                      },
+                      "strength": {
+                        "type": "keyword"
+                      },
+                      "name": {
+                        "type": "keyword"
+                      },
+                      "user_explain": {
+                        "type": "keyword",
+                        "index": false
+                      }
+                    }
+                  },
+                  "transcript": {
+                    "type": "keyword",
+                    "index": false
+                  },
+                  "transcript_reason": {
+                    "type": "keyword",
+                    "index": false
+                  },
+                  "gene_symbol": {
+                    "type": "keyword",
+                    "index": false
+                  },
+                  "coding_impact": {
+                    "type": "keyword",
+                    "index": false
+                  }
+                }
+              }
+            }
         }
       }
     }

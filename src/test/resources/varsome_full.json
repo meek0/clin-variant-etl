@@ -1,10 +1,10 @@
 [
   {
     "original_variant": "15-73027478-T-C",
-    "chromosome": "chr15",
+    "chromosome": "chr1",
     "alt": "C",
     "ref": "T",
-    "pos": 73027478,
+    "pos": 69897,
     "variant_id": "10190150730274780002",
     "publications": {
       "publications": [
