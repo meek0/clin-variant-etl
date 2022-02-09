@@ -20,21 +20,26 @@ object Varsome extends SparkApp {
   implicit val (conf, steps, spark) = init()
   val varsomeToken = spark.conf.get("spark.varsome.token")
   val varsomeUrl = spark.conf.get("spark.varsome.url")
-  if (steps.contains(reset)) {
-    new Varsome(Reload, varsomeUrl, varsomeToken).run()
+  val chromosome = if (args.length >= 3 && args(2) != "all") {
+    Some(args(2))
   } else {
-    if (args.length < 3) {
+    None
+  }
+  if (steps.contains(reset)) {
+    new Varsome(Reload, varsomeUrl, varsomeToken, chromosome).run()
+  } else {
+    if (args.length < 4) {
       throw new IllegalArgumentException("Batch id is required if reset is not included in steps")
     }
-    val batchId = args(2)
-    new Varsome(ForBatch(batchId), varsomeUrl, varsomeToken).run()
+    val batchId = args(3)
+    new Varsome(ForBatch(batchId), varsomeUrl, varsomeToken, chromosome).run()
   }
 
   spark.sparkContext.setLogLevel("ERROR")
 }
 
 
-class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String)(override implicit val conf: Configuration) extends ETL {
+class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String, chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETL {
   override val destination: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
 
@@ -42,10 +47,11 @@ class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String)
     val variants = normalized_variants.read
       .select("chromosome", "start", "reference", "alternate")
       .where(length(col("reference")) <= 200 && length(col("alternate")) <= 200) //Varsome limit variant length to 200 bases
+    val variantsFilterByChr = chromosome.map(chr => variants.where(col("chromosome") === chr)).getOrElse(variants)
     jobType match {
-      case Reload => Map(normalized_variants.id -> variants)
+      case Reload => Map(normalized_variants.id -> variantsFilterByChr)
       case ForBatch(batchId) =>
-        val batchVariants = variants
+        val batchVariants = variantsFilterByChr
           .where(col("batch_id") === batchId)
         val varsomeExist: Boolean = tableExist(destination)
         val extractedVariants = if (varsomeExist) {
