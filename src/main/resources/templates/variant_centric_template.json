@@ -776,6 +776,10 @@
         },
         "varsome": {
             "properties": {
+              "variant_id":{
+                "type": "keyword",
+                "index": false
+              },
               "has_publication":{
                 "type": "boolean"
               },
