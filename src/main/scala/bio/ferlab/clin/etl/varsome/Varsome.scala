@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.etl.varsome.VarsomeUtils.{tableExist, transformPartition, varsomeSchema}
+import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
 import bio.ferlab.clin.etl.vcf.{ForBatch, Reload, VarsomeJobType}
 import bio.ferlab.datalake.commons.config.RunStep.reset
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
@@ -53,8 +53,7 @@ class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String,
       case ForBatch(batchId) =>
         val batchVariants = variantsFilterByChr
           .where(col("batch_id") === batchId)
-        val varsomeExist: Boolean = tableExist(destination)
-        val extractedVariants = if (varsomeExist) {
+        val extractedVariants = if (destination.tableExist) {
           val varsome = destination.read.where(col("updated_on") >= Timestamp.valueOf(currentRunDateTime.minusDays(7)))
           batchVariants.join(varsome, Seq("chromosome", "start", "reference", "alternate"), "leftanti")
         }
