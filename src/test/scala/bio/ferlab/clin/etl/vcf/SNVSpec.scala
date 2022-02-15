@@ -82,12 +82,18 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     ServiceRequestOutput(`id` = "111")
   ).toDF()
 
+  val specimenDf: DataFrame = Seq(
+    SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SR0095", `sample_id` = Some("14-696"), `specimen_id` = None),
+    SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SR0095", `sample_id` = None          , `specimen_id` =  Some("SP_696"))
+  ).toDF
+
   val data = Map(
     raw_variant_calling.id -> Seq(VCFInput()).toDF(),
     patient.id -> patientDf,
     group.id -> groupDf,
     task.id -> taskDf,
-    service_request.id -> serviceRequestDf
+    service_request.id -> serviceRequestDf,
+    specimen.id -> specimenDf
   )
 
 

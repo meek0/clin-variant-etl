@@ -145,7 +145,6 @@ object FhirRawToNormalizedMappings {
       .withColumn("organization_id", regexp_replace(col("accessionIdentifier.assigner.reference"), "Organization/", ""))
       .withColumn("specimen_id", when(col("accessionIdentifier.system").like("%specimen"), col("accessionIdentifier.value")))
       .withColumn("sample_id", when(col("accessionIdentifier.system").like("%sample"), col("accessionIdentifier.value")))
-      .withColumn("aliquot_id", when(col("accessionIdentifier.system").like("%aliquot"), col("accessionIdentifier.value")))
       .withColumn("patient_id", regexp_replace(col("subject.reference"), "Patient/", ""))
       .withColumn("service_request_id", regexp_replace(col("request.reference")(0), "ServiceRequest/", ""))
       .withColumn("received_time", to_timestamp(col("receivedTime"), "yyyy-MM-dd\'T\'HH:mm:sszzzz"))

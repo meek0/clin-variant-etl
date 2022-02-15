@@ -18,6 +18,7 @@ abstract class Occurrences(batchId: String, contig: String)(implicit configurati
   val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
+  val specimen: DatasetConf = conf.getDataset("normalized_specimen")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -28,11 +29,18 @@ abstract class Occurrences(batchId: String, contig: String)(implicit configurati
       patient.id -> patient.read,
       group.id -> group.read,
       task.id -> task.read,
-      service_request.id -> service_request.read
+      service_request.id -> service_request.read,
+      specimen.id -> specimen.read
     )
   }
 
   def getClinicalRelation(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+    val specimenDf = data(specimen.id)
+      .groupBy("service_request_id", "patient_id")
+      .agg(
+        filter(collect_list(col("specimen_id")), _.isNotNull)(0) as "specimen_id",
+        filter(collect_list(col("sample_id")), _.isNotNull)(0) as "sample_id"
+      )
     val serviceRequestDf = data(service_request.id)
       .select(
         col("id") as "service_request_id",
@@ -74,9 +82,10 @@ abstract class Occurrences(batchId: String, contig: String)(implicit configurati
 
     val joinedRelation =
       taskDf
-        .join(serviceRequestDf, Seq("service_request_id"), "left").drop("service_request_id")
+        .join(serviceRequestDf, Seq("service_request_id"), "left")
         .join(patients, Seq("patient_id"))
         .join(familyRelationshipDf, Seq("patient_id"), "left")
+        .join(specimenDf, Seq("service_request_id", "patient_id"), "left")
     joinedRelation
   }
 

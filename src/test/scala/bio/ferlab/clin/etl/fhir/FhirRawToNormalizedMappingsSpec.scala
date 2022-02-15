@@ -163,8 +163,8 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val result = job.transform(Map(inputDs.id -> inputDf))
 
-    result.count() shouldBe 5
-    val head = result.where("id='32738'").as[SpecimenOutput].collect().head
+    result.count() shouldBe 7
+    val head = result.where("id='134658'").as[SpecimenOutput].collect().head
     head shouldBe SpecimenOutput()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `received_time` = head.`received_time`)

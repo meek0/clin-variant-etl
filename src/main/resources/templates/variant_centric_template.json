@@ -233,6 +233,18 @@
             "aliquot_id": {
               "type": "keyword"
             },
+            "service_request_id": {
+              "type": "keyword",
+              "index": false
+            },
+            "sample_id": {
+              "type": "keyword",
+              "index": false
+            },
+            "specimen_id": {
+              "type": "keyword",
+              "index": false
+            },
             "analysis_code": {
               "type": "keyword"
             },
