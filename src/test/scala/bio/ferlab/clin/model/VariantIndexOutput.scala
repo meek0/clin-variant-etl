@@ -60,7 +60,6 @@ case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_var
                         `aa_change`: Option[String] = None,
                         `coding_dna_change`: Option[String] = None,
                         `impact_score`: Int = 1,
-                        `consequence`: List[String] = List("downstream gene"),
                         `predictions`: PREDICTIONS = PREDICTIONS(),
                         `conservations`: CONSERVATIONS = CONSERVATIONS())
 
