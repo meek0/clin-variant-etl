@@ -64,7 +64,8 @@ class Consequences(batchId: String, contig: String)(implicit configuration: Conf
         amino_acids,
         codons,
         pick,
-        original_canonical
+        original_canonical,
+        col("annotation.RefSeq") as "refseq_mrna_id"
       )
       .drop("annotation")
       .withColumn("aa_change",

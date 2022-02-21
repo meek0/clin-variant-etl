@@ -42,8 +42,8 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
         $"ensembl_transcript_id",
         $"ensembl_gene_id",
         $"uniprot_id",
-        $"refseq_mrna_id",
-        $"refseq_protein_id",
+        //$"refseq_mrna_id",
+        //$"refseq_protein_id",
         $"is_mane_select" as "mane_select",
         $"is_mane_plus" as "mane_plus",
         $"is_canonical")

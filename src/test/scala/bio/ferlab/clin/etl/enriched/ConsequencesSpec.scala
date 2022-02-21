@@ -6,6 +6,7 @@ import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
@@ -46,7 +47,9 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   }
 
   "consequences job" should "transform data in expected format" in {
-    val result = new Consequences("1").transform(data).as[ConsequenceEnrichedOutput].collect().head
+    val resultDf = new Consequences("1").transform(data)
+    val result = resultDf.as[ConsequenceEnrichedOutput].collect().head
+
     result shouldBe ConsequenceEnrichedOutput(
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`)
@@ -56,6 +59,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     new Consequences("1").run()
 
     enriched_consequences.read.show(false)
+
     val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
       `created_on` = result.`created_on`,
