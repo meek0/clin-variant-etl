@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.varsome
 
 sealed trait VarsomeJobType
 case class ForBatch(batchId:String) extends VarsomeJobType

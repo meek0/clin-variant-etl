@@ -1,7 +1,6 @@
 package bio.ferlab.clin.etl.varsome
 
 import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
-import bio.ferlab.clin.etl.vcf.{ForBatch, Reload, VarsomeJobType}
 import bio.ferlab.datalake.commons.config.RunStep.reset
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL

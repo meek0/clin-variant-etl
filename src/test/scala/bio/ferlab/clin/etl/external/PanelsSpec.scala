@@ -1,6 +1,5 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.external
 
-import bio.ferlab.clin.etl.external.Panels
 import bio.ferlab.clin.model.PanelOutput
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}

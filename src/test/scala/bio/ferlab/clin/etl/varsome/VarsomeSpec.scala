@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.etl.vcf.ForBatch
 import bio.ferlab.clin.model.{VariantRawOutput, VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
 import bio.ferlab.clin.testutils.WithSparkSession

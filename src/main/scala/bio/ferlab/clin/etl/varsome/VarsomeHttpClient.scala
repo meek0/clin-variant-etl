@@ -27,7 +27,7 @@ case class VarsomeHttpClient(varsomeUrl: String, varsomeToken: String) {
   def getEntities(locuses: Seq[String]): VarsomeResponse = {
     val locusesBody = locuses.map(l => s""""$l"""").mkString(",")
     val body = s"""{"variants":[$locusesBody]}"""
-    val request = new HttpPost(s"$varsomeUrl/lookup/batch/hg38?add-ACMG-annotation=1&add-source-databases=none&add-all-data=0&expand-pubmed-articles=0&add-region-databases=0")
+    val request = new HttpPost(s"$varsomeUrl/lookup/batch/hg38?add-ACMG-annotation=1&add-source-databases=all&add-all-data=0&expand-pubmed-articles=0&add-region-databases=0")
     request.setEntity(new StringEntity(body))
     val response = http.execute(request)
     val status = response.getStatusLine
