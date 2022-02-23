@@ -14,10 +14,10 @@ object ImportExternal extends SparkApp {
 
 
   jobName match {
-    case "mane_summary" => new ManeSummaryETL().run(steps)
+    case "mane-summary" => new ManeSummaryETL().run(steps)
     case "panels" => new Panels().run(steps)
-    case "refseq_annotation" => new RefSeqAnnotation().run(steps)
-    case "refseq_feature" => new RefSeqFeature().run(steps)
+    case "refseq-annotation" => new RefSeqAnnotation().run(steps)
+    case "refseq-feature" => new RefSeqFeature().run(steps)
     case "all" =>
       new Panels().run(steps)
     case s: String => throw new IllegalArgumentException(s"JobName [$s] unknown.")
