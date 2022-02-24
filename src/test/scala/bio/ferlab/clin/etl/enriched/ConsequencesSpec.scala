@@ -53,7 +53,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     val result = resultDf.as[ConsequenceEnrichedOutput].collect().head
 
     result shouldBe ConsequenceEnrichedOutput(
-      `mane_select` = Some(true),
+      `mane_select` = Some(false),
       `mane_plus` = Some(false),
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`)
@@ -66,7 +66,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
     val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head
     result shouldBe ConsequenceEnrichedOutput(
-      `mane_select` = Some(true),
+      `mane_select` = Some(false),
       `mane_plus` = Some(false),
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`)

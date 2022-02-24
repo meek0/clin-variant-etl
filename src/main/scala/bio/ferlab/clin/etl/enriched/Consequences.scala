@@ -18,7 +18,7 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
-  val normalized_mane_summary: DatasetConf = conf.getDataset("normalized_mane_summary")
+  //val normalized_mane_summary: DatasetConf = conf.getDataset("normalized_mane_summary")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -28,7 +28,7 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
       ,
       dbnsfp_original.id -> dbnsfp_original.read,
       normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read,
-      normalized_mane_summary.id -> normalized_mane_summary.read
+      //normalized_mane_summary.id -> normalized_mane_summary.read
     )
   }
 
@@ -46,14 +46,14 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
         $"uniprot_id",
         //$"refseq_mrna_id",
         //$"refseq_protein_id",
-        //$"is_mane_select" as "mane_select",
-        //$"is_mane_plus" as "mane_plus",
+        $"is_mane_select" as "mane_select",
+        $"is_mane_plus" as "mane_plus",
         $"is_canonical")
 
-    val mane_summary = data(normalized_mane_summary.id)
-      .select("mane_plus", "mane_select", "ensembl_transcript_id", "ensembl_gene_id")
-      .withColumn("ensembl_gene_id", regexp_extract(col("ensembl_gene_id"), "(ENSG[0-9]+)", 0))
-      .withColumn("ensembl_transcript_id", regexp_extract(col("ensembl_transcript_id"), "(ENST[0-9]+)", 0))
+    //val mane_summary = data(normalized_mane_summary.id)
+    //  .select("mane_plus", "mane_select", "ensembl_transcript_id", "ensembl_gene_id")
+    //  .withColumn("ensembl_gene_id", regexp_extract(col("ensembl_gene_id"), "(ENSG[0-9]+)", 0))
+    //  .withColumn("ensembl_transcript_id", regexp_extract(col("ensembl_transcript_id"), "(ENST[0-9]+)", 0))
 
     val chromosomes = consequences.select("chromosome").distinct().as[String].collect()
 
@@ -66,7 +66,7 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
 
     joinWithDBNSFP(csq, dbnsfp)
       .join(ensembl_mapping, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
-      .join(mane_summary, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
+      //.join(mane_summary, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")
       .withColumn("mane_plus", coalesce(col("mane_plus"), lit(false)))
       .withColumn("mane_select", coalesce(col("mane_select"), lit(false)))
       .withColumn("canonical", coalesce(col("is_canonical"), lit(false)))

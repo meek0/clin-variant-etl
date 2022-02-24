@@ -36,7 +36,8 @@ object EtlConfiguration extends App {
     "spark.delta.merge.repartitionBeforeWrite" -> "true",
     "spark.sql.legacy.timeParserPolicy"-> "CORRECTED",
     "spark.sql.legacy.parquet.datetimeRebaseModeInWrite" -> "CORRECTED",
-    "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN"
+    "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN",
+    "spark.sql.autoBroadcastJoinThreshold" -> "-1"
   )
 
   val tsv_with_headers = Map("sep" -> "\t", "header" -> "true")
