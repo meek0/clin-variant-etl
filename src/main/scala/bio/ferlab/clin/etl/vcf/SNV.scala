@@ -43,6 +43,10 @@ class SNV(batchId: String, contig: String)(implicit configuration: Configuration
       .drop("symbols")
       .join(hc, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
       .join(possiblyHC, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
+      .withColumn("is_hc", coalesce(col("is_hc"), lit(false)))
+      .withColumn("hc_complement", coalesce(col("hc_complement"), array()))
+      .withColumn("is_possibly_hc", coalesce(col("is_possibly_hc"), lit(false)))
+      .withColumn("possibly_hc_complement", coalesce(col("possibly_hc_complement"), array()))
   }
 
 

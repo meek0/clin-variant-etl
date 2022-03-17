@@ -342,6 +342,7 @@
               "type": "boolean"
             },
             "hc_complement": {
+              "type" : "nested",
               "properties": {
                 "symbol": {
                   "type": "keyword"
@@ -354,13 +355,14 @@
             "is_possibly_hc": {
               "type": "boolean"
             },
-            "is_possibly_hc_complement": {
+            "possibly_hc_complement": {
+              "type" : "nested",
               "properties": {
                 "symbol": {
                   "type": "keyword"
                 },
                 "count": {
-                  "type": "integer"
+                  "type": "long"
                 }
               }
             }
