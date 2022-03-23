@@ -15,7 +15,10 @@ object FhirRawToNormalized extends SparkApp {
     FhirRawToNormalizedMappings
       .mappings
       .filter { case (_, dst, _) => (jobName == "all") || jobName == dst.id }
-      .map { case (src, dst, transformations) => new RawToNormalizedETL(src, dst, transformations)}
+      .map { case (src, dst, transformations) =>
+        dst.table.map(_.database).foreach(database => spark.sql(s"CREATE DATABASE IF NOT EXISTS $database"))
+        new RawToNormalizedETL(src, dst, transformations)
+      }
 
   jobs.foreach(_.run(steps))
 
