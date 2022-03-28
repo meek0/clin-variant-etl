@@ -99,7 +99,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
-      .repartition(1, col("chromosome"))
+      .repartition(10, col("chromosome"))
       .sortWithinPartitions("start"))
   }
 

@@ -121,7 +121,7 @@ class Consequences(batchId: String, contig: String)(implicit configuration: Conf
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
-      .repartition(5, col("chromosome"))
+      .repartition(10, col("chromosome"))
       .sortWithinPartitions("start"))
   }
 }
