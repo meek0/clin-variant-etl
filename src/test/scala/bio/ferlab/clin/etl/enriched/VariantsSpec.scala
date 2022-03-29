@@ -93,7 +93,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "transform data in expected format" in {
 
-    val result = new Variants("1").transform(data)
+    val result = new Variants().transform(data)
       .as[VariantEnrichedOutput].collect().head
 
     result.`donors` should contain allElementsOf expectedDonors
@@ -125,7 +125,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     ).toDF()
 
     val inputData = data ++ Map(normalized_snv.id -> occurrencesDf)
-    val df = new Variants("").transform(inputData)
+    val df = new Variants().transform(inputData)
     val result = df.as[VariantEnrichedOutput].collect().head
 
     result.`donors`.length shouldBe 4
@@ -155,7 +155,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "run" in {
 
-    new Variants("1").run(RunStep.initial_load)
+    new Variants().run(RunStep.initial_load)
 
     val result = spark.table("clin.variants")
       .as[VariantEnrichedOutput].collect().head

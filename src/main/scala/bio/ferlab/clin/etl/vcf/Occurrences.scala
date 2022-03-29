@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-abstract class Occurrences(batchId: String, contig: String)(implicit configuration: Configuration) extends ETL {
+abstract class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   def raw_variant_calling: DatasetConf
 
@@ -25,7 +25,9 @@ abstract class Occurrences(batchId: String, contig: String)(implicit configurati
     Map(
       raw_variant_calling.id ->
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-          .where(s"contigName='$contig'"),
+          //.where(s"contigName='$contig'")
+          .where(col("contigName").isin(validContigNames:_*))
+          .repartition(128),
       patient.id -> patient.read,
       group.id -> group.read,
       task.id -> task.read,

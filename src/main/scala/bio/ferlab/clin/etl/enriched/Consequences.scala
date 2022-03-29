@@ -5,14 +5,14 @@ import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
-import org.apache.spark.sql.functions.{coalesce, col, lit, regexp_extract, struct}
+import org.apache.spark.sql.functions.{coalesce, col, lit, struct}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences(chromosome: String)(implicit configuration: Configuration) extends ETL {
+class Consequences()(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
@@ -24,8 +24,7 @@ class Consequences(chromosome: String)(implicit configuration: Configuration) ex
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_consequences.id -> normalized_consequences.read
-        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where(s"chromosome='$chromosome'")
-      ,
+        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
       dbnsfp_original.id -> dbnsfp_original.read,
       normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read,
       //normalized_mane_summary.id -> normalized_mane_summary.read

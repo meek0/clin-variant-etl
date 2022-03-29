@@ -13,7 +13,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Variants(chromosome: String)(implicit configuration: Configuration) extends ETL {
+class Variants()(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
@@ -34,9 +34,8 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
 
     Map(
-      normalized_variants.id -> normalized_variants.read
-        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)).where(s"chromosome='$chromosome'"),
-      normalized_snv.id -> normalized_snv.read.where(s"chromosome='$chromosome'"), // we need ALL occurrences for frequencies calculation
+      normalized_variants.id -> normalized_variants.read.where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
+      normalized_snv.id -> normalized_snv.read, // we need ALL occurrences for frequencies calculation
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
@@ -47,7 +46,7 @@ class Variants(chromosome: String)(implicit configuration: Configuration) extend
       clinvar.id -> clinvar.read,
       genes.id -> genes.read,
       normalized_panels.id -> normalized_panels.read,
-      varsome.id -> varsome.read.where(s"chromosome='$chromosome'")
+      varsome.id -> varsome.read
     )
   }
 

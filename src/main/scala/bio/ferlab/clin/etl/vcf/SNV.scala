@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 import java.time.LocalDateTime
 
 
-class SNV(batchId: String, contig: String)(implicit configuration: Configuration) extends Occurrences(batchId, contig) {
+class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
   override val destination: DatasetConf = conf.getDataset("normalized_snv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")

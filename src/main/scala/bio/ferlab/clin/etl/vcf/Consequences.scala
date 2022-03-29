@@ -10,7 +10,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences(batchId: String, contig: String)(implicit configuration: Configuration) extends ETL {
+class Consequences(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
@@ -21,7 +21,6 @@ class Consequences(batchId: String, contig: String)(implicit configuration: Conf
       raw_variant_calling.id ->
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
           .where(col("contigName").isin(validContigNames:_*))
-          //.where(s"contigName='$contig'")
     )
   }
 

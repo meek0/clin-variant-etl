@@ -28,7 +28,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers with Befor
     ).toDF()
 
     val inputData = Map(normalized_occurrences.id -> occurrencesDf)
-    val df = new SNV("1").transform(inputData)
+    val df = new SNV().transform(inputData)
     val result = df.as[SNVRawOutput].collect()
 
     result.length shouldBe 2

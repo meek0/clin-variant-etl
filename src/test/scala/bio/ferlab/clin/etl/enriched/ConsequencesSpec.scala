@@ -49,7 +49,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   }
 
   "consequences job" should "transform data in expected format" in {
-    val resultDf = new Consequences("1").transform(data)
+    val resultDf = new Consequences().transform(data)
     val result = resultDf.as[ConsequenceEnrichedOutput].collect().head
 
     result shouldBe ConsequenceEnrichedOutput(
@@ -60,7 +60,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   }
 
   "consequences job" should "run" in {
-    new Consequences("1").run()
+    new Consequences().run()
 
     enriched_consequences.read.show(false)
 

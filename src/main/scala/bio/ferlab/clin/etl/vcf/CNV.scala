@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class CNV(batchId: String, contig: String)(implicit configuration: Configuration) extends Occurrences(batchId, contig) {
+class CNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
   override val destination: DatasetConf = conf.getDataset("normalized_cnv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv")

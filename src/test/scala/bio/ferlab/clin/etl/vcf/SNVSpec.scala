@@ -98,7 +98,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
 
   "occurrences transform" should "transform data in expected format" in {
-    val result = new SNV("BAT1", "chr1").transform(data)
+    val result = new SNV("BAT1").transform(data)
     result.as[SNVRawOutput].collect() should contain allElementsOf Seq(
       SNVRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
     )
