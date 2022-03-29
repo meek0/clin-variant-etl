@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -22,6 +23,10 @@ object Indexer extends App {
   ) = args
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
+  
+  def sanitizeArg(arg: String): String = {
+    Option(arg).map(s => s.replace("\"","")).filter(s => StringUtils.isNotBlank(s)).orNull
+  }
 
   val esConfigs = Map(
     "es.net.http.auth.user" -> username,
@@ -49,7 +54,7 @@ object Indexer extends App {
 
   val templatePath = s"${conf.storages.find(_.id == "clin_datalake").get.path}/jobs/templates/$templateFileName"
 
-  implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(username), Some(password))
+  implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(sanitizeArg(username)), Some(sanitizeArg(password)))
 
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
   val ds: DatasetConf = jobType match {
