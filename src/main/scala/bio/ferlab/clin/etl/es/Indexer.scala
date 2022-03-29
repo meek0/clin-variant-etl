@@ -24,8 +24,8 @@ object Indexer extends App {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
   
-  def sanitizeArg(arg: String): String = {
-    Option(arg).map(s => s.replace("\"","")).filter(s => StringUtils.isNotBlank(s)).orNull
+  def sanitizeArg(arg: String): Option[String] = {
+    Option(arg).map(s => s.replace("\"","")).filter(s => StringUtils.isNotBlank(s))
   }
 
   val esConfigs = Map(
@@ -52,7 +52,7 @@ object Indexer extends App {
 
   val templatePath = s"${conf.storages.find(_.id == "clin_datalake").get.path}/jobs/templates/$templateFileName"
 
-  implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(sanitizeArg(username)), Some(sanitizeArg(password)))
+  implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, sanitizeArg(username), sanitizeArg(password))
 
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
   val ds: DatasetConf = jobType match {
