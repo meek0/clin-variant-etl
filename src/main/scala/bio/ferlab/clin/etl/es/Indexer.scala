@@ -50,8 +50,6 @@ object Indexer extends App {
     .appName(s"Indexer")
     .getOrCreate()
 
-  spark.sparkContext.setLogLevel("ERROR")
-
   val templatePath = s"${conf.storages.find(_.id == "clin_datalake").get.path}/jobs/templates/$templateFileName"
 
   implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, Some(sanitizeArg(username)), Some(sanitizeArg(password)))
