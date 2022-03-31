@@ -10,7 +10,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
-
 class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
   override val destination: DatasetConf = conf.getDataset("normalized_snv")
@@ -54,8 +53,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
-      .repartition(10, col("chromosome"))
-      .sortWithinPartitions(col("chromosome"), col("start"))
+      .repartition(100, col("chromosome"))
     )
   }
 }

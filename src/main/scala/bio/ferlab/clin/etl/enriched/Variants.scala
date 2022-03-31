@@ -98,8 +98,8 @@ class Variants()(implicit configuration: Configuration) extends ETL {
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
-      .repartition(10, col("chromosome"))
-      .sortWithinPartitions("start"))
+      .repartition(100, col("chromosome"))
+    )
   }
 
   def variantsWithAggregate(aggregate: String, variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {

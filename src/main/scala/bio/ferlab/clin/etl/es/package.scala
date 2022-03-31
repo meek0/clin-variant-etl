@@ -1,6 +1,8 @@
 package bio.ferlab.clin.etl
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.loader.LoadResolver
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
 package object es {
@@ -9,13 +11,12 @@ package object es {
                        destination: DatasetConf,
                        releaseId: String)
                       (implicit conf: Configuration): DataFrame = {
-    data
-      .write
-      .partitionBy(destination.partitionby:_*)
-      .mode(SaveMode.Overwrite)
-      .option("format", destination.format.sparkFormat)
-      .option("path", s"${destination.rootPath}${destination.path}_${releaseId}")
-      .saveAsTable(s"${destination.table.get.fullName}_${releaseId}")
+    val updatedDestination = destination.copy(
+      path = s"${destination.path}_${releaseId}",
+      table = destination.table.map(t => t.copy(name = s"${t.name}_${releaseId}")))
+    LoadResolver
+      .write(data.sparkSession, conf)(destination.format, destination.loadtype)
+      .apply(updatedDestination, data.repartition(50, col("chromosome")))
     data
   }
 

@@ -23,11 +23,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id ->
-        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-          //.where(s"contigName='$contig'")
-          .where(col("contigName").isin(validContigNames:_*))
-          .repartition(128),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None),
       patient.id -> patient.read,
       group.id -> group.read,
       task.id -> task.read,

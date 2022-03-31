@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
+import bio.ferlab.datalake.commons.config.RunStep
 import bio.ferlab.datalake.spark3.public.SparkApp
 
 object ImportVcf extends SparkApp {
@@ -8,12 +9,9 @@ object ImportVcf extends SparkApp {
 
   implicit val (conf, steps, spark) = init()
 
-  spark.sparkContext.setLogLevel("ERROR")
-
-
-  println(s"batchId: $batchId")
-  println(s"Job: $jobName")
-  println(s"runType: ${steps.mkString(" -> ")}")
+  log.info(s"batchId: $batchId")
+  log.info(s"Job: $jobName")
+  log.info(s"runType: ${steps.mkString(" -> ")}")
 
   jobName match {
     case "variants" => new Variants(batchId).run(steps)
