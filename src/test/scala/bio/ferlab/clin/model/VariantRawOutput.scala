@@ -16,8 +16,9 @@ case class VariantRawOutput(`chromosome`: String = "1",
                             `variant_class`: String = "SNV",
                             `pubmed`: Option[List[String]] = None,
                             `batch_id`: String = "BAT1",
-                            //`last_batch_id`: Option[String] = None,
+                            `variant_type`: String = "germline",
                             `created_on`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
-                            `updated_on`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
-                            `normalized_variants_oid`: Timestamp = Timestamp.valueOf(LocalDateTime.now()),
-                            `locus`: String = "1-69897-T-C")
+                            `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(
+                              AnalysisCodeFrequencies("MM_PG", "Maladies musculaires (Panel global)", Frequency(2,4,0.5,1,2,0.5,1), Frequency(1,4,0.25,1,2,0.5,0), Frequency(3,8,0.375,2,4,0.5,1))),
+                            `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(Frequency(2,4,0.5,1,2,0.5,1), Frequency(1,4,0.25,1,2,0.5,0), Frequency(3,8,0.375,2,4,0.5,1))
+                           )

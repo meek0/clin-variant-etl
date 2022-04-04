@@ -84,6 +84,7 @@ object SNV {
         old_multi_allelic,
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
       )
+      .where(col("has_alt"))
       .withColumn("symbols", $"annotations.symbol")
       .drop("annotations")
       .withColumn("ad_ref", $"ad"(0))

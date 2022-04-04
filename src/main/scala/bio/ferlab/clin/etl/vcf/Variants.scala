@@ -1,34 +1,56 @@
 package bio.ferlab.clin.etl.vcf
 
+import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
-import org.apache.spark.sql.functions.{array_distinct, col, concat_ws, lit}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
-import java.sql.Timestamp
 import java.time.LocalDateTime
 
 class Variants(batchId: String)(implicit configuration: Configuration) extends ETL {
 
   override val destination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val group: DatasetConf = conf.getDataset("normalized_group")
+  val task: DatasetConf = conf.getDataset("normalized_task")
+  val service_request: DatasetConf = conf.getDataset("normalized_service_request")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .where(col("contigName").isin(validContigNames:_*))
+        .where(col("contigName").isin(validContigNames:_*)),
+      group.id -> group.read,
+      task.id -> task.read,
+      service_request.id -> service_request.read
     )
   }
 
   override def transform(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    data(raw_variant_calling.id)
+
+    val clinicalInfos = getClinicalInfo(data)
+
+    val variants = getVariants(data(raw_variant_calling.id))
+      .join(clinicalInfos, Seq("aliquot_id"))
+
+    variantsWithFrequencies(variants)
+      .withColumn("batch_id", lit(batchId))
+      .withColumn("created_on", current_timestamp())
+
+  }
+
+  def getVariants(vcf: DataFrame): DataFrame = {
+    vcf
       .withColumn("annotation", firstCsq)
       .select(
+        explode(col("genotypes")) as "genotype",
         chromosome,
         start,
         end,
@@ -41,20 +63,170 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         hgvsg,
         variant_class,
         pubmed,
-        lit(batchId) as "batch_id",
-        lit(Timestamp.valueOf(currentRunDateTime)) as "created_on",
-        lit(Timestamp.valueOf(currentRunDateTime)) as "updated_on"
+        flatten(functions.transform(col("INFO_FILTERS"), c => split(c, ";"))) as "filters"
       )
-      .withColumn(destination.oid, col("created_on"))
-      .withColumn("locus", concat_ws("-", locus:_*))
-      .drop("annotation")
+      .withColumn("variant_type", lit("germline"))
+      .withColumn("aliquot_id", col("genotype.sampleId"))
+      .withColumn("calls", col("genotype.calls"))
+      .withColumn("zygosity", zygosity(col("calls")))
+      .drop("annotation", "genotype")
+  }
+
+  def variantsWithFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
+    val emptyFrequency =
+      struct(
+        lit(0) as "ac",
+        lit(0) as "an",
+        lit(0.0) as "af",
+        lit(0) as "pc",
+        lit(0) as "pn",
+        lit(0.0) as "pf",
+        lit(0) as "hom"
+      )
+
+    val frequency: String => Column = {
+      case "" =>
+        struct(
+          $"ac",
+          $"an",
+          coalesce($"ac" / $"an", lit(0.0)) as "af",
+          $"pc",
+          $"pn",
+          coalesce($"pc" / $"pn", lit(0.0)) as "pf",
+          $"hom"
+        )
+      case prefix: String =>
+        struct(
+          col(s"${prefix}_ac") as "ac",
+          col(s"${prefix}_an") as "an",
+          coalesce(col(s"${prefix}_ac") / col(s"${prefix}_an"), lit(0.0)) as "af",
+          col(s"${prefix}_pc") as "pc",
+          col(s"${prefix}_pn") as "pn",
+          coalesce(col(s"${prefix}_pc") / col(s"${prefix}_pn"), lit(0.0)) as "pf",
+          col(s"${prefix}_hom") as "hom"
+        )
+    }
+
+    variants
+      .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
+      .groupBy(locus :+ col("analysis_code") :+ col("affected_status_str"): _*)
+      .agg(
+        first($"analysis_display_name") as "analysis_display_name",
+        first($"affected_status") as "affected_status",
+        FrequencyUtils.ac,
+        FrequencyUtils.an,
+        FrequencyUtils.het,
+        FrequencyUtils.hom,
+        FrequencyUtils.pc,
+        FrequencyUtils.pn,
+        first(struct(variants("*")))  as "variant")
+      .withColumn("frequency_by_status", frequency(""))
+      .groupBy(locus :+ col("analysis_code"): _*)
+      .agg(
+        map_from_entries(collect_list(struct($"affected_status_str", $"frequency_by_status"))) as "frequency_by_status",
+
+        sum(when($"affected_status", $"ac").otherwise(0)) as "affected_ac",
+        sum(when($"affected_status", $"an").otherwise(0)) as "affected_an",
+        sum(when($"affected_status", $"pc").otherwise(0)) as "affected_pc",
+        sum(when($"affected_status", $"pn").otherwise(0)) as "affected_pn",
+        sum(when($"affected_status", $"hom").otherwise(0)) as "affected_hom",
+
+        sum(when($"affected_status", 0).otherwise($"ac")) as "non_affected_ac",
+        sum(when($"affected_status", 0).otherwise($"an")) as "non_affected_an",
+        sum(when($"affected_status", 0).otherwise($"pc")) as "non_affected_pc",
+        sum(when($"affected_status", 0).otherwise($"pn")) as "non_affected_pn",
+        sum(when($"affected_status", 0).otherwise($"hom")) as "non_affected_hom",
+
+        sum($"ac") as "ac",
+        sum($"an") as "an",
+        sum($"pc") as "pc",
+        sum($"pn") as "pn",
+        sum($"hom") as "hom",
+        first($"analysis_display_name") as "analysis_display_name",
+        first(col("variant")) as "variant"
+      )
+      .withColumn("frequency_by_status_total", map_from_entries(array(struct(lit("total"), frequency("")))))
+      .withColumn("frequency_by_status", map_concat($"frequency_by_status_total", $"frequency_by_status"))
+      .withColumn("frequency_by_status", when(array_contains(map_keys($"frequency_by_status"), "non_affected"), $"frequency_by_status")
+        .otherwise(map_concat($"frequency_by_status", map_from_entries(array(struct(lit("non_affected"), emptyFrequency))))))
+      .groupBy(locus: _*)
+      .agg(
+        collect_list(struct(
+          $"analysis_display_name" as "analysis_display_name",
+          $"analysis_code" as "analysis_code",
+          col("frequency_by_status")("affected") as "affected",
+          col("frequency_by_status")("non_affected") as "non_affected",
+          col("frequency_by_status")("total") as "total"
+        )) as "frequencies_by_analysis",
+        sum($"affected_ac") as "affected_ac",
+        sum($"affected_an") as "affected_an",
+        sum($"affected_pc") as "affected_pc",
+        sum($"affected_pn") as "affected_pn",
+        sum($"affected_hom") as "affected_hom",
+
+        sum($"non_affected_ac") as "non_affected_ac",
+        sum($"non_affected_an") as "non_affected_an",
+        sum($"non_affected_pc") as "non_affected_pc",
+        sum($"non_affected_pn") as "non_affected_pn",
+        sum($"non_affected_hom") as "non_affected_hom",
+
+        sum($"ac") as "ac",
+        sum($"an") as "an",
+        sum($"pc") as "pc",
+        sum($"pn") as "pn",
+        sum($"hom") as "hom",
+        first(col("variant")) as "variant"
+      )
+      .withColumn("frequency_RQDM", struct(
+        frequency("affected") as "affected",
+        frequency("non_affected") as "non_affected",
+        frequency("") as "total"
+      ))
+      .drop("ac", "an", "pc", "pn", "hom")
+      .drop("non_affected_ac", "non_affected_an", "non_affected_pc", "non_affected_pn", "non_affected_hom")
+      .drop("affected_ac", "affected_an", "affected_pc", "affected_pn", "affected_hom")
+      .select($"variant.*",
+        $"frequencies_by_analysis",
+        $"frequency_RQDM"
+      )
+      .drop("filters", "calls", "zygosity", "patient_id", "service_request_id", "analysis_code", "analysis_display_name", "affected_status")
+
   }
 
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     super.load(data
-      .repartition(1, col("chromosome"))
+      .repartition(10, col("chromosome"))
       .sortWithinPartitions("start"))
+  }
+
+  def getClinicalInfo(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+    val serviceRequestDf = data(service_request.id)
+      .select(
+        col("id") as "service_request_id",
+        col("service_request_code") as "analysis_code",
+        col("service_request_description") as "analysis_display_name"
+      )
+
+    val groupDf = data(group.id)
+      .withColumn("member", explode(col("members")))
+      .select(
+        col("member.affected_status") as "affected_status",
+        col("member.patient_id") as "patient_id"
+      )
+
+    val taskDf = data(task.id)
+      .select(
+        col("experiment.aliquot_id") as "aliquot_id",
+        col("patient_id"),
+        col("service_request_id")
+      ).dropDuplicates("aliquot_id", "patient_id")
+
+    taskDf
+      .join(serviceRequestDf, Seq("service_request_id"), "left")
+      .join(groupDf, Seq("patient_id"), "left")
   }
 }

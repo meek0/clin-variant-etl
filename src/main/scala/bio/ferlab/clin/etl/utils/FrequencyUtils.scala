@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.utils
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions._
 
-object VcfUtils {
+object FrequencyUtils {
 
   def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
 

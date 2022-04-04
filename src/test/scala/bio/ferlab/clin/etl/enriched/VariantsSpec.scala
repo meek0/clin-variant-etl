@@ -91,66 +91,68 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val expectedFrequencies = Map("MN-PG" -> Map("affected" -> Frequency(), "total" -> Frequency()))
 
-  "variants job" should "transform data in expected format" in {
+  "variants job" should "aggregate frequencies from normalized_variants" in {
 
-    val result = new Variants().transform(data)
-      .as[VariantEnrichedOutput].collect().head
-
-    result.`donors` should contain allElementsOf expectedDonors
-
-    result.copy(
-      `frequencies_by_analysis` = List(),
-      `frequency_RQDM` = AnalysisFrequencies(),
-      `donors` = List()) shouldBe
-      VariantEnrichedOutput(
-        `frequencies_by_analysis` = List(),
-        `frequency_RQDM` = AnalysisFrequencies(),
-        `donors` = List(),
-        `created_on` = result.`created_on`,
-        `updated_on` = result.`updated_on`)
-  }
-
-  "variants job" should "compute frequencies by analysis" in {
-
-    val occurrencesDf = Seq(
-      SNVRawOutput(patient_id = "PA0001", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(0, 1), zygosity = "HET", affected_status = true),
-      SNVRawOutput(patient_id = "PA0002", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(1, 1), zygosity = "HOM", affected_status = true),
-      SNVRawOutput(patient_id = "PA0003", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0), zygosity = "WT", affected_status = true),
-      SNVRawOutput(patient_id = "PA0004", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0), zygosity = "WT", affected_status = true),
-      SNVRawOutput(patient_id = "PA0005", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(0, 0), zygosity = "WT", affected_status = true),
-      SNVRawOutput(patient_id = "PA0006", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("PASS"), calls = List(1, 1), zygosity = "HOM", affected_status = true),
-      SNVRawOutput(patient_id = "PA0007", analysis_display_name = "Maladies muscu", analysis_code = "MMPG", filters = List("LowDepth"), calls = List(0, 1), zygosity = "HET", affected_status = false),
-      SNVRawOutput(patient_id = "PA0008", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(-1, -1), zygosity = "UNK", affected_status = false),
-      SNVRawOutput(patient_id = "PA0009", analysis_display_name = "Intel Disorder", analysis_code = "ID", filters = List("PASS"), calls = List(-1, -1), zygosity = "UNK", affected_status = true)
+    val variantDf = Seq(
+      VariantRawOutput(
+        `batch_id` = "BAT1",
+        `frequencies_by_analysis` = List(AnalysisCodeFrequencies(
+          analysis_code = "MM_PG",
+          analysis_display_name = "Maladies musculaires (Panel global)",
+          affected =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+          non_affected = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+          total =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0))),
+        `frequency_RQDM` = AnalysisFrequencies(
+          affected =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+          non_affected = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+          total =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0))),
+      VariantRawOutput(
+        `batch_id` = "BAT2",
+        `frequencies_by_analysis` = List(
+          AnalysisCodeFrequencies(
+            analysis_code = "MM_PG",
+            analysis_display_name = "Maladies musculaires (Panel global)",
+            affected =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            non_affected = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            total =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)),
+          AnalysisCodeFrequencies(
+            analysis_code = "ACHO",
+            analysis_display_name = "Achondroplasia",
+            affected =     Frequency(1, 4, 0.25, 1, 2, 0.5, 0),
+            non_affected = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            total =        Frequency(1, 4, 0.0, 1, 2, 0.5, 0))),
+        `frequency_RQDM` = AnalysisFrequencies(
+          affected =     Frequency(1, 4, 0.25, 1, 2, 0.5, 0),
+          non_affected = Frequency(2, 2, 1.0 , 1, 1, 1.0, 1),
+          total =        Frequency(3, 6, 0.5 , 2, 3, 0.666666667, 1))),
     ).toDF()
 
-    val inputData = data ++ Map(normalized_snv.id -> occurrencesDf)
-    val df = new Variants().transform(inputData)
-    val result = df.as[VariantEnrichedOutput].collect().head
-
-    result.`donors`.length shouldBe 4
-
-    result.`frequencies_by_analysis` shouldBe List(
+    val expectedFrequencies = List(
       AnalysisCodeFrequencies(
-        analysis_code = "ID",
-        analysis_display_name = "Intel Disorder",
-        affected = Frequency(3, 4, 0.75, 2, 3, 0.6666666666666666, 1),
-        non_affected = Frequency(0, 0, 0.0, 0, 1, 0.0, 0),
-        total = Frequency(3, 4, 0.75, 2, 4, 0.5, 1)
-      ),
+        analysis_code = "MM_PG",
+        analysis_display_name = "Maladies musculaires (Panel global)",
+        affected =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+        non_affected = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+        total =        Frequency(2, 4, 0.5, 2, 2, 1.0, 0)),
       AnalysisCodeFrequencies(
-        analysis_code = "MMPG",
-        analysis_display_name = "Maladies muscu",
-        affected = Frequency(2, 8, 0.25, 1, 4, 0.25, 1),
-        non_affected = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-        total = Frequency(2, 8, 0.25, 1, 4, 0.25, 1)
-      ))
-
-    result.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(5, 12, 0.4166666666666667, 3, 7, 0.42857142857142855, 2),
-      Frequency(0, 0, 0.0, 0, 1, 0.0, 0),
-      Frequency(5, 12, 0.4166666666666667, 3, 8, 0.375, 2)
+        analysis_code = "ACHO",
+        analysis_display_name = "Achondroplasia",
+        affected =     Frequency(1, 4, 0.25, 1, 2, 0.5, 0),
+        non_affected = Frequency(0, 0, 0.0 , 0, 0, 0.0, 0),
+        total =        Frequency(1, 4, 0.25, 1, 2, 0.5, 0))
     )
+
+    val expectedRQDMFred = AnalysisFrequencies(
+      affected =     Frequency(2, 6, 0.3333333333333333, 2, 3, 0.6666666666666666, 0),
+      non_affected = Frequency(1, 2, 0.5               , 1, 1, 1.0 , 0),
+      total =        Frequency(3, 8, 0.375             , 3, 4, 0.75, 0))
+
+    val resultDf = new Variants().transform(data + (normalized_variants.id -> variantDf))
+    resultDf.show()
+    val result = resultDf.as[VariantEnrichedOutput].collect().head
+
+    result.`frequencies_by_analysis` should contain allElementsOf expectedFrequencies
+    result.`frequency_RQDM` shouldBe expectedRQDMFred
   }
 
   "variants job" should "run" in {
@@ -168,8 +170,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     ) shouldBe VariantEnrichedOutput(
       `donors` = List(),
       `frequencies_by_analysis` = List(),
+      `frequency_RQDM` = AnalysisFrequencies(Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1)),
       `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`)
+      `updated_on` = result.`updated_on`
+    )
   }
 }
 

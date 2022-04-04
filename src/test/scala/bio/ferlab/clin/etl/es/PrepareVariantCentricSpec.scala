@@ -31,7 +31,7 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with M
       "2",
       `batch_id` = "BAT2",
       `created_on` = bat0,
-      `updated_on` = bat2
+      //`updated_on` = bat2
     )
     ).toDF,
     enriched_consequences.id -> Seq(ConsequenceEnrichedOutput(), ConsequenceEnrichedOutput("2")).toDF

@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.utils
 
-import bio.ferlab.clin.etl.utils.VcfUtils._
+import bio.ferlab.clin.etl.utils.FrequencyUtils._
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -36,7 +36,7 @@ class VcfUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     ).toDF("calls", "filters")
     occurrences
       .select(
-        VcfUtils.an
+        FrequencyUtils.an
       ).as[Long].collect() should contain only 7
 
   }
@@ -54,7 +54,7 @@ class VcfUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     occurrences
       .select(
-        VcfUtils.pc
+        FrequencyUtils.pc
       ).as[Long].collect() should contain only 3
 
   }
@@ -72,7 +72,7 @@ class VcfUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     occurrences
       .select(
-        VcfUtils.pn
+        FrequencyUtils.pn
       ).as[Long].collect() should contain only 5
 
   }
