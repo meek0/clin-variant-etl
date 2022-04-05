@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.conf
 
 import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, GFF, JSON, PARQUET, VCF}
-import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, OverWritePartition, Scd1, Upsert}
+import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, OverWritePartition, Scd1}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
 
@@ -86,7 +86,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_mane_summary"        , clin_datalake, "/public/mane_summary"                               , PARQUET, OverWrite, TableConf("clin", "mane_summary")),
       DatasetConf("normalized_refseq_feature"      , clin_datalake, "/public/refseq_feature"                             , PARQUET, OverWrite, TableConf("clin", "refseq_feature")),
       DatasetConf("normalized_refseq_annotation"   , clin_datalake, "/public/refseq_annotation"                          , PARQUET, OverWrite, partitionby = List("chromosome"), table= Some(TableConf("clin", "refseq_annotation"))),
-      DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , Upsert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("variant_id")),
+      DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , OverWrite   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("variant_id")),
       //fhir
       DatasetConf("normalized_clinical_impression" , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
       DatasetConf("normalized_group"               , clin_datalake, "/normalized/fhir/Group"             , DELTA  , OverWrite   , TableConf("clin", "fhir_group")),

@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.model.{VariantRawOutput, VarsomeExtractOutput, VarsomeOutput}
+import bio.ferlab.clin.model.{PanelOutput, VariantRawOutput, VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
@@ -29,17 +29,24 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with B
   val normalized_variantsDF: DataFrame = Seq(
     VariantRawOutput(start = 1000, `reference` = "A", `alternate` = "T"),
     VariantRawOutput(start = 1001, `reference` = "A", `alternate` = "T", `batch_id` = "BAT2"),
-    VariantRawOutput(start = 1002, `reference` = "A", `alternate` = "T")
+    VariantRawOutput(start = 1002, `reference` = "A", `alternate` = "T"),
+    VariantRawOutput(start = 1003, `reference` = "A", `alternate` = "T", `genes_symbol` = List("OR4F4")), // bad panel
+    VariantRawOutput(start = 1004, `reference` = "A", `alternate` = "T")
   ).toDF()
   val normalized_varsomeDF: DataFrame = Seq(
     VarsomeOutput("1", 1000, "A", "T", "1234", sevenDaysAgo, None, None),
     VarsomeOutput("1", 1002, "A", "T", "5678", yesterday, None, None)
   ).toDF()
+  val normalized_panelsDF: DataFrame = Seq(
+    PanelOutput("OR4F5"), // available panel
+  ).toDF()
   val normalized_varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
+  val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val defaultData = Map(
     normalized_variants.id -> normalized_variantsDF,
-    normalized_varsome.id -> normalized_varsomeDF
+    normalized_varsome.id -> normalized_varsomeDF,
+    normalized_panels.id -> normalized_panelsDF
   )
 
   def withVarsomeServer[T](resource: String = "varsome_minimal.json")(block: String => T): T = withHttpServer("/lookup/batch/hg38", resourceHandler(resource, "application/json"))(block)
@@ -59,11 +66,12 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with B
     block(data)
   }
 
-  "extract" should "return a dataframe that contains only variants not in varsome table or older than 7 days in varsome table" in {
+  "extract" should "return a dataframe that contains only variants not in varsome table or older than 7 days in varsome table and in panels" in {
     withData() { _ =>
       val dataframes = new Varsome(ForBatch("BAT1"), "url", "").extract(currentRunDateTime = current)
       dataframes(normalized_variants.id).as[VarsomeExtractOutput].collect() should contain theSameElementsAs Seq(
-        VarsomeExtractOutput("1", 1000, "A", "T")
+        VarsomeExtractOutput("1", 1000, "A", "T"),
+        VarsomeExtractOutput("1", 1004, "A", "T")
       )
     }
 
