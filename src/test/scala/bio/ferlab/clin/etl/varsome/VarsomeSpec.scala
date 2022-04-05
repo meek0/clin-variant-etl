@@ -82,7 +82,8 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with B
       withVarsomeServer() { url =>
         val df = new Varsome(ForBatch("BAT1"), url, "").transform(data, currentRunDateTime = current)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(
-          VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None)
+          VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None),
+          VarsomeOutput("1", 1004, "A", "T", "1234", ts, None, None)
         )
       }
 
@@ -108,7 +109,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with B
         val df = spark.table(normalized_varsome.table.get.fullName)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(
           VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None),
-          VarsomeOutput("1", 1002, "A", "T", "5678", yesterday, None, None)
+          VarsomeOutput("1", 1004, "A", "T", "1234", ts, None, None),
         )
       }
 

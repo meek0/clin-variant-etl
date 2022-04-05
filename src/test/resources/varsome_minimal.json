@@ -6,6 +6,14 @@
     "ref": "A",
     "pos": 1000,
     "variant_id": "1234"
+  },
+  {
+    "original_variant": "chr1-1004-A-T",
+    "chromosome": "chr1",
+    "alt": "T",
+    "ref": "A",
+    "pos": 1004,
+    "variant_id": "1234"
   }
 
 ]
