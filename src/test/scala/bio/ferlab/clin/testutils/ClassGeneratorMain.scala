@@ -26,8 +26,6 @@ object ClassGeneratorMain extends App with WithSparkSession {
 
   //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "OrganizationOutput", df, "src/test/scala/")
   //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "PartitionerOutput", df, "src/test/scala/")
-  df.select("authored_on").show(false)
-
 
   ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "ServiceRequestOutput", df.where("id='SR0095'"), "src/test/scala/")
 

@@ -4,6 +4,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -56,7 +57,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       `id` = "FM00001",
       `members` = List(
         MEMBERS("PA0001", `affected_status` = true),
-        MEMBERS("PA0002", `affected_status` = true),
+        MEMBERS("PA0002", `affected_status` = false),
         MEMBERS("PA0003", `affected_status` = true)
       )
     )
@@ -68,6 +69,18 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111")
+    ),
+    TaskOutput(
+      `id` = "73256",
+      `patient_id` = "PA0002",
+      `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "22222")
+    ),
+    TaskOutput(
+      `id` = "73257",
+      `patient_id` = "PA0003",
+      `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "33333")
     ),
     TaskOutput(
       `id` = "73255",
@@ -88,7 +101,12 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   ).toDF
 
   val data = Map(
-    raw_variant_calling.id -> Seq(VCFInput()).toDF(),
+    raw_variant_calling.id -> Seq(VCFInput(
+      `genotypes` = List(
+        GENOTYPES(),                                          //proband
+        GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)),//father
+        GENOTYPES(`sampleId` = "33333"))                      //mother
+    )).toDF(),
     patient.id -> patientDf,
     group.id -> groupDf,
     task.id -> taskDf,
@@ -99,9 +117,14 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   "occurrences transform" should "transform data in expected format" in {
     val result = new SNV("BAT1").transform(data)
-    result.as[SNVRawOutput].collect() should contain allElementsOf Seq(
-      SNVRawOutput(`last_update` = Date.valueOf(LocalDate.now()))
+    result.as[NormalizedSNV].collect() should contain allElementsOf Seq(
+      NormalizedSNV(
+        `hc_complement` = List(),
+        `possibly_hc_complement` = List(),
+        `last_update` = Date.valueOf(LocalDate.now()))
     )
+
+    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNV", result, "src/test/scala/")
   }
 
   "getCompoundHet" should "return compound het for one patient and one gene" in {

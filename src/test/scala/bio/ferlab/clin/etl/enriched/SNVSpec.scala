@@ -20,16 +20,16 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers with Befor
   "Enriched occurrences job" should "filter occurrences by zygosity" in {
 
     val occurrencesDf = Seq(
-      SNVRawOutput(chromosome = "1"  , zygosity = "HET" , affected_status = true),
-      SNVRawOutput(chromosome = "1"  , zygosity = "HOM" , affected_status = true),
-      SNVRawOutput(chromosome = "1"  , zygosity = "UNK" , affected_status = true),
-      SNVRawOutput(chromosome = "1"  , zygosity = "WT"  , affected_status = true),
-      SNVRawOutput(chromosome = "1"  , zygosity = null  , affected_status = true)
+      NormalizedSNV(chromosome = "1"  , zygosity = "HET" , affected_status = true),
+      NormalizedSNV(chromosome = "1"  , zygosity = "HOM" , affected_status = true),
+      NormalizedSNV(chromosome = "1"  , zygosity = "UNK" , affected_status = true),
+      NormalizedSNV(chromosome = "1"  , zygosity = "WT"  , affected_status = true),
+      NormalizedSNV(chromosome = "1"  , zygosity = null  , affected_status = true)
     ).toDF()
 
     val inputData = Map(normalized_occurrences.id -> occurrencesDf)
     val df = new SNV().transform(inputData)
-    val result = df.as[SNVRawOutput].collect()
+    val result = df.as[NormalizedSNV].collect()
 
     result.length shouldBe 2
 

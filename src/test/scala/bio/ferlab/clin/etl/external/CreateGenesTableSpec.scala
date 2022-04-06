@@ -74,8 +74,6 @@ class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSpark
     val expectedOrphanet = List(ORPHANET(17601, "Multiple epiphyseal dysplasia, Al-Gazali type", List("Autosomal recessive")))
     val expectedOmim = List(OMIM("Shprintzen-Goldberg syndrome", "182212", List("Autosomal dominant"), List("AD")))
 
-    resultDF.show(false)
-
     resultDF.where("symbol='OR4F5'").as[GenesOutput].collect().head shouldBe
       GenesOutput(`orphanet` = expectedOrphanet, `omim` = expectedOmim)
   }

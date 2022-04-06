@@ -34,7 +34,7 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with M
       //`updated_on` = bat2
     )
     ).toDF,
-    enriched_consequences.id -> Seq(ConsequenceEnrichedOutput(), ConsequenceEnrichedOutput("2")).toDF
+    enriched_consequences.id -> Seq(EnrichedConsequences(), EnrichedConsequences("2")).toDF
   )
 
   override def beforeAll(): Unit = {

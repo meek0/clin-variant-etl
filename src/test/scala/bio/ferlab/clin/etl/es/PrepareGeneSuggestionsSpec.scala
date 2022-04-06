@@ -27,7 +27,6 @@ class PrepareGeneSuggestionsSpec extends AnyFlatSpec with WithSparkSession with 
 
     val result = new PrepareGeneSuggestions("re_000").transform(data)
 
-    result.show(false)
     result.as[GeneSuggestionsOutput].collect().head shouldBe GeneSuggestionsOutput()
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "GeneSuggestionsOutput", result, "src/test/scala/")
   }

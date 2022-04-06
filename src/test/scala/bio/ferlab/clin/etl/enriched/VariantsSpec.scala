@@ -12,6 +12,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.File
+import java.sql.Date
 
 class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
@@ -36,10 +37,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
 
   val normalized_occurrencesDf: DataFrame = Seq(
-    SNVRawOutput(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-    SNVRawOutput(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+    NormalizedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    NormalizedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
   ).toDF
-  val normalized_variantsDf: DataFrame = Seq(VariantRawOutput()).toDF()
+  val normalized_variantsDf: DataFrame = Seq(NormalizedVariants()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
   val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
   val gnomad_genomes_2_1_1Df: DataFrame = Seq(GnomadGenomes211Output()).toDF
@@ -85,16 +86,16 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val expectedDonors =
     List(
-      DONORS(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-      DONORS(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
-    )
+      DONORS(1, 2, List(0, 1), 8.07, true,List("PASS"),0,1,1,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
+      DONORS(1, 2, List(0, 1), 8.07, true,List("PASS"),0,1,1,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
+  )
 
   val expectedFrequencies = Map("MN-PG" -> Map("affected" -> Frequency(), "total" -> Frequency()))
 
   "variants job" should "aggregate frequencies from normalized_variants" in {
 
     val variantDf = Seq(
-      VariantRawOutput(
+      NormalizedVariants(
         `batch_id` = "BAT1",
         `frequencies_by_analysis` = List(AnalysisCodeFrequencies(
           analysis_code = "MM_PG",
@@ -106,7 +107,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
           affected =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
           non_affected = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
           total =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0))),
-      VariantRawOutput(
+      NormalizedVariants(
         `batch_id` = "BAT2",
         `frequencies_by_analysis` = List(
           AnalysisCodeFrequencies(
@@ -159,18 +160,20 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
     new Variants().run(RunStep.initial_load)
 
-    val result = spark.table("clin.variants")
-      .as[VariantEnrichedOutput].collect().head
+    val resultDf = spark.table("clin.variants")
+    val result = resultDf.as[VariantEnrichedOutput].collect().head
 
     result.`donors` should contain allElementsOf expectedDonors
+    result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies())
 
     result.copy(
       `donors` = List(),
       `frequencies_by_analysis` = List()
     ) shouldBe VariantEnrichedOutput(
+      `pubmed` = Some(List("29135816")),
       `donors` = List(),
       `frequencies_by_analysis` = List(),
-      `frequency_RQDM` = AnalysisFrequencies(Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1)),
+      `frequency_RQDM` = AnalysisFrequencies(),
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`
     )

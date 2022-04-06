@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model.{ConsequenceEnrichedOutput, ConsequenceRawOutput, Dbnsfp_originalOutput, EnsemblMappingOutput, ManeSummaryOutput}
+import bio.ferlab.clin.model.{EnrichedConsequences, Dbnsfp_originalOutput, EnsemblMappingOutput, ManeSummaryOutput, NormalizedConsequences}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
@@ -28,7 +28,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
   val normalized_mane_summary: DatasetConf = conf.getDataset("normalized_mane_summary")
 
   val data = Map(
-    normalized_consequences.id -> Seq(ConsequenceRawOutput()).toDF(),
+    normalized_consequences.id -> Seq(NormalizedConsequences()).toDF(),
     dbnsfp_original.id -> Seq(Dbnsfp_originalOutput()).toDF,
     normalized_ensembl_mapping.id -> Seq(EnsemblMappingOutput()).toDF,
     normalized_mane_summary.id -> Seq(ManeSummaryOutput(`ensembl_transcript_id` = "ENST00000450305.12", `ensembl_gene_id` = "ENSG00000223972.3")).toDF
@@ -50,26 +50,24 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   "consequences job" should "transform data in expected format" in {
     val resultDf = new Consequences().transform(data)
-    val result = resultDf.as[ConsequenceEnrichedOutput].collect().head
+    val result = resultDf.as[EnrichedConsequences].collect().head
 
-    result shouldBe ConsequenceEnrichedOutput(
-      `mane_select` = Some(false),
-      `mane_plus` = Some(false),
-      `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`)
+    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "EnrichedConsequences", resultDf, "src/test/scala/")
+
+    result shouldBe EnrichedConsequences(
+      `predictions` = null,
+      `conservations` = null
+    )
   }
 
   "consequences job" should "run" in {
     new Consequences().run()
 
-    enriched_consequences.read.show(false)
-
-    val result = enriched_consequences.read.as[ConsequenceEnrichedOutput].collect().head
-    result shouldBe ConsequenceEnrichedOutput(
-      `mane_select` = Some(false),
-      `mane_plus` = Some(false),
-      `created_on` = result.`created_on`,
-      `updated_on` = result.`updated_on`)
+    val result = enriched_consequences.read.as[EnrichedConsequences].collect().head
+    result shouldBe EnrichedConsequences(
+      `predictions` = null,
+      `conservations` = null
+    )
   }
 }
 

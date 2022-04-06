@@ -42,8 +42,6 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    output.show(false)
-
     output.count() shouldBe 6
     val head = output.where(col("id") === "ASHK-A").as[GroupOutput].head()
     head shouldBe GroupOutput()
@@ -95,8 +93,6 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val output = job.transform(Map(inputDs.id -> inputDf))
 
-    output.where("id='PA00004'").as[PatientOutput].show(false)
-
     output.count() shouldBe 3
     val head = output.where("id='PA00004'").as[PatientOutput].head()
     head shouldBe PatientOutput()
@@ -145,8 +141,6 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val job = new RawToNormalizedETL(src, dst, mapping)
     val result = job.transform(Map(inputDs.id -> inputDf))
 
-    result.where("id='SR0095'").show(false)
-
     result.count() shouldBe 4
     val head = result.where("id='SR0095'").as[ServiceRequestOutput].head()
     head shouldBe ServiceRequestOutput()
@@ -178,8 +172,6 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val job = new RawToNormalizedETL(src, dst, mapping)
     val result = job.transform(Map(inputDs.id -> inputDf)).where("id='109351'")
-
-    result.show(false)
 
     result.count() shouldBe 1
     val head = result.as[TaskOutput].collect().head

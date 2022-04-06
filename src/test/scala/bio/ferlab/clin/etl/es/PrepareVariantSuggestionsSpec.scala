@@ -27,7 +27,6 @@ class PrepareVariantSuggestionsSpec extends AnyFlatSpec with WithSparkSession wi
 
     val result = new PrepareVariantSuggestions("re_000").transform(data)
 
-    result.show(false)
     result.as[VariantSuggestionsOutput].collect().head shouldBe VariantSuggestionsOutput()
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VariantSuggestionsOutput", result, "src/test/scala/")
   }

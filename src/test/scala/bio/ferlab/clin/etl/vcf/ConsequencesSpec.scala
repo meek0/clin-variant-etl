@@ -6,6 +6,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, D
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -34,13 +35,15 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
   "consequences job" should "transform data in expected format" in {
 
-    val result = job1.transform(data).as[ConsequenceRawOutput].collect().head
+    val resultDf = job1.transform(data)
+    val result = resultDf.as[NormalizedConsequences].collect().head
+
+    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedConsequences", resultDf, "src/test/scala/")
     result shouldBe
-      ConsequenceRawOutput("1", 69897, 69898, "T", "C", "rs200676709", List("synonymous_variant"), "LOW", "OR4F5", "ENSG00000186092",
-        "ENST00000335137", "ENST00000335137", None, "Transcript", 1, "protein_coding", "SNV", EXON(Some(1), Some(1)), INTRON(None, None),
-        Some("ENST00000335137.4:c.807T>C"), Some("ENSP00000334393.3:p.Ser269="), "chr1:g.69897T>C", Some(807), Some(843), Some(269),
-        AMINO_ACIDS(Some("S"), None), CODONS(Some("tcT"), Some("tcC")), true, true, Some("p.Ser269="), Some("c.807T>C"), 2, "BAT1",
-        `created_on` = result.`created_on`, `updated_on` = result.`updated_on`)
+      NormalizedConsequences(
+        `created_on` = result.`created_on`,
+        `updated_on` = result.`updated_on`,
+        `normalized_consequences_oid` = result.`normalized_consequences_oid`)
   }
 
   "consequences job" should "run" in {
@@ -56,13 +59,11 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
 
 
     val job1Df = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
-    job1Df.show(false)
-    job1Df.as[ConsequenceRawOutput].collect() should contain allElementsOf Seq(
-      ConsequenceRawOutput("1", 69897, 69898, "T", "C", "rs200676709", List("synonymous_variant"), "LOW", "OR4F5", "ENSG00000186092",
-        "ENST00000335137", "ENST00000335137", None, "Transcript", 1, "protein_coding", "SNV", EXON(Some(1), Some(1)), INTRON(None, None),
-        Some("ENST00000335137.4:c.807T>C"), Some("ENSP00000334393.3:p.Ser269="), "chr1:g.69897T>C", Some(807), Some(843), Some(269),
-        AMINO_ACIDS(Some("S"), None), CODONS(Some("tcT"), Some("tcC")), true, true, Some("p.Ser269="), Some("c.807T>C"), 2, "BAT1",
-        `created_on` = Timestamp.valueOf(date1), `updated_on` = Timestamp.valueOf(date1))
+    job1Df.as[NormalizedConsequences].collect() should contain allElementsOf Seq(
+      NormalizedConsequences(
+        `created_on` = Timestamp.valueOf(date1),
+        `updated_on` = Timestamp.valueOf(date1),
+        `normalized_consequences_oid` = Timestamp.valueOf(date1))
     )
 
     job1.load(job1Df)
@@ -70,14 +71,14 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     val job2Df = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
     job2.load(job2Df)
     val resultDf = job2.destination.read
-    resultDf.show(false)
 
-    resultDf.as[ConsequenceRawOutput].collect() should contain allElementsOf Seq(
-      ConsequenceRawOutput("1", 69897, 69898, "T", "C", "rs200676710", List("synonymous_variant"), "LOW", "OR4F5", "ENSG00000186092",
-        "ENST00000335137", "ENST00000335137", None, "Transcript", 1, "protein_coding", "SNV", EXON(Some(1), Some(1)), INTRON(None, None),
-        Some("ENST00000335137.4:c.807T>C"), Some("ENSP00000334393.3:p.Ser269="), "chr1:g.69897T>C", Some(807), Some(843), Some(269),
-        AMINO_ACIDS(Some("S"), None), CODONS(Some("tcT"), Some("tcC")), true, true, Some("p.Ser269="), Some("c.807T>C"), 2, "BAT2",
-        `created_on` = Timestamp.valueOf(date1), `updated_on` = Timestamp.valueOf(date2))
+    resultDf.as[NormalizedConsequences].collect() should contain allElementsOf Seq(
+      NormalizedConsequences(
+        `batch_id` = "BAT2",
+        `name` = "rs200676710",
+        `created_on` = Timestamp.valueOf(date1),
+        `updated_on` = Timestamp.valueOf(date2),
+        `normalized_consequences_oid` = Timestamp.valueOf(date2))
     )
   }
 }

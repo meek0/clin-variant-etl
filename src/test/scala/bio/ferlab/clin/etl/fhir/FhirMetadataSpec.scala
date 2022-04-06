@@ -52,9 +52,6 @@ object FhirMetadataSpec extends App with WithSparkSession {
       spark.read.format("delta").load(sr.location)
         .withColumnRenamed("id", "service_request_id")
 
-    //patientDf.show(false)
-    //serviceRequestDf.show(false)
-
     val experiment =
       struct(
         lit("Illumina") as "platform",
@@ -94,8 +91,6 @@ object FhirMetadataSpec extends App with WithSparkSession {
         .withColumn("bodySite", randomBodySite())
         .withColumn("ldm", randomLDM())
         .withColumn("id", row_number().over(Window.partitionBy("experiment", "workflow", "submissionSchema").orderBy("patient_id")))
-
-    df.show(false)
 
     val finalDf =
       df.groupBy("experiment", "workflow", "submissionSchema")

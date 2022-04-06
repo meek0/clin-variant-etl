@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.model.{PanelOutput, VariantRawOutput, VarsomeExtractOutput, VarsomeOutput}
+import bio.ferlab.clin.model.{NormalizedVariants, PanelOutput, VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config._
@@ -27,11 +27,11 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with B
   private val sevenDaysAgo = Timestamp.valueOf(current.minusDays(8))
   private val yesterday = Timestamp.valueOf(current.minusDays(1))
   val normalized_variantsDF: DataFrame = Seq(
-    VariantRawOutput(start = 1000, `reference` = "A", `alternate` = "T"),
-    VariantRawOutput(start = 1001, `reference` = "A", `alternate` = "T", `batch_id` = "BAT2"),
-    VariantRawOutput(start = 1002, `reference` = "A", `alternate` = "T"),
-    VariantRawOutput(start = 1003, `reference` = "A", `alternate` = "T", `genes_symbol` = List("OR4F4")), // bad panel
-    VariantRawOutput(start = 1004, `reference` = "A", `alternate` = "T")
+    NormalizedVariants(start = 1000, `reference` = "A", `alternate` = "T"),
+    NormalizedVariants(start = 1001, `reference` = "A", `alternate` = "T", `batch_id` = "BAT2"),
+    NormalizedVariants(start = 1002, `reference` = "A", `alternate` = "T"),
+    NormalizedVariants(start = 1003, `reference` = "A", `alternate` = "T", `genes_symbol` = List("OR4F4")), // bad panel
+    NormalizedVariants(start = 1004, `reference` = "A", `alternate` = "T")
   ).toDF()
   val normalized_varsomeDF: DataFrame = Seq(
     VarsomeOutput("1", 1000, "A", "T", "1234", sevenDaysAgo, None, None),

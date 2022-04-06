@@ -34,6 +34,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("father_zygosity", zygosity(col("father_calls")))
       .withParentalOrigin("parental_origin", col("father_calls"), col("mother_calls"))
       .withGenotypeTransmission("transmission")
+      .where(col("has_alt"))
 
     val het = occurrences.where(col("zygosity") === "HET")
     val hc: DataFrame = getCompoundHet(het)
@@ -84,7 +85,6 @@ object SNV {
         old_multi_allelic,
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
       )
-      .where(col("has_alt"))
       .withColumn("symbols", $"annotations.symbol")
       .drop("annotations")
       .withColumn("ad_ref", $"ad"(0))

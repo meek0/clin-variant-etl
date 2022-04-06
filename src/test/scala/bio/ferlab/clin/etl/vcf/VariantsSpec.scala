@@ -98,35 +98,11 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   "variants job" should "transform data in expected format" in {
 
     val resultDf = job1.transform(data)
-    resultDf.show(false)
-    val result = resultDf.as[VariantRawOutput].collect().head
+    val result = resultDf.as[NormalizedVariants].collect().head
 
-    result shouldBe VariantRawOutput(
+    result shouldBe NormalizedVariants(
+      `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MM_PG","Maladies musculaires (Panel global)",Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1))),
+      `frequency_RQDM` = AnalysisFrequencies(Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1)),
       `created_on` = result.`created_on`)
   }
-/*
-  "variants job" should "scd1 using locus as key" in {
-
-    val firstLoad = Seq(VCFInput("chr1"), VCFInput("chr2")).toDF()
-    val secondLoad = Seq(VCFInput("chr1"), VCFInput("chr3")).toDF()
-    val date1 = LocalDateTime.of(2021, 1, 1, 1, 1, 1)
-    val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
-
-    val job1Df = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
-    job1.load(job1Df)
-
-    val job2Df = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
-    job2Df.show(false)
-    job2.load(job2Df)
-    val resultDf = job2.destination.read
-    resultDf.show(false)
-
-    resultDf.as[VariantRawOutput].collect() should contain allElementsOf Seq(
-      VariantRawOutput("1", `created_on` = Timestamp.valueOf(date1), `updated_on` = Timestamp.valueOf(date2), `batch_id` = "BAT2", `normalized_variants_oid` = Timestamp.valueOf(date2), `locus` = "1-69897-T-C"),
-      VariantRawOutput("2", `created_on` = Timestamp.valueOf(date1), `updated_on` = Timestamp.valueOf(date1), `batch_id` = "BAT1", `normalized_variants_oid` = Timestamp.valueOf(date1), `locus` = "2-69897-T-C"),
-      VariantRawOutput("3", `created_on` = Timestamp.valueOf(date2), `updated_on` = Timestamp.valueOf(date2), `batch_id` = "BAT2", `normalized_variants_oid` = Timestamp.valueOf(date2), `locus` = "3-69897-T-C")
-    )
-  }
-
- */
 }

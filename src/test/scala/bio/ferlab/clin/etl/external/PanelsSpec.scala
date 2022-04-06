@@ -34,8 +34,6 @@ class PanelsSpec extends AnyFlatSpec with WithSparkSession with Matchers with Be
 
   "panels job" should "transform data in expected format" in {
     val resultDf =  job1.transform(data).as[PanelOutput]
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "PanelOutput", df, "src/test/scala/")
-    resultDf.show(false)
     
     val result = resultDf.collect().head
 

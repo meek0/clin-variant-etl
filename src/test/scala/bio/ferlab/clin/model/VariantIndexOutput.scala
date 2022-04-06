@@ -4,7 +4,7 @@
  */
 package bio.ferlab.clin.model
 
-import java.sql.Date
+import java.sql.{Date, Timestamp}
 import java.time.LocalDate
 
 
@@ -26,7 +26,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `assembly_version`: String = "GRCh38",
                               `last_annotation_update`: Date = Date.valueOf(LocalDate.now()),
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
-                              `max_impact_score`: Int = 1,
+                              `max_impact_score`: Int = 2,
                               `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
                               `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                               `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
@@ -36,34 +36,37 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `rsnumber`: String = "rs200676709",
                               `genes`: List[GENES] = List(GENES()),
                               `omim`: List[String] = List("618285"),
-                              `variant_external_reference`: List[String] = List("DBSNP", "Clinvar"),
+                              `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Pubmed"),
                               `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
 
-
-case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_variant"),
-                        `vep_impact`: String = "MODIFIER",
-                        `symbol`: String = "DDX11L1",
-                        `ensembl_gene_id`: String = "ENSG00000223972",
-                        `ensembl_feature_id`: String = "ENST00000450305",
+case class CONSEQUENCES(`ensembl_transcript_id`: String = "ENST00000335137",
+                        `ensembl_gene_id`: String = "ENSG00000186092",
+                        `consequences`: List[String] = List("synonymous_variant"),
+                        `vep_impact`: String = "LOW",
+                        `symbol`: String = "OR4F5",
+                        `ensembl_feature_id`: String = "ENST00000335137",
                         `feature_type`: String = "Transcript",
                         `strand`: Int = 1,
-                        `biotype`: String = "transcribed_unprocessed_pseudogene",
+                        `biotype`: String = "protein_coding",
                         `exon`: EXON = EXON(),
                         `intron`: INTRON = INTRON(),
-                        `hgvsc`: Option[String] = None,
-                        `hgvsp`: Option[String] = None,
-                        `cds_position`: Option[Int] = None,
-                        `cdna_position`: Option[Int] = None,
-                        `protein_position`: Option[Int] = None,
+                        `hgvsc`: String = "ENST00000335137.4:c.807T>C",
+                        `hgvsp`: String = "ENSP00000334393.3:p.Ser269=",
+                        `cds_position`: Int = 807,
+                        `cdna_position`: Int = 843,
+                        `protein_position`: Int = 269,
                         `amino_acids`: AMINO_ACIDS = AMINO_ACIDS(),
                         `codons`: CODONS = CODONS(),
-                        `aa_change`: Option[String] = None,
-                        `coding_dna_change`: Option[String] = None,
-                        `impact_score`: Int = 1,
+                        `aa_change`: String = "p.Ser269=",
+                        `coding_dna_change`: String = "c.807T>C",
+                        `impact_score`: Int = 2,
                         `predictions`: PREDICTIONS = PREDICTIONS(),
                         `conservations`: CONSERVATIONS = CONSERVATIONS(),
-                        `refseq_mrna_id`: Seq[String] = Seq("NM_001005484.1", "NM_001005484.2")
-                       )
+                        `refseq_mrna_id`: Seq[String] = Seq("NM_001005484.1", "NM_001005484.2"),
+                        `uniprot_id`: Option[String] = None,
+                        `mane_select`: Boolean = false,
+                        `mane_plus`: Boolean = false,
+                        `canonical`: Boolean = false)
 
 case class AnalysisCodeFrequencies(analysis_code: String = "MM_PG",
                                    analysis_display_name: String = "Maladies musculaires (Panel global)",
