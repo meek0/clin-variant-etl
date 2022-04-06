@@ -64,7 +64,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
         codons,
         pick,
         original_canonical,
-        col("annotation.RefSeq") as "refseq_mrna_id"
+        array_distinct(split(col("annotation.RefSeq"), "&")) as "refseq_mrna_id"
       )
       .drop("annotation")
       .withColumn("aa_change",

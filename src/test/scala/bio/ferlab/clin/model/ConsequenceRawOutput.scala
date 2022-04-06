@@ -35,7 +35,7 @@ case class ConsequenceRawOutput(`chromosome`: String = "1",
                                 `coding_dna_change`: Option[String] = None,
                                 `impact_score`: Int = 1,
                                 `batch_id`: String = "BAT1",
-                                `refseq_mrna_id`: String = "NM_001005484.1",
+                                `refseq_mrna_id`: Seq[String] = Seq("NM_001005484.1", "NM_001005484.2"),
                                 `created_on`: Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"),
                                 `updated_on`: Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108"))
 
