@@ -41,12 +41,21 @@ object Varsome extends SparkApp {
 class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String, chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETL {
   override val destination: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
+  val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
   override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = {
-    val variants = normalized_variants.read
-      .select("chromosome", "start", "reference", "alternate")
-      .where(length(col("reference")) <= 200 && length(col("alternate")) <= 200) //Varsome limit variant length to 200 bases
-    val variantsFilterByChr = chromosome.map(chr => variants.where(col("chromosome") === chr)).getOrElse(variants)
+    val variants = normalized_variants.read.select("chromosome", "start", "reference", "alternate", "batch_id", "genes_symbol")
+    val panels = normalized_panels.read.select("symbol")
+      
+    val variantFilterByLength = variants
+      .where(length(col("reference")) <= 200 && length(col("alternate")) <= 200) // Varsome limit variant length to 200 bases
+    
+    val variantsFilterByPanels =  variantFilterByLength.join(panels, array_contains(variantFilterByLength("genes_symbol"), panels("symbol"))) // only variants in panels
+      .drop("genes_symbol").drop("symbol")
+    
+    val variantsFilterByChr = chromosome.map(chr => variantsFilterByPanels.where(col("chromosome") === chr))
+      .getOrElse(variantsFilterByPanels)
+
     jobType match {
       case Reload => Map(normalized_variants.id -> variantsFilterByChr)
       case ForBatch(batchId) =>
