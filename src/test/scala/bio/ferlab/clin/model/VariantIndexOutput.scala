@@ -61,7 +61,9 @@ case class CONSEQUENCES(`consequences`: List[String] = List("downstream_gene_var
                         `coding_dna_change`: Option[String] = None,
                         `impact_score`: Int = 1,
                         `predictions`: PREDICTIONS = PREDICTIONS(),
-                        `conservations`: CONSERVATIONS = CONSERVATIONS())
+                        `conservations`: CONSERVATIONS = CONSERVATIONS(),
+                        `refseq_mrna_id`: Seq[String] = Seq("NM_001005484.1", "NM_001005484.2")
+                       )
 
 case class AnalysisCodeFrequencies(analysis_code: String = "MM_PG",
                                    analysis_display_name: String = "Maladies musculaires (Panel global)",
