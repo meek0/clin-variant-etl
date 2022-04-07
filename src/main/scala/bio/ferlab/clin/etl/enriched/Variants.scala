@@ -55,8 +55,9 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val variants = mergeVariantFrequencies(data(normalized_variants.id))
 
     val occurrences = data(normalized_snv.id)
-      .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
-      .as("occurrences")
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
+        "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
+        "batch_id", "last_update")
 
     val genomesDf = data(`thousand_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
@@ -156,10 +157,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   }
 
   def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
+    val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate").columns.map(col)
     val donors = occurrences
       .groupByLocus()
-      .agg(filter(collect_list(struct("occurrences.*")), c => c("zygosity").isin("HOM", "HET")) as "donors")
-
+      .agg(filter(collect_list(struct(donorColumns:_*)), c => c("zygosity").isin("HOM", "HET")) as "donors")
     variants
       .joinByLocus(donors, "inner")
   }
@@ -225,10 +226,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       struct(
         $"acmg_annotation.verdict.ACMG_rules" as "verdict",
         $"acmg_annotation.classifications" as "classifications",
-        $"acmg_annotation.transcript" as "transcript",
-        $"acmg_annotation.transcript_reason" as "transcript_reason",
-        $"acmg_annotation.gene_symbol" as "gene_symbol",
-        $"acmg_annotation.coding_impact" as "coding_impact"
+        //$"acmg_annotation.transcript" as "transcript",
+        //$"acmg_annotation.transcript_reason" as "transcript_reason",
+        //$"acmg_annotation.gene_symbol" as "gene_symbol",
+        //$"acmg_annotation.coding_impact" as "coding_impact"
       ) as "acmg"
     )
     variants.joinAndMerge(df, "varsome", "left")

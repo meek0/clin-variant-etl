@@ -12,7 +12,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.File
-import java.sql.Date
 
 class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
@@ -86,8 +85,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val expectedDonors =
     List(
-      DONORS(1, 2, List(0, 1), 8.07, true,List("PASS"),0,1,1,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
-      DONORS(1, 2, List(0, 1), 8.07, true,List("PASS"),0,1,1,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
+      DONORS(1, 2, List(0, 1), 8.07,List("PASS"),0,1,1,1.0,"HET","SR0095","14-696","SP_696","PA0001","WXS","11111", "MM_PG","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
+      DONORS(1, 2, List(0, 1), 8.07,List("PASS"),0,1,1,1.0,"HET","SR0095","14-696","SP_696","PA0002","WXS","11111", "MM_PG","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
   )
 
   val expectedFrequencies = Map("MN-PG" -> Map("affected" -> Frequency(), "total" -> Frequency()))
@@ -149,7 +148,6 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       total =        Frequency(3, 8, 0.375             , 3, 4, 0.75, 0))
 
     val resultDf = new Variants().transform(data + (normalized_variants.id -> variantDf))
-    resultDf.show()
     val result = resultDf.as[VariantEnrichedOutput].collect().head
 
     result.`frequencies_by_analysis` should contain allElementsOf expectedFrequencies

@@ -30,6 +30,10 @@ case class ACMGAnnotation(
 
 case class Verdict(classifications: Seq[String], ACMG_rules: Option[ACMGRules])
 
-case class ACMGRules(clinical_score: Option[Double], verdict: Option[String], approx_score: Option[Int], pathogenic_subscore: Option[String], benign_subscore: Option[String])
+case class ACMGRules(clinical_score: Option[Double],
+                     verdict: Option[String],
+                     approx_score: Option[Int],
+                     pathogenic_subscore: Option[String],
+                     benign_subscore: Option[String])
 
 case class Classification(met_criteria: Option[Boolean], user_explain: Seq[String], strength: Option[String], name: String)

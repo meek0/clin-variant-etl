@@ -7,7 +7,7 @@
   ],
   "template": {
     "settings": {
-      "number_of_shards": 2
+      "number_of_shards": 3
     },
     "mappings": {
       "properties": {
@@ -245,20 +245,11 @@
             "analysis_code": {
               "type": "keyword"
             },
-            "analysis_display_name": {
-              "type": "keyword"
-            },
-            "batch_id": {
-              "type": "keyword"
-            },
             "calls": {
               "type": "long"
             },
             "dp": {
               "type": "long"
-            },
-            "family_id": {
-              "type": "keyword"
             },
             "father_affected_status": {
               "type": "boolean"
@@ -278,23 +269,11 @@
             "gender": {
               "type": "keyword"
             },
-            "genome_build": {
-              "type": "keyword"
-            },
             "gq": {
               "type": "long"
             },
-            "has_alt": {
-              "type": "boolean"
-            },
-            "hgvsg": {
-              "type": "keyword"
-            },
             "is_proband": {
               "type": "boolean"
-            },
-            "last_update": {
-              "type": "long"
             },
             "mother_affected_status": {
               "type": "boolean"
@@ -308,13 +287,7 @@
             "mother_zygosity": {
               "type": "keyword"
             },
-            "organization_id": {
-              "type": "keyword"
-            },
             "patient_id": {
-              "type": "keyword"
-            },
-            "practitioner_role_id": {
               "type": "keyword"
             },
             "qd": {
@@ -327,12 +300,6 @@
               "type": "keyword"
             },
             "parental_origin": {
-              "type": "keyword"
-            },
-            "variant_class": {
-              "type": "keyword"
-            },
-            "variant_type": {
               "type": "keyword"
             },
             "zygosity": {
@@ -848,22 +815,6 @@
                         "index": false
                       }
                     }
-                  },
-                  "transcript": {
-                    "type": "keyword",
-                    "index": false
-                  },
-                  "transcript_reason": {
-                    "type": "keyword",
-                    "index": false
-                  },
-                  "gene_symbol": {
-                    "type": "keyword",
-                    "index": false
-                  },
-                  "coding_impact": {
-                    "type": "keyword",
-                    "index": false
                   }
                 }
               }

@@ -8,4 +8,4 @@ case class VariantIndexUpdate(`chromosome`: String = "1",
                               `start`: Long = 69897,
                               `reference`: String = "T",
                               `alternate`: String = "C",
-                              `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")))
+                              `donors`: List[DONORS] = List(DONORS(), DONORS()))

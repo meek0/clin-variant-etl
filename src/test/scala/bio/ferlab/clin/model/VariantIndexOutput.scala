@@ -4,7 +4,9 @@
  */
 package bio.ferlab.clin.model
 
-import java.sql.{Date, Timestamp}
+import bio.ferlab.clin.etl.varsome._
+
+import java.sql.Date
 import java.time.LocalDate
 
 
@@ -27,7 +29,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `last_annotation_update`: Date = Date.valueOf(LocalDate.now()),
                               `consequences`: List[CONSEQUENCES] = List(CONSEQUENCES()),
                               `max_impact_score`: Int = 2,
-                              `donors`: List[DONORS] = List(DONORS(), DONORS(`organization_id` = "OR00202")),
+                              `donors`: List[DONORS] = List(DONORS(), DONORS()),
                               `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                               `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                               `external_frequencies`: FREQUENCIES = FREQUENCIES(),
@@ -37,7 +39,8 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `genes`: List[GENES] = List(GENES()),
                               `omim`: List[String] = List("618285"),
                               `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Pubmed"),
-                              `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"))
+                              `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
+                              `varsome`: Option[VARSOME] = Some(VARSOME()))
 
 case class CONSEQUENCES(`ensembl_transcript_id`: String = "ENST00000335137",
                         `ensembl_gene_id`: String = "ENSG00000186092",
@@ -85,4 +88,3 @@ case class Frequency(ac: Long = 4,
                      pn: Long = 2,
                      pf: Double = 1.0,
                      hom: Long = 2)
-
