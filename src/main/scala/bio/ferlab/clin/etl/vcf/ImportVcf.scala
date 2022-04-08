@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.datalake.commons.config.RunStep
 import bio.ferlab.datalake.spark3.public.SparkApp
 
 object ImportVcf extends SparkApp {

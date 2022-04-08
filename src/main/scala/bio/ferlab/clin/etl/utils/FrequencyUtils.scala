@@ -7,28 +7,28 @@ object FrequencyUtils {
 
   def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
 
-  val pass: Column = col("filters") === Array("PASS")
+  val isFilterPass: Column = col("filters") === Array("PASS")
 
   /**
    * allele count
    */
-  val ac: Column = sum(when(pass, array_sum(filter(col("calls"), c => c === 1))).otherwise(lit(0))) as "ac"
+  val ac: Column = sum(array_sum(filter(col("calls"), c => c === 1))) as "ac"
   /**
    * allele total number
    */
-  val an: Column = sum(array_sum(transform(col("calls"), c => when(pass and (c === 1 or c === 0), 1).otherwise(0)))) as "an"
+  val an: Column = sum(lit(2)) as "an"
 
   /**
    * participant count
    */
-  val pc: Column = sum(when(col("zygosity").isin("HOM", "HET") and pass, 1).otherwise(0)) as "pc"
+  val pc: Column = sum(when(col("zygosity").isin("HOM", "HET"), 1).otherwise(0)) as "pc"
 
   /**
    * participant total number
    */
-  val pn: Column = sum(when(pass, 1).otherwise(0)) as "pn"
+  val pn: Column = sum(lit(1)) as "pn"
 
-  val hom: Column = sum(when(col("zygosity") === "HOM" and pass, 1).otherwise(0)) as "hom"
-  val het: Column = sum(when(col("zygosity") === "HET" and pass, 1).otherwise(0)) as "het"
+  val hom: Column = sum(when(col("zygosity") === "HOM", 1).otherwise(0)) as "hom"
+  val het: Column = sum(when(col("zygosity") === "HET", 1).otherwise(0)) as "het"
 
 }

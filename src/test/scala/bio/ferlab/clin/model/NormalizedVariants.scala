@@ -7,7 +7,7 @@ package bio.ferlab.clin.model
 import java.sql.Timestamp
 
 
-case class NormalizedVariants(`aliquot_id`: String = "3",
+case class NormalizedVariants(//`aliquot_id`: String = "3",
                               `chromosome`: String = "1",
                               `start`: Long = 69897,
                               `end`: Long = 69898,

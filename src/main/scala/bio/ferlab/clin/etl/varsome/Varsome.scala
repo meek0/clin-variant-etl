@@ -15,7 +15,6 @@ import java.time.LocalDateTime
 
 object Varsome extends SparkApp {
 
-
   implicit val (conf, steps, spark) = init()
   val varsomeToken = spark.conf.get("spark.varsome.token")
   val varsomeUrl = spark.conf.get("spark.varsome.url")
@@ -33,12 +32,14 @@ object Varsome extends SparkApp {
     val batchId = args(3)
     new Varsome(ForBatch(batchId), varsomeUrl, varsomeToken, chromosome).run()
   }
-
-  spark.sparkContext.setLogLevel("ERROR")
 }
 
 
-class Varsome(jobType: VarsomeJobType, varsomeUrl: String, varsomeToken: String, chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETL {
+class Varsome(jobType: VarsomeJobType,
+              varsomeUrl: String,
+              varsomeToken: String,
+              chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETL {
+
   override val destination: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")

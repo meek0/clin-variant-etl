@@ -8,11 +8,9 @@ object PrepareIndex extends SparkApp {
 
   implicit val (conf, steps, spark) = init()
 
-  spark.sparkContext.setLogLevel("ERROR")
-
-  println(s"Job: $jobName")
-  println(s"releaseId: $releaseId")
-  println(s"runType: ${steps.mkString(" -> ")}")
+  log.info(s"Job: $jobName")
+  log.info(s"releaseId: $releaseId")
+  log.info(s"runType: ${steps.mkString(" -> ")}")
 
   jobName match {
     case "gene_centric" => new PrepareGeneCentric(releaseId).run(steps)

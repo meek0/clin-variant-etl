@@ -9,8 +9,6 @@ object FhirRawToNormalized extends SparkApp {
 
   implicit val (conf, steps, spark) = init()
 
-  spark.sparkContext.setLogLevel("ERROR")
-
   val jobs: List[ETL] =
     FhirRawToNormalizedMappings
       .mappings

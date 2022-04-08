@@ -93,6 +93,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   "variants job" should "aggregate frequencies from normalized_variants" in {
 
+    val occurrencesDf: DataFrame = Seq(
+      NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = true , `patient_id` = "1"),
+      NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = false, `patient_id` = "2"),
+      NormalizedSNV(`analysis_code` = "ACHO" ,`affected_status` = true , `patient_id` = "3"),
+      NormalizedSNV(`analysis_code` = "ACHO" ,`affected_status` = true , `patient_id` = "4")
+    ).toDF
+
     val variantDf = Seq(
       NormalizedVariants(
         `batch_id` = "BAT1",
@@ -147,7 +154,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       non_affected = Frequency(1, 2, 0.5               , 1, 1, 1.0 , 0),
       total =        Frequency(3, 8, 0.375             , 3, 4, 0.75, 0))
 
-    val resultDf = new Variants().transform(data + (normalized_variants.id -> variantDf))
+    val resultDf = new Variants().transform(data ++ Map(normalized_variants.id -> variantDf, normalized_snv.id -> occurrencesDf))
     val result = resultDf.as[VariantEnrichedOutput].collect().head
 
     result.`frequencies_by_analysis` should contain allElementsOf expectedFrequencies

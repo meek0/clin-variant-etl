@@ -8,10 +8,8 @@ object RunEnriched extends SparkApp {
 
   implicit val (conf, steps, spark) = init()
 
-  spark.sparkContext.setLogLevel("ERROR")
-
-  println(s"Job: $jobName")
-  println(s"runType: ${steps.mkString(" -> ")}")
+  log.info(s"Job: $jobName")
+  log.info(s"runType: ${steps.mkString(" -> ")}")
 
   jobName match {
     case "variants" => new Variants().run(steps)

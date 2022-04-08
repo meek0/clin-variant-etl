@@ -1,14 +1,14 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
+import bio.ferlab.clin.etl.utils.FrequencyUtils.isFilterPass
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
-import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
@@ -65,6 +65,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         pubmed,
         flatten(functions.transform(col("INFO_FILTERS"), c => split(c, ";"))) as "filters"
       )
+      .filter(isFilterPass)
       .withColumn("variant_type", lit("germline"))
       .withColumn("aliquot_id", col("genotype.sampleId"))
       .withColumn("calls", col("genotype.calls"))
