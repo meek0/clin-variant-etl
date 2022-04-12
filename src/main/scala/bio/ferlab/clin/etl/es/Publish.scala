@@ -16,7 +16,7 @@ object Publish extends App {
   esNodes,          // http://0.0.0.0
   username,         // basic auth username
   password,         // basic auth password
-  alias,            // alias to create, ex: clin_qa_variant_centric
+  alias,            // alias to create, ex: clin_staging_variant_centric
   release_id,       // release id, ex: re_001
   ) = args
   
@@ -24,8 +24,8 @@ object Publish extends App {
   
   implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esUrl, sanitizeArg(username), sanitizeArg(password))
   
-  val previousIndex = findIndexWithAlias(alias) // ex: clin_qa_blue_variant_centric_re_000
-  val newIndex = s"${alias}_$release_id"  //ex: clin_qa_blue_variant_centric_re_001
+  val previousIndex = findIndexWithAlias(alias) // ex: clin_staging_variant_centric_re_000
+  val newIndex = s"${alias}_$release_id"  //ex: clin_staging_variant_centric_re_001
   
   if (previousIndex.isDefined) {
     val previousIndexName = previousIndex.get
