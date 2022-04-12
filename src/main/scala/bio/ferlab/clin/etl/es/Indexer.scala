@@ -14,7 +14,7 @@ object Indexer extends App {
   esNodes,          // http://0.0.0.0
   username,         // basic auth username
   password,         // basic auth password
-  index,            // index to create
+  alias,            // alias to create
   release_id,       // release id
   templateFileName, // variant_centric_template.json
   jobType,          // variants or genes
@@ -60,7 +60,7 @@ object Indexer extends App {
 
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
-  new Indexer("index", templatePath, s"${index}_$release_id")
+  new Indexer("index", templatePath, s"${alias}_$release_id")
     .run(df)
 
 }
