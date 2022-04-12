@@ -14,7 +14,7 @@ object Indexer extends App {
   esNodes,          // http://0.0.0.0
   username,         // basic auth username
   password,         // basic auth password
-  alias,            // alias to create
+  index,            // index to create
   release_id,       // release id
   templateFileName, // variant_centric_template.json
   jobType,          // variants or genes
@@ -24,10 +24,6 @@ object Indexer extends App {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
   
-  def sanitizeArg(arg: String): Option[String] = {
-    Option(arg).map(s => s.replace("\"","")).filter(s => StringUtils.isNotBlank(s))
-  }
-
   val esConfigs = Map(
     "es.net.http.auth.user" -> username,
     "es.net.http.auth.pass" -> password,
@@ -64,7 +60,7 @@ object Indexer extends App {
 
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
-  new Indexer("index", templatePath, s"${alias}_$release_id")
+  new Indexer("index", templatePath, s"${index}_$release_id")
     .run(df)
 
 }

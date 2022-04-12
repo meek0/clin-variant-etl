@@ -2,10 +2,15 @@ package bio.ferlab.clin.etl
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SaveMode}
 
 package object es {
+
+  def sanitizeArg(arg: String): Option[String] = {
+    Option(arg).map(s => s.replace("\"","")).filter(s => StringUtils.isNotBlank(s))
+  }
 
   def loadForReleaseId(data: DataFrame,
                        destination: DatasetConf,
