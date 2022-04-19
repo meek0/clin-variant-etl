@@ -55,9 +55,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     import spark.implicits._
 
     val occurrences = data(normalized_snv.id)
-      .drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
-        "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
-        "batch_id", "last_update")
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
+      //.drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
+      //  "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
+      //  "batch_id", "last_update")
 
     val participantCount =
       occurrences
@@ -258,10 +259,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       struct(
         $"acmg_annotation.verdict.ACMG_rules" as "verdict",
         $"acmg_annotation.classifications" as "classifications",
-        //$"acmg_annotation.transcript" as "transcript",
-        //$"acmg_annotation.transcript_reason" as "transcript_reason",
-        //$"acmg_annotation.gene_symbol" as "gene_symbol",
-        //$"acmg_annotation.coding_impact" as "coding_impact"
+        $"acmg_annotation.transcript" as "transcript",
+        $"acmg_annotation.transcript_reason" as "transcript_reason",
+        $"acmg_annotation.gene_symbol" as "gene_symbol",
+        $"acmg_annotation.coding_impact" as "coding_impact"
       ) as "acmg"
     )
     variants.joinAndMerge(df, "varsome", "left")
