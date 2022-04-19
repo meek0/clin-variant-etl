@@ -24,10 +24,6 @@ object Indexer extends App {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
   
-  def sanitizeArg(arg: String): Option[String] = {
-    Option(arg).map(s => s.replace("\"","")).filter(s => StringUtils.isNotBlank(s))
-  }
-
   val esConfigs = Map(
     "es.net.http.auth.user" -> username,
     "es.net.http.auth.pass" -> password,
