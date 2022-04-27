@@ -1,0 +1,158 @@
+{
+  "index_patterns": [
+    "clin_qa_blue_cnv_centric*",
+    "clin_qa_green_cnv_centric*",
+    "clin_staging_cnv_centric*",
+    "clin_prod_cnv_centric*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 3
+    },
+    "mappings": {
+      "properties": {
+        "chromosome": {
+          "type": "keyword"
+        },
+        "start": {
+          "type": "long"
+        },
+        "reference": {
+          "type": "keyword"
+        },
+        "alternate": {
+          "type": "keyword"
+        },
+        "end": {
+          "type": "long"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "bc": {
+          "type": "long"
+        },
+        "sm": {
+          "type": "double"
+        },
+        "calls": {
+          "type": "long"
+        },
+        "cn": {
+          "type": "integer"
+        },
+        "pe": {
+          "type": "long"
+        },
+        "is_multi_allelic": {
+          "type": "boolean"
+        },
+        "old_multi_allelic": {
+          "type": "keyword",
+          "index": false
+        },
+        "ciend": {
+          "type": "long"
+        },
+        "cipos": {
+          "type": "long"
+        },
+        "svlen": {
+          "type": "long"
+        },
+        "reflen": {
+          "type": "long"
+        },
+        "svtype": {
+          "type": "keyword"
+        },
+        "filters": {
+          "type": "keyword"
+        },
+        "service_request_id": {
+          "type": "keyword"
+        },
+        "patient_id": {
+          "type": "keyword"
+        },
+        "analysis_service_request_id": {
+          "type": "keyword"
+        },
+        "sequencing_strategy": {
+          "type": "keyword"
+        },
+        "genome_build": {
+          "type": "keyword"
+        },
+        "analysis_code": {
+          "type": "keyword"
+        },
+        "analysis_display_name": {
+          "type": "keyword"
+        },
+        "affected_status": {
+          "type": "boolean"
+        },
+        "family_id": {
+          "type": "keyword"
+        },
+        "is_proband": {
+          "type": "boolean"
+        },
+        "gender": {
+          "type": "keyword"
+        },
+        "practitioner_role_id": {
+          "type": "keyword"
+        },
+        "organization_id": {
+          "type": "keyword"
+        },
+        "mother_id": {
+          "type": "keyword"
+        },
+        "father_id": {
+          "type": "keyword"
+        },
+        "specimen_id": {
+          "type": "keyword"
+        },
+        "sample_id": {
+          "type": "keyword"
+        },
+        "genes": {
+          "type": "nested",
+          "properties": {
+            "symbol": {
+              "type": "keyword"
+            },
+            "refseq_id": {
+              "type": "keyword"
+            },
+            "panels": {
+              "type": "keyword"
+            },
+            "overlap_bases": {
+              "type": "long"
+            },
+            "overlap_cnv_ratio": {
+              "type": "double"
+            },
+            "overlap_gene_ratio": {
+              "type": "double"
+            },
+            "overlap_exons": {
+              "type": "long"
+            }
+          }
+        },
+        "number_genes": {
+          "type": "long"
+        },
+        "hash": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

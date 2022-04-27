@@ -5,7 +5,7 @@ import bio.ferlab.clin.testutils.WithSparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class VcfUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class FrequencyUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   "ac" should "return sum of allele count" in {
     import spark.implicits._
