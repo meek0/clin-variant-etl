@@ -36,6 +36,7 @@ class PrepareGeneSuggestions(releaseId: String)(implicit configuration: Configur
     genes
       .select(
         lit("gene") as "type",
+        $"chromosome",
         $"symbol",
         $"ensembl_gene_id",
         $"hash" as "suggestion_id",

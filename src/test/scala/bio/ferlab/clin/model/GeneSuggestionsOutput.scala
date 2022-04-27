@@ -6,6 +6,7 @@ package bio.ferlab.clin.model
 
 
 case class GeneSuggestionsOutput(`type`: String = "gene",
+                                 `chromosome`: String = "1",
                                  `symbol`: String = "OR4F5",
                                  `ensembl_gene_id`: String = "ENSG00000198216",
                                  `suggestion_id`: String = "9b8016c31b93a7504a8314ce3d060792f67ca2ad",
