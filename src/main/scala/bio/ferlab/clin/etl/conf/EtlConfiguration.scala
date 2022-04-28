@@ -100,7 +100,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_task"                , clin_datalake, "/normalized/fhir/task"              , DELTA  , OverWrite   , TableConf("clin", "fhir_task")),
 
       //clinical normalized
-      DatasetConf("normalized_snv"                 , clin_datalake, "/normalized/snv"                    , DELTA  , Insert            , partitionby = List("chromosome")            , table = Some(TableConf("clin", "normalized_snv"))),
+      DatasetConf("normalized_snv"                 , clin_datalake, "/normalized/snv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv"))),
       DatasetConf("normalized_cnv"                 , clin_datalake, "/normalized/cnv"                    , DELTA  , Insert            , partitionby = List("patient_id")            , table = Some(TableConf("clin", "normalized_cnv"))),
       DatasetConf("normalized_variants"            , clin_datalake, "/normalized/variants"               , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_variants"))),
       DatasetConf("normalized_consequences"        , clin_datalake, "/normalized/consequences"           , DELTA  , Scd1              , partitionby = List("chromosome")            , table = Some(TableConf("clin", "normalized_consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
@@ -109,13 +109,13 @@ object EtlConfiguration extends App {
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))),
       DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "variants")), keys = List("locus")),
-      DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences")), keys = List("ensembl_transcript_id")),
+      DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
 
       //es index
-      DatasetConf("es_index_gene_centric"          , clin_datalake, "/es_index/gene_centric"             , DELTA, OverWrite, partitionby = List()            , table = Some(TableConf("clin", "gene_centric"))),
-      DatasetConf("es_index_gene_suggestions"      , clin_datalake, "/es_index/gene_suggestions"         , DELTA, OverWrite, partitionby = List()            , table = Some(TableConf("clin", "gene_suggestions"))),
-      DatasetConf("es_index_variant_centric"       , clin_datalake, "/es_index/variant_centric"          , DELTA, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_centric"))),
-      DatasetConf("es_index_variant_suggestions"   , clin_datalake, "/es_index/variant_suggestions"      , DELTA, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_suggestions"))),
+      DatasetConf("es_index_gene_centric"          , clin_datalake, "/es_index/gene_centric"             , PARQUET, OverWrite, partitionby = List()            , table = Some(TableConf("clin", "gene_centric"))),
+      DatasetConf("es_index_gene_suggestions"      , clin_datalake, "/es_index/gene_suggestions"         , PARQUET, OverWrite, partitionby = List()            , table = Some(TableConf("clin", "gene_suggestions"))),
+      DatasetConf("es_index_variant_centric"       , clin_datalake, "/es_index/variant_centric"          , PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_centric"))),
+      DatasetConf("es_index_variant_suggestions"   , clin_datalake, "/es_index/variant_suggestions"      , PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_suggestions"))),
 
     )
 
