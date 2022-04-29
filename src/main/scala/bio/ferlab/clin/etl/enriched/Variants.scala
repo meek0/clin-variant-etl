@@ -6,7 +6,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumNames}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -31,7 +31,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
-
     Map(
       normalized_variants.id -> normalized_variants.read,
       normalized_snv.id -> normalized_snv.read.filter(isFilterPass),
@@ -100,6 +99,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
     val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
+
     joinVarsome
       .withGeneExternalReference
       .withVariantExternalReference
@@ -117,35 +117,35 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     )
   }
 
+  private def sumFrequenciesByAnalysis(column: String, group: String): Column = {
+    val prefix = s"$column.$group"
+    struct(
+      sum(col(s"$prefix.ac")) as "ac",
+      first(s"${group}_pn") * 2 as "an",
+      coalesce(sum(col(s"$prefix.ac"))/sum(col(s"$prefix.an")), lit(0.0)) as "af",
+      sum(col(s"$prefix.pc")) as "pc",
+      first(s"${group}_pn") as "pn",
+      coalesce(sum(col(s"$prefix.pc"))/sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
+      sum(col(s"$prefix.hom")) as "hom"
+    ) as s"$group"
+  }
+
+  private def sumFrequencies(prefix: String): Column = {
+    struct(
+      sum(col(s"$prefix.ac")) as "ac",
+      sum(col(s"${prefix}.an")) as "an",
+      coalesce(sum(col(s"$prefix.ac"))/sum(col(s"$prefix.an")), lit(0.0)) as "af",
+      sum(col(s"$prefix.pc")) as "pc",
+      sum(col(s"${prefix}.pn")) as "pn",
+      coalesce(sum(col(s"$prefix.pc"))/sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
+      sum(col(s"$prefix.hom")) as "hom"
+    ) as s"$prefix"
+  }
+
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val variantColumns = List("end", "name", "is_multi_allelic", "old_multi_allelic", "genes_symbol", "hgvsg",
       "variant_class", "pubmed", "variant_type", "created_on").map(col)
-
-    def sumFrequenciesByAnalysis(column: String, group: String): Column = {
-      val prefix = s"$column.$group"
-      struct(
-        sum(col(s"$prefix.ac")) as "ac",
-        first(s"${group}_pn") * 2 as "an",
-        coalesce(sum(col(s"$prefix.ac"))/sum(col(s"$prefix.an")), lit(0.0)) as "af",
-        sum(col(s"$prefix.pc")) as "pc",
-        first(s"${group}_pn") as "pn",
-        coalesce(sum(col(s"$prefix.pc"))/sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
-        sum(col(s"$prefix.hom")) as "hom"
-      ) as s"$group"
-    }
-
-    def sumFrequencies(prefix: String): Column = {
-      struct(
-        sum(col(s"$prefix.ac")) as "ac",
-        sum(col(s"${prefix}.an")) as "an",
-        coalesce(sum(col(s"$prefix.ac"))/sum(col(s"$prefix.an")), lit(0.0)) as "af",
-        sum(col(s"$prefix.pc")) as "pc",
-        sum(col(s"${prefix}.pn")) as "pn",
-        coalesce(sum(col(s"$prefix.pc"))/sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
-        sum(col(s"$prefix.hom")) as "hom"
-      ) as s"$prefix"
-    }
 
     variants
       .withColumn( "variant", struct(variantColumns:_*))
@@ -270,8 +270,11 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   }
 
   def joinWithPanels(variants: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    val variantColumns = variants.drop("chromosome", "start", "reference", "alternate").columns.map(c => first(c) as c)
     variants
       .join(panels, array_contains(variants("genes_symbol"), panels("symbol")), "left")
+      .groupByLocus()
+      .agg(array_distinct(flatten(collect_list(col("panels")))) as "panels", variantColumns:_*)
       .drop("symbol", "version")
   }
 
