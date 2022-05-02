@@ -61,6 +61,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
     val participantCount =
       occurrences
+        .where(col("has_alt"))
         .dropDuplicates("patient_id")
         .groupBy("analysis_code", "affected_status")
         .count
@@ -193,7 +194,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate").columns.map(col)
     val donors = occurrences
       .groupByLocus()
-      .agg(filter(collect_list(struct(donorColumns:_*)), c => c("zygosity").isin("HOM", "HET")) as "donors")
+      .agg(filter(collect_list(struct(donorColumns:_*)), c => c("has_alt")) as "donors")
     variants
       .joinByLocus(donors, "inner")
   }

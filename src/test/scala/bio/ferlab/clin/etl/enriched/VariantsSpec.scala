@@ -38,7 +38,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val normalized_occurrencesDf: DataFrame = Seq(
     NormalizedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-    NormalizedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father"))
+    NormalizedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
+    NormalizedSNV(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
   ).toDF
   val normalized_variantsDf: DataFrame = Seq(NormalizedVariants()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
