@@ -7,6 +7,7 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import bio.ferlab.datalake.spark3.transformation.Implicits._
 
 import java.time.LocalDateTime
 
@@ -40,6 +41,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
         filter(collect_list(col("specimen_id")), _.isNotNull)(0) as "specimen_id",
         filter(collect_list(col("sample_id")), _.isNotNull)(0) as "sample_id"
       )
+
     val serviceRequestDf = data(service_request.id)
       .select(
         col("id") as "service_request_id",
@@ -50,8 +52,11 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
       .withColumn("member", explode(col("members")))
       .select(
         col("member.affected_status") as "affected_status",
-        col("member.patient_id") as "patient_id"
+        col("member.patient_id") as "patient_id",
+        col("version_id")
       )
+      .dropDuplicates(Seq("patient_id"), col("version_id").desc) //keeps only latest version of the group
+      .drop("version")
 
     val patients = data(patient.id)
       .select(

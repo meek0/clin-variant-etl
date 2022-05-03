@@ -4,7 +4,6 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +14,10 @@ import java.time.LocalDate
 class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
+    .copy(storages = List(
+      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
+      StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)
+    ))
 
   import spark.implicits._
 
@@ -54,12 +56,22 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
   val groupDf: DataFrame = Seq(
     GroupOutput(
+      `id` = "FM00000",
+      `members` = List(
+        MEMBERS("PA0001", `affected_status` = true),
+        MEMBERS("PA0002", `affected_status` = true),
+        MEMBERS("PA0003", `affected_status` = true)
+      ),
+      `version_id` = "1"
+    ),
+    GroupOutput(
       `id` = "FM00001",
       `members` = List(
         MEMBERS("PA0001", `affected_status` = true),
         MEMBERS("PA0002", `affected_status` = false),
         MEMBERS("PA0003", `affected_status` = true)
-      )
+      ),
+      `version_id` = "4"
     )
   ).toDF()
 
