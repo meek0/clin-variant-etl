@@ -56,7 +56,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
         col("version_id")
       )
       .dropDuplicates(Seq("patient_id"), col("version_id").desc) //keeps only latest version of the group
-      .drop("version")
+      .drop("version_id")
 
     val patients = data(patient.id)
       .select(
