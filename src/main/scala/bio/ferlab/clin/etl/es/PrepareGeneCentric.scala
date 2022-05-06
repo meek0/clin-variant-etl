@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
-import org.apache.spark.sql.functions.{col, collect_list, count, explode, sha1, struct}
+import org.apache.spark.sql.functions.{array, coalesce, col, collect_list, count, explode, lit, sha1, struct}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 
@@ -44,8 +44,13 @@ class PrepareGeneCentric(releaseId: String)
       )
 
     data(enriched_genes.id)
+      .join(variants, Seq("symbol"), "full")
       .withColumn("hash", sha1(col("symbol")))
-      .join(variants, Seq("symbol"))
+      .withColumn("entrez_gene_id", coalesce(col("entrez_gene_id"), lit(0)))
+      .withColumn("alias", coalesce(col("alias"), lit(array())))
+      .withColumn("number_of_patients", coalesce(col("number_of_patients"), lit(0)))
+      .withColumn("number_of_variants_per_patient", coalesce(col("number_of_variants_per_patient"), lit(array())))
+    
   }
 
   override def load(data: DataFrame,
