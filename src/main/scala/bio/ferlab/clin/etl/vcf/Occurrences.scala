@@ -1,13 +1,13 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.vcf.Occurrences.getFamilyRelationships
+import bio.ferlab.clin.etl.vcf.Occurrences.{getDistinctGroup, getFamilyRelationships}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
+import bio.ferlab.datalake.spark3.transformation.Implicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import bio.ferlab.datalake.spark3.transformation.Implicits._
 
 import java.time.LocalDateTime
 
@@ -48,15 +48,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
         col("service_request_code") as "analysis_code",
         col("service_request_description") as "analysis_display_name"
       )
-    val groupDf = data(group.id)
-      .withColumn("member", explode(col("members")))
-      .select(
-        col("member.affected_status") as "affected_status",
-        col("member.patient_id") as "patient_id",
-        col("version_id")
-      )
-      .dropDuplicates(Seq("patient_id"), col("version_id").desc) //keeps only latest version of the group
-      .drop("version_id")
+    val groupDf = getDistinctGroup(data(group.id))
 
     val patients = data(patient.id)
       .select(
@@ -97,6 +89,19 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
 }
 
 object Occurrences {
+
+  def getDistinctGroup(groupsDf: DataFrame) = {
+    groupsDf
+      .withColumn("member", explode(col("members")))
+      .select(
+        col("member.affected_status") as "affected_status",
+        col("member.patient_id") as "patient_id",
+        col("version_id")
+      )
+      .dropDuplicates(Seq("patient_id"), col("version_id").desc) //keeps only latest version of the group
+      .drop("version_id")
+  }
+
   def getFamilyRelationships(patientDf: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 

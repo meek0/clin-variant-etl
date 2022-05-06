@@ -32,7 +32,17 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
         MEMBERS("PA0001", `affected_status` = true),
         MEMBERS("PA0002", `affected_status` = false),
         MEMBERS("PA0003", `affected_status` = false)
-      )
+      ),
+      `version_id` = "5"
+    ),
+    GroupOutput(
+      `id` = "FM00001",
+      `members` = List(
+        MEMBERS("PA0001", `affected_status` = true),
+        MEMBERS("PA0002", `affected_status` = false),
+        MEMBERS("PA0003", `affected_status` = true)
+      ),
+      `version_id` = "4"
     ),
     GroupOutput(
       `id` = "FM00001",

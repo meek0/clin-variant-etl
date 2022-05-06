@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.clin.testutils.ClassGeneratorMain.conf
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL

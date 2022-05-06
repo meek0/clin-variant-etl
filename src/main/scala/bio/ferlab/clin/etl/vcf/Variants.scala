@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.isFilterPass
+import bio.ferlab.clin.etl.vcf.Occurrences.getDistinctGroup
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
@@ -212,12 +213,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         col("service_request_description") as "analysis_display_name"
       )
 
-    val groupDf = data(group.id)
-      .withColumn("member", explode(col("members")))
-      .select(
-        col("member.affected_status") as "affected_status",
-        col("member.patient_id") as "patient_id"
-      )
+    val groupDf = getDistinctGroup(data(group.id))
 
     val taskDf = data(task.id)
       .select(
