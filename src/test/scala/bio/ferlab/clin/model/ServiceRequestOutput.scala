@@ -8,24 +8,30 @@ import java.sql.{Date, Timestamp}
 
 
 case class ServiceRequestOutput(`authored_on`: Option[Date] = None,
-                                `id`: String = "SR0095",
+                                `id`: String = "2908",
                                 `intent`: String = "order",
                                 `note`: List[NOTE] = List(NOTE()),
-                                `priority`: String = "routine",
+                                `priority`: Option[String] = None,
                                 `resource_type`: String = "ServiceRequest",
                                 `status`: String = "active",
-                                `ingestion_file_name`: String = "/raw/landing/fhir/ServiceRequest/ServiceRequest_0_20211124_143455.json",
+                                `ingestion_file_name`: String = "/raw/landing/fhir/ServiceRequest/service_request_with_family.json",
                                 `ingested_on`: Timestamp = Timestamp.valueOf("2021-11-24 14:34:55.0"),
-                                `version_id`: String = "2",
+                                `version_id`: String = "1",
                                 `updated_on`: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
                                 `created_on`: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
-                                `specimens`: List[String] = List("109672", "109673"),
-                                `service_request_code`: String = "MM_PG",
-                                `service_request_description`: String = "Maladies musculaires (Panel global)",
-                                `patient_id`: String = "PA00095",
-                                `practitioner_id`: String = "PR00117",
-                                `clinical_impression_id`: String = "CI00495",
-                                `is_submitted`: Boolean = true)
+                                `specimens`: Option[List[String]] = None,
+                                `service_request_code`: String = "MMG",
+                                `service_request_description`: Option[String] = None,
+                                `patient_id`: String = "2909",
+                                `practitioner_id`: Option[String] = None,
+                                family: Option[FAMILY] = Some(FAMILY()),
+                                `clinical_impressions`: Option[Seq[String]] = Some(Seq("2906", "2917")),
+                                service_request_type: String = "analysis",
+                                analysis_service_request_id: Option[String] = None,
+                                family_id: Option[String] = Some("_FAMILY_ID_")
+                               )
+
+case class FAMILY(mother: Option[String] = Some("2919"), father: Option[String] = Some("2920"))
 
 case class NOTE(`text`: String = "Un commentaire général sur cette prescription",
                 `time`: Option[Timestamp] = None,

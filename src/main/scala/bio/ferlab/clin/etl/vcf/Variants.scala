@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.isFilterPass
-import bio.ferlab.clin.etl.vcf.Occurrences.getDistinctGroup
+import bio.ferlab.clin.etl.vcf.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
@@ -17,7 +17,8 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   override val destination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
-  val group: DatasetConf = conf.getDataset("normalized_group")
+  val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
+  val observation: DatasetConf = conf.getDataset("normalized_observation")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
 
@@ -25,8 +26,9 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .where(col("contigName").isin(validContigNames:_*)),
-      group.id -> group.read,
+        .where(col("contigName").isin(validContigNames: _*)),
+      clinical_impression.id -> clinical_impression.read,
+      observation.id -> observation.read,
       task.id -> task.read,
       service_request.id -> service_request.read
     )
@@ -123,7 +125,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         FrequencyUtils.hom,
         FrequencyUtils.pc,
         FrequencyUtils.pn,
-        first(struct(variants("*")))  as "variant")
+        first(struct(variants("*"))) as "variant")
       .withColumn("frequency_by_status", frequency(""))
       .groupBy(locus :+ col("analysis_code"): _*)
       .agg(
@@ -207,13 +209,20 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   def getClinicalInfo(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     val serviceRequestDf = data(service_request.id)
+      .where(col("service_request_type") === "sequencing")
       .select(
         col("id") as "service_request_id",
         col("service_request_code") as "analysis_code",
-        col("service_request_description") as "analysis_display_name"
+        col("service_request_description") as "analysis_display_name",
+        col("analysis_service_request_id")
       )
 
-    val groupDf = getDistinctGroup(data(group.id))
+    val analysisServiceRequestDf = data(service_request.id)
+      .where(col("service_request_type") === "analysis")
+
+    val analysisServiceRequestWithDiseaseStatus = getDiseaseStatus(analysisServiceRequestDf, data(clinical_impression.id), data(observation.id))
+      .select("analysis_service_request_id", "patient_id", "affected_status")
+
 
     val taskDf = data(task.id)
       .select(
@@ -224,6 +233,6 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
     taskDf
       .join(serviceRequestDf, Seq("service_request_id"), "left")
-      .join(groupDf, Seq("patient_id"), "left")
+      .join(analysisServiceRequestWithDiseaseStatus, Seq("analysis_service_request_id", "patient_id"))
   }
 }

@@ -20,7 +20,9 @@ case class ClinicalImpressionOutput( //`clinical_impression_id`: String = "CI000
                                      `updated_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:41.572"),
                                      `created_on`: Timestamp = Timestamp.valueOf("2020-12-17 13:14:41.572"),
                                      `patient_id`: String = "PA0005",
-                                     `practitioner_id`: String = "PR00105")
+                                     `practitioner_id`: String = "PR00105",
+                                     observations: List[String] = List("OB0157","OB0206", "OB0255", "OB0005", "OB0054", "OB0070", "OB0108")
+                                   )
 
 
 case class ITEM(`reference`: String = "Observation/OB0157")

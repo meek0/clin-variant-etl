@@ -24,54 +24,27 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
-  val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
+  val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
+  val observation: DatasetConf = conf.getDataset("normalized_observation")
 
   val patientDf: DataFrame = Seq(
     PatientOutput(
       `id` = "PA0001",
-      `family_id` = "FM00001",
       `gender` = "male",
       `practitioner_role_id` = "PPR00101",
-      `organization_id` = Some("OR00201"),
-      `family_relationship` = List(FAMILY_RELATIONSHIP("PA0002", "FTH"), FAMILY_RELATIONSHIP("PA0003", "MTH")),
-      `is_proband` = true
+      `organization_id` = Some("OR00201")
     ),
     PatientOutput(
       `id` = "PA0002",
-      `family_id` = "FM00001",
-      `gender` = "male",
-      `family_relationship` = List(),
-      `is_proband` = false
+      `practitioner_role_id` = "PPR00101",
+      `gender` = "male"
     ),
     PatientOutput(
       `id` = "PA0003",
-      `family_id` = "FM00001",
-      `gender` = "female",
-      `family_relationship` = List(),
-      `is_proband` = false
-    )
-  ).toDF()
-
-  val groupDf: DataFrame = Seq(
-    GroupOutput(
-      `id` = "FM00000",
-      `members` = List(
-        MEMBERS("PA0001", `affected_status` = true),
-        MEMBERS("PA0002", `affected_status` = true),
-        MEMBERS("PA0003", `affected_status` = true)
-      ),
-      `version_id` = "1"
-    ),
-    GroupOutput(
-      `id` = "FM00001",
-      `members` = List(
-        MEMBERS("PA0001", `affected_status` = true),
-        MEMBERS("PA0002", `affected_status` = false),
-        MEMBERS("PA0003", `affected_status` = true)
-      ),
-      `version_id` = "4"
+      `practitioner_role_id` = "PPR00101",
+      `gender` = "female"
     )
   ).toDF()
 
@@ -80,62 +53,120 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       `id` = "73254",
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
+      `service_request_id` = "SRS0001"
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0002",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "22222")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "22222"),
+      `service_request_id` = "SRS0002"
     ),
     TaskOutput(
       `id` = "73257",
       `patient_id` = "PA0003",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "33333")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "33333"),
+      `service_request_id` = "SRS0003"
     ),
     TaskOutput(
       `id` = "73255",
       `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
+      `service_request_id` = "SRS0099"
     )
   ).toDF
 
+  val clinicalImpressionsDf = Seq(
+    ClinicalImpressionOutput(id = "CI0001", `patient_id` = "PA0001", observations = List("OB0001", "OB0099")),
+    ClinicalImpressionOutput(id = "CI0002", `patient_id` = "PA0002", observations = List("OB0002")),
+    ClinicalImpressionOutput(id = "CI0003", `patient_id` = "PA0003", observations = List("OB0003"))
+  ).toDF()
+
+  val observationsDf = Seq(
+    ObservationOutput(id = "OB0001", patient_id = "PA0001", `observation_code` = "DSTA", `interpretation_code` = "POS"),
+    ObservationOutput(id = "OB0099", patient_id = "PA0001", `observation_code` = "OTHER", `interpretation_code` = "POS"),
+    ObservationOutput(id = "OB0002", patient_id = "PA0002", `observation_code` = "DSTA", `interpretation_code` = "NEG"),
+    ObservationOutput(id = "OB0003", patient_id = "PA0003", `observation_code` = "DSTA", `interpretation_code` = "POS"),
+  ).toDF()
   val serviceRequestDf: DataFrame = Seq(
-    ServiceRequestOutput(),
-    ServiceRequestOutput(`id` = "111")
+    ServiceRequestOutput(service_request_type = "analysis", `id` = "SRA0001", `patient_id` = "PA0001",
+      family = Some(FAMILY(mother = Some("PA0003"), father = Some("PA0002"))),
+      family_id = Some("FM00001"),
+      `clinical_impressions` = Some(Seq("CI0001", "CI0002", "CI0003")),
+      `service_request_description` = Some("Maladies musculaires (Panel global)")
+    ),
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0001", `patient_id` = "PA0001", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0002", `patient_id` = "PA0002", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0003", `patient_id` = "PA0003", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)"))
   ).toDF()
 
   val specimenDf: DataFrame = Seq(
-    SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SR0095", `sample_id` = Some("14-696"), `specimen_id` = None),
-    SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SR0095", `sample_id` = None          , `specimen_id` =  Some("SP_696"))
+    SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_001"), `specimen_id` = None),
+    SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = None, `specimen_id` = Some("SP_001")),
+    SpecimenOutput(`patient_id` = "PA0002", `service_request_id` = "SRS0002", `sample_id` = Some("SA_002"), `specimen_id` = None),
+    SpecimenOutput(`patient_id` = "PA0002", `service_request_id` = "SRS0002", `sample_id` = None, `specimen_id` = Some("SP_002")),
+    SpecimenOutput(`patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = Some("SA_003"), `specimen_id` = None),
+    SpecimenOutput(`patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = None, `specimen_id` = Some("SP_003")),
   ).toDF
 
   val data = Map(
     raw_variant_calling.id -> Seq(VCFInput(
       `genotypes` = List(
-        GENOTYPES(),                                          //proband
-        GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)),//father
-        GENOTYPES(`sampleId` = "33333"))                      //mother
+        GENOTYPES(), //proband
+        GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)), //father
+        GENOTYPES(`sampleId` = "33333")) //mother
     )).toDF(),
     patient.id -> patientDf,
-    group.id -> groupDf,
+    clinical_impression.id -> clinicalImpressionsDf,
+    observation.id -> observationsDf,
     task.id -> taskDf,
     service_request.id -> serviceRequestDf,
     specimen.id -> specimenDf
   )
 
-
   "occurrences transform" should "transform data in expected format" in {
-    val result = new SNV("BAT1").transform(data)
-    result.as[NormalizedSNV].collect() should contain allElementsOf Seq(
-      NormalizedSNV(
-        `hc_complement` = List(),
-        `possibly_hc_complement` = List(),
-        `last_update` = Date.valueOf(LocalDate.now()))
-    )
+    val result = new SNV("BAT1").transform(data).as[NormalizedSNV].collect()
 
+    result.length shouldBe 2
+    val probandSnv = result.find(_.patient_id == "PA0001")
+    probandSnv shouldBe Some(NormalizedSNV(
+      analysis_code = "MMG",
+      specimen_id = "SP_001",
+      sample_id = "SA_001",
+      hc_complement = List(),
+      possibly_hc_complement = List(),
+      service_request_id = "SRS0001",
+      last_update = Date.valueOf(LocalDate.now())
+    ))
+
+    val motherSnv = result.find(_.patient_id == "PA0003")
+    motherSnv shouldBe Some(NormalizedSNV(
+      patient_id = "PA0003",
+      gender = "Female",
+      aliquot_id = "33333",
+      analysis_code = "MMG",
+      specimen_id = "SP_003",
+      sample_id = "SA_003",
+      organization_id = "CHUSJ",
+      service_request_id = "SRS0003",
+      hc_complement = List(),
+      possibly_hc_complement = List(),
+      is_proband = false,
+      mother_id = null,
+      father_id = null,
+      mother_calls = None,
+      father_calls = None,
+      mother_affected_status = None,
+      father_affected_status = None,
+      mother_zygosity = None,
+      father_zygosity = None,
+      parental_origin = None,
+      transmission = Some("unknown_parents_genotype"),
+      last_update = Date.valueOf(LocalDate.now())
+    ))
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNV", result, "src/test/scala/")
   }
 
@@ -198,8 +229,8 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     val result = SNV.getPossiblyCompoundHet(input).as[PossiblyCompoundHetOutput]
     result.collect() should contain theSameElementsAs Seq(
-      PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2),PossiblyHCComplement("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2),PossiblyHCComplement("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2), PossiblyHCComplement("BRAF2", 3))),
+      PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2), PossiblyHCComplement("BRAF2", 3))),
       PossiblyCompoundHetOutput("PA001", "1", 1070, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF2", 3))),
       PossiblyCompoundHetOutput("PA002", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2))),
       PossiblyCompoundHetOutput("PA002", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2))),
@@ -207,7 +238,6 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
 
   }
-
 
 
 }

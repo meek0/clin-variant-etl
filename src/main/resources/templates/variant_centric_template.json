@@ -234,6 +234,10 @@
               "type": "keyword",
               "index": false
             },
+            "analysis_service_request_id": {
+              "type": "keyword",
+              "index": false
+            },
             "sample_id": {
               "type": "keyword",
               "index": false

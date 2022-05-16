@@ -1,10 +1,10 @@
 package bio.ferlab.clin.etl.fhir
 
+import bio.ferlab.clin.etl.fhir.FhirToNormalizedETL.getSchema
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithSparkSession
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
 import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -18,10 +18,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
   "clinicalImpression raw job" should "return data in the expected format" in {
     val inputDs = conf.getDataset("raw_clinical_impression")
-
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/ClinicalImpression/ClinicalImpression_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_clinical_impression")).json("src/test/resources/raw/landing/fhir/ClinicalImpression/ClinicalImpression_0_19000101_000000.json")
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 7
@@ -32,31 +31,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
   }
 
-  "group raw job" should "return data in the expected format" in {
-
-    val inputDs = conf.getDataset("raw_group")
-
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Group/Group_0_19000101_130549.json")
-
-    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
-    val output = job.transform(Map(inputDs.id -> inputDf))
-
-    output.count() shouldBe 6
-    val head = output.where(col("id") === "ASHK-A").as[GroupOutput].head()
-    head shouldBe GroupOutput()
-      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
-
-  }
-
   "observation raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_observation")
 
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Observation/Observation_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_observation")).json("src/test/resources/raw/landing/fhir/Observation/Observation_0_19000101_000000.json")
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 4
@@ -67,13 +48,13 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
   }
 
-  "organziation raw job" should "return data in the expected format" in {
+  "organization raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_organization")
 
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Organization/Organization_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_organization")).json("src/test/resources/raw/landing/fhir/Organization/Organization_0_19000101_000000.json")
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 8
@@ -87,10 +68,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
     val inputDs = conf.getDataset("raw_patient")
 
-    val inputDf = spark.read
-      .json("src/test/resources/raw/landing/fhir/Patient/Patient_1_19000101_102715.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_patient")).json("src/test/resources/raw/landing/fhir/Patient/Patient_1_19000101_102715.json")
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 3
@@ -104,9 +84,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
 
     val inputDs = conf.getDataset("raw_practitioner")
 
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Practitioner/Practitioner_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_practitioner")).json("src/test/resources/raw/landing/fhir/Practitioner/Practitioner_0_19000101_000000.json")
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 2
@@ -120,9 +100,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
   "practitioner role raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_practitioner_role")
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/PractitionerRole/PractitionerRole_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_practitioner_role")).json("src/test/resources/raw/landing/fhir/PractitionerRole/PractitionerRole_0_19000101_000000.json")
     val output = job.transform(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 2
@@ -136,25 +116,32 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
   "service request raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_service_request")
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/ServiceRequest/ServiceRequest_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_service_request")).json("src/test/resources/raw/landing/fhir/ServiceRequest/service_request_with_family.json")
     val result = job.transform(Map(inputDs.id -> inputDf))
 
-    result.count() shouldBe 4
-    val head = result.where("id='SR0095'").as[ServiceRequestOutput].head()
-    head shouldBe ServiceRequestOutput()
-      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `note` = head.`note`)
+    result.count() shouldBe 2
+    val analysisServiceRequest = result.where("id='2908'").as[ServiceRequestOutput].head()
+    analysisServiceRequest shouldBe ServiceRequestOutput()
+      .copy(`ingestion_file_name` = analysisServiceRequest.`ingestion_file_name`, `ingested_on` = analysisServiceRequest.`ingested_on`,
+        `updated_on` = analysisServiceRequest.`updated_on`, `created_on` = analysisServiceRequest.`created_on`, `note` = analysisServiceRequest.`note`)
+    val sequencingServiceRequest = result.where("id='2916'").as[ServiceRequestOutput].head()
+    sequencingServiceRequest shouldBe ServiceRequestOutput(id = "2916",
+      `ingestion_file_name` = analysisServiceRequest.`ingestion_file_name`, `ingested_on` = analysisServiceRequest.`ingested_on`,
+      `updated_on` = analysisServiceRequest.`updated_on`, `created_on` = analysisServiceRequest.`created_on`, `note` = analysisServiceRequest.`note`,
+      `specimens` = Some(List("2923", "2924")), patient_id = "2919", family = None, `clinical_impressions` = None,
+      service_request_type = "sequencing", analysis_service_request_id = Some("2908"), family_id = None)
 
   }
 
   "specimen raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_specimen")
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Specimen/Specimen_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_specimen")).json("src/test/resources/raw/landing/fhir/Specimen/Specimen_0_19000101_000000.json")
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+
     val result = job.transform(Map(inputDs.id -> inputDf))
 
     result.count() shouldBe 7
@@ -168,9 +155,9 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithSparkSession 
   "task raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_task")
-    val inputDf = spark.read.json("src/test/resources/raw/landing/fhir/Task/Task_0_19000101_000000.json")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = new RawToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_task")).json("src/test/resources/raw/landing/fhir/Task/Task_0_19000101_000000.json")
+    val job = new FhirToNormalizedETL(src, dst, mapping)
     val result = job.transform(Map(inputDs.id -> inputDf)).where("id='109351'")
 
     result.count() shouldBe 1
