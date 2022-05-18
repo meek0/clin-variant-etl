@@ -15,7 +15,7 @@ object FhirRawToNormalized extends SparkApp {
       .filter { case (_, dst, _) => (jobName == "all") || jobName == dst.id }
       .map { case (src, dst, transformations) =>
         dst.table.map(_.database).foreach(database => spark.sql(s"CREATE DATABASE IF NOT EXISTS $database"))
-        new RawToNormalizedETL(src, dst, transformations)
+        new FhirToNormalizedETL(src, dst, transformations)
       }
 
   jobs.foreach(_.run(steps))

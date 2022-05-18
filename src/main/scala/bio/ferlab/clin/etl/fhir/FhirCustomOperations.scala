@@ -9,10 +9,13 @@ import org.apache.spark.sql.{Column, DataFrame}
 object FhirCustomOperations {
 
   case class REFERENCE(reference: String)
+
   case class ENTITY(entity: REFERENCE)
+
   val extractmemberUdf: UserDefinedFunction = udf { entities: Seq[ENTITY] => entities.map(_.entity.reference.replace("Patient/", "")) }
 
-  val patient_id: Column = regexp_replace(col("subject.reference"), "Patient/", "")
+  val patientReference: Column => Column = patientIdColumn => regexp_replace(patientIdColumn, "Patient/", "")
+  val patient_id: Column = patientReference(col("subject.reference"))
   val practitioner_id: Column = regexp_replace(col("assessor.reference"), "Practitioner/", "")
   val organization_id: Column = regexp_replace(col("organization.reference"), "Organization/", "")
 
@@ -29,8 +32,8 @@ object FhirCustomOperations {
             .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
               collect_set(col("phone_numbers")) as "phone_numbers",
-              df.drop("id", INGESTION_TIMESTAMP, "telecom", "phones").columns.map(c => first(c) as c):+
-                (collect_set(col("email_addresses")) as "email_addresses"):_*
+              df.drop("id", INGESTION_TIMESTAMP, "telecom", "phones").columns.map(c => first(c) as c) :+
+                (collect_set(col("email_addresses")) as "email_addresses"): _*
             )
         }
     }
@@ -38,28 +41,28 @@ object FhirCustomOperations {
     def extractIdentifier(codeList: List[(String, String)]): DataFrame = {
       val explodedDf = df.withColumn("identifier", explode(col("identifier")))
 
-      val withColumnDf = codeList.foldLeft(explodedDf){ case (d, (code, destColumn)) =>
+      val withColumnDf = codeList.foldLeft(explodedDf) { case (d, (code, destColumn)) =>
         d.withColumn(destColumn, when(col("identifier.type.coding.code")(0).isin(code), col("identifier.value")))
       }
       val dfWithIdentifiers = codeList match {
-        case head::Nil =>
+        case head :: Nil =>
           withColumnDf
             .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
               max(head._2) as head._2,
-              df.drop("id", INGESTION_TIMESTAMP, "identifier").columns.map(c => first(c) as c):_*
+              df.drop("id", INGESTION_TIMESTAMP, "identifier").columns.map(c => first(c) as c): _*
             )
-        case head::tail =>
+        case head :: tail =>
           withColumnDf
             .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
               max(head._2) as head._2,
               df.drop("id", INGESTION_TIMESTAMP, "identifier").columns.map(c => first(c) as c) ++
-                tail.map(t => max(t._2) as t._2):_*
+                tail.map(t => max(t._2) as t._2): _*
             )
       }
 
-      val dfWithNulls = codeList.foldLeft(df.where(col("identifier").isNull)){ case (d, (code, destColumn)) =>
+      val dfWithNulls = codeList.foldLeft(df.where(col("identifier").isNull)) { case (d, (code, destColumn)) =>
         d.withColumn(destColumn, lit(null).cast(StringType))
       }
 
@@ -120,33 +123,25 @@ object FhirCustomOperations {
             .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
               max("family_id") as "family_id",
-              df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c):+
-                (max("is_proband") as "is_proband"):+
-                (max("is_fetus") as "is_fetus"):+
-                (collect_list("family_relationship") as "family_relationship"):_*
+              df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c) :+
+                (max("is_proband") as "is_proband") :+
+                (max("is_fetus") as "is_fetus") :+
+                (collect_list("family_relationship") as "family_relationship"): _*
             )
         }
     }
 
     def withServiceRequestExtension: DataFrame = {
-      df.where(col("extension").isNull)
-        .drop("extension")
-        .withColumn("clinical_impression_id", lit(null).cast(StringType))
-        .withColumn("is_submitted", lit(null).cast(BooleanType))
-        .unionByName {
-          df.withColumn("extension", explode(col("extension")))
-            .withColumn("clinical_impression_id",
-              when(col("extension.url").like("%/ref-clin-impression"),
-                regexp_replace(col("extension.valueReference.reference"), "ClinicalImpression/", "")))
-            .withColumn("is-submitted",
-              when(col("extension.url").like("%/is-submitted"), col("extension.valueBoolean")))
-            .groupBy("id")
-            .agg(
-              max("clinical_impression_id") as "clinical_impression_id",
-              df.drop("id", "extension").columns.map(c => first(c) as c):+
-                (max("is-submitted") as "is_submitted"):_*
-            )
-        }
+      df.withColumn("family_extensions", filter(col("extension"), e => e("url") === "http://fhir.cqgc.ferlab.bio/StructureDefinition/family-member"))
+        .withColumn("family", aggregate(col("family_extensions"), struct(lit(null).cast("string").as("mother"), lit(null).cast("string").as("father")), (comb, current) => {
+          val currentExtension = current("extension")
+          val relationship = filter(currentExtension, ext => ext("url") === "parent-relationship")(0)
+          val member = filter(currentExtension, ext => ext("url") === "parent")(0)
+          when(relationship("valueCoding")("code") === "MTH", struct(patientReference(member("valueReference")("reference")) as "mother", comb("father") as "father"))
+            .when(relationship("valueCoding")("code") === "FTH", struct(comb("mother") as "mother", patientReference(member("valueReference")("reference")) as "father"))
+            .otherwise(comb)
+        }))
+        .drop("family_extensions")
     }
 
     def withObservationExtension: DataFrame = {
@@ -165,8 +160,8 @@ object FhirCustomOperations {
             .groupBy("id")
             .agg(
               max(age_at_onset) as age_at_onset,
-              df.drop("id", "extension").columns.map(c => first(c) as c):+
-                (max(hpo_category) as hpo_category):_*
+              df.drop("id", "extension").columns.map(c => first(c) as c) :+
+                (max(hpo_category) as hpo_category): _*
             )
         }
     }
@@ -183,8 +178,8 @@ object FhirCustomOperations {
             .groupBy("id", INGESTION_TIMESTAMP)
             .agg(
               max(destColName) as destColName,
-              df.drop("id", INGESTION_TIMESTAMP, sourceColumn).columns.map(c => first(c) as c):+
-                (collect_set(col(sourceColumn)) as sourceColumn):_*
+              df.drop("id", INGESTION_TIMESTAMP, sourceColumn).columns.map(c => first(c) as c) :+
+                (collect_set(col(sourceColumn)) as sourceColumn): _*
             )
         }
     }
@@ -205,6 +200,7 @@ object FhirCustomOperations {
       df.withColumn("version_id", col("meta.versionId"))
         .withColumn("updated_on", to_timestamp(col("meta.lastUpdated"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz"))
         .withColumn("created_on", col("updated_on"))
+        .withColumn("profile", col("meta.profile"))
     }
   }
 

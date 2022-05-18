@@ -3,13 +3,13 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirCustomOperations._
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.transformation._
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{when, _}
 
 object FhirRawToNormalizedMappings {
   val INPUT_FILENAME = "ingestion_file_name"
   val INGESTION_TIMESTAMP = "ingested_on"
 
-  val defaultTransformations: List[Transformation]  = List(
+  val defaultTransformations: List[Transformation] = List(
     InputFileName(INPUT_FILENAME),
     InputFileTimestamp(INGESTION_TIMESTAMP),
     KeepFirstWithinPartition(Seq("id"), col(INGESTION_TIMESTAMP).desc_nulls_last),
@@ -27,24 +27,12 @@ object FhirRawToNormalizedMappings {
         .withColumn("patient_id", patient_id)
         .withColumn("practitioner_id", practitioner_id)
         .withColumn("age_at_event_in_days", col("extension")(0)("valueAge")("value"))
+        .withColumn("observation_items", filter(flatten(col("investigation.item"))("reference"), i => i like "Observation/%"))
+        .withColumn("observations", transform(col("observation_items"), c => regexp_replace(c, "Observation/", "")))
     ),
     Drop("assessor", "subject", "extension")
   )
 
-  val groupMappings: List[Transformation] = List(
-    Custom(
-      _
-        //.withColumnRenamed("id", "group_id")
-        .withColumn("members", transform(col("member"), c =>
-          struct(
-            regexp_replace(c("entity")("reference"), "Patient/", "") as "patient_id",
-            when(c("extension")(0)("valueCoding")("display") === "Affected", lit(true)).otherwise(lit(false)) as "affected_status"
-          ))
-        )
-        .withColumn("family_structure_code", col("extension")(0)("valueCoding")("code"))
-    ),
-    Drop("member", "extension")
-  )
 
   val observationMappings: List[Transformation] = List(
     Custom(
@@ -59,7 +47,7 @@ object FhirRawToNormalizedMappings {
         .withColumn("interpretation_code", col("interpretation.coding.code")(0))
         .withColumn("interpretation_description", col("interpretation.coding.display")(0))
         .withColumn("note", transform(col("note"), c => c("text")))
-        //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
+      //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
     ),
     Drop("extension", "code", "interpretation", "valueCodeableConcept", "subject", "category", "valueBoolean", "valueString")
   )
@@ -74,20 +62,19 @@ object FhirRawToNormalizedMappings {
     Drop("type", "coding")
   )
 
-  val patientMappings: List[Transformation]  = List(
+  val patientMappings: List[Transformation] = List(
     Custom(_.withColumnRenamed("birthDate", "birth_date")),
     ToDate("yyyy-MM-dd", "birth_date"),
-    Custom (
+    Custom(
       _
         .withColumn("organization_id", regexp_replace(col("identifier")(0)("assigner")("reference"), "Organization/", ""))
         .extractIdentifier(List("MR" -> "medical_record_number", "JHN" -> "jurisdictional_health_number"))
         .withColumn("practitioner_role_id", regexp_replace(col("generalPractitioner.reference")(0), "PractitionerRole/", ""))
-        .withPatientExtension
     ),
     Drop("name", "text", "extension", "generalPractitioner", "identifier")
   )
 
-  val practitionerMappings: List[Transformation]  = List(
+  val practitionerMappings: List[Transformation] = List(
     Custom(
       _
         //.withColumnRenamed("id", "practitioner_id")
@@ -102,7 +89,7 @@ object FhirRawToNormalizedMappings {
     Drop("name", "identifier")
   )
 
-  val practitionerRoleMappings: List[Transformation]  = List(
+  val practitionerRoleMappings: List[Transformation] = List(
     Custom(
       _
         .withTelecoms
@@ -117,29 +104,41 @@ object FhirRawToNormalizedMappings {
     Drop("meta", "telecoms", "code", "practitioner", "organization")
   )
 
-  val serviceRequestMappings: List[Transformation]  = List(
+  val serviceRequestMappings: List[Transformation] = List(
     Custom(_.withColumnRenamed("authoredOn", "authored_on")),
     ToDate("yyyy-MM-dd", "authored_on"),
-    Custom(
-      _
-        //.extractIdentifier(List("MR" -> "medical_record_number"))
-        .withColumn("specimens", transform(col("specimen"), c => regexp_replace(c("reference"), "Specimen/", "")))
-        .withColumn("service_request_code", regexp_replace(col("code.coding.code")(0), "\\W+", "_"))
-        .withColumn("service_request_description", col("code.coding.display")(0))
-        .withColumn("patient_id", patient_id)
-        .withColumn("practitioner_id", regexp_replace(col("requester.reference"), "Practitioner/", ""))
+    Custom { input =>
+      val df = input
+          .withColumn("family_identifier", filter(col("identifier"), i=> i("system") === "https://cqgc.qc.ca/family"))
+          .withColumn("family_id", col("family_identifier.value")(0))
+          .drop("family_identifier")
+          .extractIdentifier(List("MR" -> "medical_record_number"))
+          .withColumn("specimens", transform(col("specimen"), c => regexp_replace(c("reference"), "Specimen/", "")))
+          .withColumn("service_request_code", regexp_replace(col("code.coding.code")(0), "\\W+", "_"))
+          .withColumn("service_request_description", col("code.coding.display")(0))
+          .withColumn("patient_id", patient_id)
+          .withColumn("practitioner_id", regexp_replace(col("requester.reference"), "Practitioner/", ""))
+          .withColumn("practitioner_id", lit(null).cast("string"))
+          .withColumn("note", transform(col("note"), c =>
+            struct(
+              c("text").as("text"),
+              to_timestamp(c("time"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz").as("time"),
+              regexp_replace(c("authorReference")("reference"), "Practitioner/", "").as("practitioner_id")
+            )))
+          .withColumn("analysis_service_request_id", regexp_replace(col("basedOn.reference")(0), "ServiceRequest/", ""))
+          .withColumn("clinical_impressions", transform(col("supportingInfo.reference"), si => regexp_replace(si, "ClinicalImpression/", "")))
         .withServiceRequestExtension
-        .withColumn("note", transform(col("note"), c =>
-          struct(
-            c("text").as("text"),
-            to_timestamp(c("time"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz").as("time"),
-            regexp_replace(c("authorReference")("reference"), "Practitioner/", "").as("practitioner_id")
-          )))
-    ),
-    Drop("meta", "code", "subject", "requester", "extension", "specimen")
+        .withColumn("service_request_type",
+          when(array_contains(col("profile"), "http://fhir.cqgc.ferlab.bio/StructureDefinition/cqgc-sequencing-request"), "sequencing")
+            .when(array_contains(col("profile"), "http://fhir.cqgc.ferlab.bio/StructureDefinition/cqgc-analysis-request"), "analysis")
+            .otherwise(lit(null).cast("string"))
+        )
+      df
+    },
+      Drop("meta", "code", "subject", "extension", "specimen", "basedOn", "supportingInfo")
   )
 
-  val specimenMapping: List[Transformation]  = List(
+  val specimenMapping: List[Transformation] = List(
     Custom(_
       .withColumn("parent_id", regexp_replace(col("parent.reference")(0), "Specimen/", ""))
       .withColumn("organization_id", regexp_replace(col("accessionIdentifier.assigner.reference"), "Organization/", ""))
@@ -153,7 +152,7 @@ object FhirRawToNormalizedMappings {
     Drop("meta", "parent", "subject", "receivedTime", "accessionIdentifier", "request", "type")
   )
 
-  val taskMapping: List[Transformation]  = List(
+  val taskMapping: List[Transformation] = List(
     Custom(_
       .withColumn("analysis_code", col("code")("coding")(0)("code"))
       .withColumn("service_request_id", regexp_replace(col("focus")("reference"), "ServiceRequest/", ""))
@@ -174,14 +173,13 @@ object FhirRawToNormalizedMappings {
 
   def mappings(implicit c: Configuration): List[(DatasetConf, DatasetConf, List[Transformation])] = List(
     (c.getDataset("raw_clinical_impression"), c.getDataset("normalized_clinical_impression"), defaultTransformations ++ clinicalImpressionMappings),
-    (c.getDataset("raw_group")              , c.getDataset("normalized_group")              , defaultTransformations ++ groupMappings),
-    (c.getDataset("raw_observation")        , c.getDataset("normalized_observation")        , defaultTransformations ++ observationMappings),
-    (c.getDataset("raw_organization")       , c.getDataset("normalized_organization")       , defaultTransformations ++ organizationMappings),
-    (c.getDataset("raw_patient")            , c.getDataset("normalized_patient")            , defaultTransformations ++ patientMappings),
-    (c.getDataset("raw_practitioner")       , c.getDataset("normalized_practitioner")       , defaultTransformations ++ practitionerMappings),
-    (c.getDataset("raw_practitioner_role")  , c.getDataset("normalized_practitioner_role")  , defaultTransformations ++ practitionerRoleMappings),
-    (c.getDataset("raw_service_request")    , c.getDataset("normalized_service_request")    , defaultTransformations ++ serviceRequestMappings),
-    (c.getDataset("raw_specimen")           , c.getDataset("normalized_specimen")           , defaultTransformations ++ specimenMapping),
-    (c.getDataset("raw_task")               , c.getDataset("normalized_task")               , defaultTransformations ++ taskMapping)
+    (c.getDataset("raw_observation"), c.getDataset("normalized_observation"), defaultTransformations ++ observationMappings),
+    (c.getDataset("raw_organization"), c.getDataset("normalized_organization"), defaultTransformations ++ organizationMappings),
+    (c.getDataset("raw_patient"), c.getDataset("normalized_patient"), defaultTransformations ++ patientMappings),
+    (c.getDataset("raw_practitioner"), c.getDataset("normalized_practitioner"), defaultTransformations ++ practitionerMappings),
+    (c.getDataset("raw_practitioner_role"), c.getDataset("normalized_practitioner_role"), defaultTransformations ++ practitionerRoleMappings),
+    (c.getDataset("raw_service_request"), c.getDataset("normalized_service_request"), defaultTransformations ++ serviceRequestMappings),
+    (c.getDataset("raw_specimen"), c.getDataset("normalized_specimen"), defaultTransformations ++ specimenMapping),
+    (c.getDataset("raw_task"), c.getDataset("normalized_task"), defaultTransformations ++ taskMapping)
   )
 }

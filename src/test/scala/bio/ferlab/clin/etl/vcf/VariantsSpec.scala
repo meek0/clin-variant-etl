@@ -24,62 +24,70 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
+  val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
+  val observation: DatasetConf = conf.getDataset("normalized_observation")
 
-  val groupDf: DataFrame = Seq(
-    GroupOutput(
-      `id` = "FM00001",
-      `members` = List(
-        MEMBERS("PA0001", `affected_status` = true),
-        MEMBERS("PA0002", `affected_status` = false),
-        MEMBERS("PA0003", `affected_status` = false)
-      ),
-      `version_id` = "5"
+  val clinicalImpressionsDf = Seq(
+    ClinicalImpressionOutput(id = "CI0001", `patient_id` = "PA0001", observations = List("OB0001", "OB0099")),
+    ClinicalImpressionOutput(id = "CI0002", `patient_id` = "PA0002", observations = List("OB0002")),
+    ClinicalImpressionOutput(id = "CI0003", `patient_id` = "PA0003", observations = List("OB0003")),
+    ClinicalImpressionOutput(id = "CI0004", `patient_id` = "PA0004", observations = List("OB0004"))
+  ).toDF()
+
+  val observationsDf = Seq(
+    ObservationOutput(id = "OB0001", patient_id = "PA0001", `observation_code` = "DSTA", `interpretation_code` = "POS"),
+    ObservationOutput(id = "OB0099", patient_id = "PA0001", `observation_code` = "OTHER", `interpretation_code` = "POS"),
+    ObservationOutput(id = "OB0002", patient_id = "PA0002", `observation_code` = "DSTA", `interpretation_code` = "NEG"),
+    ObservationOutput(id = "OB0003", patient_id = "PA0003", `observation_code` = "DSTA", `interpretation_code` = "NEG"),
+    ObservationOutput(id = "OB0004", patient_id = "PA0004", `observation_code` = "DSTA", `interpretation_code` = "POS"),
+  ).toDF()
+  val serviceRequestDf: DataFrame = Seq(
+    ServiceRequestOutput(service_request_type = "analysis", `id` = "SRA0001", `patient_id` = "PA0001",
+      family = Some(FAMILY(mother = Some("PA0003"), father = Some("PA0002"))),
+      family_id = Some("FM00001"),
+      `clinical_impressions` = Some(Seq("CI0001", "CI0002", "CI0003")),
+      `service_request_description` = Some("Maladies musculaires (Panel global)")
     ),
-    GroupOutput(
-      `id` = "FM00001",
-      `members` = List(
-        MEMBERS("PA0001", `affected_status` = true),
-        MEMBERS("PA0002", `affected_status` = false),
-        MEMBERS("PA0003", `affected_status` = true)
-      ),
-      `version_id` = "4"
+    ServiceRequestOutput(service_request_type = "analysis", `id` = "SRA0002", `patient_id` = "PA0004",
+      family = None,
+      family_id = Some("FM00002"),
+      `clinical_impressions` = Some(Seq("CI0004")),
+      `service_request_description` = Some("Maladies musculaires (Panel global)")
     ),
-    GroupOutput(
-      `id` = "FM00001",
-      `members` = List(
-        MEMBERS("PA0004", `affected_status` = true)
-      )
-    )
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0001", `patient_id` = "PA0001", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0002", `patient_id` = "PA0002", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0003", `patient_id` = "PA0003", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
+    ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0004", `patient_id` = "PA0004", analysis_service_request_id = Some("SRA0002"), `service_request_description` = Some("Maladies musculaires (Panel global)"))
   ).toDF()
 
   val taskDf: DataFrame = Seq(
     TaskOutput(
       `id` = "73254",
       `patient_id` = "PA0001",
+      `service_request_id` = "SRS0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`aliquot_id` = "1")
     ),
     TaskOutput(
       `id` = "73255",
       `patient_id` = "PA0002",
+      `service_request_id` = "SRS0002",
       `experiment` = EXPERIMENT(`aliquot_id` = "2")
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0003",
+      `service_request_id` = "SRS0003",
       `experiment` = EXPERIMENT(`aliquot_id` = "3")
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0004",
-      `experiment` = EXPERIMENT(`aliquot_id` = "3")
+      `service_request_id` = "SRS0004",
+      `experiment` = EXPERIMENT(`aliquot_id` = "4")
     )
   ).toDF
 
-  val serviceRequestDf: DataFrame = Seq(
-    ServiceRequestOutput(),
-    ServiceRequestOutput(`id` = "111")
-  ).toDF()
 
   val job1 = new Variants("BAT1")
   val job2 = new Variants("BAT2")
@@ -100,7 +108,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
           GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1))
         )
     )).toDF(),
-    group.id -> groupDf,
+    clinical_impression.id -> clinicalImpressionsDf,
+    observation.id -> observationsDf,
     task.id -> taskDf,
     service_request.id -> serviceRequestDf
   )
@@ -111,7 +120,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     val result = resultDf.as[NormalizedVariants].collect().head
 
     result shouldBe NormalizedVariants(
-      `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MM_PG","Maladies musculaires (Panel global)",Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1))),
+
+      `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG","Maladies musculaires (Panel global)",Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1))),
       `frequency_RQDM` = AnalysisFrequencies(Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1)),
       `created_on` = result.`created_on`)
   }
