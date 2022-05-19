@@ -16,7 +16,6 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
   def raw_variant_calling: DatasetConf
 
   val patient: DatasetConf = conf.getDataset("normalized_patient")
-  val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
@@ -29,7 +28,6 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
         .where(col("contigName").isin(validContigNames: _*)),
       patient.id -> patient.read,
-      group.id -> group.read,
       task.id -> task.read,
       service_request.id -> service_request.read,
       clinical_impression.id -> clinical_impression.read,

@@ -26,8 +26,7 @@ class FhirToNormalizedETL(override val source: DatasetConf,
 
 object FhirToNormalizedETL{
   def getSchema(schema: String): StructType = {
-    val url = ClassLoader.getSystemResource(s"fhir_schemas/$schema.json")
-    val schemaSource = Source.fromFile(url.getFile).getLines.mkString
+    val schemaSource = Source.fromResource(s"fhir_schemas/$schema.json").getLines.mkString
     val schemaFromJson = DataType.fromJson(schemaSource).asInstanceOf[StructType]
     schemaFromJson
   }
