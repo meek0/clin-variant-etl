@@ -90,6 +90,42 @@
                       "metadata": {}
                     },
                     {
+                      "name": "valueCodeableConcept",
+                      "type": {
+                        "type": "struct",
+                        "fields": [
+                          {
+                            "name": "coding",
+                            "type": {
+                              "type": "array",
+                              "elementType": {
+                                "type": "struct",
+                                "fields": [
+                                  {
+                                    "name": "code",
+                                    "type": "string",
+                                    "nullable": true,
+                                    "metadata": {}
+                                  },
+                                  {
+                                    "name": "system",
+                                    "type": "string",
+                                    "nullable": true,
+                                    "metadata": {}
+                                  }
+                                ]
+                              },
+                              "containsNull": true
+                            },
+                            "nullable": true,
+                            "metadata": {}
+                          }
+                        ]
+                      },
+                      "nullable": true,
+                      "metadata": {}
+                    },
+                    {
                       "name": "valueCoding",
                       "type": {
                         "type": "struct",
