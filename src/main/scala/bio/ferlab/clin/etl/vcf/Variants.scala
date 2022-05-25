@@ -1,13 +1,13 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
-import bio.ferlab.clin.etl.utils.FrequencyUtils.isFilterPass
+import bio.ferlab.clin.etl.utils.FrequencyUtils.frequencyFilter
 import bio.ferlab.clin.etl.vcf.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
@@ -38,12 +38,14 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
-    val clinicalInfos = getClinicalInfo(data)
 
     val variants = getVariants(data(raw_variant_calling.id))
+    val clinicalInfos = getClinicalInfo(data)
+    val variantsForFrequencies = getVariantsForFrequency(data(raw_variant_calling.id))
       .join(clinicalInfos, Seq("aliquot_id"))
 
-    variantsWithFrequencies(variants)
+    variantsWithFrequencies(variantsForFrequencies)
+      .joinByLocus(variants, "right")
       .withColumn("batch_id", lit(batchId))
       .withColumn("created_on", current_timestamp())
 
@@ -53,27 +55,40 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     vcf
       .withColumn("annotation", firstCsq)
       .select(
-        explode(col("genotypes")) as "genotype",
         chromosome,
         start,
         end,
         reference,
         alternate,
         name,
-        is_multi_allelic,
-        old_multi_allelic,
         array_distinct(csq("symbol")) as "genes_symbol",
         hgvsg,
         variant_class,
-        pubmed,
+        pubmed
+      )
+      .drop("annotation")
+      .withColumn("variant_type", lit("germline"))
+  }
+
+  def getVariantsForFrequency(vcf: DataFrame): DataFrame = {
+    vcf
+      .withColumn("annotation", firstCsq)
+      .select(
+        explode(col("genotypes")) as "genotype",
+        chromosome,
+        start,
+        reference,
+        alternate,
         flatten(functions.transform(col("INFO_FILTERS"), c => split(c, ";"))) as "filters"
       )
-      .filter(isFilterPass)
-      .withColumn("variant_type", lit("germline"))
+      .withColumn("ad", col("genotype.alleleDepths" ))
+      .withColumn("ad_alt", col("ad")(1))
+      .withColumn("gq", col("genotype.conditionalQuality"))
+      .filter(frequencyFilter)
       .withColumn("aliquot_id", col("genotype.sampleId"))
       .withColumn("calls", col("genotype.calls"))
       .withColumn("zygosity", zygosity(col("calls")))
-      .drop("annotation", "genotype")
+      .drop("genotype", "filters")
   }
 
   def variantsWithFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {

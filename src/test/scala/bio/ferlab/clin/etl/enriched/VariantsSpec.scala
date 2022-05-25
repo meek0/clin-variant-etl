@@ -87,19 +87,19 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   val expectedDonors =
     List(
-      DONORS(1, 2, List(0, 1), 8.07, true,List("PASS"),0,1,1,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
-      DONORS(1, 2, List(0, 1), 8.07, true,List("PASS"),0,1,1,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
+      DONORS(1, 30, List(0, 1), 8.07, true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
+      DONORS(1, 30, List(0, 1), 8.07, true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
   )
 
   val expectedFrequencies = Map("MN-PG" -> Map("affected" -> Frequency(), "total" -> Frequency()))
 
   "variants job" should "aggregate frequencies from normalized_variants" in {
 
-    val occurrencesDf: DataFrame = Seq(
-      NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = true , `patient_id` = "1"),
-      NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = false, `patient_id` = "2"),
-      NormalizedSNV(`analysis_code` = "ACHO" ,`affected_status` = true , `patient_id` = "3"),
-      NormalizedSNV(`analysis_code` = "ACHO" ,`affected_status` = true , `patient_id` = "4")
+      val occurrencesDf: DataFrame = Seq(
+      NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = true , `patient_id` = "1", ad_alt=30),
+      NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = false, `patient_id` = "2", ad_alt=30),
+      NormalizedSNV(`analysis_code` = "ACHO" ,`affected_status` = true , `patient_id` = "3", ad_alt=30),
+      NormalizedSNV(`analysis_code` = "ACHO" ,`affected_status` = true , `patient_id` = "4", ad_alt=30)
     ).toDF
 
     val variantDf = Seq(
@@ -164,7 +164,6 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   }
 
   "variants job" should "run" in {
-
     new Variants().run(RunStep.initial_load)
 
     val resultDf = spark.table("clin.variants")
