@@ -56,9 +56,9 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val occurrences = data(normalized_snv.id)
       .where(includeFilter)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
-      //.drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
-      //  "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
-      //  "batch_id", "last_update")
+    //.drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
+    //  "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
+    //  "batch_id", "last_update")
 
     val participantCount =
       occurrences
@@ -124,10 +124,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     struct(
       sum(col(s"$prefix.ac")) as "ac",
       first(s"${group}_pn") * 2 as "an",
-      coalesce(sum(col(s"$prefix.ac"))/sum(col(s"$prefix.an")), lit(0.0)) as "af",
+      coalesce(sum(col(s"$prefix.ac")) / sum(col(s"$prefix.an")), lit(0.0)) as "af",
       sum(col(s"$prefix.pc")) as "pc",
       first(s"${group}_pn") as "pn",
-      coalesce(sum(col(s"$prefix.pc"))/sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
+      coalesce(sum(col(s"$prefix.pc")) / sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
       sum(col(s"$prefix.hom")) as "hom"
     ) as s"$group"
   }
@@ -136,10 +136,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     struct(
       sum(col(s"$prefix.ac")) as "ac",
       sum(col(s"${prefix}.an")) as "an",
-      coalesce(sum(col(s"$prefix.ac"))/sum(col(s"$prefix.an")), lit(0.0)) as "af",
+      coalesce(sum(col(s"$prefix.ac")) / sum(col(s"$prefix.an")), lit(0.0)) as "af",
       sum(col(s"$prefix.pc")) as "pc",
       sum(col(s"${prefix}.pn")) as "pn",
-      coalesce(sum(col(s"$prefix.pc"))/sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
+      coalesce(sum(col(s"$prefix.pc")) / sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
       sum(col(s"$prefix.hom")) as "hom"
     ) as s"$prefix"
   }
@@ -150,10 +150,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       "variant_class", "pubmed", "variant_type", "created_on").map(col)
 
     variants
-      .withColumn( "variant", struct(variantColumns:_*))
+      .withColumn("variant", struct(variantColumns: _*))
       .withColumn("frequency_by_analysis", explode($"frequencies_by_analysis"))
       .join(participantCount, col("analysis_code") === col("frequency_by_analysis.analysis_code"))
-      .groupBy(locus :+ $"frequency_by_analysis.analysis_code":_*)
+      .groupBy(locus :+ $"frequency_by_analysis.analysis_code": _*)
       .agg(
         first($"affected_pn") as "affected_pn",
         first($"non_affected_pn") as "non_affected_pn",
@@ -195,7 +195,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate").columns.map(col)
     val donors = occurrences
       .groupByLocus()
-      .agg(filter(collect_list(struct(donorColumns:_*)), c => c("has_alt")) as "donors")
+      .agg(filter(collect_list(struct(donorColumns: _*)), c => c("has_alt")) as "donors")
     variants
       .joinByLocus(donors, "inner")
   }
@@ -226,9 +226,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   }
 
   def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    //We first take rsnumber from variants.name, and then from dbsnp if variants.name is null
     variants
       .joinByLocus(dbsnp, "left")
-      .select(variants.drop("name")("*"), dbsnp("name") as "rsnumber")
+      .select(variants.drop("name")("*"), coalesce(variants("name"), dbsnp("name")) as "rsnumber")
   }
 
   def joinWithClinvar(variants: DataFrame, clinvar: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -276,7 +277,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     variants
       .join(panels, array_contains(variants("genes_symbol"), panels("symbol")), "left")
       .groupByLocus()
-      .agg(array_distinct(flatten(collect_list(col("panels")))) as "panels", variantColumns:_*)
+      .agg(array_distinct(flatten(collect_list(col("panels")))) as "panels", variantColumns: _*)
       .drop("symbol", "version")
   }
 
