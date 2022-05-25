@@ -54,7 +54,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     import spark.implicits._
 
     val occurrences = data(normalized_snv.id)
-      .where(includeFilter)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
     //.drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
     //  "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",

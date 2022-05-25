@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
+import bio.ferlab.clin.etl.utils.FrequencyUtils.includeFilter
 import bio.ferlab.clin.etl.vcf.SNV.{getCompoundHet, getPossiblyCompoundHet, getSNV}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -97,6 +98,7 @@ object SNV {
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
+      .where(includeFilter)
       .drop("annotation")
   }
 
