@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.clin.etl.utils.FrequencyUtils.isFilterPass
+import bio.ferlab.clin.etl.utils.FrequencyUtils.{includeFilter, frequencyFilter}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -33,7 +33,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_variants.id -> normalized_variants.read,
-      normalized_snv.id -> normalized_snv.read.filter(isFilterPass),
+      normalized_snv.id -> normalized_snv.read.filter(frequencyFilter),
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
@@ -54,6 +54,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     import spark.implicits._
 
     val occurrences = data(normalized_snv.id)
+      .where(includeFilter)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
       //.drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
       //  "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
@@ -145,7 +146,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val variantColumns = List("end", "name", "is_multi_allelic", "old_multi_allelic", "genes_symbol", "hgvsg",
+    val variantColumns = List("end", "name", "genes_symbol", "hgvsg",
       "variant_class", "pubmed", "variant_type", "created_on").map(col)
 
     variants

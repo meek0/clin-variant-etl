@@ -231,12 +231,10 @@
               "type": "keyword"
             },
             "service_request_id": {
-              "type": "keyword",
-              "index": false
+              "type": "keyword"
             },
             "analysis_service_request_id": {
-              "type": "keyword",
-              "index": false
+              "type": "keyword"
             },
             "sample_id": {
               "type": "keyword",
@@ -752,9 +750,6 @@
         },
         "hgvsg": {
           "type": "keyword"
-        },
-        "is_multi_allelic": {
-          "type": "boolean"
         },
         "last_annotation_update": {
           "type": "long"

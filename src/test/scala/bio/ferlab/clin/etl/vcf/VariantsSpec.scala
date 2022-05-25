@@ -105,9 +105,22 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
           GENOTYPES(`sampleId` = "1", `calls` = List(1, 1)),
           GENOTYPES(`sampleId` = "2", `calls` = List(1, 0)),
           GENOTYPES(`sampleId` = "3", `calls` = List(0, 0)),
-          GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1))
-        )
-    )).toDF(),
+          GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1)),
+
+        )),
+      VCFInput(
+        referenceAllele = "G",
+        `genotypes` = List(
+          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `alleleDepths` = List(10, 0)), //Should not be included in frequencies
+          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `conditionalQuality` = 10) //Should not be included in frequencies
+        )),
+      VCFInput(
+        referenceAllele = "A",
+        INFO_FILTERS = List("DRAGENHardQUAL;LowDepth"), //Should not be included in frequencies
+        `genotypes` = List(
+          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1)),
+        ))
+    ).toDF(),
     clinical_impression.id -> clinicalImpressionsDf,
     observation.id -> observationsDf,
     task.id -> taskDf,
@@ -117,12 +130,31 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   "variants job" should "transform data in expected format" in {
 
     val resultDf = job1.transform(data)
-    val result = resultDf.as[NormalizedVariants].collect().head
+    val result = resultDf.as[NormalizedVariants].collect()
+    val variantWithFreq = result.find(_.`reference` == "T")
+    variantWithFreq.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
+      `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1))),
+      `frequency_RQDM` = AnalysisFrequencies(Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1)),
+      `created_on` = null)
+    )
 
-    result shouldBe NormalizedVariants(
+    val variantWithoutFreqG = result.find(_.`reference` == "G")
+    variantWithoutFreqG.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
+      reference= "G",
+      `frequencies_by_analysis` = null,
+      `frequency_RQDM` = null,
+      `created_on` = null)
+    )
 
-      `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG","Maladies musculaires (Panel global)",Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1))),
-      `frequency_RQDM` = AnalysisFrequencies(Frequency(2,4,0.5,1,2,0.5,1),Frequency(1,4,0.25,1,2,0.5,0),Frequency(3,8,0.375,2,4,0.5,1)),
-      `created_on` = result.`created_on`)
+    val variantWithoutFreqA = result.find(_.`reference` == "A")
+    variantWithoutFreqA.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
+      reference= "A",
+      `frequencies_by_analysis` = null,
+      `frequency_RQDM` = null,
+      `created_on` = null)
+    )
+
+
+
   }
 }
