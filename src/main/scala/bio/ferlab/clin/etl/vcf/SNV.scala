@@ -29,6 +29,8 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("father_calls", fatherCalls)
       .withColumn("mother_affected_status", motherAffectedStatus)
       .withColumn("father_affected_status", fatherAffectedStatus)
+      .withColumn("mother_gq", motherGQ)
+      .withColumn("father_gq", fatherGQ)
       .drop("family_info", "participant_id")
       .withColumn("zygosity", zygosity(col("calls")))
       .withColumn("mother_zygosity", zygosity(col("mother_calls")))
