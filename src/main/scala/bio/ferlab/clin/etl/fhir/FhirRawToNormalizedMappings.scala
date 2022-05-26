@@ -157,7 +157,7 @@ object FhirRawToNormalizedMappings {
       .withColumn("analysis_code", col("code")("coding")(0)("code"))
       .withColumn("service_request_id", regexp_replace(col("focus")("reference"), "ServiceRequest/", ""))
       .withColumn("patient_id", regexp_replace(col("for")("reference"), "Patient/", ""))
-      .withColumn("organization_id", regexp_replace(col("owner")("reference"), "Organization/", ""))
+      .withColumn("organization_id", regexp_replace(col("requester")("reference"), "Organization/", ""))
 
       .withColumn("specimen_id", regexp_replace(col("input")(0)("valueReference")("reference"), "Specimen/", ""))
       .withColumn("documents", transform(col("output"), c =>
@@ -168,7 +168,7 @@ object FhirRawToNormalizedMappings {
       .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzz"))
       .withTaskExtension
     ),
-    Drop("meta", "owner", "authoredOn", "extension", "input", "output", "focus", "for", "code")
+    Drop("meta", "requester", "authoredOn", "extension", "input", "output", "focus", "for", "code")
   )
 
   def mappings(implicit c: Configuration): List[(DatasetConf, DatasetConf, List[Transformation])] = List(

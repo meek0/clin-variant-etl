@@ -340,6 +340,22 @@
       "metadata": {}
     },
     {
+      "name": "requester",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "reference",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
       "name": "priority",
       "type": "string",
       "nullable": true,
