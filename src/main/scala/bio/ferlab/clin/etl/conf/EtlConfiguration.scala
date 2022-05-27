@@ -25,8 +25,8 @@ object EtlConfiguration extends App {
   )
 
   val clin_prd_storage = List(
-    StorageConf(clin_import, "s3a://cqgc-prd-app-files-import", S3),
-    StorageConf(clin_datalake, "s3a://cqgc-prd-app-datalake", S3)
+    StorageConf(clin_import, "s3a://cqgc-prod-app-files-import", S3),
+    StorageConf(clin_datalake, "s3a://cqgc-prod-app-datalake", S3)
   )
 
   val clin_spark_conf = Map(

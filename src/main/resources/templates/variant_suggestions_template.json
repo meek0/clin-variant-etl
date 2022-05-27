@@ -2,7 +2,8 @@
   "index_patterns": [
     "clin_qa_blue_variant_suggestions*",
     "clin_qa_green_variant_suggestions*",
-    "clin_staging_variant_suggestions*"
+    "clin_staging_variant_suggestions*",
+    "clin_prod_variant_suggestions*"
   ],
   "template": {
     "settings": {

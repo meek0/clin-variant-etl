@@ -2,8 +2,8 @@
   "index_patterns": [
     "clin_qa_blue_variant_centric*",
     "clin_qa_green_variant_centric*",
-    "clin_staging_variant_centric*"
-
+    "clin_staging_variant_centric*",
+    "clin_prod_variant_centric*"
   ],
   "template": {
     "settings": {

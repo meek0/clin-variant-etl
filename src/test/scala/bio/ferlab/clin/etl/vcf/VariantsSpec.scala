@@ -21,7 +21,6 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
-  val group: DatasetConf = conf.getDataset("normalized_group")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")

@@ -2,8 +2,8 @@
   "index_patterns": [
     "clin_qa_blue_gene_suggestions*",
     "clin_qa_green_gene_suggestions*",
-    "clin_staging_gene_suggestions*"
-
+    "clin_staging_gene_suggestions*",
+    "clin_prod_gene_suggestions*"
   ],
   "template": {
     "settings": {

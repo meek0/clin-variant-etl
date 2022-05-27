@@ -46,8 +46,6 @@ object Indexer extends App {
     .appName(s"Indexer")
     .getOrCreate()
 
-  val templatePath = s"${conf.storages.find(_.id == "clin_datalake").get.path}/jobs/templates/$templateFileName"
-
   implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, sanitizeArg(username), sanitizeArg(password))
 
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
@@ -60,7 +58,7 @@ object Indexer extends App {
 
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
-  new Indexer("index", templatePath, s"${alias}_$release_id")
+  new Indexer("index", templateFileName, s"${alias}_$release_id")
     .run(df)
 
 }
