@@ -1,12 +1,11 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.clin.etl.utils.FrequencyUtils.{includeFilter, frequencyFilter}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumNames}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -33,7 +32,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_variants.id -> normalized_variants.read,
-      normalized_snv.id -> normalized_snv.read.filter(frequencyFilter),
+      normalized_snv.id -> normalized_snv.read,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
@@ -55,9 +54,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
     val occurrences = data(normalized_snv.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
-    //.drop("is_multi_allelic", "old_multi_allelic", "name", "end", "hgvsg", "variant_class", "variant_type",
-    //  "genome_build", "analysis_display_name", "practitioner_role_id", "organization_id", "has_alt", "family_id",
-    //  "batch_id", "last_update")
 
     val participantCount =
       occurrences
@@ -145,11 +141,8 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val variantColumns = List("end", "name", "genes_symbol", "hgvsg",
-      "variant_class", "pubmed", "variant_type", "created_on").map(col)
-
+    val originalVariants = variants.select("chromosome","start", "reference", "alternate","end", "name", "genes_symbol", "hgvsg","variant_class", "pubmed", "variant_type", "created_on")
     variants
-      .withColumn("variant", struct(variantColumns: _*))
       .withColumn("frequency_by_analysis", explode($"frequencies_by_analysis"))
       .join(participantCount, col("analysis_code") === col("frequency_by_analysis.analysis_code"))
       .groupBy(locus :+ $"frequency_by_analysis.analysis_code": _*)
@@ -158,7 +151,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         first($"non_affected_pn") as "non_affected_pn",
         first($"total_pn") as "total_pn",
         first($"frequency_by_analysis.analysis_display_name", ignoreNulls = true) as "analysis_display_name",
-        first("variant") as "variant",
         max(col("batch_id")) as "batch_id",
         sumFrequenciesByAnalysis("frequency_by_analysis", "affected"),
         sumFrequenciesByAnalysis("frequency_by_analysis", "non_affected"),
@@ -166,7 +158,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       )
       .groupByLocus()
       .agg(
-        first("variant") as "variant",
         max(col("batch_id")) as "batch_id",
         collect_list(struct($"analysis_code", $"analysis_display_name", $"affected", $"non_affected", $"total")) as "frequencies_by_analysis",
         struct(
@@ -180,7 +171,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         "start",
         "reference",
         "alternate",
-        "variant.*",
         "frequencies_by_analysis",
         "frequency_RQDM",
         "batch_id"
@@ -188,6 +178,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .withColumn("assembly_version", lit("GRCh38"))
       .withColumn("last_annotation_update", current_date())
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
+      .joinByLocus(originalVariants, "right")
   }
 
   def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
