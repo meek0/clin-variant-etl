@@ -9,7 +9,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
-import java.time.LocalDateTime
+import java.time.{LocalDate, LocalDateTime}
 
 class Variants()(implicit configuration: Configuration) extends ETL {
 
@@ -142,6 +142,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val originalVariants = variants.select("chromosome","start", "reference", "alternate","end", "name", "genes_symbol", "hgvsg","variant_class", "pubmed", "variant_type", "created_on")
+    val now = LocalDate.now()
     variants
       .withColumn("frequency_by_analysis", explode($"frequencies_by_analysis"))
       .join(participantCount, col("analysis_code") === col("frequency_by_analysis.analysis_code"))
@@ -175,10 +176,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         "frequency_RQDM",
         "batch_id"
       )
-      .withColumn("assembly_version", lit("GRCh38"))
-      .withColumn("last_annotation_update", current_date())
-      .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
       .joinByLocus(originalVariants, "right")
+      .withColumn("assembly_version", lit("GRCh38"))
+      .withColumn("last_annotation_update", lit(now))
+      .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
   def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
