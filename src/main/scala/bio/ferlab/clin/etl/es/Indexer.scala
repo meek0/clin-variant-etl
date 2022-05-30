@@ -58,7 +58,7 @@ object Indexer extends App {
 
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
 
-  new Indexer("index", templateFileName, s"${alias}_$release_id")
+  new Indexer("index", s"templates/$templateFileName", s"${alias}_$release_id")
     .run(df)
 
 }
