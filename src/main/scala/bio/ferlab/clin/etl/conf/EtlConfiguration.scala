@@ -56,7 +56,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_service_request"            , clin_datalake, "/raw/landing/fhir/ServiceRequest"                       , JSON   , OverWrite),
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
-      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20220511.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20220606.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_refseq_feature"             , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_feature_table.txt.gz", CSV    , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_refseq_annotation"          , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"      , GFF    , OverWrite),
       DatasetConf("raw_mane_summary"               , clin_datalake, "/raw/landing/mane/MANE.GRCh38.v1.0.summary.txt"                      , CSV    , OverWrite, readoptions = tsv_with_headers),
