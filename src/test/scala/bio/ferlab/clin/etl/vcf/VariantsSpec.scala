@@ -130,6 +130,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
     val resultDf = job1.transform(data)
     val result = resultDf.as[NormalizedVariants].collect()
+    resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
     val variantWithFreq = result.find(_.`reference` == "T")
     variantWithFreq.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
       `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1))),

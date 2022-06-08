@@ -7,7 +7,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, locusColumnNames, vcf}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
@@ -203,14 +203,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         frequency("non_affected") as "non_affected",
         frequency("") as "total"
       ))
-      .drop("ac", "an", "pc", "pn", "hom")
-      .drop("non_affected_ac", "non_affected_an", "non_affected_pc", "non_affected_pn", "non_affected_hom")
-      .drop("affected_ac", "affected_an", "affected_pc", "affected_pn", "affected_hom")
-      .select($"variant.*",
-        $"frequencies_by_analysis",
-        $"frequency_RQDM"
-      )
-      .drop("filters", "calls", "zygosity", "patient_id", "service_request_id", "analysis_code", "analysis_display_name", "affected_status")
+      .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM":_*)
 
   }
 
