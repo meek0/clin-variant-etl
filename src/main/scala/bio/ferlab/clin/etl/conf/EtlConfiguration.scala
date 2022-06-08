@@ -37,7 +37,8 @@ object EtlConfiguration extends App {
     "spark.sql.legacy.timeParserPolicy"-> "CORRECTED",
     "spark.sql.legacy.parquet.datetimeRebaseModeInWrite" -> "CORRECTED",
     "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN",
-    "spark.sql.autoBroadcastJoinThreshold" -> "-1"
+    "spark.sql.autoBroadcastJoinThreshold" -> "-1",
+    "spark.databricks.delta.merge.repartitionBeforeWrite.enabled" -> "true"
   )
 
   val tsv_with_headers = Map("sep" -> "\t", "header" -> "true")
@@ -106,7 +107,7 @@ object EtlConfiguration extends App {
 
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))),
-      DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "variants")), keys = List("locus")),
+      DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "variants")), keys = List("chromosome", "start", "reference", "alternate")),
       DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
 
       //es index
