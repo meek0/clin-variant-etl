@@ -102,7 +102,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
       .withColumn("hash", sha1(col("locus")))
-      .withColumn("updated_on", col("created_on"))
       .withColumn(destination.oid, col("created_on"))
   }
 
@@ -114,8 +113,8 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     )
   }
 
-  private def sumFrequenciesByAnalysis(column: String, group: String): Column = {
-    val prefix = s"$column.$group"
+  private def sumFrequenciesByAnalysis(columnName: String, group: String): Column = {
+    val prefix = s"$columnName.$group"
     struct(
       sum(col(s"$prefix.ac")) as "ac",
       first(s"${group}_pn") * 2 as "an",
@@ -141,7 +140,21 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val originalVariants = variants.select("chromosome","start", "reference", "alternate","end", "name", "genes_symbol", "hgvsg","variant_class", "pubmed", "variant_type", "created_on")
+    val originalVariants = variants
+      .select("chromosome","start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
+        "variant_class", "pubmed", "variant_type", "created_on")
+      .groupByLocus()
+      .agg(
+        first("end") as "end",
+        first("name") as "name",
+        first($"genes_symbol") as "genes_symbol",
+        first($"hgvsg") as "hgvsg",
+        first($"variant_class") as "variant_class",
+        first($"pubmed") as "pubmed",
+        first($"variant_type") as "variant_type",
+        max($"created_on") as "updated_on",
+        min($"created_on") as "created_on"
+      )
     val now = LocalDate.now()
     variants
       .withColumn("frequency_by_analysis", explode($"frequencies_by_analysis"))
@@ -152,14 +165,12 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         first($"non_affected_pn") as "non_affected_pn",
         first($"total_pn") as "total_pn",
         first($"frequency_by_analysis.analysis_display_name", ignoreNulls = true) as "analysis_display_name",
-        max(col("batch_id")) as "batch_id",
         sumFrequenciesByAnalysis("frequency_by_analysis", "affected"),
         sumFrequenciesByAnalysis("frequency_by_analysis", "non_affected"),
         sumFrequenciesByAnalysis("frequency_by_analysis", "total")
       )
       .groupByLocus()
       .agg(
-        max(col("batch_id")) as "batch_id",
         collect_list(struct($"analysis_code", $"analysis_display_name", $"affected", $"non_affected", $"total")) as "frequencies_by_analysis",
         struct(
           sumFrequencies("affected"),
@@ -173,8 +184,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         "reference",
         "alternate",
         "frequencies_by_analysis",
-        "frequency_RQDM",
-        "batch_id"
+        "frequency_RQDM"
       )
       .joinByLocus(originalVariants, "right")
       .withColumn("assembly_version", lit("GRCh38"))
