@@ -102,7 +102,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
       .withColumn("hash", sha1(col("locus")))
-      .withColumn("updated_on", col("created_on"))
       .withColumn(destination.oid, col("created_on"))
   }
 
@@ -142,17 +141,18 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val originalVariants = variants
-      .select("chromosome","start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg","variant_class", "pubmed", "variant_type", "created_on", "updated_on", "batch_id")
+      .select("chromosome","start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
+        "variant_class", "pubmed", "variant_type", "created_on", "batch_id")
       .groupByLocus()
       .agg(
-        first("end"),
-        first("name"),
-        first($"genes_symbol"),
-        first($"hgvsg"),
-        first($"variant_class"),
-        first($"pubmed"),
-        first($"variant_type"),
-        max($"updated_on") as "updated_on",
+        first("end") as "end",
+        first("name") as "name",
+        first($"genes_symbol") as "genes_symbol",
+        first($"hgvsg") as "hgvsg",
+        first($"variant_class") as "variant_class",
+        first($"pubmed") as "pubmed",
+        first($"variant_type") as "variant_type",
+        max($"created_on") as "updated_on",
         min($"created_on") as "created_on",
         collect_list("batch_id") as "batch_id"
       )

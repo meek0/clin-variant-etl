@@ -29,7 +29,6 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with M
   val data = Map(
     enriched_variants.id -> Seq(VariantEnrichedOutput("1"), VariantEnrichedOutput(
       "2",
-      `batch_id` = "BAT2",
       `created_on` = bat0,
       //`updated_on` = bat2
     )

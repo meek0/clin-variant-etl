@@ -17,9 +17,6 @@
         "assembly_version": {
           "type": "keyword"
         },
-        "batch_id": {
-          "type": "keyword"
-        },
         "chromosome": {
           "type": "keyword"
         },
