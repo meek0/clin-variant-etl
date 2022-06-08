@@ -88,7 +88,7 @@ object SNV {
         old_multi_allelic,
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
       )
-      .withColumn("symbols", $"annotations.symbol")
+      .withColumn("symbols", array_distinct($"annotations.symbol"))
       .drop("annotations")
       .withColumn("ad_ref", $"ad"(0))
       .withColumn("ad_alt", $"ad"(1))
