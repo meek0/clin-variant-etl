@@ -142,7 +142,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     import spark.implicits._
     val originalVariants = variants
       .select("chromosome","start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
-        "variant_class", "pubmed", "variant_type", "created_on", "batch_id")
+        "variant_class", "pubmed", "variant_type", "created_on")
       .groupByLocus()
       .agg(
         first("end") as "end",
@@ -153,8 +153,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         first($"pubmed") as "pubmed",
         first($"variant_type") as "variant_type",
         max($"created_on") as "updated_on",
-        min($"created_on") as "created_on",
-        collect_list("batch_id") as "batch_id"
+        min($"created_on") as "created_on"
       )
     val now = LocalDate.now()
     variants
