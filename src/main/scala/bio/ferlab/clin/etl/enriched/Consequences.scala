@@ -1,5 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.clin.etl.utils.RepartitionByColumns
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -56,7 +58,7 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
 
     val chromosomes = consequences.select("chromosome").distinct().as[String].collect()
 
-    val dbnsfp = data(dbnsfp_original.id).where(col("chromosome").isin(chromosomes:_*))
+    val dbnsfp = data(dbnsfp_original.id).where(col("chromosome").isin(chromosomes: _*))
 
     val csq = consequences
       .drop("batch_id", "name", "end", "hgvsg", "variant_class", "ensembl_regulatory_id")
@@ -72,12 +74,9 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
       .drop("is_canonical")
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
-      .repartition(1, col("chromosome"))
-      .sortWithinPartitions("start"))
+  override def publish()(implicit spark: SparkSession): Unit = {
+    compact(destination, RepartitionByColumns(Seq("chromosome"), Some(1), Seq(col("start"))))
+    vacuum(destination, 2)
   }
 
   def joinWithDBNSFP(csq: DataFrame, dbnsfp: DataFrame)(implicit spark: SparkSession): DataFrame = {

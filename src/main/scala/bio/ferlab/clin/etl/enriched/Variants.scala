@@ -1,6 +1,8 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
+import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.clin.etl.utils.{FixedRepartition, RepartitionByColumns}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -10,6 +12,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
+import scala.concurrent.duration.{DAYS, Duration, FiniteDuration}
 
 class Variants()(implicit configuration: Configuration) extends ETL {
 
@@ -65,8 +68,8 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         .withColumn("non_affected_pn", when(not(col("affected_status")), col("count")))
         .groupBy("analysis_code")
         .agg(
-          coalesce(first("affected_pn", true), lit(0)) as "affected_pn",
-          coalesce(first("non_affected_pn", true), lit(0)) as "non_affected_pn",
+          coalesce(first("affected_pn", ignoreNulls = true), lit(0)) as "affected_pn",
+          coalesce(first("non_affected_pn", ignoreNulls = true), lit(0)) as "non_affected_pn",
           sum(col("count")) as "total_pn"
         )
 
@@ -102,15 +105,12 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
       .withColumn("hash", sha1(col("locus")))
-      .withColumn(destination.oid, col("created_on"))
+      .withColumn(destination.oid, col("updated_on"))
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
-      .repartition(100, col("chromosome"))
-    )
+  override def publish()(implicit spark: SparkSession): Unit = {
+    compact(destination, FixedRepartition(100))
+    vacuum(destination, 2)
   }
 
   private def sumFrequenciesByAnalysis(columnName: String, group: String): Column = {
@@ -129,10 +129,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   private def sumFrequencies(prefix: String): Column = {
     struct(
       sum(col(s"$prefix.ac")) as "ac",
-      sum(col(s"${prefix}.an")) as "an",
+      sum(col(s"$prefix.an")) as "an",
       coalesce(sum(col(s"$prefix.ac")) / sum(col(s"$prefix.an")), lit(0.0)) as "af",
       sum(col(s"$prefix.pc")) as "pc",
-      sum(col(s"${prefix}.pn")) as "pn",
+      sum(col(s"$prefix.pn")) as "pn",
       coalesce(sum(col(s"$prefix.pc")) / sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
       sum(col(s"$prefix.hom")) as "hom"
     ) as s"$prefix"
@@ -141,7 +141,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
   def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val originalVariants = variants
-      .select("chromosome","start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
+      .select("chromosome", "start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
         "variant_class", "pubmed", "variant_type", "created_on")
       .groupByLocus()
       .agg(
