@@ -1,5 +1,7 @@
 package bio.ferlab.clin.etl.vcf
 
+import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.clin.etl.utils.RepartitionByColumns
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -116,11 +118,9 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
       }.otherwise(amino_acid)
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
-      .repartition(10, col("chromosome"))
-      .sortWithinPartitions("start"))
+  override def publish()(implicit spark: SparkSession): Unit = {
+    compact(destination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq(col("start"))))
+    vacuum(destination, 2)
   }
+
 }
