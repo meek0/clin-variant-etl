@@ -195,6 +195,9 @@
             "symbol": {
               "type": "keyword"
             },
+            "symbol_id_1": {
+              "type": "keyword"
+            },
             "uniprot_id": {
               "type": "keyword"
             },
@@ -758,6 +761,9 @@
           "type": "long"
         },
         "locus": {
+          "type": "keyword"
+        },
+        "locus_id_1": {
           "type": "keyword"
         },
         "max_impact_score": {

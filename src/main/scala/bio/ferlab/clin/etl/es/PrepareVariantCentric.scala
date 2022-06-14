@@ -31,14 +31,16 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
     val variants = data(enriched_variants.id)
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab",
         "normalized_variants_oid", "variants_oid", "created_on", "updated_on")
+      .withColumn("locus_id_1", col("locus"))
       .as("variants")
       .repartition(100)
 
     val consequences = data(enriched_consequences.id)
       .drop("normalized_consequences_oid", "consequences_oid", "created_on", "updated_on", "pick", "original_canonical", "consequence")
+      .withColumn("symbol_id_1", col("symbol"))
       .as("consequences")
       .repartition(100)
-
+    
     joinWithConsequences(variants, consequences)
   }
 
