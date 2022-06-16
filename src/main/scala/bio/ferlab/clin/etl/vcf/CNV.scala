@@ -37,28 +37,30 @@ object CNV {
     import spark.implicits._
     val df =
       inputDf
-        .withColumn("genotype", explode(col("genotypes"))).select(
-        chromosome,
-        start,
-        reference,
-        alternate,
-        name,
-        $"genotype.sampleId" as "aliquot_id",
-        $"genotype.BC" as "bc",
-        $"genotype.SM" as "sm",
-        $"genotype.calls" as "calls",
-        $"genotype.CN" as "cn",
-        $"genotype.pe" as "pe",
-        is_multi_allelic,
-        old_multi_allelic,
-        $"INFO_CIEND" as "ciend",
-        $"INFO_CIPOS" as "cipos",
-        $"INFO_SVLEN"(0) as "svlen",
-        $"INFO_REFLEN" as "reflen",
-        $"start" + $"reflen" as "end",
-        $"INFO_SVTYPE" as "svtype",
-        flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters")
-        df
+        .withColumn("genotype", explode(col("genotypes")))
+        .select(
+          chromosome,
+          start,
+          reference,
+          alternate,
+          name,
+          $"genotype.sampleId" as "aliquot_id",
+          $"genotype.BC" as "bc",
+          $"genotype.SM" as "sm",
+          $"genotype.calls" as "calls",
+          $"genotype.CN" as "cn",
+          $"genotype.pe" as "pe",
+          is_multi_allelic,
+          old_multi_allelic,
+          $"INFO_CIEND" as "ciend",
+          $"INFO_CIPOS" as "cipos",
+          $"INFO_SVLEN"(0) as "svlen",
+          $"INFO_REFLEN" as "reflen",
+          $"start" + $"reflen" as "end",
+          $"INFO_SVTYPE" as "svtype",
+          flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters",
+          lit(batchId) as "batch_id")
+    df
   }
 }
 
