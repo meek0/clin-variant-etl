@@ -7,7 +7,6 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import java.sql.Timestamp
 import java.time.LocalDateTime
 
 class CNV()(implicit configuration: Configuration) extends ETL {
@@ -21,8 +20,7 @@ class CNV()(implicit configuration: Configuration) extends ETL {
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      normalized_cnv.id -> normalized_cnv.read
-        .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
+      normalized_cnv.id -> normalized_cnv.read,
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read
     )
