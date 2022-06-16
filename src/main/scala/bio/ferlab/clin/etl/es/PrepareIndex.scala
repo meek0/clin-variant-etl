@@ -17,6 +17,7 @@ object PrepareIndex extends SparkApp {
     case "gene_suggestions" => new PrepareGeneSuggestions(releaseId).run(steps)
     case "variant_centric" => new PrepareVariantCentric(releaseId).run(steps)
     case "variant_suggestions" => new PrepareVariantSuggestions(releaseId).run(steps)
+    case "cnv_centric" => new PrepareCnvCentric(releaseId).run(steps)
   }
 
 }

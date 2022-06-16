@@ -24,9 +24,28 @@ class RefSeqAnnotation()(implicit configuration: Configuration) extends ETL {
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    data(raw_refseq_annotation.id)
+
+    val original = data(raw_refseq_annotation.id)
+
+    val regions = original
+      .where($"type" === "region" and $"genome" === "chromosome")
+      .select("seqId", "chromosome")
+
+    original
+      .drop("chromosome")
+      .join(regions, Seq("seqId"))
       .repartition(3)
   }
+
+  //    val original = spark.table("refseq_annotation")
+  //
+  //    val regions = original
+  //      .where($"type" === "region" and $"genome" === "chromosome")
+  //      .select("seqId", "chromosome")
+  //
+  //    original
+  //      .drop("chromosome")
+  //      .join(regions, Seq("seqId"))
 
 }
 

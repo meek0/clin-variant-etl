@@ -55,7 +55,7 @@ object CNV {
         $"INFO_CIPOS" as "cipos",
         $"INFO_SVLEN"(0) as "svlen",
         $"INFO_REFLEN" as "reflen",
-        $"INFO_END" as "end",
+        $"start" + $"reflen" as "end",
         $"INFO_SVTYPE" as "svtype",
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters")
         df

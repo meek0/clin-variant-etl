@@ -53,6 +53,7 @@ object Indexer extends App {
     case "gene_centric" => conf.getDataset("es_index_gene_centric")
     case "gene_suggestions" => conf.getDataset("es_index_gene_suggestions")
     case "variant_centric" => conf.getDataset("es_index_variant_centric")
+    case "cnv_centric" => conf.getDataset("es_index_cnv_centric")
     case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
   }
 
