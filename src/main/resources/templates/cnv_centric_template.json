@@ -75,6 +75,9 @@
         "patient_id": {
           "type": "keyword"
         },
+        "aliquot_id": {
+          "type": "keyword"
+        },
         "analysis_service_request_id": {
           "type": "keyword"
         },
