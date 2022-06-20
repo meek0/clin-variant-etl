@@ -7,7 +7,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, locusColumnNames, vcf}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
@@ -26,7 +26,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .where(col("contigName").isin(validContigNames: _*)),
+        .filter(col("contigName").isin(validContigNames: _*)),
       clinical_impression.id -> clinical_impression.read,
       observation.id -> observation.read,
       task.id -> task.read,
@@ -46,6 +46,8 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
     variantsWithFrequencies(variantsForFrequencies)
       .joinByLocus(variants, "right")
+      .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array()))
+      .withColumn("frequency_RQDM", coalesce(col("frequency_RQDM"), emptyFrequencyRQDM))
       .withColumn("batch_id", lit(batchId))
       .withColumn("created_on", current_timestamp())
 
@@ -91,19 +93,25 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .drop("genotype", "filters")
   }
 
+  val emptyFrequency =
+    struct(
+      lit(0) as "ac",
+      lit(0) as "an",
+      lit(0.0) as "af",
+      lit(0) as "pc",
+      lit(0) as "pn",
+      lit(0.0) as "pf",
+      lit(0) as "hom"
+    )
+
+  val emptyFrequencyRQDM = struct(
+    emptyFrequency as "affected",
+    emptyFrequency as "non_affected",
+    emptyFrequency as "total"
+  )
+
   def variantsWithFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-
-    val emptyFrequency =
-      struct(
-        lit(0) as "ac",
-        lit(0) as "an",
-        lit(0.0) as "af",
-        lit(0) as "pc",
-        lit(0) as "pn",
-        lit(0.0) as "pf",
-        lit(0) as "hom"
-      )
 
     val frequency: String => Column = {
       case "" =>
@@ -217,7 +225,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   def getClinicalInfo(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     val serviceRequestDf = data(service_request.id)
-      .where(col("service_request_type") === "sequencing")
+      .filter(col("service_request_type") === "sequencing")
       .select(
         col("id") as "service_request_id",
         col("service_request_code") as "analysis_code",
@@ -226,7 +234,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       )
 
     val analysisServiceRequestDf = data(service_request.id)
-      .where(col("service_request_type") === "analysis")
+      .filter(col("service_request_type") === "analysis")
 
     val analysisServiceRequestWithDiseaseStatus = getDiseaseStatus(analysisServiceRequestDf, data(clinical_impression.id), data(observation.id))
       .select("analysis_service_request_id", "patient_id", "affected_status")

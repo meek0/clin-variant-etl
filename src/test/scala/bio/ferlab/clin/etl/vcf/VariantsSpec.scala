@@ -137,20 +137,22 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       `frequency_RQDM` = AnalysisFrequencies(Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1)),
       `created_on` = null)
     )
+    val emptyFrequency = Frequency(0, 0, 0, 0, 0, 0, 0)
+    val emptyFrequencies = AnalysisFrequencies(emptyFrequency, emptyFrequency, emptyFrequency)
 
     val variantWithoutFreqG = result.find(_.`reference` == "G")
     variantWithoutFreqG.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
       reference= "G",
-      `frequencies_by_analysis` = null,
-      `frequency_RQDM` = null,
+      `frequencies_by_analysis` = List.empty[AnalysisCodeFrequencies],
+      `frequency_RQDM` = emptyFrequencies,
       `created_on` = null)
     )
 
     val variantWithoutFreqA = result.find(_.`reference` == "A")
     variantWithoutFreqA.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
       reference= "A",
-      `frequencies_by_analysis` = null,
-      `frequency_RQDM` = null,
+      `frequencies_by_analysis` = List.empty[AnalysisCodeFrequencies],
+      `frequency_RQDM` = emptyFrequencies,
       `created_on` = null)
     )
 

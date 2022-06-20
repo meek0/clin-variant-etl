@@ -37,9 +37,9 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("father_zygosity", zygosity(col("father_calls")))
       .withParentalOrigin("parental_origin", col("father_calls"), col("mother_calls"))
       .withGenotypeTransmission("transmission")
-      .where(col("has_alt"))
+      .filter(col("has_alt"))
 
-    val het = occurrences.where(col("zygosity") === "HET")
+    val het = occurrences.filter(col("zygosity") === "HET")
     val hc: DataFrame = getCompoundHet(het)
     val possiblyHC: DataFrame = getPossiblyCompoundHet(het)
     occurrences
@@ -100,7 +100,7 @@ object SNV {
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
-      .where(includeFilter)
+      .filter(includeFilter)
       .drop("annotation")
   }
 
@@ -110,7 +110,7 @@ object SNV {
     val possiblyHC = het
       .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), explode(col("symbols")) as "symbol")
       .withColumn("possibly_hc_count", count(lit(1)).over(hcWindow))
-      .where(col("possibly_hc_count") > 1)
+      .filter(col("possibly_hc_count") > 1)
       .withColumn("possibly_hc_complement", struct(col("symbol") as "symbol", col("possibly_hc_count") as "count"))
       .groupBy(col("patient_id") :: locus: _*)
       .agg(collect_set("possibly_hc_complement") as "possibly_hc_complement")
@@ -119,7 +119,7 @@ object SNV {
   }
 
   def getCompoundHet(het: DataFrame): DataFrame = {
-    val withParentalOrigin = het.where(col("parental_origin").isNotNull)
+    val withParentalOrigin = het.filter(col("parental_origin").isNotNull)
 
     val hcWindow = Window.partitionBy("patient_id", "symbol", "parental_origin").orderBy("start")
     val hc = withParentalOrigin
@@ -132,7 +132,7 @@ object SNV {
       .withColumn("all_coords", collect_set("struct_coords").over(Window.partitionBy("patient_id", "symbol").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
       .withColumn("complement_coords", functions.filter(col("all_coords"), x => x.getItem("parental_origin") =!= col("parental_origin"))(0))
       .withColumn("is_hc", col("complement_coords").isNotNull)
-      .where(col("is_hc"))
+      .filter(col("is_hc"))
       .withColumn("hc_complement", struct(col("symbol") as "symbol", col("complement_coords.coords") as "locus"))
       .groupBy(col("patient_id") :: locus: _*)
       .agg(first("is_hc") as "is_hc", collect_set("hc_complement") as "hc_complement")

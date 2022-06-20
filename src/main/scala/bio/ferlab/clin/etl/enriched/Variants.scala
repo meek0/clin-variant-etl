@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
-import bio.ferlab.clin.etl.utils.{FixedRepartition, RepartitionByColumns}
+import bio.ferlab.clin.etl.utils.FixedRepartition
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -12,7 +12,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
-import scala.concurrent.duration.{DAYS, Duration, FiniteDuration}
 
 class Variants()(implicit configuration: Configuration) extends ETL {
 
@@ -58,22 +57,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val occurrences = data(normalized_snv.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
-    val participantCount =
-      occurrences
-        .where(col("has_alt"))
-        .dropDuplicates("patient_id")
-        .groupBy("analysis_code", "affected_status")
-        .count
-        .withColumn("affected_pn", when(col("affected_status"), col("count")))
-        .withColumn("non_affected_pn", when(not(col("affected_status")), col("count")))
-        .groupBy("analysis_code")
-        .agg(
-          coalesce(first("affected_pn", ignoreNulls = true), lit(0)) as "affected_pn",
-          coalesce(first("non_affected_pn", ignoreNulls = true), lit(0)) as "non_affected_pn",
-          sum(col("count")) as "total_pn"
-        )
-
-    val variants = mergeVariantFrequencies(data(normalized_variants.id), participantCount)
+    val variants = mergeVariantFrequencies(data(normalized_variants.id))
 
     val genomesDf = data(`thousand_genomes`.id)
       .selectLocus($"ac".cast("long"), $"af", $"an".cast("long"))
@@ -91,7 +75,6 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
 
 
-    //val joinWithFrequencies = variantsWithFrequencies(variants, occurrences)
     val joinWithDonors = variantsWithDonors(variants, occurrences)
     val joinWithPop = joinWithPopulations(joinWithDonors, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df, gnomad_genomes_3_1_1Df)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
@@ -113,20 +96,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     vacuum(destination, 2)
   }
 
-  private def sumFrequenciesByAnalysis(columnName: String, group: String): Column = {
-    val prefix = s"$columnName.$group"
-    struct(
-      sum(col(s"$prefix.ac")) as "ac",
-      first(s"${group}_pn") * 2 as "an",
-      coalesce(sum(col(s"$prefix.ac")) / sum(col(s"$prefix.an")), lit(0.0)) as "af",
-      sum(col(s"$prefix.pc")) as "pc",
-      first(s"${group}_pn") as "pn",
-      coalesce(sum(col(s"$prefix.pc")) / sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
-      sum(col(s"$prefix.hom")) as "hom"
-    ) as s"$group"
-  }
-
-  private def sumFrequencies(prefix: String): Column = {
+  private def sumFrequencies(prefix: String, as: String): Column = {
     struct(
       sum(col(s"$prefix.ac")) as "ac",
       sum(col(s"$prefix.an")) as "an",
@@ -135,10 +105,10 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       sum(col(s"$prefix.pn")) as "pn",
       coalesce(sum(col(s"$prefix.pc")) / sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
       sum(col(s"$prefix.hom")) as "hom"
-    ) as s"$prefix"
+    ) as as
   }
 
-  def mergeVariantFrequencies(variants: DataFrame, participantCount: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def mergeVariantFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val originalVariants = variants
       .select("chromosome", "start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
@@ -155,27 +125,22 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         max($"created_on") as "updated_on",
         min($"created_on") as "created_on"
       )
-    val now = LocalDate.now()
-    variants
-      .withColumn("frequency_by_analysis", explode($"frequencies_by_analysis"))
-      .join(participantCount, col("analysis_code") === col("frequency_by_analysis.analysis_code"))
+    val variantsWithFrequencies = variants
+      .withColumn("frequency_by_analysis", explode_outer($"frequencies_by_analysis"))
       .groupBy(locus :+ $"frequency_by_analysis.analysis_code": _*)
       .agg(
-        first($"affected_pn") as "affected_pn",
-        first($"non_affected_pn") as "non_affected_pn",
-        first($"total_pn") as "total_pn",
         first($"frequency_by_analysis.analysis_display_name", ignoreNulls = true) as "analysis_display_name",
-        sumFrequenciesByAnalysis("frequency_by_analysis", "affected"),
-        sumFrequenciesByAnalysis("frequency_by_analysis", "non_affected"),
-        sumFrequenciesByAnalysis("frequency_by_analysis", "total")
+        sumFrequencies("frequency_by_analysis.affected", "affected"),
+        sumFrequencies("frequency_by_analysis.non_affected", "non_affected"),
+        sumFrequencies("frequency_by_analysis.total", "total")
       )
       .groupByLocus()
       .agg(
         collect_list(struct($"analysis_code", $"analysis_display_name", $"affected", $"non_affected", $"total")) as "frequencies_by_analysis",
         struct(
-          sumFrequencies("affected"),
-          sumFrequencies("non_affected"),
-          sumFrequencies("total")
+          sumFrequencies("affected", "affected"),
+          sumFrequencies("non_affected", "non_affected"),
+          sumFrequencies("total", "total")
         ) as "frequency_RQDM"
       )
       .select(
@@ -186,9 +151,9 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         "frequencies_by_analysis",
         "frequency_RQDM"
       )
-      .joinByLocus(originalVariants, "right")
+    variantsWithFrequencies.joinByLocus(originalVariants, "right")
       .withColumn("assembly_version", lit("GRCh38"))
-      .withColumn("last_annotation_update", lit(now))
+      .withColumn("last_annotation_update", lit(LocalDate.now()))
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
