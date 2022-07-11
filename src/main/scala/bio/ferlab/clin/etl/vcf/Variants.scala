@@ -1,7 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
-import bio.ferlab.clin.etl.utils.FrequencyUtils.frequencyFilter
 import bio.ferlab.clin.etl.vcf.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETL
@@ -38,13 +37,10 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
-
     val variants = getVariants(data(raw_variant_calling.id))
     val clinicalInfos = getClinicalInfo(data)
-    val variantsForFrequencies = getVariantsForFrequency(data(raw_variant_calling.id))
-      .join(clinicalInfos, Seq("aliquot_id"))
-
-    variantsWithFrequencies(variantsForFrequencies)
+    val variantsWithClinicalInfo = getVariantsWithClinicalInfo(data(raw_variant_calling.id), clinicalInfos)
+    getVariantsWithFrequencies(variantsWithClinicalInfo)
       .joinByLocus(variants, "right")
       .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array()))
       .withColumn("frequency_RQDM", coalesce(col("frequency_RQDM"), emptyFrequencyRQDM))
@@ -56,6 +52,8 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   def getVariants(vcf: DataFrame): DataFrame = {
     vcf
       .withColumn("annotation", firstCsq)
+      .withColumn("alleleDepths", functions.transform(col("genotypes.alleleDepths"), c => c(1)))
+      .filter(size(filter(col("alleleDepths"), ad => ad >= 3)) > 0)
       .select(
         chromosome,
         start,
@@ -72,7 +70,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .withColumn("variant_type", lit("germline"))
   }
 
-  def getVariantsForFrequency(vcf: DataFrame): DataFrame = {
+  def getVariantsWithClinicalInfo(vcf: DataFrame, clinicalInfos: DataFrame): DataFrame = {
     vcf
       .withColumn("annotation", firstCsq)
       .select(
@@ -83,14 +81,14 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         alternate,
         flatten(functions.transform(col("INFO_FILTERS"), c => split(c, ";"))) as "filters"
       )
-      .withColumn("ad", col("genotype.alleleDepths" ))
+      .withColumn("ad", col("genotype.alleleDepths"))
       .withColumn("ad_alt", col("ad")(1))
       .withColumn("gq", col("genotype.conditionalQuality"))
-      .filter(frequencyFilter)
       .withColumn("aliquot_id", col("genotype.sampleId"))
       .withColumn("calls", col("genotype.calls"))
       .withColumn("zygosity", zygosity(col("calls")))
-      .drop("genotype", "filters")
+      .drop("genotype")
+      .join(clinicalInfos, Seq("aliquot_id"))
   }
 
   val emptyFrequency =
@@ -110,7 +108,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     emptyFrequency as "total"
   )
 
-  def variantsWithFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def getVariantsWithFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
     val frequency: String => Column = {
@@ -137,7 +135,6 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     }
 
     variants
-      .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
       .groupBy(locus :+ col("analysis_code") :+ col("affected_status_str"): _*)
       .agg(
         first($"analysis_display_name") as "analysis_display_name",
@@ -238,6 +235,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
     val analysisServiceRequestWithDiseaseStatus = getDiseaseStatus(analysisServiceRequestDf, data(clinical_impression.id), data(observation.id))
       .select("analysis_service_request_id", "patient_id", "affected_status")
+      .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
 
 
     val taskDf = data(task.id)

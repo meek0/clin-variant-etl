@@ -14,23 +14,24 @@ object FrequencyUtils {
   /**
    * allele count
    */
-  val ac: Column = sum(array_sum(filter(col("calls"), c => c === 1))) as "ac"
+  val ac: Column = sum(when(frequencyFilter, array_sum(filter(col("calls"), c => c === 1))).otherwise(0)) as "ac"
+
   /**
    * allele total number
    */
-  val an: Column = sum(lit(2)) as "an"
+  val an: Column = sum(size(col("calls"))) as "an"
 
   /**
    * participant count
    */
-  val pc: Column = sum(when(col("zygosity").isin("HOM", "HET"), 1).otherwise(0)) as "pc"
+  val pc: Column = sum(when(array_contains(col("calls"), 1) and frequencyFilter, 1).otherwise(0)) as "pc"
 
   /**
    * participant total number
    */
   val pn: Column = sum(lit(1)) as "pn"
 
-  val hom: Column = sum(when(col("zygosity") === "HOM", 1).otherwise(0)) as "hom"
-  val het: Column = sum(when(col("zygosity") === "HET", 1).otherwise(0)) as "het"
+  val hom: Column = sum(when(col("zygosity") === "HOM" and frequencyFilter, 1).otherwise(0)) as "hom"
+  val het: Column = sum(when(col("zygosity") === "HET" and frequencyFilter, 1).otherwise(0)) as "het"
 
 }
