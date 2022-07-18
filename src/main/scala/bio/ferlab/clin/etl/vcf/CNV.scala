@@ -56,7 +56,7 @@ object CNV {
           $"INFO_CIPOS" as "cipos",
           $"INFO_SVLEN"(0) as "svlen",
           $"INFO_REFLEN" as "reflen",
-          $"start" + $"reflen" as "end",
+          $"start" + $"INFO_REFLEN" as "end",
           $"INFO_SVTYPE" as "svtype",
           flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters",
           lit(batchId) as "batch_id")
