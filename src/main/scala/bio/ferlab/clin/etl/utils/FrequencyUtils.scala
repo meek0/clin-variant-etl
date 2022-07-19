@@ -19,7 +19,7 @@ object FrequencyUtils {
   /**
    * allele total number
    */
-  val an: Column = sum(size(col("calls"))) as "an"
+  val an: Column = sum(lit(2)) as "an" //alternate computation method: sum(size(col("calls"))) as "an"
 
   /**
    * participant count

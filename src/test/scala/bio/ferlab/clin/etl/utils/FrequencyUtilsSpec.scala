@@ -30,7 +30,7 @@ class FrequencyUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers
     occurrences
       .select(
         FrequencyUtils.an
-      ).as[Long].collect() should contain only 11
+      ).as[Long].collect() should contain only 12
 
   }
 

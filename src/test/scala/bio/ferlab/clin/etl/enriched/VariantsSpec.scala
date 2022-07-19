@@ -170,7 +170,9 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
     val result = resultDf.as[VariantEnrichedOutput].collect().head
 
     result.`donors` should contain allElementsOf expectedDonors
-    result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies())
+    result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies(
+      affected = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2),
+      total = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2)))
 
     result.copy(
       `donors` = List(),
@@ -179,7 +181,9 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       `pubmed` = Some(List("29135816")),
       `donors` = List(),
       `frequencies_by_analysis` = List(),
-      `frequency_RQDM` = AnalysisFrequencies(),
+      `frequency_RQDM` = AnalysisFrequencies(
+        affected = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2),
+        total = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2)),
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`
     )
