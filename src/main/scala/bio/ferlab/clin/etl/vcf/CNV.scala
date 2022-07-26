@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.vcf.CNV.getCNV
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
@@ -30,9 +30,15 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .repartition(10, col("patient_id"))
     )
   }
+
+
 }
 
 object CNV {
+  val sortChromosome: Column = when(col("chromosome") === "X", 100).when(col("chromosome") === "Y", 101)
+    .when(col("chromosome") === "M", 102)
+    .otherwise(col("chromosome").cast("int")) as "sortChromosome"
+
   def getCNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val df =
@@ -60,6 +66,7 @@ object CNV {
           $"INFO_SVTYPE" as "svtype",
           flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters",
           lit(batchId) as "batch_id")
+        .withColumn("sortChromosome", sortChromosome)
     df
   }
 }

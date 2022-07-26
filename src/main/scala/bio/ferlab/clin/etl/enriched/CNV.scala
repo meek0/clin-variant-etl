@@ -65,6 +65,7 @@ class CNV()(implicit configuration: Configuration) extends ETL {
       .drop("refseq_genes.chromosome", "refseq_genes.start", "refseq_genes.end")
       .withColumn("overlap_gene_ratio", $"overlap_bases" / geneRegion.nbBases)
       .withColumn("overlap_cnv_ratio", $"overlap_bases" / cnvRegion.nbBases)
+      .withColumn("gene_length", geneRegion.nbBases)
   }
 
   def joinWithExons(cnv: DataFrame, refseq: DataFrame)(implicit sparkSession: SparkSession): DataFrame = {
