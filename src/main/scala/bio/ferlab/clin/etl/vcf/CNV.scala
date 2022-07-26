@@ -37,7 +37,7 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 object CNV {
   val sortChromosome: Column = when(col("chromosome") === "X", 100).when(col("chromosome") === "Y", 101)
     .when(col("chromosome") === "M", 102)
-    .otherwise(col("chromosome").cast("int")) as "sortChromosome"
+    .otherwise(col("chromosome").cast("int")) as "sort_chromosome"
 
   def getCNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -66,7 +66,7 @@ object CNV {
           $"INFO_SVTYPE" as "svtype",
           flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters",
           lit(batchId) as "batch_id")
-        .withColumn("sortChromosome", sortChromosome)
+        .withColumn("sort_chromosome", sortChromosome)
     df
   }
 }
