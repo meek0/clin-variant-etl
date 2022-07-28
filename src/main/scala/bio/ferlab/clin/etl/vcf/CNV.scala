@@ -47,6 +47,7 @@ object CNV {
           reference,
           alternate,
           name,
+          $"qual" as "qual",
           $"genotype.sampleId" as "aliquot_id",
           $"genotype.BC" as "bc",
           $"genotype.SM" as "sm",
@@ -63,11 +64,8 @@ object CNV {
           $"INFO_SVTYPE" as "svtype",
           flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters",
           lit(batchId) as "batch_id")
-        .withColumn("qual", col("qual"))
-        .withColumn("type", split(col("names")(0), ":")(1))
+        .withColumn("type", split(col("name"), ":")(1))
         .withColumn("sort_chromosome", sortChromosome)
     df
   }
 }
-
-
