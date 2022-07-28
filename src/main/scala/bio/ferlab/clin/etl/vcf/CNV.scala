@@ -63,6 +63,8 @@ object CNV {
           $"INFO_SVTYPE" as "svtype",
           flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters",
           lit(batchId) as "batch_id")
+        .withColumn("qual", col("qual"))
+        .withColumn("type", split(col("names")(0), ":")(1))
         .withColumn("sort_chromosome", sortChromosome)
     df
   }
