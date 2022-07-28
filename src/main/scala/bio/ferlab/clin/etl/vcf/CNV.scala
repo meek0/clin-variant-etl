@@ -47,7 +47,7 @@ object CNV {
           reference,
           alternate,
           name,
-          $"qual" as "qual",
+          $"qual",
           $"genotype.sampleId" as "aliquot_id",
           $"genotype.BC" as "bc",
           $"genotype.SM" as "sm",
