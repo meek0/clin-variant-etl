@@ -37,7 +37,7 @@ class CNV()(implicit configuration: Configuration) extends ETL {
     val joinedWithExons = joinWithExons(joinedWithGenes, refseq)
 
     val groupedCnv = joinedWithExons
-      .select(struct($"cnv.*") as "cnv", struct($"refseq_genes.gene" as "symbol", $"refseq_genes.refseq_id" as "refseq_id", $"overlap_bases", $"overlap_cnv_ratio", $"overlap_gene_ratio", $"panels") as "gene")
+      .select(struct($"cnv.*") as "cnv", struct($"refseq_genes.gene" as "symbol", $"refseq_genes.refseq_id" as "refseq_id", $"gene_length", $"overlap_bases", $"overlap_cnv_ratio", $"overlap_gene_ratio", $"panels") as "gene")
       .groupBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"cnv.aliquot_id", $"gene.refseq_id")
       .agg(first($"cnv") as "cnv", first($"gene") as "gene", count(lit(1)) as "overlap_exons")
       .select($"cnv", struct($"gene.*", $"overlap_exons") as "gene")
