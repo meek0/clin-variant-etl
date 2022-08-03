@@ -38,7 +38,7 @@ class CNV()(implicit configuration: Configuration) extends ETL {
 
     val groupedCnv = joinedWithExons
       .select(struct($"cnv.*") as "cnv", struct($"refseq_genes.gene" as "symbol", $"refseq_genes.refseq_id" as "refseq_id", $"gene_length", $"overlap_bases", $"overlap_cnv_ratio", $"overlap_gene_ratio", $"panels") as "gene")
-      .groupBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"cnv.aliquot_id", $"gene.refseq_id")
+      .groupBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"cnv.aliquot_id", $"gene.gene")
       .agg(first($"cnv") as "cnv", first($"gene") as "gene", count(lit(1)) as "overlap_exons")
       .select($"cnv", struct($"gene.*", $"overlap_exons") as "gene")
       .groupBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"cnv.aliquot_id")
@@ -57,7 +57,7 @@ class CNV()(implicit configuration: Configuration) extends ETL {
       .join(joinedPanels, $"gene" === $"symbol", "left")
       .drop(joinedPanels("symbol"))
     val geneRegion = Region($"refseq_genes.chromosome", $"refseq_genes.start", $"refseq_genes.end")
-    val cnvOverlap = when($"refseq_genes.refseq_id".isNull, null)
+    val cnvOverlap = when($"refseq_genes.gene".isNull, null)
       .otherwise(cnvRegion.overlap(geneRegion))
     cnv.as("cnv")
       .join(refseqGenesWithPanels.alias("refseq_genes"), cnvRegion.isOverlapping(geneRegion), "left")
@@ -75,7 +75,7 @@ class CNV()(implicit configuration: Configuration) extends ETL {
 
     cnv
       .join(refseqExons.alias("refseq_exons"),
-        $"refseq_genes.refseq_id" === $"refseq_exons.refseq_id" and
+        $"refseq_genes.gene" === $"refseq_exons.gene" and
           cnvRegion.isOverlapping(Region($"refseq_exons.chromosome", $"refseq_exons.start", $"refseq_exons.end"))
         , "left")
 
