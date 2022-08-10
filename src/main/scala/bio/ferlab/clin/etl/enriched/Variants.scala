@@ -8,6 +8,7 @@ import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -57,8 +58,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     val occurrences = data(normalized_snv.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
-    val pn_an_by_analysis = getPnAnPerAnalysis(occurrences)
-
+    val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(occurrences)
     val variants = mergeVariantFrequencies(data(normalized_variants.id), pn_an_by_analysis)
 
     val genomesDf = data(`thousand_genomes`.id)
@@ -100,7 +100,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
 
   private def getPnAnPerAnalysis(occurrences: DataFrame): DataFrame = {
     import occurrences.sparkSession.implicits._
-    occurrences
+    val byAnalysis = occurrences
       .select($"patient_id", $"affected_status", $"analysis_code")
       .distinct
       .groupBy("analysis_code", "affected_status")
@@ -116,30 +116,33 @@ class Variants()(implicit configuration: Configuration) extends ETL {
           lit(2) * sum($"pn") as "total_an"
         ) as "pn_an_by_analysis"
       )
+
+    val total = byAnalysis.select(
+      struct(
+        sum($"pn_an_by_analysis.affected_pn") as "affected_pn",
+        sum($"pn_an_by_analysis.non_affected_pn") as "non_affected_pn",
+        sum($"pn_an_by_analysis.total_pn") as "total_pn",
+        sum($"pn_an_by_analysis.affected_an") as "affected_an",
+        sum($"pn_an_by_analysis.non_affected_an") as "non_affected_an",
+        sum($"pn_an_by_analysis.total_an") as "total_an",
+      ) as "pn_an_total"
+    )
+    byAnalysis.join(total)
   }
 
-  private def sumFrequencies(prefix: String, as: String): Column = {
+  private def sumFrequencies(prefix: String, as: String, byAnalysis: Boolean = true): Column = {
+    val mode = if (byAnalysis) "by_analysis" else "total"
+    val total_an = first(s"pn_an_$mode.${as}_an")
+    val total_pn = first(s"pn_an_$mode.${as}_pn")
     struct(
       sum(col(s"$prefix.ac")) as "ac",
-      col(s"pn_an_by_analysis.${as}_an") as "an",
-      coalesce(sum(col(s"$prefix.ac")) / col(s"pn_an_by_analysis.${as}_an"), lit(0.0)) as "af",
+      total_an as "an",
+      coalesce(sum(col(s"$prefix.ac")) / total_an, lit(0.0)) as "af",
       sum(col(s"$prefix.pc")) as "pc",
-      col(s"pn_an_by_analysis.${as}_pn") as "pn",
-      coalesce(sum(col(s"$prefix.pc")) / col(s"pn_an_by_analysis.${as}_pn"), lit(0.0)) as "pf",
+      total_pn as "pn",
+      coalesce(sum(col(s"$prefix.pc")) / total_pn, lit(0.0)) as "pf",
       sum(col(s"$prefix.hom")) as "hom"
     ) as as
-  }
-
-  private def sumFrequencies(prefix: String): Column = {
-    struct(
-      sum(col(s"$prefix.ac")) as "ac",
-      sum(col(s"$prefix.an")) as "an",
-      coalesce(sum(col(s"$prefix.ac")) / sum(col(s"$prefix.an")), lit(0.0)) as "af",
-      sum(col(s"$prefix.pc")) as "pc",
-      sum(col(s"$prefix.pn")) as "pn",
-      coalesce(sum(col(s"$prefix.pc")) / sum(col(s"$prefix.pn")), lit(0.0)) as "pf",
-      sum(col(s"$prefix.hom")) as "hom"
-    ) as prefix
   }
 
   def mergeVariantFrequencies(variants: DataFrame, pn_an_by_analysis: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -160,23 +163,27 @@ class Variants()(implicit configuration: Configuration) extends ETL {
         max($"created_on") as "updated_on",
         min($"created_on") as "created_on"
       )
-    val variantsWithFrequencies = variants
+
+    val byAnalysis = variants
       .withColumn("frequency_by_analysis", explode_outer($"frequencies_by_analysis"))
       .join(pn_an_by_analysis, col("frequency_by_analysis.analysis_code") === col("analysis_code"))
-      .groupBy((locus :+ $"frequency_by_analysis.analysis_code" :+ $"pn_an_by_analysis"): _*)
+      .groupBy((locus :+ $"frequency_by_analysis.analysis_code"): _*)
       .agg(
         first($"frequency_by_analysis.analysis_display_name", ignoreNulls = true) as "analysis_display_name",
+        first($"pn_an_total") as "pn_an_total",
         sumFrequencies("frequency_by_analysis.affected", "affected"),
         sumFrequencies("frequency_by_analysis.non_affected", "non_affected"),
         sumFrequencies("frequency_by_analysis.total", "total")
       )
+
+    val variantsWithFrequencies = byAnalysis
       .groupByLocus()
       .agg(
         collect_list(struct($"analysis_code", $"analysis_display_name", $"affected", $"non_affected", $"total")) as "frequencies_by_analysis",
         struct(
-          sumFrequencies("affected"),
-          sumFrequencies("non_affected"),
-          sumFrequencies("total")
+          sumFrequencies("affected", "affected", byAnalysis = false),
+          sumFrequencies("non_affected", "non_affected", byAnalysis = false),
+          sumFrequencies("total", "total", byAnalysis = false)
         ) as "frequency_RQDM"
       )
       .select(

@@ -14,7 +14,7 @@ import org.scalatest.matchers.should.Matchers
 import java.io.File
 import java.sql.Date
 
-class VariantsSpecEnr extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
@@ -265,7 +265,7 @@ resultDf.orderBy("start").show(false)
 
     val occurrencesDf: DataFrame = Seq(
       NormalizedSNV(`analysis_code` = "MM_PG",`affected_status` = true , `patient_id` = "1", `ad_alt`=30, `batch_id` = "BAT1", `start` = 101),
-      NormalizedSNV(`analysis_code` = "GEAN" ,`affected_status` = false, `patient_id` = "2", `ad_alt`=30, `batch_id` = "BAT1", `start` = 102)
+      NormalizedSNV(`analysis_code` = "GEAN" ,`affected_status` = false, `patient_id` = "2", `ad_alt`=30, `batch_id` = "BAT2", `start` = 102)
     ).toDF
 
     val variantDf = Seq(
@@ -284,7 +284,7 @@ resultDf.orderBy("start").show(false)
           `non_affected` = Frequency(0, 2, 0.0 , 0, 1, 0.0, 0),
           `total` =        Frequency(1, 4, 0.25, 1, 2, 0.5, 0))),
       NormalizedVariants(
-        `batch_id` = "BAT1",
+        `batch_id` = "BAT2",
         `start` = 102,
         `frequencies_by_analysis` = List(
           AnalysisCodeFrequencies(
@@ -301,7 +301,7 @@ resultDf.orderBy("start").show(false)
 
     val resultDf = new Variants().transform(data ++ Map(normalized_variants.id -> variantDf, normalized_snv.id -> occurrencesDf))
 
-resultDf.orderBy("start").show(false)
+//resultDf.orderBy("start").show(false)
 /*
 +----------+-----+---------+---------+-------------+-------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------+-----+------------+---------------+-------------+----------+------------+--------------------------+--------------------------+----------------+----------------------+----------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------------------+-----------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------+-------+-----------------------+--------------------------+---------+----------------------------------------+--------------------------+
 |chromosome|start|reference|alternate|panels       |frequencies_by_analysis                                                                                                        |frequency_RQDM                                                                   |end  |genes_symbol|hgvsg          |variant_class|pubmed    |variant_type|updated_on                |created_on                |assembly_version|last_annotation_update|dna_change|donors                                                                                                                                                                                                                                                                                                                                                                                        |external_frequencies                |rsnumber   |clinvar|genes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |omim    |varsome|gene_external_reference|variant_external_reference|locus    |hash                                    |variants_oid              |
@@ -312,13 +312,14 @@ resultDf.orderBy("start").show(false)
 */
     val result = resultDf.as[VariantEnrichedOutput].collect()
     result.find(_.`start` == 101).head.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
-      Frequency(2, 2, 1.0, 1, 1, 1.0, 1),
-      Frequency(2, 4, 1.0, 1, 2, 1.0, 1))
+      affected = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+      non_affected = Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
+      total = Frequency(1, 4, 0.25, 1, 2, 0.5, 0),
+    )
     result.find(_.`start` == 102).head.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
-      Frequency(2, 2, 1.0, 1, 1, 1.0, 1),
-      Frequency(2, 4, 1.0, 1, 2, 1.0, 1))
+      affected = Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
+      non_affected = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+      total = Frequency(1, 4, 0.25, 1, 2, 0.5, 1))
   }
 
 
