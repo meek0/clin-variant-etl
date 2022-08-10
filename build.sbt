@@ -9,7 +9,7 @@ javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 val spark_version = "3.1.2"
 val deltaCoreVersion = "1.0.0"
 val scalatestVersion = "3.2.9"
-val glowVersion = "1.0.1"
+val glowVersion = "1.2.1"
 val datalakeSpark3Version = "1.1.0"
 val elasticsearchVersion = "7.15.0"
 
