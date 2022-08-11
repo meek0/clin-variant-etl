@@ -62,11 +62,11 @@
               "type": "boolean"
             },
             "cdna_position": {
-              "type": "string",
+              "type": "keyword",
               "index": false
             },
             "cds_position": {
-              "type": "string",
+              "type": "keyword",
               "index": false
             },
             "coding_dna_change": {
@@ -183,7 +183,7 @@
               }
             },
             "protein_position": {
-              "type": "string",
+              "type": "keyword",
               "index": false
             },
             "refseq_mrna_id": {
