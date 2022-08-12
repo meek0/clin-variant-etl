@@ -107,7 +107,7 @@
             "exon": {
               "properties": {
                 "rank": {
-                  "type": "long"
+                  "type": "keyword"
                 },
                 "total": {
                   "type": "long"
