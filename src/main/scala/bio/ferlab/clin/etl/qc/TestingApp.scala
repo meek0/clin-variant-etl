@@ -20,7 +20,7 @@ trait TestingApp extends SparkApp {
 
   lazy val normalized_snv: DataFrame = spark.table("normalized_snv")
   lazy val variants: DataFrame = spark.table("variants")
-  lazy val variant_centric = spark.table(s"varaint_centric_$release_id")
+  lazy val variant_centric = spark.table(s"variant_centric_$release_id")
 
   def shouldBeEmpty(df: DataFrame, error: String): Unit = assert(df.count() == 0, error)
 }
