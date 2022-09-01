@@ -163,7 +163,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
       father_affected_status = None,
       mother_zygosity = None,
       father_zygosity = None,
-      parental_origin = None,
+      parental_origin = Some("unknown"),
       transmission = Some("unknown_parents_genotype"),
       last_update = Date.valueOf(LocalDate.now())
     ))

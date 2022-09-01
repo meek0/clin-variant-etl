@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.FrequencyUtils.includeFilter
 import bio.ferlab.clin.etl.vcf.SNV.{getCompoundHet, getPossiblyCompoundHet, getSNV}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -35,7 +34,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("zygosity", zygosity(col("calls")))
       .withColumn("mother_zygosity", zygosity(col("mother_calls")))
       .withColumn("father_zygosity", zygosity(col("father_calls")))
-      .withParentalOrigin("parental_origin", col("father_calls"), col("mother_calls"))
+      .withParentalOrigin("parental_origin", col("calls"), col("father_calls"), col("mother_calls"))
       .withGenotypeTransmission("transmission")
       .filter(col("has_alt"))
 
@@ -100,7 +99,7 @@ object SNV {
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
-      .filter(includeFilter)
+      //.filter(includeFilter)
       .drop("annotation")
   }
 
