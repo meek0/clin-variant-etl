@@ -99,8 +99,9 @@ object SNV {
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
-      //.filter(includeFilter)
-      .drop("annotation")
+      .filter($"alternate" =!= "*")
+    //.filter(includeFilter)
+    .drop("annotation")
   }
 
 
