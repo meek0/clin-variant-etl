@@ -88,7 +88,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .withColumn("calls", col("genotype.calls"))
       .withColumn("zygosity", zygosity(col("calls")))
       .drop("genotype")
-      .join(clinicalInfos, Seq("aliquot_id"))
+      .join(broadcast(clinicalInfos), Seq("aliquot_id"))
   }
 
   val emptyFrequency =
@@ -239,6 +239,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
 
     val taskDf = data(task.id)
+      .where(col("experiment.name") === batchId)
       .select(
         col("experiment.aliquot_id") as "aliquot_id",
         col("patient_id"),
