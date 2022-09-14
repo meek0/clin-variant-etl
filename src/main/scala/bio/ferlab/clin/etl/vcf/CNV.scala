@@ -19,7 +19,7 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
     val occurrences = getCNV(data(raw_variant_calling.id), batchId)
-      .join(joinedRelation, Seq("aliquot_id"), "inner")
+      .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
     occurrences
   }
 

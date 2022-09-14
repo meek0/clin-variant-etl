@@ -65,25 +65,25 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
       `patient_id` = "PA0001",
       `service_request_id` = "SRS0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
-      `experiment` = EXPERIMENT(`aliquot_id` = "1")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "1")
     ),
     TaskOutput(
       `id` = "73255",
       `patient_id` = "PA0002",
       `service_request_id` = "SRS0002",
-      `experiment` = EXPERIMENT(`aliquot_id` = "2")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "2")
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0003",
       `service_request_id` = "SRS0003",
-      `experiment` = EXPERIMENT(`aliquot_id` = "3")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "3")
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0004",
       `service_request_id` = "SRS0004",
-      `experiment` = EXPERIMENT(`aliquot_id` = "4")
+      `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "4")
     )
   ).toDF
 
