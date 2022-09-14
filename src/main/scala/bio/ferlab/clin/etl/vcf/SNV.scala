@@ -21,7 +21,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
     val occurrences = getSNV(data(raw_variant_calling.id), batchId)
-      .join(joinedRelation, Seq("aliquot_id"), "inner")
+      .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo)
       .withColumn("mother_calls", motherCalls)

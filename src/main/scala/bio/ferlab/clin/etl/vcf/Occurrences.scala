@@ -75,6 +75,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
           .otherwise(col("gender")))
 
     val taskDf = data(task.id)
+      .where(col("name") === batchId)
       .select(
         col("experiment.aliquot_id") as "aliquot_id",
         col("experiment.sequencing_strategy") as "sequencing_strategy",
