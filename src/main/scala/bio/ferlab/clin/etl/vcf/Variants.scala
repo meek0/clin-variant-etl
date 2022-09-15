@@ -220,7 +220,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .repartition(10, col("chromosome"))
       .sortWithinPartitions("start")
 
-    val replaceWhereClause = s"batch_id='$batchId')"
+    val replaceWhereClause = s"batch_id = '$batchId'"
     writeOnce(destination.location, destination.table.map(_.database).getOrElse(""), destination.table.map(_.name).getOrElse(""), df, destination.partitionby, destination.format.sparkFormat, destination.writeoptions + ("replaceWhere" -> replaceWhereClause))
   }
 

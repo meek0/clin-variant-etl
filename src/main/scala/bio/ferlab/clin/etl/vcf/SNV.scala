@@ -62,7 +62,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
     val df = data
       .repartition(100, col("chromosome"))
 
-    val replaceWhereClause = s"batch_id='$batchId')"
+    val replaceWhereClause = s"batch_id = '$batchId'"
     writeOnce(destination.location, destination.table.map(_.database).getOrElse(""), destination.table.map(_.name).getOrElse(""), df, destination.partitionby, destination.format.sparkFormat, destination.writeoptions + ("replaceWhere" -> replaceWhereClause))
   }
 }
