@@ -38,6 +38,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withParentalOrigin("parental_origin", col("calls"), col("father_calls"), col("mother_calls"))
       .withGenotypeTransmission("transmission")
       .filter(col("has_alt"))
+      .persist()
 
     val het = occurrences.filter(col("zygosity") === "HET")
     val hc: DataFrame = getCompoundHet(het)
