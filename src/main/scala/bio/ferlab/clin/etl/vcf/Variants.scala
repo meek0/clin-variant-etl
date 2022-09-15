@@ -7,6 +7,7 @@ import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
+import bio.ferlab.datalake.spark3.loader.DeltaLoader.writeOnce
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
@@ -215,9 +216,12 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
+    val df = data
       .repartition(10, col("chromosome"))
-      .sortWithinPartitions("start"))
+      .sortWithinPartitions("start")
+
+    val replaceWhereClause = s"batch_id='$batchId')"
+    writeOnce(destination.location, destination.table.map(_.database).getOrElse(""), destination.table.map(_.name).getOrElse(""), df, destination.partitionby, destination.format.sparkFormat, destination.writeoptions + ("replaceWhere" -> replaceWhereClause))
   }
 
   def getClinicalInfo(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {

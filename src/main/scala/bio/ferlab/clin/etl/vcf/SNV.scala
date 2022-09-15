@@ -4,6 +4,7 @@ import bio.ferlab.clin.etl.vcf.SNV.{getCompoundHet, getPossiblyCompoundHet, getS
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, _}
+import bio.ferlab.datalake.spark3.loader.DeltaLoader.writeOnce
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession, functions}
@@ -55,9 +56,14 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
   override def load(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
                     currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
+//    super.load(data
+//      .repartition(100, col("chromosome"))
+//    )
+    val df = data
       .repartition(100, col("chromosome"))
-    )
+
+    val replaceWhereClause = s"batch_id='$batchId')"
+    writeOnce(destination.location, destination.table.map(_.database).getOrElse(""), destination.table.map(_.name).getOrElse(""), df, destination.partitionby, destination.format.sparkFormat, destination.writeoptions + ("replaceWhere" -> replaceWhereClause))
   }
 }
 
@@ -100,8 +106,8 @@ object SNV {
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
       .filter($"alternate" =!= "*")
-    //.filter(includeFilter)
-    .drop("annotation")
+      //.filter(includeFilter)
+      .drop("annotation")
   }
 
 
