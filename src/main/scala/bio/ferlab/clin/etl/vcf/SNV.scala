@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.vcf.SNV.{getCompoundHet, getPossiblyCompoundHet, getSNV}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.ParentalOrigin.{FTH, MTH}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, _}
 import bio.ferlab.datalake.spark3.loader.DeltaLoader.writeOnce
@@ -113,7 +114,7 @@ object SNV {
 
 
   def getPossiblyCompoundHet(het: DataFrame): DataFrame = {
-    val hcWindow = Window.partitionBy("patient_id", "symbol").orderBy("start").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+    val hcWindow = Window.partitionBy("patient_id", "chromosome","symbol").orderBy("start").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
     val possiblyHC = het
       .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), explode(col("symbols")) as "symbol")
       .withColumn("possibly_hc_count", count(lit(1)).over(hcWindow))
@@ -126,9 +127,9 @@ object SNV {
   }
 
   def getCompoundHet(het: DataFrame): DataFrame = {
-    val withParentalOrigin = het.filter(col("parental_origin").isNotNull)
+    val withParentalOrigin = het.filter(col("parental_origin").isin(FTH, MTH))
 
-    val hcWindow = Window.partitionBy("patient_id", "symbol", "parental_origin").orderBy("start")
+    val hcWindow = Window.partitionBy("patient_id", "chromosome", "symbol", "parental_origin").orderBy("start")
     val hc = withParentalOrigin
       .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), col("symbols"), col("parental_origin"))
       .withColumn("locus", concat_ws("-", locus: _*))
@@ -136,7 +137,7 @@ object SNV {
       .withColumn("coords", collect_set(col("locus")).over(hcWindow))
       .withColumn("merged_coords", last("coords", ignoreNulls = true).over(hcWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
       .withColumn("struct_coords", struct(col("parental_origin"), col("merged_coords").alias("coords")))
-      .withColumn("all_coords", collect_set("struct_coords").over(Window.partitionBy("patient_id", "symbol").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
+      .withColumn("all_coords", collect_set("struct_coords").over(Window.partitionBy("patient_id", "chromosome", "symbol").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
       .withColumn("complement_coords", functions.filter(col("all_coords"), x => x.getItem("parental_origin") =!= col("parental_origin"))(0))
       .withColumn("is_hc", col("complement_coords").isNotNull)
       .filter(col("is_hc"))
