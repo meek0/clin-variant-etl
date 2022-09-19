@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.vcf
 import bio.ferlab.clin.etl.vcf.CNV.getCNV
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -10,10 +11,10 @@ import java.time.LocalDateTime
 
 class CNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
-  override val destination: DatasetConf = conf.getDataset("normalized_cnv")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_cnv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv")
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     val joinedRelation: DataFrame = getClinicalRelation(data)
@@ -23,14 +24,9 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
     occurrences
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
-      .repartition(10, col("patient_id"))
-    )
-  }
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(Seq("patient_id"), Some(10))
 
+  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 
 }
 

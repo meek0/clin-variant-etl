@@ -1,17 +1,16 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
-import org.apache.spark.sql.functions.{array, coalesce, col, collect_list, count, explode, lit, sha1, struct}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
 class PrepareGeneCentric(releaseId: String)
-                        (override implicit val conf: Configuration) extends ETL() {
+                        (override implicit val conf: Configuration) extends PrepareCentric(releaseId) {
 
-  override val destination: DatasetConf = conf.getDataset("es_index_gene_centric")
+  override val mainDestination: DatasetConf = conf.getDataset("es_index_gene_centric")
   val enriched_genes: DatasetConf = conf.getDataset("enriched_genes")
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
 
@@ -23,7 +22,7 @@ class PrepareGeneCentric(releaseId: String)
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -50,12 +49,8 @@ class PrepareGeneCentric(releaseId: String)
       .withColumn("alias", coalesce(col("alias"), lit(array())))
       .withColumn("number_of_patients", coalesce(col("number_of_patients"), lit(0)))
       .withColumn("number_of_variants_per_patient", coalesce(col("number_of_variants_per_patient"), lit(array())))
-    
+
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame =
-    loadForReleaseId(data, destination, releaseId)
 }
 

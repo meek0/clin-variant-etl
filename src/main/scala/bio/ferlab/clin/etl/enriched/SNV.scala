@@ -1,16 +1,18 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class SNV()(implicit configuration: Configuration) extends ETL {
+class SNV()(implicit configuration: Configuration) extends ETLSingleDestination {
 
-  override val destination: DatasetConf = conf.getDataset("enriched_snv")
+  override val mainDestination: DatasetConf = conf.getDataset("enriched_snv")
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
@@ -20,7 +22,7 @@ class SNV()(implicit configuration: Configuration) extends ETL {
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
@@ -28,11 +30,5 @@ class SNV()(implicit configuration: Configuration) extends ETL {
       .where(col("zygosity").isin("HOM", "HET"))
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    super.load(data
-      .repartition(1, col("chromosome"))
-      .sortWithinPartitions("start"))
-  }
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(10), sortColumns = Seq(col("start")))
 }

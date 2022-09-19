@@ -11,9 +11,9 @@ import java.time.LocalDateTime
 import scala.io.Source
 
 class FhirToNormalizedETL(override val source: DatasetConf,
-                          override val destination: DatasetConf,
+                          override val mainDestination: DatasetConf,
                           override val transformations: List[Transformation])
-                         (override implicit val conf: Configuration)  extends RawToNormalizedETL(source, destination, transformations){
+                         (override implicit val conf: Configuration)  extends RawToNormalizedETL(source, mainDestination, transformations){
 
   override def extract(lastRunDateTime: LocalDateTime,
                        currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = {

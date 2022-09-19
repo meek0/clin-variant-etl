@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model.{DONORS, GeneCentricOutput, GenesOutput, VARIANT_PER_PATIENT, VariantEnrichedOutput}
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.apache.spark.sql.DataFrame
@@ -9,11 +9,8 @@ import org.scalatest.GivenWhenThen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class PrepareGeneCentricSpec extends AnyFlatSpec with GivenWhenThen with WithSparkSession with Matchers {
+class PrepareGeneCentricSpec extends AnyFlatSpec with GivenWhenThen with WithTestConfig with WithSparkSession with Matchers {
   import spark.implicits._
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val genesDf: DataFrame = Seq(GenesOutput(), GenesOutput(`symbol` = "OR4F6")).toDF()
   val variantsDf: DataFrame = Seq(
@@ -37,7 +34,7 @@ class PrepareGeneCentricSpec extends AnyFlatSpec with GivenWhenThen with WithSpa
   )
 
   "Gene_centric transform" should "return data as GeneCentricOutput" in {
-    val result = new PrepareGeneCentric("re_000").transform(data)
+    val result = new PrepareGeneCentric("re_000").transformSingle(data)
     result.columns should contain allElementsOf Seq("hash")
     result.as[GeneCentricOutput].collect() should contain allElementsOf Seq(
       GeneCentricOutput(symbol = "OR4F4", `entrez_gene_id` = 0, `omim_gene_id` = null, `hgnc` = null, `ensembl_gene_id` = null, `location` = null, name= null, `alias` = List(), `biotype` = null, `orphanet` = null,hpo=null,`omim` = null, chromosome=null, ddd=null, cosmic=null, `number_of_patients` = 2, `number_of_variants_per_patient` = List(VARIANT_PER_PATIENT("PA0002", 1), VARIANT_PER_PATIENT("PA0001", 1)), hash="63592aea532cb1c022cbc13ea463513df18baf57"), 

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.apache.spark.sql.DataFrame
@@ -11,13 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import java.sql.Date
 import java.time.LocalDate
 
-class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(
-      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
-      StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)
-    ))
+class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
 
   import spark.implicits._
 
@@ -128,7 +122,8 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   )
 
   "occurrences transform" should "transform data in expected format" in {
-    val result = new SNV("BAT1").transform(data).as[NormalizedSNV].collect()
+    val results = new SNV("BAT1").transform(data)
+    val result = results("normalized_snv").as[NormalizedSNV].collect()
 
     result.length shouldBe 2
     val probandSnv = result.find(_.patient_id == "PA0001")

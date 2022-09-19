@@ -1,20 +1,19 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
-class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Configuration) extends ETL {
+class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Configuration) extends PrepareCentric(releaseId) {
 
-  override val destination: DatasetConf = conf.getDataset("es_index_variant_suggestions")
+  override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_suggestions")
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
 
   final val high_priority_weight = 4
-  final val low_priority_weight  = 2
+  final val low_priority_weight = 2
 
   final val indexColumns =
     List("type", "locus", "suggestion_id", "hgvsg", "suggest", "chromosome", "rsnumber", "symbol_aa_change")
@@ -30,7 +29,7 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -74,9 +73,5 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
       .drop("consequences", "ensembl_gene_ids", "ensembl_feature_ids", "symbols")
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame =
-    loadForReleaseId(data, destination, releaseId)
 }
 

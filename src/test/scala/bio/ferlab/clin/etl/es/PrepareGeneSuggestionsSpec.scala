@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.apache.spark.sql.DataFrame
@@ -11,12 +11,9 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.Seq
 
-class PrepareGeneSuggestionsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class PrepareGeneSuggestionsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val destination: DatasetConf = conf.getDataset("es_index_gene_suggestions")
   val es_index_gene_centric: DatasetConf = conf.getDataset("es_index_gene_centric")
@@ -31,7 +28,7 @@ class PrepareGeneSuggestionsSpec extends AnyFlatSpec with WithSparkSession with 
 
   "transform PrepareGeneSuggestions" should "produce suggestions for genes" in {
 
-    val result = new PrepareGeneSuggestions("re_000").transform(data)
+    val result = new PrepareGeneSuggestions("re_000").transformSingle(data)
 
     result.as[GeneSuggestionsOutput].collect() should contain allElementsOf Seq(
       GeneSuggestionsOutput(symbol = "OR4F4", `chromosome` = null, `ensembl_gene_id` = null, suggestion_id = "63592aea532cb1c022cbc13ea463513df18baf57", `suggest` = List(SUGGEST(4, List("OR4F4")), SUGGEST(2, List()))),

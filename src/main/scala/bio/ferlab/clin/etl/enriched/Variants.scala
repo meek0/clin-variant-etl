@@ -1,22 +1,23 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
-import bio.ferlab.clin.etl.utils.FixedRepartition
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
+import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.datalake.spark3.utils.FixedRepartition
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
 
-class Variants()(implicit configuration: Configuration) extends ETL {
+class Variants()(implicit configuration: Configuration) extends ETLSingleDestination {
 
-  override val destination: DatasetConf = conf.getDataset("enriched_variants")
+  override val mainDestination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
@@ -50,7 +51,7 @@ class Variants()(implicit configuration: Configuration) extends ETL {
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -90,12 +91,12 @@ class Variants()(implicit configuration: Configuration) extends ETL {
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
       .withColumn("hash", sha1(col("locus")))
-      .withColumn(destination.oid, col("updated_on"))
+      .withColumn(mainDestination.oid, col("updated_on"))
   }
 
   override def publish()(implicit spark: SparkSession): Unit = {
-    compact(destination, FixedRepartition(100))
-    vacuum(destination, 2)
+    compact(mainDestination, FixedRepartition(100))
+    vacuum(mainDestination, 2)
   }
 
   private def getPnAnPerAnalysis(occurrences: DataFrame): DataFrame = {

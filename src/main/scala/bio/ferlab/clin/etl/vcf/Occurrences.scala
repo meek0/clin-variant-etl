@@ -2,7 +2,8 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.vcf.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.transformation.Implicits._
@@ -11,8 +12,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import java.time.LocalDateTime
 
-abstract class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETL {
-
+abstract class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
   def raw_variant_calling: DatasetConf
 
   val patient: DatasetConf = conf.getDataset("normalized_patient")

@@ -1,20 +1,22 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
-import bio.ferlab.clin.etl.utils.RepartitionByColumns
+
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
+import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences(batchId: String)(implicit configuration: Configuration) extends ETL {
+class Consequences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
-  override val destination: DatasetConf = conf.getDataset("normalized_consequences")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
@@ -22,15 +24,15 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
     Map(
       raw_variant_calling.id ->
         vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-          .where(col("contigName").isin(validContigNames:_*))
+          .where(col("contigName").isin(validContigNames: _*))
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    data(raw_variant_calling.id)
+    val df = data(raw_variant_calling.id)
       .select(
         chromosome,
         start,
@@ -74,13 +76,14 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
           lit("p."),
           normalizeAminoAcid($"amino_acids.reference"),
           $"protein_position",
-          when($"amino_acids.variant".isNull, lit("=")).otherwise(normalizeAminoAcid( $"amino_acids.variant"))))
+          when($"amino_acids.variant".isNull, lit("=")).otherwise(normalizeAminoAcid($"amino_acids.variant"))))
       .withColumn("coding_dna_change", when($"cds_position".isNotNull, concat(lit("c."), $"cds_position", $"reference", lit(">"), $"alternate")).otherwise(lit(null)))
       .withColumn("impact_score", when($"impact" === "MODIFIER", 1).when($"impact" === "LOW", 2).when($"impact" === "MODERATE", 3).when($"impact" === "HIGH", 4).otherwise(0))
       .withColumn("batch_id", lit(batchId))
       .withColumn("created_on", lit(Timestamp.valueOf(currentRunDateTime)))
       .withColumn("updated_on", lit(Timestamp.valueOf(currentRunDateTime)))
-      .withColumn(destination.oid, col("created_on"))
+      .withColumn(mainDestination.oid, col("created_on"))
+    df
   }
 
   def normalizeAminoAcid(amino_acid: Column): Column = {
@@ -118,9 +121,10 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
       }.otherwise(amino_acid)
   }
 
+
   override def publish()(implicit spark: SparkSession): Unit = {
-    compact(destination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq(col("start"))))
-    vacuum(destination, 2)
+    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq(col("start"))))
+    vacuum(mainDestination, 2)
   }
 
 }

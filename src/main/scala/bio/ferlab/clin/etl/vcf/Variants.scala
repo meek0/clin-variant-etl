@@ -3,19 +3,19 @@ package bio.ferlab.clin.etl.vcf
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.vcf.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
-import bio.ferlab.datalake.spark3.loader.DeltaLoader.writeOnce
+import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
-class Variants(batchId: String)(implicit configuration: Configuration) extends ETL {
+class Variants(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
-  override val destination: DatasetConf = conf.getDataset("normalized_variants")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
@@ -34,7 +34,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
@@ -209,20 +209,13 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         frequency("non_affected") as "non_affected",
         frequency("") as "total"
       ))
-      .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM":_*)
+      .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM": _*)
 
   }
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    val df = data
-      .repartition(10, col("chromosome"))
-      .sortWithinPartitions("start")
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(10), sortColumns = Seq(col("start")))
 
-    val replaceWhereClause = s"batch_id = '$batchId'"
-    writeOnce(destination.location, destination.table.map(_.database).getOrElse(""), destination.table.map(_.name).getOrElse(""), df, destination.partitionby, destination.format.sparkFormat, destination.writeoptions + ("replaceWhere" -> replaceWhereClause))
-  }
+  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 
   def getClinicalInfo(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
     val serviceRequestDf = data(service_request.id)

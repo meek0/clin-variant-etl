@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.external
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -12,16 +12,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{BeforeAndAfterAll, GivenWhenThen}
 
-class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSparkSession with Matchers with BeforeAndAfterAll {
+class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
   import spark.implicits._
 
   override def beforeAll(): Unit = {
     spark.sql("CREATE DATABASE IF NOT EXISTS clin")
   }
-
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val destination      : DatasetConf = conf.getDataset("enriched_genes")
   val omim_gene_set    : DatasetConf = conf.getDataset("normalized_omim_gene_set")
@@ -46,7 +42,7 @@ class CreateGenesTableSpec extends AnyFlatSpec with GivenWhenThen with WithSpark
 
   it should "transform data into genes table" in {
 
-    val resultDF = job.transform(inputData)
+    val resultDF = job.transformSingle(inputData)
 
     val expectedOrphanet = List(ORPHANET(17601, "Multiple epiphyseal dysplasia, Al-Gazali type", List("Autosomal recessive")))
     val expectedOmim = List(OMIM("Shprintzen-Goldberg syndrome", "182212", List("Autosomal dominant"), List("AD")))

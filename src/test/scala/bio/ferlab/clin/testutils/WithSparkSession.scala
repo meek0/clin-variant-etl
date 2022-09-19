@@ -15,4 +15,6 @@ trait WithSparkSession extends WithOutputFolder {
 
   spark.sparkContext.setLogLevel("ERROR")
 
+  spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+
 }

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.external
 
 import bio.ferlab.clin.model.PanelOutput
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
@@ -10,13 +10,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class PanelsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(
-      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
-      StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)
-    ))
+class PanelsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
