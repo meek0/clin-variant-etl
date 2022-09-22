@@ -1,11 +1,10 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, SimpleConfiguration}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
-
+import pureconfig.generic.auto._
 object Indexer extends App {
 
   println(s"ARGS: " + args.mkString("[", ", ", "]"))
@@ -22,7 +21,7 @@ object Indexer extends App {
   configFile        // config/qa.conf or config/prod.conf
   ) = args
 
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources(configFile)
+  implicit val conf: Configuration = ConfigurationLoader.loadFromResources[SimpleConfiguration](configFile)
   
   val esConfigs = Map(
     "es.net.http.auth.user" -> username,

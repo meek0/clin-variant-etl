@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
@@ -10,13 +10,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(
-      StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
-      StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)
-    ))
+class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
@@ -93,7 +87,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
 
   override def beforeAll(): Unit = {
     spark.sql(s"CREATE DATABASE IF NOT EXISTS ${raw_variant_calling.table.map(_.database).getOrElse("clin")}")
-    HadoopFileSystem.remove(job1.destination.location)
+    HadoopFileSystem.remove(job1.mainDestination.location)
   }
 
 
@@ -127,8 +121,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
   )
 
   "variants job" should "transform data in expected format" in {
-
-    val resultDf = job1.transform(data)
+    val results = job1.transform(data)
+    val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
     resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
     val variantWithFreq = result.find(_.`reference` == "T")

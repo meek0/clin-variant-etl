@@ -5,7 +5,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.ParentalOrigin.{FTH, MTH}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, _}
-import bio.ferlab.datalake.spark3.loader.DeltaLoader.writeOnce
+import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession, functions}
@@ -14,10 +14,10 @@ import java.time.LocalDateTime
 
 class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
-  override val destination: DatasetConf = conf.getDataset("normalized_snv")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     val joinedRelation: DataFrame = getClinicalRelation(data)
@@ -52,21 +52,12 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("hc_complement", coalesce(col("hc_complement"), array()))
       .withColumn("is_possibly_hc", coalesce(col("is_possibly_hc"), lit(false)))
       .withColumn("possibly_hc_complement", coalesce(col("possibly_hc_complement"), array()))
+
   }
 
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(Seq("chromosome"), Some(100))
 
-  override def load(data: DataFrame,
-                    lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-//    super.load(data
-//      .repartition(100, col("chromosome"))
-//    )
-    val df = data
-      .repartition(100, col("chromosome"))
-
-    val replaceWhereClause = s"batch_id = '$batchId'"
-    writeOnce(destination.location, destination.table.map(_.database).getOrElse(""), destination.table.map(_.name).getOrElse(""), df, destination.partitionby, destination.format.sparkFormat, destination.writeoptions + ("replaceWhere" -> replaceWhereClause))
-  }
+  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object SNV {
@@ -114,7 +105,7 @@ object SNV {
 
 
   def getPossiblyCompoundHet(het: DataFrame): DataFrame = {
-    val hcWindow = Window.partitionBy("patient_id", "chromosome","symbol").orderBy("start").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
+    val hcWindow = Window.partitionBy("patient_id", "chromosome", "symbol").orderBy("start").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
     val possiblyHC = het
       .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), explode(col("symbols")) as "symbol")
       .withColumn("possibly_hc_count", count(lit(1)).over(hcWindow))

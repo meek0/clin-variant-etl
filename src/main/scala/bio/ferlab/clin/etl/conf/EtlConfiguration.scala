@@ -120,29 +120,29 @@ object EtlConfiguration extends App {
 
     )
 
-  val qa_conf = Configuration(
+  val qa_conf = SimpleConfiguration(DatalakeConf(
     storages = clin_qa_storage,
     sources = sources.map(ds => ds.copy(table = ds.table.map(t => TableConf(clin_qa_database, t.name)))),
     sparkconf = clin_spark_conf
-  )
+  ))
 
-  val staging_conf = Configuration(
+  val staging_conf = SimpleConfiguration(DatalakeConf(
     storages = clin_staging_storage,
     sources = sources.map(ds => ds.copy(table = ds.table.map(t => TableConf(clin_staging_database, t.name)))),
     sparkconf = clin_spark_conf
-  )
+  ))
 
-  val prd_conf = Configuration(
+  val prd_conf = SimpleConfiguration(DatalakeConf(
     storages = clin_prd_storage,
     sources = sources.map(ds => ds.copy(table = ds.table.map(t => TableConf(clin_prd_database, t.name)))),
     sparkconf = clin_spark_conf
-  )
+  ))
 
-  val test_conf = Configuration(
+  val test_conf = SimpleConfiguration(DatalakeConf(
     storages = List(),
     sources = sources,
     sparkconf = clin_spark_conf
-  )
+  ))
 
   ConfigurationWriter.writeTo("src/main/resources/config/qa.conf", qa_conf)
   ConfigurationWriter.writeTo("src/main/resources/config/staging.conf", staging_conf)

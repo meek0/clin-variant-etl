@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
@@ -13,12 +13,9 @@ import org.scalatest.matchers.should.Matchers
 import java.io.File
 import java.sql.Timestamp
 
-class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
@@ -53,11 +50,11 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with M
 
   "run" should "produce parquet files in the right format" in {
 
-    val result = new PrepareVariantCentric("re_000").transform(data)
+    val result = new PrepareVariantCentric("re_000").transformSingle(data)
     result.count() shouldBe 2
     result.as[VariantIndexOutput].collect() should contain allElementsOf Seq(VariantIndexOutput("1"))
 
-    new PrepareVariantCentric("re_000").load(result)
+    new PrepareVariantCentric("re_000").loadSingle(result)
     result.write.mode("overwrite").json(this.getClass.getClassLoader.getResource(".").getFile + "/es_index/variant_centric")
   }
 

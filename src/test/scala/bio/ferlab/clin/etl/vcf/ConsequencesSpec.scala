@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
@@ -14,28 +14,26 @@ import org.scalatest.matchers.should.Matchers
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
-
-  implicit val localConf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
+class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   val job1 = new Consequences("BAT1")
   val job2 = new Consequences("BAT2")
 
   import spark.implicits._
-  val raw_variant_calling: DatasetConf = localConf.getDataset("raw_snv")
+
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
   val data = Map(
     raw_variant_calling.id -> Seq(VCFInput()).toDF()
   )
 
   override def beforeAll(): Unit = {
-    HadoopFileSystem.remove(job1.destination.location)
+    HadoopFileSystem.remove(job1.mainDestination.location)
   }
 
   "consequences job" should "transform data in expected format" in {
-
-    val resultDf = job1.transform(data)
+    val results = job1.transform(data)
+    val resultDf = results(job1.mainDestination.id)
     val result = resultDf.as[NormalizedConsequences].collect().head
 
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedConsequences", resultDf, "src/test/scala/")
@@ -58,7 +56,8 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
     val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
 
 
-    val job1Df = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
+    val job1Results = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
+    val job1Df = job1Results(job1.mainDestination.id)
     job1Df.as[NormalizedConsequences].collect() should contain allElementsOf Seq(
       NormalizedConsequences(
         `created_on` = Timestamp.valueOf(date1),
@@ -66,11 +65,11 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with Matchers w
         `normalized_consequences_oid` = Timestamp.valueOf(date1))
     )
 
-    job1.load(job1Df)
+    job1.load(job1Results)
 
-    val job2Df = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
-    job2.load(job2Df)
-    val resultDf = job2.destination.read
+    val job2Results = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
+    job2.load(job2Results)
+    val resultDf = job2.mainDestination.read
 
     resultDf.as[NormalizedConsequences].collect() should contain allElementsOf Seq(
       NormalizedConsequences(

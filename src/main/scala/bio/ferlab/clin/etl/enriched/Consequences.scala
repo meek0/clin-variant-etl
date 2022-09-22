@@ -1,12 +1,13 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.DeltaUtils.{compact, vacuum}
-import bio.ferlab.clin.etl.utils.RepartitionByColumns
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
+import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions.{coalesce, col, lit, struct}
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -14,9 +15,9 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences()(implicit configuration: Configuration) extends ETL {
+class Consequences()(implicit configuration: Configuration) extends ETLSingleDestination {
 
-  override val destination: DatasetConf = conf.getDataset("enriched_consequences")
+  override val mainDestination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
@@ -33,7 +34,7 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
     )
   }
 
-  override def transform(data: Map[String, DataFrame],
+  override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -75,8 +76,8 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
   }
 
   override def publish()(implicit spark: SparkSession): Unit = {
-    compact(destination, RepartitionByColumns(Seq("chromosome"), Some(1), Seq(col("start"))))
-    vacuum(destination, 2)
+    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(1), Seq(col("start"))))
+    vacuum(mainDestination, 2)
   }
 
   def joinWithDBNSFP(csq: DataFrame, dbnsfp: DataFrame)(implicit spark: SparkSession): DataFrame = {
@@ -104,7 +105,7 @@ class Consequences()(implicit configuration: Configuration) extends ETL {
     csq
       .join(dbnsfpRenamed, Seq("chromosome", "start", "reference", "alternate", "ensembl_feature_id"), "left")
       .select(csq("*"), dbnsfpRenamed("predictions"), dbnsfpRenamed("conservations"))
-      .withColumn(destination.oid, col("created_on"))
+      .withColumn(mainDestination.oid, col("created_on"))
 
   }
 }

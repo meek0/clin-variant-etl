@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
@@ -14,12 +14,9 @@ import org.scalatest.matchers.should.Matchers
 import java.io.File
 import java.sql.Date
 
-class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
@@ -507,7 +504,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with Matchers with 
             `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1))))
     ).toDF()
 
-    val resultDf = new Variants().transform(data ++ Map(normalized_variants.id -> variantDf, normalized_snv.id -> occurrencesDf))
+    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, normalized_snv.id -> occurrencesDf))
     val result = resultDf.as[VariantEnrichedOutput].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2

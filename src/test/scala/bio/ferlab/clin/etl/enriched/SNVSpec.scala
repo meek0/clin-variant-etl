@@ -1,19 +1,16 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
-
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
 
   val normalized_occurrences: DatasetConf = conf.getDataset("normalized_snv")
 
@@ -28,7 +25,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with Matchers with Befor
     ).toDF()
 
     val inputData = Map(normalized_occurrences.id -> occurrencesDf)
-    val df = new SNV().transform(inputData)
+    val df = new SNV().transformSingle(inputData)
     val result = df.as[NormalizedSNV].collect()
 
     result.length shouldBe 2

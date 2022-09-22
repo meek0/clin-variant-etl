@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.datalake.spark3.etl.{ETL, RawToNormalizedETL}
+import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
+import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.public.SparkApp
 
 object FhirRawToNormalized extends SparkApp {

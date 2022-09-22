@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.varsome
 
 import bio.ferlab.clin.model.{NormalizedVariants, PanelOutput, VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
@@ -16,9 +16,7 @@ import java.io.File
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class VarsomeSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
-  implicit val conf: Configuration = ConfigurationLoader.loadFromResources("config/test.conf")
-    .copy(storages = List(StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)))
+class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 
   import spark.implicits._
 
