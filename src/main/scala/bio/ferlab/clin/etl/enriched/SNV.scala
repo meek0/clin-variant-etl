@@ -30,5 +30,5 @@ class SNV()(implicit configuration: Configuration) extends ETLSingleDestination 
       .where(col("zygosity").isin("HOM", "HET"))
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(10), sortColumns = Seq(col("start")))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq(col("start")))
 }
