@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.etl.vcf.SNV.{getCompoundHet, getPossiblyCompoundHet, getSNV}
+import bio.ferlab.clin.etl.vcf.SNV._
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.ParentalOrigin.{FTH, MTH}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -8,7 +8,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, _}
 import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
@@ -18,20 +18,39 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                               lastRunDateTime: LocalDateTime = minDateTime,
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
     val occurrences = getSNV(data(raw_variant_calling.id), batchId)
       .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
-      .withColumn("family_info", familyInfo)
+      .withColumn("family_info", familyInfo(
+        Seq(
+          col("gq"), col("dp"),  col("qd"), col("filters"),
+          col("ad_ref"),col("ad_alt"), col("ad_total"), col("ad_ratio"),
+          col("calls"), col("affected_status")))
+      )
       .withColumn("mother_calls", motherCalls)
       .withColumn("father_calls", fatherCalls)
       .withColumn("mother_affected_status", motherAffectedStatus)
       .withColumn("father_affected_status", fatherAffectedStatus)
       .withColumn("mother_gq", motherGQ)
+      .withColumn("mother_dp", motherDP)
+      .withColumn("mother_qd", motherQD)
+      .withColumn("mother_filters", motherFilters)
+      .withColumn("mother_ad_ref", motherADRef)
+      .withColumn("mother_ad_alt", motherADAlt)
+      .withColumn("mother_ad_total", motherADTotal)
+      .withColumn("mother_ad_ratio", motherADRatio)
       .withColumn("father_gq", fatherGQ)
+      .withColumn("father_dp", fatherDP)
+      .withColumn("father_qd", fatherQD)
+      .withColumn("father_filters", fatherFilters)
+      .withColumn("father_ad_ref", fatherADRef)
+      .withColumn("father_ad_alt", fatherADAlt)
+      .withColumn("father_ad_total", fatherADTotal)
+      .withColumn("father_ad_ratio", fatherADRatio)
       .drop("family_info", "participant_id")
       .withColumn("zygosity", zygosity(col("calls")))
       .withColumn("mother_zygosity", zygosity(col("mother_calls")))
@@ -137,4 +156,5 @@ object SNV {
       .agg(first("is_hc") as "is_hc", collect_set("hc_complement") as "hc_complement")
     hc
   }
+
 }
