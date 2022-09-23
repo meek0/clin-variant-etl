@@ -7,7 +7,16 @@
   ],
   "template": {
     "settings": {
-      "number_of_shards": 1
+      "number_of_shards": 1,
+      "analysis": {
+        "normalizer": {
+          "lowercase_normalizer": {
+            "type": "custom",
+            "char_filter": [],
+            "filter": "lowercase"
+          }
+        }
+      }
     },
     "mappings": {
       "properties": {
@@ -37,7 +46,8 @@
           }
         },
         "ensembl_gene_id": {
-          "type": "keyword"
+          "type": "keyword",
+          "normalizer" : "lowercase_normalizer"
         },
         "entrez_gene_id": {
           "type": "long"
@@ -117,7 +127,8 @@
           }
         },
         "symbol": {
-          "type": "keyword"
+          "type": "keyword",
+          "normalizer" : "lowercase_normalizer"
         }
       }
     }
