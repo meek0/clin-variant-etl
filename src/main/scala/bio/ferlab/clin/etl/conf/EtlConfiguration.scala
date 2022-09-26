@@ -4,6 +4,7 @@ import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, GFF, JSON, PARQUET
 import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, OverWritePartition, Scd1, Upsert}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
+import bio.ferlab.datalake.spark3.public.ReferenceConfiguration.alias
 
 object EtlConfiguration extends App {
 
@@ -61,6 +62,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_refseq_feature"             , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_feature_table.txt.gz", CSV    , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_refseq_annotation"          , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"      , GFF    , OverWrite),
       DatasetConf("raw_mane_summary"               , clin_datalake, "/raw/landing/mane/MANE.GRCh38.v1.0.summary.txt"                      , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_clinvar"                    , clin_datalake, "/raw/clinvar/clinvar.vcf.gz"                         , VCF, OverWrite, readoptions = Map("flattenInfoFields" -> "true", "split_multiallelics" -> "true")),
 
       //public
       DatasetConf("normalized_1000_genomes"        , clin_datalake, "/public/1000_genomes"                               , PARQUET, OverWrite, TableConf("clin", "1000_genomes")),
