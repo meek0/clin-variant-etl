@@ -269,10 +269,40 @@
               "type": "boolean"
             },
             "father_calls": {
-              "type": "long"
+              "type": "long",
+              "index": false
             },
             "father_gq": {
-              "type": "long"
+              "type": "long",
+              "index": false
+            },
+            "father_dp": {
+              "type": "long",
+              "index": false
+            },
+            "father_qd": {
+              "type": "float",
+              "index": false
+            },
+            "father_ad_alt": {
+              "type": "long",
+              "index": false
+            },
+            "father_ad_ratio": {
+              "type": "float",
+              "index": false
+            },
+            "father_ad_ref": {
+              "type": "long",
+              "index": false
+            },
+            "father_ad_total": {
+              "type": "long",
+              "index": false
+            },
+            "father_filters": {
+              "type": "keyword",
+              "index": false
             },
             "father_id": {
               "type": "keyword"
@@ -308,11 +338,41 @@
               "type": "boolean"
             },
             "mother_calls": {
-              "type": "long"
+              "type": "long",
+              "index": false
             },
             "mother_gq": {
-              "type": "long"
+              "type": "long",
+              "index": false
             },
+            "mother_dp": {
+              "type": "long",
+              "index": false
+            },
+            "mother_qd": {
+              "type": "float",
+              "index": false
+            },            
+            "mother_ad_alt": {
+              "type": "long",
+              "index": false
+            },
+            "mother_ad_ratio": {
+              "type": "float",
+              "index": false
+            },
+            "mother_ad_ref": {
+              "type": "long",
+              "index": false
+            },
+            "mother_ad_total": {
+              "type": "long",
+              "index": false
+            },
+            "mother_filters": {
+              "type": "keyword",
+              "index": false
+            },            
             "mother_id": {
               "type": "keyword"
             },
