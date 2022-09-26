@@ -5,6 +5,7 @@ import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import pureconfig.generic.auto._
+import pureconfig.module.enum._
 object Indexer extends App {
 
   println(s"ARGS: " + args.mkString("[", ", ", "]"))
