@@ -3,13 +3,11 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
-import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
-import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
+import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import bio.ferlab.datalake.spark3.utils.FixedRepartition
-import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -94,8 +92,9 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .withColumn(mainDestination.oid, col("updated_on"))
   }
 
+  override def defaultRepartition: DataFrame => DataFrame = FixedRepartition(56)
+
   override def publish()(implicit spark: SparkSession): Unit = {
-    compact(mainDestination, FixedRepartition(100))
     vacuum(mainDestination, 2)
   }
 
