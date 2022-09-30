@@ -19,15 +19,15 @@ class PanelsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig w
 
   override def beforeAll(): Unit = {
     spark.sql(s"CREATE DATABASE IF NOT EXISTS ${raw_panels.table.map(_.database).getOrElse("clin")}")
-    HadoopFileSystem.remove(job1.destination.location)
+    HadoopFileSystem.remove(job1.mainDestination.location)
   }
 
-  val data = Map(
+  private val data = Map(
     raw_panels.id -> raw_panels.read
   )
 
   "panels job" should "transform data in expected format" in {
-    val resultDf =  job1.transform(data).as[PanelOutput]
+    val resultDf =  job1.transformSingle(data).as[PanelOutput]
     
     val result = resultDf.collect().head
 

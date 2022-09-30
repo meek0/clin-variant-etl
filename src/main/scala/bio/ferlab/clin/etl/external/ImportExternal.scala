@@ -6,7 +6,7 @@ object ImportExternal extends SparkApp {
 
   val Array(_, _, jobName) = args
 
-  implicit val (conf, steps, spark) = init()
+  implicit val (conf, steps, spark) = init(s"Import $jobName")
 
   spark.sparkContext.setLogLevel("ERROR")
 

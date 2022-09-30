@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.varsome
 import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
 import bio.ferlab.datalake.commons.config.RunStep.reset
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETL
+import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import bio.ferlab.datalake.spark3.public.SparkApp
@@ -15,14 +15,16 @@ import java.time.LocalDateTime
 
 object Varsome extends SparkApp {
 
-  implicit val (conf, steps, spark) = init()
-  val varsomeToken = spark.conf.get("spark.varsome.token")
-  val varsomeUrl = spark.conf.get("spark.varsome.url")
   val chromosome = if (args.length >= 3 && args(2) != "all") {
     Some(args(2))
   } else {
     None
   }
+
+  implicit val (conf, steps, spark) = init(s"Varsome $chromosome")
+  val varsomeToken = spark.conf.get("spark.varsome.token")
+  val varsomeUrl = spark.conf.get("spark.varsome.url")
+
   if (steps.contains(reset)) {
     new Varsome(Reload, varsomeUrl, varsomeToken, chromosome).run()
   } else {
@@ -38,22 +40,22 @@ object Varsome extends SparkApp {
 class Varsome(jobType: VarsomeJobType,
               varsomeUrl: String,
               varsomeToken: String,
-              chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETL {
+              chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETLSingleDestination {
 
-  override val destination: DatasetConf = conf.getDataset("normalized_varsome")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
   override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = {
     val variants = normalized_variants.read.select("chromosome", "start", "reference", "alternate", "batch_id", "genes_symbol")
     val panels = normalized_panels.read.select("symbol")
-      
+
     val variantFilterByLength = variants
       .where(length(col("reference")) <= 200 && length(col("alternate")) <= 200) // Varsome limit variant length to 200 bases
-    
-    val variantsFilterByPanels =  variantFilterByLength.join(panels, array_contains(variantFilterByLength("genes_symbol"), panels("symbol"))) // only variants in panels
+
+    val variantsFilterByPanels = variantFilterByLength.join(panels, array_contains(variantFilterByLength("genes_symbol"), panels("symbol"))) // only variants in panels
       .drop("genes_symbol").drop("symbol")
-    
+
     val variantsFilterByChr = chromosome.map(chr => variantsFilterByPanels.where(col("chromosome") === chr))
       .getOrElse(variantsFilterByPanels)
 
@@ -62,8 +64,8 @@ class Varsome(jobType: VarsomeJobType,
       case ForBatch(batchId) =>
         val batchVariants = variantsFilterByChr
           .where(col("batch_id") === batchId)
-        val extractedVariants = if (destination.tableExist) {
-          val varsome = destination.read.where(col("updated_on") >= Timestamp.valueOf(currentRunDateTime.minusDays(7)))
+        val extractedVariants = if (mainDestination.tableExist) {
+          val varsome = mainDestination.read.where(col("updated_on") >= Timestamp.valueOf(currentRunDateTime.minusDays(7)))
           batchVariants.join(varsome, Seq("chromosome", "start", "reference", "alternate"), "leftanti")
         }
         else {
@@ -76,7 +78,7 @@ class Varsome(jobType: VarsomeJobType,
   }
 
 
-  override def transform(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
+  override def transformSingle(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val input = data(normalized_variants.id).persist()
     val numPartitions = (input.count() / 1000) + 1
