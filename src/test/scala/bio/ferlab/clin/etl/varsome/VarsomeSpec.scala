@@ -4,7 +4,6 @@ import bio.ferlab.clin.model.{NormalizedVariants, PanelOutput, VarsomeExtractOut
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
@@ -36,12 +35,12 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
     VarsomeOutput("1", 1002, "A", "T", "5678", yesterday, None, None)
   ).toDF()
   val normalized_panelsDF: DataFrame = Seq(
-    PanelOutput("OR4F5"), // available panel
+    PanelOutput(), // available panel
   ).toDF()
   val normalized_varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  val defaultData = Map(
+  private val defaultData = Map(
     normalized_variants.id -> normalized_variantsDF,
     normalized_varsome.id -> normalized_varsomeDF,
     normalized_panels.id -> normalized_panelsDF
@@ -78,7 +77,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
   "transform" should "return a dataframe representing Varsome response" in {
     withData() { data =>
       withVarsomeServer() { url =>
-        val df = new Varsome(ForBatch("BAT1"), url, "").transform(data, currentRunDateTime = current)
+        val df = new Varsome(ForBatch("BAT1"), url, "").transformSingle(data, currentRunDateTime = current)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(
           VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None),
           VarsomeOutput("1", 1004, "A", "T", "1234", ts, None, None)
@@ -92,7 +91,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
     withData() { data =>
 
       withVarsomeServer("varsome_full.json") { url =>
-        val df = new Varsome(ForBatch("BAT1"), url, "").transform(data, currentRunDateTime = current)
+        val df = new Varsome(ForBatch("BAT1"), url, "").transformSingle(data, currentRunDateTime = current)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(VarsomeOutput(`updated_on` = ts))
       }
 
