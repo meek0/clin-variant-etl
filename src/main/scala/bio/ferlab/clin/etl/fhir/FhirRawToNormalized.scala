@@ -8,7 +8,7 @@ object FhirRawToNormalized extends SparkApp {
 
   val Array(_, _, jobName) = args
 
-  implicit val (conf, steps, spark) = init()
+  implicit val (conf, steps, spark) = init(s"Normalize FHIR $jobName")
 
   val jobs: List[ETL] =
     FhirRawToNormalizedMappings

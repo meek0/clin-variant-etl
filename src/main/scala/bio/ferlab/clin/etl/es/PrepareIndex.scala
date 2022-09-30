@@ -6,7 +6,7 @@ object PrepareIndex extends SparkApp {
 
   val Array(_, _, jobName, releaseId) = args
 
-  implicit val (conf, steps, spark) = init()
+  implicit val (conf, steps, spark) = init(appName = s"Prepare index $jobName")
 
   log.info(s"Job: $jobName")
   log.info(s"releaseId: $releaseId")

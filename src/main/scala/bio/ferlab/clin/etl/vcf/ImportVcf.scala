@@ -6,7 +6,7 @@ object ImportVcf extends SparkApp {
 
   val Array(_, _, batchId, jobName) = args
 
-  implicit val (conf, steps, spark) = init()
+  implicit val (conf, steps, spark) = init(appName = s"Normalize $jobName $batchId")
 
   log.info(s"batchId: $batchId")
   log.info(s"Job: $jobName")

@@ -43,7 +43,7 @@ object Indexer extends App {
   implicit val spark: SparkSession = SparkSession.builder
     .config(sparkConfigs)
     .enableHiveSupport()
-    .appName(s"Indexer")
+    .appName(s"Indexer $jobType $release_id")
     .getOrCreate()
 
   implicit val esClient: ElasticSearchClient = new ElasticSearchClient(esNodes.split(',').head, sanitizeArg(username), sanitizeArg(password))

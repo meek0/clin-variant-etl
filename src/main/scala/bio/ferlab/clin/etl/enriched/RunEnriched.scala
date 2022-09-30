@@ -6,7 +6,7 @@ object RunEnriched extends SparkApp {
 
   val Array(_, _, jobName) = args
 
-  implicit val (conf, steps, spark) = init()
+  implicit val (conf, steps, spark) = init(appName = s"Enrich $jobName")
 
   log.info(s"Job: $jobName")
   log.info(s"runType: ${steps.mkString(" -> ")}")
