@@ -3,10 +3,6 @@ package bio.ferlab.clin.etl.qc.variantlist
 import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.variantlist.NonDuplicationSNV.run
 
-// Test:               Validation de la liste des variants entre la table normalized_snv et la table variants
-// Objectifs du test:  Vérifier que la liste des variants ayant ad_alt >= 3 dans la table normalized_snv est incluse dans celle de la table variants
-// Critère de succès:  La table doit être vide
-
 object SameListBetweenSNVAndVariants extends TestingApp {
   run { spark =>
     import spark.implicits._
