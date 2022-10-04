@@ -41,7 +41,7 @@ object Publish extends App {
   
   def findIndexWithAlias(alias: String): Option[String] = {
     val body = EntityUtils.toString(esClient.http.execute(new HttpGet(s"$esUrl/_cat/aliases")).getEntity)
-    val aliases = body.split("\n").map(line => line.split("\\s+")).map(e => (e(0), e(1))).toMap
+    val aliases = body.split("\n").map(line => line.split("\\s+")).filter(a => a.length == 2).map(e => (e(0), e(1))).toMap
     aliases.get(alias)
   }
 
