@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.qc.variantfilter
 
 import bio.ferlab.clin.etl.qc.TestingApp
+import bio.ferlab.clin.etl.qc.TestingApp.shouldBeEmpty
 import bio.ferlab.clin.etl.qc.variantfilter.FiltersSNV.run
 import org.apache.spark.sql.functions._
 

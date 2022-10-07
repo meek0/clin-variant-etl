@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.qc.variantlist
 
 import bio.ferlab.clin.etl.qc.TestingApp
+import bio.ferlab.clin.etl.qc.TestingApp.shouldBeEmpty
 import bio.ferlab.clin.etl.qc.variantlist.NonDuplicationSNV.run
 
 object NonDuplicationNorVariants extends TestingApp {

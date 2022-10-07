@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.qc.variantlist
 
 import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.variantlist.NonDuplicationSNV.run
-
+import bio.ferlab.clin.etl.qc.TestingApp.shouldBeEmpty
 object NonDuplicationVarsome extends TestingApp {
   run { spark =>
     import spark.implicits._
