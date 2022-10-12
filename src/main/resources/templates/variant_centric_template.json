@@ -228,7 +228,11 @@
               "type": "long"
             },
             "affected_status": {
-              "type": "boolean"
+              "type": "boolean",
+              "index": false
+            },
+            "affected_status_code": {
+              "type": "keyword"
             },
             "aliquot_id": {
               "type": "keyword"

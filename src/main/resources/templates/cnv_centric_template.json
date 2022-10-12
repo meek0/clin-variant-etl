@@ -103,7 +103,11 @@
           "type": "keyword"
         },
         "affected_status": {
-          "type": "boolean"
+          "type": "boolean",
+          "index": false
+        },
+        "affected_status_code": {
+          "type": "keyword"
         },
         "family_id": {
           "type": "keyword"
