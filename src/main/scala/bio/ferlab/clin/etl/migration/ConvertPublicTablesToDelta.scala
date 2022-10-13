@@ -28,7 +28,6 @@ object ConvertPublicTablesToDelta extends SparkApp {
     "normalized_omim_gene_set",
     "normalized_orphanet_gene_set",
     "normalized_topmed_bravo",
-    "normalized_mane_summary",
     "normalized_refseq_annotation"
   ).foreach { d =>
     val ds = conf.getDataset(d)
