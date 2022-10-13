@@ -35,7 +35,7 @@ object ConvertPublicTablesToDelta extends SparkApp {
     val partitionSchema: StructType = ds.read.schema
       .filter(s => ds.partitionby.contains(s.name))
       .foldLeft(new StructType()) { case (struct, f) => struct.add(f) }
-    DeltaTable.convertToDelta(spark, ds.table.map(_.name).getOrElse(s"parquet.`${ds.location}`"), partitionSchema)
+    DeltaTable.convertToDelta(spark, ds.table.map(_.fullName).getOrElse(s"parquet.`${ds.location}`"), partitionSchema)
   }
 }
 
