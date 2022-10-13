@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.spark3.public.SparkApp
+import bio.ferlab.datalake.spark3.SparkApp
 
 object RunEnriched extends SparkApp {
 

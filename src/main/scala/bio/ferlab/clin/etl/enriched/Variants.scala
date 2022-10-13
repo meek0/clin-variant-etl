@@ -20,10 +20,10 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
-  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
-  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_2_1_1")
+  val gnomad_genomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v2_1_1")
+  val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
-  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_1_1")
+  val gnomad_genomes_v3: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -37,10 +37,10 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       normalized_snv.id -> normalized_snv.read,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
-      gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1.read,
-      gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1.read,
+      gnomad_genomes_v2_1_1.id -> gnomad_genomes_v2_1_1.read,
+      gnomad_exomes_v2_1_1.id -> gnomad_exomes_v2_1_1.read,
       gnomad_genomes_3_0.id -> gnomad_genomes_3_0.read,
-      gnomad_genomes_3_1_1.id -> gnomad_genomes_3_1_1.read,
+      gnomad_genomes_v3.id -> gnomad_genomes_v3.read,
       dbsnp.id -> dbsnp.read,
       clinvar.id -> clinvar.read,
       genes.id -> genes.read,
@@ -70,14 +70,14 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
         $"homozygotes".cast("long") as "hom",
         $"heterozygotes".cast("long") as "het")
 
-    val gnomad_genomes_2_1Df = data(gnomad_genomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
-    val gnomad_exomes_2_1Df = data(gnomad_exomes_2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
-    val gnomad_genomes_3_0Df = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
-    val gnomad_genomes_3_1_1Df = data(gnomad_genomes_3_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
+    val gnomad_genomes_v2_1DF = data(gnomad_genomes_v2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
+    val gnomad_exomes_v2_1DF = data(gnomad_exomes_v2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
+    val gnomad_genomes_3_0DF = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
+    val gnomad_genomes_v3DF = data(gnomad_genomes_v3.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
 
 
     val joinWithDonors = variantsWithDonors(variants, occurrences)
-    val joinWithPop = joinWithPopulations(joinWithDonors, genomesDf, topmed_bravoDf, gnomad_genomes_2_1Df, gnomad_exomes_2_1Df, gnomad_genomes_3_0Df, gnomad_genomes_3_1_1Df)
+    val joinWithPop = joinWithPopulations(joinWithDonors, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))

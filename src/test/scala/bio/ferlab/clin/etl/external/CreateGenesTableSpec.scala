@@ -5,7 +5,7 @@ import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.public.enriched.Genes
+import bio.ferlab.datalake.spark3.publictables.enriched.Genes
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
 import org.scalatest.flatspec.AnyFlatSpec
