@@ -121,12 +121,16 @@ object Occurrences {
       .where(col("observation_code") === "DSTA")
       .select(
         col("id") as "observation_id",
-        when(col("interpretation_code") === "POS", true).otherwise(false) as "affected_status"
+        when(col("interpretation_code") === "POS", true).otherwise(false) as "affected_status",
+        col("interpretation_code") as "affected_status_code"
       )
 
     val diseaseStatusByCI = clinicalImpressionDf.join(diseaseStatusDf, array_contains(col("observations"), diseaseStatusDf("observation_id")))
       .groupBy(col("clinical_impression_id"), clinicalImpressionDf("patient_id"))
-      .agg(first("affected_status") as "affected_status")
+      .agg(
+        first("affected_status") as "affected_status",
+        first("affected_status_code") as "affected_status_code"
+      )
     val analysisServiceRequestWithDiseaseStatus = analysisServiceRequestsDf
       .withColumn("clinical_impression_id", explode(col("clinical_impressions")))
       .join(diseaseStatusByCI, Seq("clinical_impression_id"))
@@ -134,13 +138,14 @@ object Occurrences {
       .groupBy(diseaseStatusByCI("patient_id"), col("analysis_service_request_id"))
       .agg(
         first("affected_status") as "affected_status",
+        first("affected_status_code") as "affected_status_code",
         first(analysisServiceRequestsDf("family_id")) as "family_id",
         first("is_proband") as "is_proband"
       )
     analysisServiceRequestWithDiseaseStatus
   }
 
-  def getDistinctGroup(groupsDf: DataFrame) = {
+  def getDistinctGroup(groupsDf: DataFrame): DataFrame = {
     groupsDf
       .withColumn("member", explode(col("members")))
       .select(
