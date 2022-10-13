@@ -19,9 +19,8 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
-  val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
+  val dbnsfp_original: DatasetConf = conf.getDataset("enriched_dbnsfp")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
-  //val normalized_mane_summary: DatasetConf = conf.getDataset("normalized_mane_summary")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -29,8 +28,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
       normalized_consequences.id -> normalized_consequences.read
         .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
       dbnsfp_original.id -> dbnsfp_original.read,
-      normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read,
-      //normalized_mane_summary.id -> normalized_mane_summary.read
+      normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read
     )
   }
 
@@ -51,11 +49,6 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
         $"is_mane_select" as "mane_select",
         $"is_mane_plus" as "mane_plus",
         $"is_canonical")
-
-    //val mane_summary = data(normalized_mane_summary.id)
-    //  .select("mane_plus", "mane_select", "ensembl_transcript_id", "ensembl_gene_id")
-    //  .withColumn("ensembl_gene_id", regexp_extract(col("ensembl_gene_id"), "(ENSG[0-9]+)", 0))
-    //  .withColumn("ensembl_transcript_id", regexp_extract(col("ensembl_transcript_id"), "(ENST[0-9]+)", 0))
 
     val chromosomes = consequences.select("chromosome").distinct().as[String].collect()
 

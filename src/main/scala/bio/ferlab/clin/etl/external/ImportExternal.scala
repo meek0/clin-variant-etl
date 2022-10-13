@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.external
 
-import bio.ferlab.datalake.spark3.public.SparkApp
+import bio.ferlab.datalake.spark3.SparkApp
 
 object ImportExternal extends SparkApp {
 
@@ -14,10 +14,7 @@ object ImportExternal extends SparkApp {
 
 
   jobName match {
-    case "mane-summary" => new ManeSummaryETL().run(steps)
     case "panels" => new Panels().run(steps)
-    case "refseq-annotation" => new RefSeqAnnotation().run(steps)
-    case "refseq-feature" => new RefSeqFeature().run(steps)
     case "all" =>
       new Panels().run(steps)
     case s: String => throw new IllegalArgumentException(s"JobName [$s] unknown.")

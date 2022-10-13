@@ -17,16 +17,14 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
   import spark.implicits._
 
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
-  val dbnsfp_original: DatasetConf = conf.getDataset("normalized_dbnsfp_original")
+  val dbnsfp_original: DatasetConf = conf.getDataset("enriched_dbnsfp")
   val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
-  val normalized_mane_summary: DatasetConf = conf.getDataset("normalized_mane_summary")
 
-  val data = Map(
+  private val data = Map(
     normalized_consequences.id -> Seq(NormalizedConsequences()).toDF(),
     dbnsfp_original.id -> Seq(Dbnsfp_originalOutput()).toDF,
-    normalized_ensembl_mapping.id -> Seq(EnsemblMappingOutput()).toDF,
-    normalized_mane_summary.id -> Seq(ManeSummaryOutput(`ensembl_transcript_id` = "ENST00000450305.12", `ensembl_gene_id` = "ENSG00000223972.3")).toDF
+    normalized_ensembl_mapping.id -> Seq(EnsemblMappingOutput()).toDF
   )
 
   override def beforeAll(): Unit = {

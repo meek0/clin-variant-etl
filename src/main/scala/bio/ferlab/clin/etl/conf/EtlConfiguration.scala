@@ -4,7 +4,7 @@ import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, GFF, JSON, PARQUET
 import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, OverWritePartition, Scd1, Upsert}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
-import bio.ferlab.datalake.spark3.public.ReferenceConfiguration.alias
+import bio.ferlab.datalake.spark3.publictables.PublicDatasets
 
 object EtlConfiguration extends App {
 
@@ -59,35 +59,10 @@ object EtlConfiguration extends App {
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
       DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20220606.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
-      DatasetConf("raw_refseq_feature"             , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_feature_table.txt.gz", CSV    , OverWrite, readoptions = tsv_with_headers),
-      DatasetConf("raw_refseq_annotation"          , clin_datalake, "/raw/landing/refseq/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"      , GFF    , OverWrite),
-      DatasetConf("raw_mane_summary"               , clin_datalake, "/raw/landing/mane/MANE.GRCh38.v1.0.summary.txt"                      , CSV    , OverWrite, readoptions = tsv_with_headers),
-      DatasetConf("raw_clinvar"                    , clin_datalake, "/raw/clinvar/clinvar.vcf.gz"                         , VCF, OverWrite, readoptions = Map("flattenInfoFields" -> "true", "split_multiallelics" -> "true")),
 
-      //public
-      DatasetConf("normalized_1000_genomes"        , clin_datalake, "/public/1000_genomes"                               , PARQUET, OverWrite, TableConf("clin", "1000_genomes")),
-      DatasetConf("normalized_cancer_hotspots"     , clin_datalake, "/public/cancer_hotspots"                            , PARQUET, OverWrite, TableConf("clin", "cancer_hotspots")),
-      DatasetConf("normalized_clinvar"             , clin_datalake, "/public/clinvar"                                    , PARQUET, OverWrite, TableConf("clin", "clinvar")),
-      DatasetConf("normalized_cosmic_gene_set"     , clin_datalake, "/public/cosmic_gene_set"                            , PARQUET, OverWrite, TableConf("clin", "cosmic_gene_set")),
-      DatasetConf("normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite, TableConf("clin", "dbnsfp_scores")),
-      DatasetConf("normalized_dbnsfp_annovar"      , clin_datalake, "/public/annovar/dbnsfp"                             , PARQUET, OverWrite, TableConf("clin", "dbnsfp_annovar")),
-      DatasetConf("normalized_dbnsfp_original"     , clin_datalake, "/public/dbnsfp/scores"                              , PARQUET, OverWrite, TableConf("clin", "dbnsfp_original")),
-      DatasetConf("normalized_dbsnp"               , clin_datalake, "/public/dbsnp"                                      , PARQUET, OverWrite, TableConf("clin", "dbsnp")),
-      DatasetConf("normalized_ddd_gene_set"        , clin_datalake, "/public/ddd_gene_set"                               , PARQUET, OverWrite, TableConf("clin", "ddd_gene_set")),
-      DatasetConf("normalized_ensembl_mapping"     , clin_datalake, "/public/ensembl_mapping"                            , PARQUET, OverWrite, TableConf("clin", "ensembl_mapping")),
-      DatasetConf("enriched_genes"                 , clin_datalake, "/public/genes"                                      , PARQUET, OverWrite, TableConf("clin", "genes")),
-      DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
-      DatasetConf("normalized_gnomad_exomes_2_1_1" , clin_datalake, "/public/gnomad/gnomad_exomes_2.1.1_liftover_grch38" , PARQUET, OverWrite, TableConf("clin", "gnomad_exomes_2_1_1")),
+      //old version of gnomad, should be removed
       DatasetConf("normalized_gnomad_genomes_3_0"  , clin_datalake, "/public/gnomad/gnomad_genomes_3.0"                  , PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_0")),
-      DatasetConf("normalized_gnomad_genomes_3_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_3_1_1"                , PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
-      DatasetConf("normalized_human_genes"         , clin_datalake, "/public/human_genes"                                , PARQUET, OverWrite, TableConf("clin", "human_genes")),
-      DatasetConf("normalized_hpo_gene_set"        , clin_datalake, "/public/hpo_gene_set"                               , PARQUET, OverWrite, TableConf("clin", "hpo_gene_set")),
-      DatasetConf("normalized_omim_gene_set"       , clin_datalake, "/public/omim_gene_set"                              , PARQUET, OverWrite, TableConf("clin", "omim_gene_set")),
-      DatasetConf("normalized_orphanet_gene_set"   , clin_datalake, "/public/orphanet_gene_set"                          , PARQUET, OverWrite, TableConf("clin", "orphanet_gene_set")),
-      DatasetConf("normalized_topmed_bravo"        , clin_datalake, "/public/topmed_bravo"                               , PARQUET, OverWrite, TableConf("clin", "topmed_bravo")),
-      DatasetConf("normalized_mane_summary"        , clin_datalake, "/public/mane_summary"                               , PARQUET, OverWrite, TableConf("clin", "mane_summary")),
-      DatasetConf("normalized_refseq_feature"      , clin_datalake, "/public/refseq_feature"                             , PARQUET, OverWrite, TableConf("clin", "refseq_feature")),
-      DatasetConf("normalized_refseq_annotation"   , clin_datalake, "/public/refseq_annotation"                          , PARQUET, OverWrite, partitionby = List("chromosome"), table= Some(TableConf("clin", "refseq_annotation"))),
+      //varsome
       DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , Upsert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("chromosome", "start", "reference", "alternate")),
       //fhir
       DatasetConf("normalized_clinical_impression" , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
@@ -120,7 +95,7 @@ object EtlConfiguration extends App {
       DatasetConf("es_index_cnv_centric"           , clin_datalake, "/es_index/cnv_centric"              , PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "cnv_centric"))),
       DatasetConf("es_index_variant_suggestions"   , clin_datalake, "/es_index/variant_suggestions"      , PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variant_suggestions"))),
 
-    )
+    ) ++ PublicDatasets(clin_datalake, tableDatabase = Some("clin"), viewDatabase = None).sources
 
   val qa_conf = SimpleConfiguration(DatalakeConf(
     storages = clin_qa_storage,
