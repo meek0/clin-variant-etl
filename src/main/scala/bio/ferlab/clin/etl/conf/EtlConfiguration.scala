@@ -61,7 +61,10 @@ object EtlConfiguration extends App {
       DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20220606.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
 
       //old version of gnomad, should be removed
-      DatasetConf("normalized_gnomad_genomes_3_0"  , clin_datalake, "/public/gnomad/gnomad_genomes_3.0"                  , PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_0")),
+      DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
+      DatasetConf("normalized_gnomad_exomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_exomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_exomes_2_1_1")),
+      DatasetConf("normalized_gnomad_genomes_3_0", clin_datalake, "/public/gnomad/gnomad_genomes_3.0", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_0")),
+      DatasetConf("normalized_gnomad_genomes_3_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_3_1_1", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
       //varsome
       DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , Upsert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("chromosome", "start", "reference", "alternate")),
       //fhir
