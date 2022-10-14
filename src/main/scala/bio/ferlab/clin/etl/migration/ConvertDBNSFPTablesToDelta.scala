@@ -9,14 +9,10 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 /**
- * This app copy all gnomad tables into new directories, accordingly to public dataset configuration in datalake lib:
- * - normalized_gnomad_genomes_2_1_1 is copy to normalized_gnomad_genomes_v2_1_1
- * - normalized_gnomad_exomes_2_1_1 is copy to normalized_gnomad_exomes_v2_1_1
- * - normalized_gnomad_genomes_3_1_1 is copy to normalized_gnomad_genomes_v3
- * - normalized_gnomad_genomes_3_0 is not kept because in the future we'll keep only one version of gnomad per major
+ * This app copy dbnsfp tables into new directories, accordingly to public dataset configuration in datalake lib:
  *
  */
-object ConvertGnomadTablesToDelta extends SparkApp {
+object ConvertDBNSFPTablesToDelta extends SparkApp {
 
   implicit val (conf, _, spark) = init(appName = s"Convert Public tables to parquet")
 
@@ -24,13 +20,12 @@ object ConvertGnomadTablesToDelta extends SparkApp {
 
 }
 
-class ConvertGnomadTablesToDelta()(implicit conf: Configuration) extends ETL {
-  override def mainDestination: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
+class ConvertDBNSFPTablesToDelta()(implicit conf: Configuration) extends ETL {
+  override def mainDestination: DatasetConf = conf.getDataset("enriched_dbnsfp")
 
   override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = Map(
-    "normalized_gnomad_genomes_v2_1_1" -> conf.getDataset("normalized_gnomad_genomes_2_1_1").read,
-    "normalized_gnomad_exomes_v2_1_1" -> conf.getDataset("normalized_gnomad_exomes_2_1_1").read,
-    "normalized_gnomad_genomes_v3" -> conf.getDataset("normalized_gnomad_genomes_3_1_1").read,
+    "normalized_dbnsfp" -> conf.getDataset("deprecated_normalized_dbnsfp_scores").read,
+    "enriched_dbnsfp" -> conf.getDataset("deprecated_normalized_dbnsfp_original").read,
   )
 
   override def transform(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = data
