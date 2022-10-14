@@ -24,8 +24,7 @@ class ConvertDBNSFPTablesToDelta()(implicit conf: Configuration) extends ETL {
   override def mainDestination: DatasetConf = conf.getDataset("enriched_dbnsfp")
 
   override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = Map(
-    "normalized_dbnsfp" -> conf.getDataset("deprecated_normalized_dbnsfp_scores").read,
-    "enriched_dbnsfp" -> conf.getDataset("deprecated_normalized_dbnsfp_original").read,
+    "normalized_dbnsfp" -> conf.getDataset("deprecated_normalized_dbnsfp_scores").read
   )
 
   override def transform(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = data

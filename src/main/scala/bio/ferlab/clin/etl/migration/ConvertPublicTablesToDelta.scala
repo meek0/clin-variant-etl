@@ -17,6 +17,7 @@ object ConvertPublicTablesToDelta extends SparkApp {
     "normalized_clinvar",
     "normalized_cosmic_gene_set",
     "normalized_dbnsfp_annovar",
+    "enriched_dbnsfp",
     "normalized_dbsnp",
     "normalized_ddd_gene_set",
     "normalized_ensembl_mapping",
