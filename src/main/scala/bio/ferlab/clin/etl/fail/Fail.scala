@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.fail
 
-import bio.ferlab.datalake.spark3.public.SparkApp
+import bio.ferlab.datalake.spark3.SparkApp
 
 object Fail extends SparkApp {
 

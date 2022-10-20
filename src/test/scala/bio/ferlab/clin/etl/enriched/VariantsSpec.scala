@@ -23,10 +23,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
-  val gnomad_genomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_2_1_1")
-  val gnomad_exomes_2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_2_1_1")
+  val gnomad_genomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v2_1_1")
+  val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
-  val gnomad_genomes_3_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_1_1")
+  val gnomad_genomes_v3: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -56,10 +56,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     normalized_snv.id -> normalized_occurrencesDf,
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
-    gnomad_genomes_2_1_1.id -> gnomad_genomes_2_1_1Df,
-    gnomad_exomes_2_1_1.id -> gnomad_exomes_2_1_1Df,
+    gnomad_genomes_v2_1_1.id -> gnomad_genomes_2_1_1Df,
+    gnomad_exomes_v2_1_1.id -> gnomad_exomes_2_1_1Df,
     gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
-    gnomad_genomes_3_1_1.id -> gnomad_genomes_3_1_1Df,
+    gnomad_genomes_v3.id -> gnomad_genomes_3_1_1Df,
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,

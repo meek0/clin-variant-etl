@@ -6,7 +6,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
-import bio.ferlab.datalake.spark3.public.SparkApp
+import bio.ferlab.datalake.spark3.SparkApp
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
