@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.qc.variantlist
 
 import bio.ferlab.clin.etl.qc.TestingApp
-import bio.ferlab.clin.etl.qc.variantlist.NonDuplicationSNV.run
+import bio.ferlab.clin.etl.qc.TestingApp._
 
 object SameListBetweenVariantsAndVariantCentric extends TestingApp {
   run { spark =>
@@ -15,9 +15,10 @@ object SameListBetweenVariantsAndVariantCentric extends TestingApp {
       .select($"chromosome", $"start", $"reference", $"alternate")
       .dropDuplicates("chromosome", "start", "reference", "alternate")
 
-    val df_Diff = df_Var.unionAll(df_VarCen).except(df_Var.intersect(df_VarCen))
-
-    shouldBeEmpty(df_Diff, "La table devrait etre vide")
+    handleErrors(
+      shouldBeEmpty(
+        df_Var.unionAll(df_VarCen).except(df_Var.intersect(df_VarCen))
+      )
+    )
   }
-
 }
