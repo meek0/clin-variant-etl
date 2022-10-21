@@ -32,7 +32,7 @@ trait TestingApp extends App {
 
 object TestingApp {
   def shouldBeEmpty(df: DataFrame): Option[String] = {
-    if (df.count() > 0) Some(s"DataFrame should be empty") else None
+    if (df.count() > 0) Some("DataFrame should be empty") else None
   }
 
   def shouldNotContainNull(df: DataFrame, columnNames: String*): Option[String] = {
