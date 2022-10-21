@@ -1,8 +1,7 @@
 package bio.ferlab.clin.etl.qc.variantfilter
 
 import bio.ferlab.clin.etl.qc.TestingApp
-import bio.ferlab.clin.etl.qc.TestingApp.shouldBeEmpty
-import bio.ferlab.clin.etl.qc.variantfilter.FiltersSNV.run
+import bio.ferlab.clin.etl.qc.TestingApp._
 import org.apache.spark.sql.functions._
 
 object FiltersFrequencyMissed extends TestingApp {
@@ -18,9 +17,10 @@ object FiltersFrequencyMissed extends TestingApp {
       .filter(col("frequency_RQDM").isNull || ($"frequency_RQDM.total.ac" === 0 && $"frequency_RQDM.total.pc" === 0))
       .select("chromosome", "start", "reference", "alternate", "batch_id")
 
-    val df_join = df_NorSNV.join(df_NorVar, Seq("chromosome", "start", "reference", "alternate", "batch_id"), "inner")
-
-    shouldBeEmpty(df_join, "La table devrait etre vide")
+    handleErrors(
+      shouldBeEmpty(
+        df_NorSNV.join(df_NorVar, Seq("chromosome", "start", "reference", "alternate", "batch_id"), "inner")
+      )
+    )
   }
-
 }
