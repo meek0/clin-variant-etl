@@ -53,8 +53,8 @@ class Varsome(jobType: VarsomeJobType,
     val variantFilterByLength = variants
       .where(length(col("reference")) <= 200 && length(col("alternate")) <= 200) // Varsome limit variant length to 200 bases
 
-    val variantsFilterByPanels = variantFilterByLength.join(panels, array_contains(variantFilterByLength("genes_symbol"), panels("symbol"))) // only variants in panels
-      .drop("genes_symbol").drop("symbol")
+    val variantsFilterByPanels = variantFilterByLength.join(panels, array_contains(variantFilterByLength("genes_symbol"), panels("symbol")), "left_semi") // only variants in panels
+      .drop("genes_symbol")
 
     val variantsFilterByChr = chromosome.map(chr => variantsFilterByPanels.where(col("chromosome") === chr))
       .getOrElse(variantsFilterByPanels)
