@@ -20,7 +20,7 @@ object ConvertGnomadTablesToDelta extends SparkApp {
 
   implicit val (conf, _, spark) = init(appName = s"Convert Public tables to parquet")
 
-  new ConvertDBNSFPTablesToDelta().run()
+  new ConvertGnomadTablesToDelta().run()
 
 }
 
