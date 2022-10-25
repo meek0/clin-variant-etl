@@ -7,6 +7,7 @@ import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import bio.ferlab.datalake.spark3.SparkApp
+import bio.ferlab.datalake.spark3.utils.Coalesce
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -77,6 +78,7 @@ class Varsome(jobType: VarsomeJobType,
 
   }
 
+  override def defaultRepartition: DataFrame => DataFrame = Coalesce(1)
 
   override def transformSingle(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -94,7 +96,6 @@ class Varsome(jobType: VarsomeJobType,
       .withColumnRenamed("ref", "reference")
       .withColumnRenamed("alt", "alternate")
       .withColumn("updated_on", lit(Timestamp.valueOf(currentRunDateTime)))
-      .repartition(25)
 
 
   }
