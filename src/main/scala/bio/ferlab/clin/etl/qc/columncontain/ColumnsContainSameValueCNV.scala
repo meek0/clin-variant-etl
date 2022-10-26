@@ -10,7 +10,8 @@ object ColumnsContainSameValueCNV extends TestingApp {
 
     handleErrors(
       shouldNotContainSameValue(
-        cnv_centric, cnv_centric.columns.filterNot(List("reference", "is_multi_allelic", "svtype", "sequencing_strategy", "genome_build").contains(_)): _*
+        cnv_centric,
+        cnv_centric.columns.filterNot(List("reference", "is_multi_allelic", "svtype", "sequencing_strategy", "genome_build").contains(_)): _*
       ),
       shouldNotContainSameValue(
         cnv_centric.select(explode($"genes")).select("col.*")
