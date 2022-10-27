@@ -10,7 +10,8 @@ object ColumnsContainOnlyNullCNV extends TestingApp {
 
     handleErrors(
       shouldNotContainOnlyNull(
-        cnv_centric, cnv_centric.columns.filterNot(List("old_multi_allelic", "practitioner_role_id").contains(_)): _*
+        cnv_centric,
+        cnv_centric.columns.filterNot(List("old_multi_allelic", "practitioner_role_id").contains(_)): _*
       ),
       shouldNotContainOnlyNull(
         cnv_centric.select(explode($"genes")).select("col.*")

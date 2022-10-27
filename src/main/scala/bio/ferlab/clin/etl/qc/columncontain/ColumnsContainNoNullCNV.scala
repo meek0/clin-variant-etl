@@ -10,7 +10,8 @@ object ColumnsContainNoNullCNV extends TestingApp {
 
     handleErrors(
       shouldNotContainNull(
-        cnv_centric, "aliquot_id", "chromosome", "start", "reference", "alternate"
+        cnv_centric,
+        "aliquot_id", "chromosome", "start", "reference", "alternate"
       ),
       shouldNotContainNull(
         cnv_centric.select(explode($"genes") as "gene").select($"gene.overlap_exons" as "overlap_exons")

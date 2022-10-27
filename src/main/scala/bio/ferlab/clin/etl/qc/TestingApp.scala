@@ -18,6 +18,7 @@ trait TestingApp extends App {
       .getOrCreate()
 
   lazy val cnv_centric = spark.table(s"cnv_centric_$release_id")
+  lazy val gene_centric = spark.table(s"gene_centric_$release_id")
   lazy val normalized_snv: DataFrame = spark.table("normalized_snv")
   lazy val normalized_variants: DataFrame = spark.table("normalized_variants")
   lazy val variant_centric = spark.table(s"variant_centric_$release_id")
