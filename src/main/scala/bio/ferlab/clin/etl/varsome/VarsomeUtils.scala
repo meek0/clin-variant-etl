@@ -8,8 +8,11 @@ object VarsomeUtils {
 
   val transformPartition: (String, String) => Iterator[Row] => Iterator[VarsomeResponse] = (url, token) => rows => {
     val locuses = rows.map(r => r.getAs[String]("locus")).toSeq
-    val response = VarsomeHttpClient(url, token).getEntities(locuses)
-    Iterator(response)
+    if (locuses.isEmpty) Iterator.empty
+    else {
+      val response = VarsomeHttpClient(url, token).getEntities(locuses)
+      Iterator(response)
+    }
   }
 
   val varsomeSchema = new ArrayType(ScalaReflection.schemaFor[VarsomeEntity].dataType.asInstanceOf[StructType], false)
