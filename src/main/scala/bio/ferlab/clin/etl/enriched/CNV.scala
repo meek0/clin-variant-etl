@@ -72,7 +72,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
 
   def joinWithExons(cnv: DataFrame, refseq: DataFrame)(implicit sparkSession: SparkSession): DataFrame = {
     import sparkSession.implicits._
-    val refseqExons = refseq.where($"type" === "exon")
+    val refseqExons = refseq.where($"type" === "exon" and $"tag" === "MANE Select")
       .select($"seqId" as "refseq_id", $"chromosome", $"start", $"end", $"gene")
 
     cnv
