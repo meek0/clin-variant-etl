@@ -25,6 +25,42 @@ trait TestingApp extends App {
   lazy val variants: DataFrame = spark.table("variants")
   lazy val varsome: DataFrame = spark.table("varsome")
 
+  lazy val gnomad_genomes_2_1_1: DataFrame = spark.table("gnomad_genomes_2_1_1")
+  lazy val gnomad_exomes_2_1_1: DataFrame = spark.table("gnomad_exomes_2_1_1")
+  lazy val gnomad_genomes_3_0: DataFrame = spark.table("gnomad_genomes_3_0")
+  lazy val gnomad_genomes_3_1_1: DataFrame = spark.table("gnomad_genomes_3_1_1")
+  lazy val fhir_clinical_impression: DataFrame = spark.table("fhir_clinical_impression")
+  lazy val fhir_observation: DataFrame = spark.table("fhir_observation")
+  lazy val fhir_organization: DataFrame = spark.table("fhir_organization")
+  lazy val fhir_patient: DataFrame = spark.table("fhir_patient")
+  lazy val fhir_practitioner: DataFrame = spark.table("fhir_practitioner")
+  lazy val fhir_practitioner_role: DataFrame = spark.table("fhir_practitioner_role")
+  lazy val fhir_service_request: DataFrame = spark.table("fhir_service_request")
+  lazy val fhir_specimen: DataFrame = spark.table("fhir_specimen")
+  lazy val fhir_task: DataFrame = spark.table("fhir_task")
+  lazy val normalized_cnv: DataFrame = spark.table("normalized_cnv")
+  lazy val normalized_consequences: DataFrame = spark.table("normalized_consequences")
+  lazy val normalized_panels: DataFrame = spark.table("normalized_panels")
+  lazy val cnv: DataFrame = spark.table("cnv")
+  lazy val consequences: DataFrame = spark.table("consequences")
+  lazy val gene_suggestions: DataFrame = spark.table(s"gene_suggestions_$release_id")
+  lazy val variant_suggestions: DataFrame = spark.table(s"variant_suggestions_$release_id")
+  lazy val thousand_genomes: DataFrame = spark.table("1000_genomes")
+  lazy val cancer_hotspots: DataFrame = spark.table("cancer_hotspots")
+  lazy val clinvar: DataFrame = spark.table("clinvar")
+  lazy val cosmic_gene_set: DataFrame = spark.table("cosmic_gene_set")
+  lazy val dbsnp: DataFrame = spark.table("dbsnp")
+  lazy val ddd_gene_set: DataFrame = spark.table("ddd_gene_set")
+  lazy val ensembl_mapping: DataFrame = spark.table("ensembl_mapping")
+  lazy val human_genes: DataFrame = spark.table("human_genes")
+  lazy val hpo_gene_set: DataFrame = spark.table("hpo_gene_set")
+  lazy val omim_gene_set: DataFrame = spark.table("omim_gene_set")
+  lazy val orphanet_gene_set: DataFrame = spark.table("orphanet_gene_set")
+  lazy val topmed_bravo: DataFrame = spark.table("topmed_bravo")
+  lazy val refseq_annotation: DataFrame = spark.table("refseq_annotation")
+  lazy val genes: DataFrame = spark.table("genes")
+  lazy val dbnsfp_original: DataFrame = spark.table("dbnsfp_original")
+
   def run(f: SparkSession => Unit): Unit = {
     spark.sql(s"use $database")
     f(spark)
@@ -34,6 +70,10 @@ trait TestingApp extends App {
 object TestingApp {
   def shouldBeEmpty(df: DataFrame): Option[String] = {
     if (df.count() > 0) Some("DataFrame should be empty") else None
+  }
+
+  def shouldNotBeEmpty(df: DataFrame, dfName: String): Option[String] = {
+    if (df.head(1).isEmpty) Some(s"DataFrame ${dfName} should not be empty") else None
   }
 
   def shouldNotContainNull(df: DataFrame, columnNames: String*): Option[String] = {
