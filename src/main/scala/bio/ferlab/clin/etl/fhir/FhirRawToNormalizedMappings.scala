@@ -13,7 +13,7 @@ object FhirRawToNormalizedMappings {
   val defaultTransformations: List[Transformation] = List(
     InputFileName(INPUT_FILENAME),
     InputFileTimestamp(INGESTION_TIMESTAMP),
-    DropDuplicates(Seq("id"), col(INGESTION_TIMESTAMP).desc_nulls_last),
+    KeepFirstWithinPartition(Seq("id"), col(INGESTION_TIMESTAMP).desc_nulls_last),
     Custom(_
       .withColumnRenamed("resourceType", "resource_type")
       .withMetadata),
