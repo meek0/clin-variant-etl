@@ -3,7 +3,6 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirCustomOperations._
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.transformation._
-import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.{when, _}
 
 object FhirRawToNormalizedMappings {
@@ -13,7 +12,7 @@ object FhirRawToNormalizedMappings {
   val defaultTransformations: List[Transformation] = List(
     InputFileName(INPUT_FILENAME),
     InputFileTimestamp(INGESTION_TIMESTAMP),
-    DropDuplicates(Seq("id"), col(INGESTION_TIMESTAMP).desc_nulls_last),
+    KeepFirstWithinPartition(Seq("id"), col(INGESTION_TIMESTAMP).desc_nulls_last),
     Custom(_
       .withColumnRenamed("resourceType", "resource_type")
       .withMetadata),
@@ -34,11 +33,6 @@ object FhirRawToNormalizedMappings {
     Drop("assessor", "subject", "extension")
   )
 
-  val interpretationCodeMap: Column = typedLit(Map(
-    "POS" -> "affected",
-    "NEG" -> "not_affected",
-    "IND" -> "unknown"
-  ))
 
   val observationMappings: List[Transformation] = List(
     Custom(
@@ -50,10 +44,10 @@ object FhirRawToNormalizedMappings {
         //.withColumn("concept_code", col("valueCodeableConcept.coding.code")(0))
         //.withColumn("concept_description", col("valueCodeableConcept.coding.display")(0))
         .withColumn("interpretation", col("interpretation")(0))
-        .withColumn("interpretation_code", interpretationCodeMap(col("interpretation.coding.code")(0)))
+        .withColumn("interpretation_code", col("interpretation.coding.code")(0))
         .withColumn("interpretation_description", col("interpretation.coding.display")(0))
         .withColumn("note", transform(col("note"), c => c("text")))
-        //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
+      //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
     ),
     Drop("extension", "code", "interpretation", "valueCodeableConcept", "subject", "category", "valueBoolean", "valueString")
   )
