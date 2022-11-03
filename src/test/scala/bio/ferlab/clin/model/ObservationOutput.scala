@@ -22,7 +22,7 @@ case class ObservationOutput(`id`: String = "OB00001",
                              `patient_id`: String = "PA00001",
                              //`concept_code`: Option[String] = None,
                              //`concept_description`: Option[String] = None,
-                             `interpretation_code`: String = "A",
+                             `interpretation_code`: String = "affected",
                              `interpretation_description`: String = "Abnormal"//,
                              //`category_description`: Option[String] = None
                             )
