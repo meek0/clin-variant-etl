@@ -2,8 +2,7 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.datalake.commons.config.DatasetConf
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -73,17 +72,17 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     )
   ).toDF
 
-  val clinicalImpressionsDf = Seq(
+  val clinicalImpressionsDf: DataFrame = Seq(
     ClinicalImpressionOutput(id = "CI0001", `patient_id` = "PA0001", observations = List("OB0001", "OB0099")),
     ClinicalImpressionOutput(id = "CI0002", `patient_id` = "PA0002", observations = List("OB0002")),
     ClinicalImpressionOutput(id = "CI0003", `patient_id` = "PA0003", observations = List("OB0003"))
   ).toDF()
 
-  val observationsDf = Seq(
-    ObservationOutput(id = "OB0001", patient_id = "PA0001", `observation_code` = "DSTA", `interpretation_code` = "POS"),
-    ObservationOutput(id = "OB0099", patient_id = "PA0001", `observation_code` = "OTHER", `interpretation_code` = "POS"),
-    ObservationOutput(id = "OB0002", patient_id = "PA0002", `observation_code` = "DSTA", `interpretation_code` = "NEG"),
-    ObservationOutput(id = "OB0003", patient_id = "PA0003", `observation_code` = "DSTA", `interpretation_code` = "POS"),
+  val observationsDf: DataFrame = Seq(
+    ObservationOutput(id = "OB0001", patient_id = "PA0001", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    ObservationOutput(id = "OB0099", patient_id = "PA0001", `observation_code` = "OTHER", `interpretation_code` = "affected"),
+    ObservationOutput(id = "OB0002", patient_id = "PA0002", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
+    ObservationOutput(id = "OB0003", patient_id = "PA0003", `observation_code` = "DSTA", `interpretation_code` = "affected"),
   ).toDF()
   val serviceRequestDf: DataFrame = Seq(
     ServiceRequestOutput(service_request_type = "analysis", `id` = "SRA0001", `patient_id` = "PA0001",
@@ -106,7 +105,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     SpecimenOutput(`patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = None, `specimen_id` = Some("SP_003")),
   ).toDF
 
-  val data = Map(
+  val data: Map[String, DataFrame] = Map(
     raw_variant_calling.id -> Seq(VCFInput(
       `genotypes` = List(
         GENOTYPES(), //proband
