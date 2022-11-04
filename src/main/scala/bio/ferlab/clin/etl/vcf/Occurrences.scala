@@ -121,7 +121,7 @@ object Occurrences {
       .where(col("observation_code") === "DSTA")
       .select(
         col("id") as "observation_id",
-        when(col("interpretation_code") === "POS", true).otherwise(false) as "affected_status",
+        when(col("interpretation_code") === "affected", true).otherwise(false) as "affected_status",
         col("interpretation_code") as "affected_status_code"
       )
 
