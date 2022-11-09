@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.qc
 
-import bio.ferlab.clin.etl.qc.TestingApp.{combineErrors, shouldBeEmpty, shouldNotContainNull, shouldNotContainOnlyNull, shouldNotContainSameValue}
+import bio.ferlab.clin.etl.qc.TestingApp.{combineErrors, shouldBeEmpty, shouldNotContainNull, shouldNotContainOnlyNull, shouldNotContainSameValue, shouldNotBeEmpty}
 import bio.ferlab.clin.testutils.WithSparkSession
 import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterAll
@@ -187,6 +187,16 @@ class TestingAppSpec extends AnyFlatSpec with WithSparkSession with Matchers wit
     ).toDF
 
     shouldNotContainSameValue(df) shouldBe Some("Column(s) foo should not contain same value")
+  }
+
+  it should "return errors for foo with empty table" in {
+    val df: DataFrame = spark.emptyDataFrame
+    shouldNotBeEmpty(df, "foo") shouldBe Some("DataFrame foo should not be empty")
+  }
+
+  it should "return no errors for foo with none-empty table" in {
+    val df: DataFrame = Seq("1", "2").toDF
+    shouldNotBeEmpty(df, "foo") shouldBe None
   }
 
   "combineErrors" should "combine several errors" in {
