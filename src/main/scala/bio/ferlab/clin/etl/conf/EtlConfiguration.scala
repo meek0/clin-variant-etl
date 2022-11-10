@@ -39,7 +39,8 @@ object EtlConfiguration extends App {
     "spark.sql.legacy.parquet.datetimeRebaseModeInWrite" -> "CORRECTED",
     "spark.sql.mapKeyDedupPolicy" -> "LAST_WIN",
     "spark.sql.autoBroadcastJoinThreshold" -> "-1",
-    "spark.databricks.delta.merge.repartitionBeforeWrite.enabled" -> "true"
+    "spark.databricks.delta.merge.repartitionBeforeWrite.enabled" -> "true",
+    "spark.databricks.delta.schema.autoMerge.enabled" -> "true"
   )
 
   val tsv_with_headers = Map("sep" -> "\t", "header" -> "true")
@@ -61,12 +62,12 @@ object EtlConfiguration extends App {
       DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20220606.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
 
       //old version of gnomad, should be removed
-      DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
-      DatasetConf("normalized_gnomad_exomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_exomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_exomes_2_1_1")),
+      //DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
+      //DatasetConf("normalized_gnomad_exomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_exomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_exomes_2_1_1")),
       DatasetConf("normalized_gnomad_genomes_3_0", clin_datalake, "/public/gnomad/gnomad_genomes_3.0", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_0")),
-      DatasetConf("normalized_gnomad_genomes_3_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_3_1_1", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
+      //DatasetConf("normalized_gnomad_genomes_3_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_3_1_1", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
       //old version of dbnsfp, should be removed after migration
-      DatasetConf("deprecated_normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite),
+      //DatasetConf("deprecated_normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite),
       DatasetConf("deprecated_normalized_dbnsfp_original"     , clin_datalake, "/public/dbnsfp/scores"                              , PARQUET, OverWrite),
       //varsome
       DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , Upsert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("chromosome", "start", "reference", "alternate")),
