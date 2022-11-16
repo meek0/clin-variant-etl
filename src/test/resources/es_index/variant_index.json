@@ -3447,6 +3447,7 @@
       "FATHMM_converted_rankscore": 0.09635,
       "fathmm_pred": "T",
       "cadd_score": 0.21382,
+      "cadd_phred": 27.3,
       "dann_score": 0.64374,
       "revel_rankscore": 0.44471,
       "lrt_converted_rankscore": 0.34245,
