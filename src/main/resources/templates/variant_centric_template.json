@@ -150,6 +150,9 @@
                 "cadd_score": {
                   "type": "float"
                 },
+                "cadd_phred": {
+                  "type": "float"
+                },
                 "dann_score": {
                   "type": "float"
                 },

@@ -88,6 +88,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
             $"FATHMM_converted_rankscore" as "fathmm_converted_rankscore",
             $"FATHMM_pred" as "fathmm_pred",
             $"CADD_raw_rankscore" as "cadd_score",
+            $"CADD_phred" as "cadd_phred",
             $"DANN_rankscore" as "dann_score",
             $"REVEL_rankscore" as "revel_rankscore",
             $"LRT_converted_rankscore" as "lrt_converted_rankscore",
