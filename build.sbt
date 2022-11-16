@@ -6,11 +6,11 @@ scalaVersion := "2.12.13"
 
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
-val spark_version = "3.1.2"
-val deltaCoreVersion = "1.0.0"
+val spark_version = "3.3.1"
+val deltaCoreVersion = "2.1.1"
 val scalatestVersion = "3.2.9"
 val glowVersion = "1.2.1"
-val datalakeSpark3Version = "4.0.22"
+val datalakeSpark3Version = "5.0.1"
 val elasticsearchVersion = "7.15.0"
 
 resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
