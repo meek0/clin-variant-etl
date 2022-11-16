@@ -196,7 +196,7 @@ object FhirCustomOperations {
         .withColumn("full_name", concat_ws(" ", col("first_name"), col("last_name")))
     }
 
-    def withMetadata: DataFrame = {
+    def withFhirMetadata: DataFrame = {
       df.withColumn("version_id", col("meta.versionId"))
         .withColumn("updated_on", to_timestamp(col("meta.lastUpdated"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz"))
         .withColumn("created_on", col("updated_on"))

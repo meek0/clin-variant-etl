@@ -6,7 +6,7 @@ scalaVersion := "2.12.13"
 
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
-val spark_version = "3.1.2"
+val spark_version = "3.3.1"
 val deltaCoreVersion = "2.1.1"
 val scalatestVersion = "3.2.9"
 val glowVersion = "1.2.1"

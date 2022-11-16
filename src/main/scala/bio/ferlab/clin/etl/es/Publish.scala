@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.spark3.elasticsearch.ElasticSearchClient
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.util.EntityUtils
+import org.apache.hadoop.shaded.org.apache.http.client.methods.{HttpGet}
+import org.apache.hadoop.shaded.org.apache.http.util.EntityUtils
 
 object Publish extends App {
 

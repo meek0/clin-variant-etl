@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.fhir.FhirCustomOperations._
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.transformation._
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.functions.{when, _}
+import org.apache.spark.sql.functions._
 
 object FhirRawToNormalizedMappings {
   val INPUT_FILENAME = "ingestion_file_name"
@@ -16,7 +16,7 @@ object FhirRawToNormalizedMappings {
     KeepFirstWithinPartition(Seq("id"), col(INGESTION_TIMESTAMP).desc_nulls_last),
     Custom(_
       .withColumnRenamed("resourceType", "resource_type")
-      .withMetadata),
+      .withFhirMetadata),
     Drop("meta")
   )
 
