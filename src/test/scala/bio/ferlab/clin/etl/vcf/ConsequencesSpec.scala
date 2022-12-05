@@ -24,7 +24,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
   val data = Map(
-    raw_variant_calling.id -> Seq(VCFInput()).toDF()
+    raw_variant_calling.id -> Seq(VCF_SNV_Input()).toDF()
   )
 
   override def beforeAll(): Unit = {
@@ -46,10 +46,10 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
 
   "consequences job" should "run" in {
 
-    val firstLoad = Seq(VCFInput(
+    val firstLoad = Seq(VCF_SNV_Input(
       `names` = List("rs200676709")
     )).toDF()
-    val secondLoad = Seq(VCFInput(
+    val secondLoad = Seq(VCF_SNV_Input(
       `names` = List("rs200676710")
     )).toDF()
     val date1 = LocalDateTime.of(2021, 1, 1, 1, 1, 1)

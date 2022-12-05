@@ -48,7 +48,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
-  val normalized_panelsDf: DataFrame = Seq(PanelOutput()).toDF()
+  val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
 
   val data = Map(

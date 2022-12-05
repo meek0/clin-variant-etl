@@ -5,7 +5,7 @@
 package bio.ferlab.clin.model
 
 
-case class VCFInput(`contigName`: String = "chr1",
+case class VCF_SNV_Input(`contigName`: String = "chr1",
                     `start`: Long = 69896,
                     `end`: Long = 69897,
                     `names`: List[String] = List("rs200676709"),
@@ -29,7 +29,7 @@ case class VCFInput(`contigName`: String = "chr1",
                     `INFO_DB`: Boolean = true,
                     `INFO_MQRankSum`: Double = 2.054,
                     `INFO_OLD_MULTIALLELIC`: Option[String] = None,
-                    `genotypes`: List[GENOTYPES] = List(GENOTYPES(), GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)), GENOTYPES(`sampleId` = "33333")))
+                    `genotypes`: List[SNV_GENOTYPES] = List(SNV_GENOTYPES(), SNV_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)), SNV_GENOTYPES(`sampleId` = "33333")))
 
 
 case class INFO_CSQ(`Allele`: String = "C",
@@ -98,23 +98,23 @@ case class INFO_CSQ(`Allele`: String = "C",
                     `rs_dbSNP151`: Option[String] = None)
 
 
-case class GENOTYPES(`sampleId`: String = "11111",
-                     `conditionalQuality`: Int = 30,
-                     `F1R2`: List[Int] = List(0, 0),
-                     `PRI`: Option[List[Double]] = None,
-                     `filters`: List[String] = List("PASS"),
-                     `posteriorProbabilities`: List[Double] = List(7.795, 3.805, 3.795),
-                     `SB`: Option[List[Int]] = None,
-                     `F2R1`: List[Int] = List(0, 1),
-                     `alleleDepths`: List[Int] = List(0, 30),
-                     `ICNT`: Option[List[Int]] = None,
-                     `AF`: List[Double] = List(1.0),
-                     `phased`: Boolean = false,
-                     `calls`: List[Int] = List(0, 1),
-                     `MIN_DP`: Option[Int] = None,
-                     `phredLikelihoods`: List[Int] = List(42, 3, 0),
-                     `LOD`: Option[Double] = None,
-                     `depth`: Int = 1,
-                     `SPL`: Option[List[Int]] = None,
-                     `PS`: Option[Int] = None,
-                     `MB`: Option[List[Int]] = None)
+case class SNV_GENOTYPES(`sampleId`: String = "11111",
+                         `conditionalQuality`: Int = 30,
+                         `F1R2`: List[Int] = List(0, 0),
+                         `PRI`: Option[List[Double]] = None,
+                         `filters`: List[String] = List("PASS"),
+                         `posteriorProbabilities`: List[Double] = List(7.795, 3.805, 3.795),
+                         `SB`: Option[List[Int]] = None,
+                         `F2R1`: List[Int] = List(0, 1),
+                         `alleleDepths`: List[Int] = List(0, 30),
+                         `ICNT`: Option[List[Int]] = None,
+                         `AF`: List[Double] = List(1.0),
+                         `phased`: Boolean = false,
+                         `calls`: List[Int] = List(0, 1),
+                         `MIN_DP`: Option[Int] = None,
+                         `phredLikelihoods`: List[Int] = List(42, 3, 0),
+                         `LOD`: Option[Double] = None,
+                         `depth`: Int = 1,
+                         `SPL`: Option[List[Int]] = None,
+                         `PS`: Option[Int] = None,
+                         `MB`: Option[List[Int]] = None)

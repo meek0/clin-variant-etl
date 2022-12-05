@@ -106,11 +106,11 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   ).toDF
 
   val data: Map[String, DataFrame] = Map(
-    raw_variant_calling.id -> Seq(VCFInput(
+    raw_variant_calling.id -> Seq(VCF_SNV_Input(
       `genotypes` = List(
-        GENOTYPES(), //proband
-        GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)), //father
-        GENOTYPES(`sampleId` = "33333")) //mother
+        SNV_GENOTYPES(), //proband
+        SNV_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)), //father
+        SNV_GENOTYPES(`sampleId` = "33333")) //mother
     )).toDF(),
     patient.id -> patientDf,
     clinical_impression.id -> clinicalImpressionsDf,
