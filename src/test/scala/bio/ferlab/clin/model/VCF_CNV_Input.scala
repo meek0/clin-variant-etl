@@ -8,11 +8,10 @@ package bio.ferlab.clin.model
 
 
 case class VCF_CNV_Input(`contigName`: String = "chr1",
-                         `start`: Long = 9823626,
-                         `end`: Long = 9823687,
+                         `start`: Long = 9999,
                          `names`: Seq[String] = Seq("DRAGEN:LOSS:chr1:9823628-9823687"),
-                         `referenceAllele`: String = "N",
-                         `alternateAlleles`: Seq[String] = Seq("<DEL>"),
+                         `referenceAllele`: String = "A",
+                         `alternateAlleles`: Seq[String] = Seq("TAA"),
                          `qual`: Double = 27.0,
                          `filters`: Seq[String] = Seq("cnvQual"),
                          `splitFromMultiAllelic`: Boolean = false,

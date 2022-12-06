@@ -10,7 +10,7 @@ package bio.ferlab.clin.model
 case class CnvEnrichedOutput(`aliquot_id`: String = "11111",
                              `chromosome`: String = "1",
                              `start`: Long = 10000,
-                             `end`: Long = 9823686,
+                             `end`: Long = 10059,
                              `reference`: String = "A",
                              `alternate`: String = "TAA",
                              `name`: String = "DRAGEN:LOSS:chr1:9823628-9823687",

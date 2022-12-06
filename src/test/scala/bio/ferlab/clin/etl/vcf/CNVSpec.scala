@@ -110,8 +110,8 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   }*/
 
   "cnv transform" should "transform data in expected format" in {
-    val results = new CNV("BAT1").transform(data)
-    val result = results("normalized_cnv").as[NormalizedCNV].collect()
+    val results = new CNV("BAT1").transformSingle(data)
+    val result = results.as[NormalizedCNV].collect()
 
     result should contain theSameElementsAs Seq(
       NormalizedCNV(),
