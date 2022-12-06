@@ -66,6 +66,20 @@
             }
           }
         },
+        "number_of_patients_cnvs": {
+          "type": "long"
+        },
+        "number_of_cnvs_per_patient": {
+          "type": "nested",
+          "properties": {
+            "patient_id": {
+              "type": "keyword"
+            },
+            "count": {
+              "type": "long"
+            }
+          }
+        },
         "hash": {
           "type": "keyword"
         },

@@ -8,6 +8,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
+import scala.collection.Seq
 
 class PrepareGeneCentric(releaseId: String)
                         (override implicit val conf: Configuration) extends PrepareCentric(releaseId) {
@@ -35,14 +36,7 @@ class PrepareGeneCentric(releaseId: String)
       .select(explode($"donors.patient_id") as "patient_id", $"genes_symbol", $"locus")
       .select($"patient_id", explode($"genes_symbol") as "symbol", $"locus")
       .dropDuplicates
-
-    val cnvs = data(enriched_cnv.id) // locus doest exist in CNV, build it
-      .withColumn("locus", concat(locus(0), lit("-"), locus(1), lit("-"), locus(2), lit("-"), locus(3)))
-      .select(explode($"genes") as "genes", $"patient_id", $"locus")
-      .select("patient_id", "genes.symbol", "locus")
-      .dropDuplicates
-
-    val groupBySymbol = variants.union(cnvs).groupBy("patient_id", "symbol")
+      .groupBy("patient_id", "symbol")
       .agg(count($"locus") as "number_of_variants_per_patient")
       .groupBy("symbol")
       .agg(
@@ -53,16 +47,33 @@ class PrepareGeneCentric(releaseId: String)
         )) as "number_of_variants_per_patient"
       )
 
-    variants.union(cnvs).show(100, false)
-    groupBySymbol.show(100, false)
+    val cnvs = data(enriched_cnv.id) // locus doest exist in CNV, build it
+      .withColumn("locus", concat(locus(0), lit("-"), locus(1), lit("-"), locus(2), lit("-"), locus(3)))
+      .select(explode($"genes") as "genes", $"patient_id", $"locus")
+      .select("patient_id", "genes.symbol", "locus")
+      .dropDuplicates
+      .groupBy("patient_id", "symbol")
+      .agg(count($"locus") as "number_of_cnvs_per_patient")
+      .groupBy("symbol")
+      .agg(
+        count($"patient_id") as "number_of_patients_cnvs",
+        collect_list(struct(
+          $"patient_id",
+          $"number_of_cnvs_per_patient" as "count"
+        )) as "number_of_cnvs_per_patient"
+      )
+
+    val all = variants.join(cnvs, Seq("symbol"), "full");
 
     data(enriched_genes.id)
-      .join(groupBySymbol, Seq("symbol"), "full")
+      .join(all, Seq("symbol"), "full")
       .withColumn("hash", sha1(col("symbol")))
       .withColumn("entrez_gene_id", coalesce(col("entrez_gene_id"), lit(0)))
       .withColumn("alias", coalesce(col("alias"), lit(array())))
       .withColumn("number_of_patients", coalesce(col("number_of_patients"), lit(0)))
+      .withColumn("number_of_patients_cnvs", coalesce(col("number_of_patients_cnvs"), lit(0)))
       .withColumn("number_of_variants_per_patient", coalesce(col("number_of_variants_per_patient"), lit(array())))
+      .withColumn("number_of_cnvs_per_patient", coalesce(col("number_of_cnvs_per_patient"), lit(array())))
   }
 
 }
