@@ -33,7 +33,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   "Enriched CNV job" should "enriched data" in {
 
-    val results = new CNV().transformSingle(data).as[EnrichedCNV]
+    val results = new CNV().transformSingle(data).as[CnvEnrichedOutput]
 
     //val res = results.select(explode($"genes")).select("col.*")
     //val genes = results.select(explode($"genes")).select("col.*")
@@ -41,7 +41,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "EnrichedCNVgenes", genes, "src/test/scala/")
 
     results.collect() should contain theSameElementsAs Seq(
-      EnrichedCNV(),
+      CnvEnrichedOutput(),
     )
   }
 

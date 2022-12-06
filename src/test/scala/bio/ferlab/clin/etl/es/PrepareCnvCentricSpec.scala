@@ -20,7 +20,7 @@ class PrepareCnvCentricSpec extends AnyFlatSpec with WithSparkSession with WithT
   val enriched_cnv: DatasetConf = conf.getDataset("enriched_cnv")
 
   val data = Map(
-    enriched_cnv.id -> Seq(EnrichedCNV("1"), EnrichedCNV("2")).toDF,
+    enriched_cnv.id -> Seq(CnvEnrichedOutput("1"), CnvEnrichedOutput("2")).toDF,
   )
 
   "Cnv_centric transform" should "return data as CnvCentricOutput" in {
