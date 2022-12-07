@@ -37,14 +37,14 @@ class PrepareGeneCentric(releaseId: String)
       .select($"patient_id", explode($"genes_symbol") as "symbol", $"locus")
       .dropDuplicates
       .groupBy("patient_id", "symbol")
-      .agg(count($"locus") as "number_of_variants_per_patient")
+      .agg(count($"locus") as "number_of_snvs_per_patient")
       .groupBy("symbol")
       .agg(
-        count($"patient_id") as "number_of_patients",
+        count($"patient_id") as "number_of_patients_snvs",
         collect_list(struct(
           $"patient_id",
-          $"number_of_variants_per_patient" as "count"
-        )) as "number_of_variants_per_patient"
+          $"number_of_snvs_per_patient" as "count"
+        )) as "number_of_snvs_per_patient"
       )
 
     val cnvs = data(enriched_cnv.id) // locus doest exist in CNV, build it
@@ -70,9 +70,9 @@ class PrepareGeneCentric(releaseId: String)
       .withColumn("hash", sha1(col("symbol")))
       .withColumn("entrez_gene_id", coalesce(col("entrez_gene_id"), lit(0)))
       .withColumn("alias", coalesce(col("alias"), lit(array())))
-      .withColumn("number_of_patients", coalesce(col("number_of_patients"), lit(0)))
+      .withColumn("number_of_patients_snvs", coalesce(col("number_of_patients_snvs"), lit(0)))
       .withColumn("number_of_patients_cnvs", coalesce(col("number_of_patients_cnvs"), lit(0)))
-      .withColumn("number_of_variants_per_patient", coalesce(col("number_of_variants_per_patient"), lit(array())))
+      .withColumn("number_of_snvs_per_patient", coalesce(col("number_of_snvs_per_patient"), lit(array())))
       .withColumn("number_of_cnvs_per_patient", coalesce(col("number_of_cnvs_per_patient"), lit(array())))
   }
 
