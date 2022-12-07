@@ -92,25 +92,25 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   val data: Map[String, DataFrame] = Map(
     raw_variant_calling.id -> Seq(
-      VCFInput(
+      VCF_SNV_Input(
         `genotypes` = List(
-          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1)),
-          GENOTYPES(`sampleId` = "2", `calls` = List(1, 0)),
-          GENOTYPES(`sampleId` = "3", `calls` = List(0, 0)),
-          GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1)),
+          SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1)),
+          SNV_GENOTYPES(`sampleId` = "2", `calls` = List(1, 0)),
+          SNV_GENOTYPES(`sampleId` = "3", `calls` = List(0, 0)),
+          SNV_GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1)),
 
         )),
-      VCFInput(
+      VCF_SNV_Input(
         referenceAllele = "G",
         `genotypes` = List(
-          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `alleleDepths` = List(10, 0)), //Should not be included in frequencies
-          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `conditionalQuality` = 10) //Should not be included in frequencies
+          SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `alleleDepths` = List(10, 0)), //Should not be included in frequencies
+          SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `conditionalQuality` = 10) //Should not be included in frequencies
         )),
-      VCFInput(
+      VCF_SNV_Input(
         referenceAllele = "A",
         INFO_FILTERS = List("DRAGENHardQUAL;LowDepth"), //Should not be included in frequencies
         `genotypes` = List(
-          GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `alleleDepths` = List(0, 30)),
+          SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `alleleDepths` = List(0, 30)),
         ))
     ).toDF(),
     clinical_impression.id -> clinicalImpressionsDf,

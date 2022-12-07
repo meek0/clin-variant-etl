@@ -25,7 +25,7 @@ object ColumnsContainNoNullGene extends TestingApp {
         gene_centric.select(explode($"cosmic") as "cosmic").select($"cosmic.tumour_types_germline" as "tumour_types_germline")
       ),
       shouldNotContainNull(
-        gene_centric.select(explode($"number_of_variants_per_patient") as "number_of_variants_per_patient").select($"number_of_variants_per_patient.patient_id" as "patient_id")
+        gene_centric.select(explode($"number_of_snvs_per_patient") as "number_of_snvs_per_patient").select($"number_of_snvs_per_patient.patient_id" as "patient_id")
       ),
     )
   }

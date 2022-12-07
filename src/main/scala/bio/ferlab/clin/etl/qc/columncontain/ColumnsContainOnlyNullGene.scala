@@ -28,7 +28,7 @@ object ColumnsContainOnlyNullGene extends TestingApp {
         gene_centric.select(explode($"cosmic")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        gene_centric.select(explode($"number_of_variants_per_patient")).select("col.*")
+        gene_centric.select(explode($"number_of_snvs_per_patient")).select("col.*")
       ),
     )
   }

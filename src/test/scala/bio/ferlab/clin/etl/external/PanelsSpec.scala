@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.external
 
-import bio.ferlab.clin.model.PanelOutput
+import bio.ferlab.clin.model.NormalizedPanels
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
@@ -27,11 +27,11 @@ class PanelsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig w
   )
 
   "panels job" should "transform data in expected format" in {
-    val resultDf =  job1.transformSingle(data).as[PanelOutput]
+    val resultDf =  job1.transformSingle(data).as[NormalizedPanels]
     
     val result = resultDf.collect().head
 
-    result shouldBe PanelOutput()
+    result shouldBe NormalizedPanels()
   }
 
 }

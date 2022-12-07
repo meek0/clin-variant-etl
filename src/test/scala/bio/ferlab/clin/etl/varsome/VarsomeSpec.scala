@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.model.{NormalizedVariants, PanelOutput, VarsomeExtractOutput, VarsomeOutput}
+import bio.ferlab.clin.model.{NormalizedVariants, NormalizedPanels, VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
@@ -35,7 +35,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
     VarsomeOutput("1", 1002, "A", "T", "5678", yesterday, None, None)
   ).toDF()
   val normalized_panelsDF: DataFrame = Seq(
-    PanelOutput(), // available panel
+    NormalizedPanels(), // available panel
   ).toDF()
   val normalized_varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
