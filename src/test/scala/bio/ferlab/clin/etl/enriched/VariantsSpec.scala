@@ -3,8 +3,9 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterAll
@@ -32,6 +33,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
+  val spliceai_indel: DatasetConf = conf.getDataset("normalized_spliceai_indel")
+  val spliceai_snv: DatasetConf = conf.getDataset("normalized_spliceai_snv")
 
   val normalized_occurrencesDf: DataFrame = Seq(
     NormalizedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -50,6 +53,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
+  val spliceAiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -64,7 +68,9 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
-    varsome.id -> varsomeDf
+    varsome.id -> varsomeDf,
+    spliceai_indel.id -> spliceAiDf,
+    spliceai_snv.id -> spliceAiDf
   )
 
   override def beforeAll(): Unit = {
@@ -898,5 +904,31 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`
     )
+  }
+
+  "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
+    val variants = Seq(
+      NormalizedVariants(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C"),
+      NormalizedVariants(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
+      NormalizedVariants(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
+    ).toDF()
+    val snv = Seq(
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `ds_ag` = "1.00", `ds_al` = "2.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
+    ).toDF()
+    val indel = Seq(
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `ds_ag` = "1.00", `ds_al` = "1.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
+    ).toDF()
+
+    val result = new Variants().joinWithSpliceAi(variants, snv, indel)
+
+    val expected = Seq(
+      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `spliceai_ds` = Some(2.0), `spliceai_type` = Some(List("al"))),
+      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `spliceai_ds` = Some(1.0), `spliceai_type` = Some(List("ag", "al"))),
+      VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `spliceai_ds` = None, `spliceai_type` = None),
+    ).toDF().selectLocus($"spliceai_ds", $"spliceai_type").collect()
+
+    result
+      .selectLocus($"spliceai_ds", $"spliceai_type")
+      .collect() should contain theSameElementsAs expected
   }
 }
