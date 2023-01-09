@@ -39,7 +39,9 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Pubmed"),
                                  `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
                                  `panels`: List[String] = List("DYSTM", "MITN"),
-                                 `varsome`: Option[VARSOME] = Some(VARSOME())
+                                 `varsome`: Option[VARSOME] = Some(VARSOME()),
+                                 `spliceai_ds`: Option[Double] = Some(0.01),
+                                 `spliceai_type`: Option[List[String]] = Some(List("ag"))
                                 )
 
 

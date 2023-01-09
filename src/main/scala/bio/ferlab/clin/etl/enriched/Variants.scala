@@ -9,7 +9,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import bio.ferlab.datalake.spark3.utils.FixedRepartition
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
 import java.time.{LocalDate, LocalDateTime}
 
@@ -29,6 +29,8 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
+  val spliceai_indel: DatasetConf = conf.getDataset("normalized_spliceai_indel")
+  val spliceai_snv: DatasetConf = conf.getDataset("normalized_spliceai_snv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -45,7 +47,9 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       clinvar.id -> clinvar.read,
       genes.id -> genes.read,
       normalized_panels.id -> normalized_panels.read,
-      varsome.id -> varsome.read
+      varsome.id -> varsome.read,
+      spliceai_indel.id -> spliceai_indel.read,
+      spliceai_snv.id -> spliceai_snv.read
     )
   }
 
@@ -83,8 +87,9 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
     val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
+    val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai_snv.id), data(spliceai_indel.id))
 
-    joinVarsome
+    joinSpliceAi
       .withGeneExternalReference
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
@@ -290,6 +295,37 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .drop("symbol", "version")
   }
 
+  def joinWithSpliceAi(variants: DataFrame, snv: DataFrame, indel: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
+    // Get delta score
+    val getDs: Column => Column = _.getItem(0).getField("ds")
+    val scoreColumnNames = Array("ag", "al", "dg", "dl")
+
+    val scores = snv
+      .union(indel)
+      .selectLocus(
+        $"ds_ag".cast("double") as "ag", // acceptor gain
+        $"ds_al".cast("double") as "al", // acceptor loss
+        $"ds_dg".cast("double") as "dg", // donor gain
+        $"ds_dl".cast("double") as "dl" // donor loss
+     )
+
+    val scoreColumns = scores.columns.filter(scoreColumnNames.contains).map(c => array(struct(col(c) as "ds", lit(c) as "type")))
+    val maxScore: Column = scoreColumns.reduce {
+      (c1, c2) => when(getDs(c1) > getDs(c2), c1)
+        .when(getDs(c1) === getDs(c2), concat(c1, c2))
+        .otherwise(c2)
+    }
+
+    variants
+      .joinByLocus(scores, "left")
+      .withColumn("maxScore", maxScore)
+      .withColumn("spliceai_ds", getDs($"maxScore"))
+      .withColumn("spliceai_type", functions.transform($"maxScore", c => c.getField("type")))
+      .withColumn("spliceai_type", when($"spliceai_ds".isNull, null).otherwise($"spliceai_type"))
+      .drop(List("maxScore") ++ scoreColumnNames: _*)
+  }
 }
 
 object Variants {
