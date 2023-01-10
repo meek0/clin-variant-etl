@@ -863,6 +863,12 @@
         "variant_type": {
           "type": "keyword"
         },
+        "spliceai_ds": {
+          "type": "double"
+        },
+        "spliceai_type": {
+          "type": "keyword"
+        },
         "varsome": {
             "properties": {
               "variant_id":{
