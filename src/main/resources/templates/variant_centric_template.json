@@ -812,6 +812,16 @@
             },
             "symbol": {
               "type": "keyword"
+            },
+            "spliceai": {
+              "properties": {
+                "ds": {
+                  "type": "double"
+                },
+                "type": {
+                  "type": "keyword"
+                }
+              }
             }
           }
         },
@@ -861,12 +871,6 @@
           "type": "keyword"
         },
         "variant_type": {
-          "type": "keyword"
-        },
-        "spliceai_ds": {
-          "type": "double"
-        },
-        "spliceai_type": {
           "type": "keyword"
         },
         "varsome": {
