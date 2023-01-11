@@ -8,6 +8,7 @@ import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -53,7 +54,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
-  val spliceAiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
+  val spliceai_snvDf: DataFrame = Seq(SpliceAiOutput(`chromosome` = "1")).toDF()
+  val spliceai_indelDf: DataFrame = Seq(SpliceAiOutput(`chromosome` = "2")).toDF() // different chr to avoid duplicates
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -69,8 +71,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
     varsome.id -> varsomeDf,
-    spliceai_indel.id -> spliceAiDf,
-    spliceai_snv.id -> spliceAiDf
+    spliceai_indel.id -> spliceai_indelDf,
+    spliceai_snv.id -> spliceai_snvDf
   )
 
   override def beforeAll(): Unit = {
@@ -908,27 +910,45 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
     val variants = Seq(
-      NormalizedVariants(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C"),
-      NormalizedVariants(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
-      NormalizedVariants(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
+      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
+      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
+      VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
+      VariantEnrichedOutput(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes_symbol` = List(null), genes = List(null)),
     ).toDF()
+
+    // Remove spliceai nested field from variants df
+    val variantsWithoutSpliceAi = variants.select($"*", explode_outer($"genes") as "gene")
+      .withColumn("gene", $"gene".dropFields("spliceai"))
+      .groupByLocus()
+      .agg(
+        first(struct(variants.drop("genes")("*"))) as "variant",
+        collect_list("gene") as "genes"
+      )
+      .select("variant.*", "genes")
+
     val snv = Seq(
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `ds_ag` = "1.00", `ds_al` = "2.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene1", `ds_ag` = "1.00", `ds_al` = "2.00", `ds_dg` = "0.00", `ds_dl` = "0.00"),
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene2", `ds_ag` = "0.00", `ds_al` = "0.00", `ds_dg` = "0.00", `ds_dl` = "0.00"),
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene3", `ds_ag` = "0.00", `ds_al` = "0.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
     ).toDF()
     val indel = Seq(
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `ds_ag` = "1.00", `ds_al` = "1.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `symbol` = "OR4F5", `ds_ag` = "1.00", `ds_al` = "1.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
     ).toDF()
 
-    val result = new Variants().joinWithSpliceAi(variants, snv, indel)
+    val result = new Variants().joinWithSpliceAi(variantsWithoutSpliceAi, snv, indel)
 
     val expected = Seq(
-      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `spliceai_ds` = Some(2.0), `spliceai_type` = Some(List("al"))),
-      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `spliceai_ds` = Some(1.0), `spliceai_type` = Some(List("ag", "al"))),
-      VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `spliceai_ds` = None, `spliceai_type` = None),
-    ).toDF().selectLocus($"spliceai_ds", $"spliceai_type").collect()
+      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
+        GENES(`symbol` = Some("gene1"), `spliceai` = Some(SPLICEAI(`ds` = 2.0, `type` = List("AL")))),
+        GENES(`symbol` = Some("gene2"), `spliceai` = Some(SPLICEAI(`ds` = 0.0, `type` = List("AG", "AL", "DG", "DL")))),
+      )),
+      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `genes` = List(GENES(`spliceai` = Some(SPLICEAI(`ds` = 1.0, `type` = List("AG", "AL")))))),
+      VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `genes` = List(GENES(`spliceai` = None))),
+      VariantEnrichedOutput(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
+    ).toDF().selectLocus($"genes.spliceai").collect()
 
     result
-      .selectLocus($"spliceai_ds", $"spliceai_type")
+      .selectLocus($"genes.spliceai")
       .collect() should contain theSameElementsAs expected
   }
 }

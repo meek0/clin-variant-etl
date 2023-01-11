@@ -298,33 +298,42 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   def joinWithSpliceAi(variants: DataFrame, snv: DataFrame, indel: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    // Get delta score
-    val getDs: Column => Column = _.getItem(0).getField("ds")
-    val scoreColumnNames = Array("ag", "al", "dg", "dl")
-
-    val scores = snv
-      .union(indel)
-      .selectLocus(
-        $"ds_ag".cast("double") as "ag", // acceptor gain
-        $"ds_al".cast("double") as "al", // acceptor loss
-        $"ds_dg".cast("double") as "dg", // donor gain
-        $"ds_dl".cast("double") as "dl" // donor loss
-     )
-
-    val scoreColumns = scores.columns.filter(scoreColumnNames.contains).map(c => array(struct(col(c) as "ds", lit(c) as "type")))
+    val getDs: Column => Column = _.getItem(0).getField("ds") // Get delta score
+    val scoreColumnNames = Array("AG", "AL", "DG", "DL")
+    val scoreColumns = scoreColumnNames.map(c => array(struct(col(c) as "ds", lit(c) as "type")))
     val maxScore: Column = scoreColumns.reduce {
       (c1, c2) => when(getDs(c1) > getDs(c2), c1)
         .when(getDs(c1) === getDs(c2), concat(c1, c2))
         .otherwise(c2)
     }
 
-    variants
-      .joinByLocus(scores, "left")
+    val scores = snv
+      .union(indel)
+      .selectLocus(
+        $"symbol",
+        $"ds_ag".cast("double") as "AG", // acceptor gain
+        $"ds_al".cast("double") as "AL", // acceptor loss
+        $"ds_dg".cast("double") as "DG", // donor gain
+        $"ds_dl".cast("double") as "DL" // donor loss
+      )
       .withColumn("maxScore", maxScore)
-      .withColumn("spliceai_ds", getDs($"maxScore"))
-      .withColumn("spliceai_type", functions.transform($"maxScore", c => c.getField("type")))
-      .withColumn("spliceai_type", when($"spliceai_ds".isNull, null).otherwise($"spliceai_type"))
-      .drop(List("maxScore") ++ scoreColumnNames: _*)
+      .withColumn("spliceai", struct(
+        getDs($"maxScore") as "ds",
+        functions.transform($"maxScore", c => c.getField("type")) as "type")
+      )
+      .selectLocus($"symbol", $"spliceai")
+
+    variants
+      .select($"*", explode_outer($"genes") as "gene", $"gene.symbol" as "symbol") // explode_outer since genes can be null
+      .join(scores, locusColumnNames :+ "symbol", "left")
+      .drop("symbol") // only used for joining
+      .withColumn("gene", struct($"gene.*", $"spliceai")) // add spliceai struct as nested field of gene struct
+      .groupByLocus()
+      .agg(
+        first(struct(variants.drop("genes")("*"))) as "variant",
+        collect_list("gene") as "genes" // re-create genes list for each locus, now containing spliceai struct
+      )
+      .select("variant.*", "genes")
   }
 }
 

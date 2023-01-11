@@ -38,9 +38,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `omim`: List[String] = List("618285"),
                               `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Pubmed"),
                               `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
-                              `varsome`: Option[VARSOME] = Some(VARSOME()),
-                              `spliceai_ds`: Option[Double] = Some(0.01),
-                              `spliceai_type`: Option[List[String]] = Some(List("ag")))
+                              `varsome`: Option[VARSOME] = Some(VARSOME()))
 
 case class CONSEQUENCES(`ensembl_transcript_id`: String = "ENST00000335137",
                         `ensembl_gene_id`: String = "ENSG00000186092",

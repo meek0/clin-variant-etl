@@ -40,8 +40,6 @@ case class VariantEnrichedOutput(`chromosome`: String = "1",
                                  `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
                                  `panels`: List[String] = List("DYSTM", "MITN"),
                                  `varsome`: Option[VARSOME] = Some(VARSOME()),
-                                 `spliceai_ds`: Option[Double] = Some(0.01),
-                                 `spliceai_type`: Option[List[String]] = Some(List("ag"))
                                 )
 
 
@@ -127,7 +125,8 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `biotype`: Option[String] = Some("protein_coding"),
                  `orphanet`: List[ORPHANET] = List(ORPHANET()),
                  `hpo`: List[HPO] = List(HPO()),
-                 `omim`: List[OMIM] = List(OMIM()))
+                 `omim`: List[OMIM] = List(OMIM()),
+                 `spliceai`: Option[SPLICEAI] = Some(SPLICEAI()))
 
 case class VARSOME(
                     `variant_id`: Option[String] = Some("10190150730274780002"),
@@ -148,3 +147,8 @@ case class VERDICT(
                     `pathogenic_subscore`: Option[String] = Some("Uncertain Significance"),
                     `benign_subscore`: Option[String] = Some("Benign")
                   )
+
+  case class SPLICEAI(
+                       `ds`: Double = 0.01,
+                       `type`: List[String] = List("AG")
+                     )
