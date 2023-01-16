@@ -34,8 +34,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
-  val spliceai_indel: DatasetConf = conf.getDataset("normalized_spliceai_indel")
-  val spliceai_snv: DatasetConf = conf.getDataset("normalized_spliceai_snv")
+  val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
 
   val normalized_occurrencesDf: DataFrame = Seq(
     NormalizedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -54,8 +53,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val genesDf: DataFrame = Seq(GenesOutput()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
-  val spliceai_snvDf: DataFrame = Seq(SpliceAiOutput(`chromosome` = "1")).toDF()
-  val spliceai_indelDf: DataFrame = Seq(SpliceAiOutput(`chromosome` = "2")).toDF() // different chr to avoid duplicates
+  val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -71,8 +69,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
     varsome.id -> varsomeDf,
-    spliceai_indel.id -> spliceai_indelDf,
-    spliceai_snv.id -> spliceai_snvDf
+    spliceai.id -> spliceaiDf,
   )
 
   override def beforeAll(): Unit = {
@@ -926,16 +923,17 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       )
       .select("variant.*", "genes")
 
-    val snv = Seq(
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene1", `ds_ag` = "1.00", `ds_al` = "2.00", `ds_dg` = "0.00", `ds_dl` = "0.00"),
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene2", `ds_ag` = "0.00", `ds_al` = "0.00", `ds_dg` = "0.00", `ds_dl` = "0.00"),
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene3", `ds_ag` = "0.00", `ds_al` = "0.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
-    ).toDF()
-    val indel = Seq(
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `symbol` = "OR4F5", `ds_ag` = "1.00", `ds_al` = "1.00", `ds_dg` = "0.00", `ds_dl` = "0.00")
+    val spliceai = Seq(
+      // snv
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene1", `max_score` = MAX_SCORE(`ds` = 2.0, `type` = Seq("AL"))),
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene2", `max_score` = MAX_SCORE(`ds` = 0.0, `type` = Seq("AG", "AL", "DG", "DL"))),
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene3", `max_score` = MAX_SCORE(`ds` = 0.0, `type` = Seq("AG", "AL", "DG", "DL"))),
+
+      // indel
+      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `symbol` = "OR4F5", `max_score` = MAX_SCORE(`ds` = 1.0, `type` = Seq("AG", "AL")))
     ).toDF()
 
-    val result = new Variants().joinWithSpliceAi(variantsWithoutSpliceAi, snv, indel)
+    val result = new Variants().joinWithSpliceAi(variantsWithoutSpliceAi, spliceai)
 
     val expected = Seq(
       VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
@@ -946,6 +944,9 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `genes` = List(GENES(`spliceai` = None))),
       VariantEnrichedOutput(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
     ).toDF().selectLocus($"genes.spliceai").collect()
+
+    result.show(false)
+    result.printSchema()
 
     result
       .selectLocus($"genes.spliceai")

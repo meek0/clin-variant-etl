@@ -148,7 +148,5 @@ case class VERDICT(
                     `benign_subscore`: Option[String] = Some("Benign")
                   )
 
-  case class SPLICEAI(
-                       `ds`: Double = 0.01,
-                       `type`: List[String] = List("AG")
-                     )
+case class SPLICEAI(`ds`: Double = 0.01,
+                    `type`: Seq[String] = Seq("AG"))

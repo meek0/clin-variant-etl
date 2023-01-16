@@ -29,8 +29,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
-  val spliceai_indel: DatasetConf = conf.getDataset("normalized_spliceai_indel")
-  val spliceai_snv: DatasetConf = conf.getDataset("normalized_spliceai_snv")
+  val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -48,8 +47,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       genes.id -> genes.read,
       normalized_panels.id -> normalized_panels.read,
       varsome.id -> varsome.read,
-      spliceai_indel.id -> spliceai_indel.read,
-      spliceai_snv.id -> spliceai_snv.read
+      spliceai.id -> spliceai.read,
     )
   }
 
@@ -87,7 +85,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
     val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
-    val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai_snv.id), data(spliceai_indel.id))
+    val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai.id))
 
     joinSpliceAi
       .withGeneExternalReference
@@ -295,33 +293,10 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .drop("symbol", "version")
   }
 
-  def joinWithSpliceAi(variants: DataFrame, snv: DataFrame, indel: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def joinWithSpliceAi(variants: DataFrame, spliceai: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val getDs: Column => Column = _.getItem(0).getField("ds") // Get delta score
-    val scoreColumnNames = Array("AG", "AL", "DG", "DL")
-    val scoreColumns = scoreColumnNames.map(c => array(struct(col(c) as "ds", lit(c) as "type")))
-    val maxScore: Column = scoreColumns.reduce {
-      (c1, c2) => when(getDs(c1) > getDs(c2), c1)
-        .when(getDs(c1) === getDs(c2), concat(c1, c2))
-        .otherwise(c2)
-    }
-
-    val scores = snv
-      .union(indel)
-      .selectLocus(
-        $"symbol",
-        $"ds_ag".cast("double") as "AG", // acceptor gain
-        $"ds_al".cast("double") as "AL", // acceptor loss
-        $"ds_dg".cast("double") as "DG", // donor gain
-        $"ds_dl".cast("double") as "DL" // donor loss
-      )
-      .withColumn("maxScore", maxScore)
-      .withColumn("spliceai", struct(
-        getDs($"maxScore") as "ds",
-        functions.transform($"maxScore", c => c.getField("type")) as "type")
-      )
-      .selectLocus($"symbol", $"spliceai")
+    val scores = spliceai.selectLocus($"symbol", $"max_score" as "spliceai")
 
     variants
       .select($"*", explode_outer($"genes") as "gene", $"gene.symbol" as "symbol") // explode_outer since genes can be null
