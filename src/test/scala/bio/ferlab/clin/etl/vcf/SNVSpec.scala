@@ -19,6 +19,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
+  val family: DatasetConf = conf.getDataset("normalized_family")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
 
@@ -95,6 +96,12 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0002", `patient_id` = "PA0002", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
     ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0003", `patient_id` = "PA0003", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)"))
   ).toDF()
+  val familyDf: DataFrame = Seq(
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id="PA0001", family = Some(FAMILY(mother = Some("PA0003"), father = Some("PA0002"))), family_id = Some("FM00001")),
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id="PA0002", family = None, family_id = Some("FM00001")),
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id="PA0003", family = None, family_id = Some("FM00001"))
+
+  ).toDF()
 
   val specimenDf: DataFrame = Seq(
     SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_001"), `specimen_id` = None),
@@ -117,7 +124,8 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     observation.id -> observationsDf,
     task.id -> taskDf,
     service_request.id -> serviceRequestDf,
-    specimen.id -> specimenDf
+    specimen.id -> specimenDf,
+    family.id -> familyDf
   )
 
   "occurrences transform" should "transform data in expected format" in {

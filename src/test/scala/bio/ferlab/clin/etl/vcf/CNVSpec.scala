@@ -22,6 +22,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val observation: DatasetConf = conf.getDataset("normalized_observation")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val task: DatasetConf = conf.getDataset("normalized_task")
+  val family: DatasetConf = conf.getDataset("normalized_family")
 
   val specimenDf: DataFrame = Seq(
     SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_001"), `specimen_id` = None),
@@ -42,6 +43,13 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0001", `patient_id` = "PA0001", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
     ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0002", `patient_id` = "PA0002", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)")),
     ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0003", `patient_id` = "PA0003", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)"))
+  ).toDF()
+
+  val familyDf: DataFrame = Seq(
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id = "PA0001", family = Some(FAMILY(mother = Some("PA0003"), father = Some("PA0002"))), family_id = Some("FM00001")),
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id = "PA0002", family = None, family_id = Some("FM00001")),
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id = "PA0003", family = None, family_id = Some("FM00001"))
+
   ).toDF()
 
   val clinicalImpressionsDf: DataFrame = Seq(
@@ -102,6 +110,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     observation.id -> observationsDf,
     patient.id -> patientDf,
     task.id -> taskDf,
+    family.id -> familyDf
   )
 
   /*"occurrences transform" should "create the VCF_CNV_Input model" in {

@@ -9,7 +9,8 @@ import org.apache.spark.sql.functions._
 object FhirRawToNormalizedMappings {
   val INPUT_FILENAME = "ingestion_file_name"
   val INGESTION_TIMESTAMP = "ingested_on"
-
+  val ANALYSIS_SERVICE_REQUEST_PROFILE: String = "http://fhir.cqgc.ferlab.bio/StructureDefinition/cqgc-analysis-request"
+  val SEQUENCING_REQUEST_PROFILE = "http://fhir.cqgc.ferlab.bio/StructureDefinition/cqgc-sequencing-request"
   val defaultTransformations: List[Transformation] = List(
     InputFileName(INPUT_FILENAME),
     InputFileTimestamp(INGESTION_TIMESTAMP),
@@ -53,7 +54,7 @@ object FhirRawToNormalizedMappings {
         .withColumn("interpretation_code", interpretationCodeMap(col("interpretation.coding.code")(0)))
         .withColumn("interpretation_description", col("interpretation.coding.display")(0))
         .withColumn("note", transform(col("note"), c => c("text")))
-        //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
+      //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
     ),
     Drop("extension", "code", "interpretation", "valueCodeableConcept", "subject", "category", "valueBoolean", "valueString")
   )
@@ -103,47 +104,91 @@ object FhirRawToNormalizedMappings {
         .withColumn("organization_id", organization_id)
         .withColumn("role_code", col("code")(0)("coding")(0)("code"))
         .withColumn("role_description", col("code")(0)("coding")(0)("display"))
-        //.withColumn("role_description_FR", col("code")(0)("text"))
-        //.withColumnRenamed("id", "practitioner_role_id")
+      //.withColumn("role_description_FR", col("code")(0)("text"))
+      //.withColumnRenamed("id", "practitioner_role_id")
 
     ),
     Drop("meta", "telecoms", "code", "practitioner", "organization")
   )
+
+
 
   val serviceRequestMappings: List[Transformation] = List(
     Custom(_.withColumnRenamed("authoredOn", "authored_on")),
     ToDate("yyyy-MM-dd", "authored_on"),
     Custom { input =>
       val df = input
-          .withColumn("family_identifier", filter(col("identifier"), i=> i("system") === "https://cqgc.qc.ca/family"))
-          .withColumn("family_id", col("family_identifier.value")(0))
-          .drop("family_identifier")
-          .extractIdentifier(List("MR" -> "medical_record_number"))
-          .withColumn("specimens", transform(col("specimen"), c => regexp_replace(c("reference"), "Specimen/", "")))
-          .withColumn("service_request_code", regexp_replace(col("code.coding.code")(0), "\\W+", "_"))
-          .withColumn("service_request_description", col("code.coding.display")(0))
-          .withColumn("patient_id", patient_id)
-          .withColumn("practitioner_id", regexp_replace(col("requester.reference"), "Practitioner/", ""))
-          .withColumn("practitioner_id", lit(null).cast("string"))
-          .withColumn("note", transform(col("note"), c =>
-            struct(
-              c("text").as("text"),
-              to_timestamp(c("time"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz").as("time"),
-              regexp_replace(c("authorReference")("reference"), "Practitioner/", "").as("practitioner_id")
-            )))
-          .withColumn("analysis_service_request_id", regexp_replace(col("basedOn.reference")(0), "ServiceRequest/", ""))
-          .withColumn("clinical_impressions", transform(col("supportingInfo.reference"), si => regexp_replace(si, "ClinicalImpression/", "")))
+        .withFamilyIdentifier
+        .extractIdentifier(List("MR" -> "medical_record_number"))
+        .withColumn("specimens", transform(col("specimen"), c => regexp_replace(c("reference"), "Specimen/", "")))
+        .withColumn("service_request_code", regexp_replace(col("code.coding.code")(0), "\\W+", "_"))
+        .withColumn("service_request_description", col("code.coding.display")(0))
+        .withColumn("patient_id", patient_id)
+        .withColumn("practitioner_id", regexp_replace(col("requester.reference"), "Practitioner/", ""))
+        .withColumn("practitioner_id", lit(null).cast("string"))
+        .withColumn("note", transform(col("note"), c =>
+          struct(
+            c("text").as("text"),
+            to_timestamp(c("time"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz").as("time"),
+            regexp_replace(c("authorReference")("reference"), "Practitioner/", "").as("practitioner_id")
+          )))
+        .withColumn("analysis_service_request_id", regexp_replace(col("basedOn.reference")(0), "ServiceRequest/", ""))
+        .withColumn("clinical_impressions", transform(col("supportingInfo.reference"), si => regexp_replace(si, "ClinicalImpression/", "")))
         .withServiceRequestExtension
         .withColumn("service_request_type",
-          when(array_contains(col("profile"), "http://fhir.cqgc.ferlab.bio/StructureDefinition/cqgc-sequencing-request"), "sequencing")
-            .when(array_contains(col("profile"), "http://fhir.cqgc.ferlab.bio/StructureDefinition/cqgc-analysis-request"), "analysis")
+          when(array_contains(col("profile"), SEQUENCING_REQUEST_PROFILE), "sequencing")
+            .when(array_contains(col("profile"), ANALYSIS_SERVICE_REQUEST_PROFILE), "analysis")
             .otherwise(lit(null).cast("string"))
         )
       df
     },
-      Drop("meta", "code", "subject", "extension", "specimen", "basedOn", "supportingInfo")
+    Drop("meta", "code", "subject", "extension", "specimen", "basedOn", "supportingInfo")
   )
 
+  val familyMappings: List[Transformation] = List(
+    Custom(_.withColumnRenamed("authoredOn", "authored_on")),
+    ToDate("yyyy-MM-dd", "authored_on"),
+    Custom { input =>
+      val analysisServiceRequests = input
+        .where(array_contains(col("profile"), ANALYSIS_SERVICE_REQUEST_PROFILE))
+        .withFamilyIdentifier
+        .withColumn("analysis_service_request_id", col("id"))
+
+      val probands = analysisServiceRequests.withColumn("patient_id", patient_id)
+        .withServiceRequestExtension
+        .select("patient_id", "family_id", "family", "analysis_service_request_id", "authored_on")
+
+      val siblings = analysisServiceRequests
+        .withFamilyExtensions
+        .select(col("family_extensions"), col("family_id"), col("analysis_service_request_id"), col("authored_on"))
+        .withColumn("siblings", aggregate(col("family_extensions"), array().cast("array<string>"), (comb, current) => {
+          val currentExtension = current("extension")
+          val relationship = filter(currentExtension, ext => ext("url") === "parent-relationship")(0)
+          val member = filter(currentExtension, ext => ext("url") === "parent")(0)
+          when(relationship("valueCodeableConcept")("coding")(0)("code").isin("SIS", "BRO", "SIB"), array_union(comb, array(patientReference(member("valueReference")("reference")))))
+            .otherwise(comb)
+        }))
+        .withColumn("patient_id", explode(col("siblings")))
+        .withFamily
+        .drop("family_extensions", "siblings")
+
+      val others = analysisServiceRequests
+        .withFamilyExtensions
+        .select(col("family_extensions"), col("family_id"), col("analysis_service_request_id"), col("authored_on"))
+        .withColumn("others", aggregate(col("family_extensions"), array().cast("array<string>"), (comb, current) => {
+          val currentExtension = current("extension")
+          val relationship = filter(currentExtension, ext => ext("url") === "parent-relationship")(0)
+          val member = filter(currentExtension, ext => ext("url") === "parent")(0)
+          when(not(relationship("valueCodeableConcept")("coding")(0)("code").isin("SIS", "BRO", "SIB")), array_union(comb, array(patientReference(member("valueReference")("reference")))))
+            .otherwise(comb)
+        }))
+        .withColumn("patient_id", explode(col("others")))
+        .drop("family_extensions", "others")
+
+      probands.unionByName(siblings).unionByName(others, allowMissingColumns = true)
+
+    }
+  )
   val specimenMapping: List[Transformation] = List(
     Custom(_
       .withColumn("parent_id", regexp_replace(col("parent.reference")(0), "Specimen/", ""))
@@ -186,6 +231,7 @@ object FhirRawToNormalizedMappings {
     (c.getDataset("raw_practitioner_role"), c.getDataset("normalized_practitioner_role"), defaultTransformations ++ practitionerRoleMappings),
     (c.getDataset("raw_service_request"), c.getDataset("normalized_service_request"), defaultTransformations ++ serviceRequestMappings),
     (c.getDataset("raw_specimen"), c.getDataset("normalized_specimen"), defaultTransformations ++ specimenMapping),
-    (c.getDataset("raw_task"), c.getDataset("normalized_task"), defaultTransformations ++ taskMapping)
+    (c.getDataset("raw_task"), c.getDataset("normalized_task"), defaultTransformations ++ taskMapping),
+    (c.getDataset("raw_service_request"), c.getDataset("normalized_family"), defaultTransformations ++ familyMappings)
   )
 }
