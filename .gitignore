@@ -7,3 +7,5 @@ spark-warehouse
 .bsp
 .DS_Store
 hive
+
+clin-variant-etl.jar
