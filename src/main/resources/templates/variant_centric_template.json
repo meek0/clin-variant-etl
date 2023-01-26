@@ -822,6 +822,16 @@
                   "type": "keyword"
                 }
               }
+            },
+            "gnomad": {
+              "properties": {
+                "pli": {
+                  "type": "float"
+                },
+                "loeuf": {
+                  "type": "float"
+                }
+              }
             }
           }
         },

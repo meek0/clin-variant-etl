@@ -126,7 +126,8 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `orphanet`: List[ORPHANET] = List(ORPHANET()),
                  `hpo`: List[HPO] = List(HPO()),
                  `omim`: List[OMIM] = List(OMIM()),
-                 `spliceai`: Option[SPLICEAI] = Some(SPLICEAI()))
+                 `spliceai`: Option[SPLICEAI] = Some(SPLICEAI()),
+                 `gnomad`: Option[GNOMAD] = Some(GNOMAD()))
 
 case class VARSOME(
                     `variant_id`: Option[String] = Some("10190150730274780002"),
@@ -150,3 +151,6 @@ case class VERDICT(
 
 case class SPLICEAI(`ds`: Double = 0.01,
                     `type`: Seq[String] = Seq("AG"))
+
+case class GNOMAD(`pli`: Float = 0.030354f,
+                  `loeuf`: Float = 1.84f)

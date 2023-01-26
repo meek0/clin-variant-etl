@@ -25,6 +25,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
+  val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
   val gnomad_genomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v2_1_1")
   val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
@@ -44,6 +45,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val normalized_variantsDf: DataFrame = Seq(NormalizedVariants()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
   val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
+  val gnomad_constraintDf: DataFrame = Seq(GnomadConstraintOutput()).toDF()
   val gnomad_genomes_2_1_1Df: DataFrame = Seq(GnomadGenomes211Output()).toDF
   val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes211Output()).toDF
   val gnomad_genomes_3_0Df: DataFrame = Seq(GnomadGenomes30Output()).toDF
@@ -60,6 +62,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     normalized_snv.id -> normalized_occurrencesDf,
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
+    gnomad_constraint.id -> gnomad_constraintDf,
     gnomad_genomes_v2_1_1.id -> gnomad_genomes_2_1_1Df,
     gnomad_exomes_v2_1_1.id -> gnomad_exomes_2_1_1Df,
     gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
@@ -914,14 +917,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     ).toDF()
 
     // Remove spliceai nested field from variants df
-    val variantsWithoutSpliceAi = variants.select($"*", explode_outer($"genes") as "gene")
-      .withColumn("gene", $"gene".dropFields("spliceai"))
-      .groupByLocus()
-      .agg(
-        first(struct(variants.drop("genes")("*"))) as "variant",
-        collect_list("gene") as "genes"
-      )
-      .select("variant.*", "genes")
+    val variantsWithoutSpliceAi = removeNestedField(variants, "spliceai", "genes")
 
     val spliceai = Seq(
       // snv
@@ -945,11 +941,54 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       VariantEnrichedOutput(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
     ).toDF().selectLocus($"genes.spliceai").collect()
 
-    result.show(false)
-    result.printSchema()
-
     result
       .selectLocus($"genes.spliceai")
       .collect() should contain theSameElementsAs expected
+  }
+
+  "joinWithConstraint" should "enrich variants with gnomAD constraint metrics" in {
+    val variants = Seq(
+      VariantEnrichedOutput(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
+      VariantEnrichedOutput(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`symbol` = Some("gene3")))),
+      VariantEnrichedOutput(`chromosome` = "3", `genes_symbol` = List(null), genes = List(null)),
+      VariantEnrichedOutput(`chromosome` = "4", `genes_symbol` = List("gene4"), genes = List(GENES(`symbol` = Some("gene4")))),
+    ).toDF()
+
+    // Remove gnomad nested field from variants df
+    val variantsWithoutConstraint = removeNestedField(variants, "gnomad", "genes")
+
+    val constraint = Seq(
+      GnomadConstraintOutput(`chromosome` = "1", `symbol` = "gene1", `transcript` = "transcriptA", `pLI` = 0.25f, `oe_lof_upper` = 1.86f),
+      GnomadConstraintOutput(`chromosome` = "1", `symbol` = "gene2", `transcript` = "transcriptB", `pLI` = 0.34f, `oe_lof_upper` = 0.54f),
+      GnomadConstraintOutput(`chromosome` = "2", `symbol` = "gene3", `transcript` = "transcriptC", `pLI` = 0.89f, `oe_lof_upper` = 2.5f),
+      GnomadConstraintOutput(`chromosome` = "2", `symbol` = "gene3", `transcript` = "transcriptD", `pLI` = 0.9236f, `oe_lof_upper` = 1.458f),
+    ).toDF()
+
+    val result = new Variants().joinWithConstraint(variantsWithoutConstraint, constraint)
+
+    val expected = Seq(
+      VariantEnrichedOutput(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(
+        GENES(`symbol` = Some("gene1"), `gnomad` = Some(GNOMAD(`pli` = 0.25f, `loeuf` = 1.86f))),
+        GENES(`symbol` = Some("gene2"), `gnomad` = Some(GNOMAD(`pli` = 0.34f, `loeuf` = 0.54f))),
+      )),
+      VariantEnrichedOutput(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`gnomad` = Some(GNOMAD(`pli` = 0.9236f, `loeuf` = 2.5f))))),
+      VariantEnrichedOutput(`chromosome` = "3", `genes_symbol` = List(null), `genes` = List(null)),
+      VariantEnrichedOutput(`chromosome` = "4", `genes_symbol` = List("gene4"), `genes` = List(GENES(`gnomad` = None))),
+    ).toDF().select("chromosome", "genes.gnomad").collect()
+
+    result
+      .select("chromosome", "genes.gnomad")
+      .collect() should contain theSameElementsAs expected
+  }
+
+  def removeNestedField(df: DataFrame, field: String, parent: String): DataFrame = {
+    df.select($"*", explode_outer(col(parent)) as "temp")
+      .withColumn("temp", col("temp").dropFields(field))
+      .groupByLocus()
+      .agg(
+        first(struct(df.drop(parent)("*"))) as "df",
+        collect_list("temp") as parent
+      )
+      .select("df.*", parent)
   }
 }
