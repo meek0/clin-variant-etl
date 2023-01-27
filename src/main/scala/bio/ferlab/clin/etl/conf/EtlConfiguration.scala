@@ -79,6 +79,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_practitioner"        , clin_datalake, "/normalized/fhir/Practitioner"      , DELTA  , OverWrite   , TableConf("clin", "fhir_practitioner")),
       DatasetConf("normalized_practitioner_role"   , clin_datalake, "/normalized/fhir/PractitionerRole"  , DELTA  , OverWrite   , TableConf("clin", "fhir_practitioner_role")),
       DatasetConf("normalized_service_request"     , clin_datalake, "/normalized/fhir/ServiceRequest"    , DELTA  , OverWrite   , TableConf("clin", "fhir_service_request")),
+      DatasetConf("normalized_family"              , clin_datalake, "/normalized/fhir/family"            , DELTA  , OverWrite   , TableConf("clin", "fhir_family")),
       DatasetConf("normalized_specimen"            , clin_datalake, "/normalized/fhir/specimen"          , DELTA  , OverWrite   , TableConf("clin", "fhir_specimen")),
       DatasetConf("normalized_task"                , clin_datalake, "/normalized/fhir/task"              , DELTA  , OverWrite   , TableConf("clin", "fhir_task")),
 

@@ -9,7 +9,7 @@ import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec  with WithTestConfig with WithSparkSession with Matchers {
+class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithTestConfig with WithSparkSession with Matchers {
 
   import spark.implicits._
 
@@ -129,6 +129,39 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec  with WithTestConfig w
       `updated_on` = analysisServiceRequest.`updated_on`, `created_on` = analysisServiceRequest.`created_on`, `note` = analysisServiceRequest.`note`,
       `specimens` = Some(List("2923", "2924")), patient_id = "2919", family = None, `clinical_impressions` = None,
       service_request_type = "sequencing", analysis_service_request_id = Some("2908"), family_id = None)
+
+  }
+
+  "family raw job" should "return data in the expected format" in {
+    val inputDs = conf.getDataset("raw_service_request")
+    val outputDs = conf.getDataset("normalized_family")
+    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._2 == outputDs).get
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_service_request")).json("src/test/resources/raw/landing/fhir/ServiceRequest/service_request_with_siblings.json")
+    val result = job.transformSingle(Map(inputDs.id -> inputDf))
+
+    result.count() shouldBe 7
+
+    val proband = result.where("patient_id='2909'").as[FamilyOutput].head()
+    proband shouldBe FamilyOutput()
+
+    val brother = result.where("patient_id='2923'").as[FamilyOutput].head()
+    brother shouldBe FamilyOutput(patient_id = "2923")
+
+    val sister1 = result.where("patient_id='2921'").as[FamilyOutput].head()
+    sister1 shouldBe FamilyOutput(patient_id = "2921")
+
+    val sister2 = result.where("patient_id='2922'").as[FamilyOutput].head()
+    sister2 shouldBe FamilyOutput(patient_id = "2922")
+
+    val mother = result.where("patient_id='2919'").as[FamilyOutput].head()
+    mother shouldBe FamilyOutput(patient_id = "2919", family = None)
+
+    val father = result.where("patient_id='2920'").as[FamilyOutput].head()
+    father shouldBe FamilyOutput(patient_id = "2920", family = None)
+
+    val probandOnly = result.where("patient_id='3000'").as[FamilyOutput].head()
+    probandOnly shouldBe FamilyOutput(patient_id = "3000", family_id = None, family = None, analysis_service_request_id = "2916")
 
   }
 

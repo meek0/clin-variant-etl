@@ -18,6 +18,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
+  val family: DatasetConf = conf.getDataset("normalized_family")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
@@ -57,8 +58,8 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
       .where(col("service_request_type") === "analysis")
 
     val analysisServiceRequestWithDiseaseStatus = getDiseaseStatus(analysisServiceRequestDf, data(clinical_impression.id), data(observation.id))
-    val familyRelationshipDf = analysisServiceRequestDf.select(
-      col("id") as "analysis_service_request_id", col("patient_id"),
+    val familyRelationshipDf = data(family.id).select(
+      col("analysis_service_request_id"), col("patient_id"), col("family_id"),
       col("family.mother") as "mother_id", col("family.father") as "father_id"
     )
 
@@ -105,8 +106,6 @@ object Occurrences {
       .select(
         col("id") as "analysis_service_request_id",
         col("patient_id") as "patient_id",
-        col("family") as "family",
-        col("family_id") as "family_id",
         col("clinical_impressions") as "clinical_impressions"
       )
 
@@ -139,49 +138,11 @@ object Occurrences {
       .agg(
         first("affected_status") as "affected_status",
         first("affected_status_code") as "affected_status_code",
-        first(analysisServiceRequestsDf("family_id")) as "family_id",
         first("is_proband") as "is_proband"
       )
     analysisServiceRequestWithDiseaseStatus
   }
 
-  def getDistinctGroup(groupsDf: DataFrame): DataFrame = {
-    groupsDf
-      .withColumn("member", explode(col("members")))
-      .select(
-        col("member.affected_status") as "affected_status",
-        col("member.patient_id") as "patient_id",
-        col("version_id")
-      )
-      .dropDuplicates(Seq("patient_id"), col("version_id").desc) //keeps only latest version of the group
-      .drop("version_id")
-  }
 
-  def getFamilyRelationships(patientDf: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
 
-    patientDf
-      .withColumn("fr", explode(col("family_relationship")))
-      .select(
-        $"id" as "patient1",
-        $"fr.patient2" as "patient2",
-        $"fr.patient1_to_patient2_relation" as "patient1_to_patient2_relation"
-      ).filter($"patient1_to_patient2_relation".isin("MTH", "FTH"))
-      .groupBy("patient1")
-      .agg(
-        map_from_entries(
-          collect_list(
-            struct(
-              $"patient1_to_patient2_relation" as "relation",
-              $"patient2" as "patient_id"
-            )
-          )
-        ) as "relations"
-      )
-      .select(
-        $"patient1" as "patient_id",
-        $"relations.MTH" as "mother_id",
-        $"relations.FTH" as "father_id"
-      )
-  }
 }

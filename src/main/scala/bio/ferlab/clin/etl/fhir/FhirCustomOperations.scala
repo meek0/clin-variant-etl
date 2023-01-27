@@ -131,17 +131,30 @@ object FhirCustomOperations {
         }
     }
 
+    def withFamilyIdentifier: DataFrame = {
+      df.withColumn("family_identifier", filter(col("identifier"), i => i("system") === "https://cqgc.qc.ca/family"))
+        .withColumn("family_id", col("family_identifier.value")(0))
+        .drop("family_identifier")
+    }
+
     def withServiceRequestExtension: DataFrame = {
-      df.withColumn("family_extensions", filter(col("extension"), e => e("url") === "http://fhir.cqgc.ferlab.bio/StructureDefinition/family-member"))
-        .withColumn("family", aggregate(col("family_extensions"), struct(lit(null).cast("string").as("mother"), lit(null).cast("string").as("father")), (comb, current) => {
-          val currentExtension = current("extension")
-          val relationship = filter(currentExtension, ext => ext("url") === "parent-relationship")(0)
-          val member = filter(currentExtension, ext => ext("url") === "parent")(0)
-          when(relationship("valueCodeableConcept")("coding")(0)("code") === "MTH", struct(patientReference(member("valueReference")("reference")) as "mother", comb("father") as "father"))
-            .when(relationship("valueCodeableConcept")("coding")(0)("code") === "FTH", struct(comb("mother") as "mother", patientReference(member("valueReference")("reference")) as "father"))
-            .otherwise(comb)
-        }))
+      df.withFamilyExtensions
+        .withFamily
         .drop("family_extensions")
+    }
+
+    def withFamilyExtensions: DataFrame = {
+      df.withColumn("family_extensions", filter(col("extension"), e => e("url") === "http://fhir.cqgc.ferlab.bio/StructureDefinition/family-member"))
+    }
+    def withFamily: DataFrame = {
+      df.withColumn("family", aggregate(col("family_extensions"), struct(lit(null).cast("string").as("mother"), lit(null).cast("string").as("father")), (comb, current) => {
+        val currentExtension = current("extension")
+        val relationship = filter(currentExtension, ext => ext("url") === "parent-relationship")(0)
+        val member = filter(currentExtension, ext => ext("url") === "parent")(0)
+        when(relationship("valueCodeableConcept")("coding")(0)("code") === "MTH", struct(patientReference(member("valueReference")("reference")) as "mother", comb("father") as "father"))
+          .when(relationship("valueCodeableConcept")("coding")(0)("code") === "FTH", struct(comb("mother") as "mother", patientReference(member("valueReference")("reference")) as "father"))
+          .otherwise(comb)
+      }))
     }
 
     def withObservationExtension: DataFrame = {
@@ -203,5 +216,6 @@ object FhirCustomOperations {
         .withColumn("profile", col("meta.profile"))
     }
   }
+
 
 }
