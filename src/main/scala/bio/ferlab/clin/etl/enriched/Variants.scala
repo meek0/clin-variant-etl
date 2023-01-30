@@ -20,6 +20,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
+  val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
   val gnomad_genomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v2_1_1")
   val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
@@ -38,6 +39,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       normalized_snv.id -> normalized_snv.read,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
+      gnomad_constraint.id -> gnomad_constraint.read,
       gnomad_genomes_v2_1_1.id -> gnomad_genomes_v2_1_1.read,
       gnomad_exomes_v2_1_1.id -> gnomad_exomes_v2_1_1.read,
       gnomad_genomes_3_0.id -> gnomad_genomes_3_0.read,
@@ -83,7 +85,8 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
-    val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
+    val joinConstraint = joinWithConstraint(joinGenes, data(gnomad_constraint.id))
+    val joinPanels = joinWithPanels(joinConstraint, data(normalized_panels.id))
     val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
     val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai.id))
 
@@ -264,6 +267,33 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
         flatten(collect_set(genes("omim.omim_id"))) as "omim"
       )
       .select("variant.*", "genes", "omim")
+  }
+
+  def joinWithConstraint(variants: DataFrame, constraint: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
+    val joinCols = Seq("chromosome", "symbol")
+
+    val gnomadStruct = constraint
+      .groupBy("chromosome", "symbol")
+      .agg(
+        max("pLI") as "pli",
+        max("oe_lof_upper") as "loeuf"
+      )
+      .withColumn("gnomad", struct("pli", "loeuf"))
+      .select("gnomad", joinCols: _*)
+
+    variants
+      .select($"*", explode_outer($"genes") as "gene", $"gene.symbol" as "symbol") // explode_outer since genes can be null
+      .join(broadcast(gnomadStruct), joinCols, "left")
+      .drop("symbol") // only used for joining
+      .withColumn("gene", struct($"gene.*", $"gnomad")) // add gnomad struct as nested field of gene struct
+      .groupByLocus()
+      .agg(
+        first(struct(variants.drop("genes")("*"))) as "variant",
+        collect_list("gene") as "genes" // re-create genes list for each locus, now containing gnomad struct
+      )
+      .select("variant.*", "genes")
   }
 
   def joinWithVarsome(variants: DataFrame, varsome: DataFrame)(implicit spark: SparkSession): DataFrame = {
