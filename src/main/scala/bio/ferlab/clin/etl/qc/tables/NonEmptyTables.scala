@@ -22,6 +22,7 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(fhir_service_request, "fhir_service_request"),
       shouldNotBeEmpty(fhir_specimen, "fhir_specimen"),
       shouldNotBeEmpty(fhir_task, "fhir_task"),
+      shouldNotBeEmpty(fhir_family, "fhir_family"),
       shouldNotBeEmpty(normalized_snv, "normalized_snv"),
       shouldNotBeEmpty(normalized_cnv, "normalized_cnv"),
       shouldNotBeEmpty(normalized_variants, "normalized_variants"),
@@ -36,7 +37,6 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(cnv_centric, "cnv_centric"),
       shouldNotBeEmpty(variant_suggestions, "variant_suggestions"),
       shouldNotBeEmpty(thousand_genomes, "1000_genomes"),
-      shouldNotBeEmpty(cancer_hotspots, "cancer_hotspots"),
       shouldNotBeEmpty(clinvar, "clinvar"),
       shouldNotBeEmpty(cosmic_gene_set, "cosmic_gene_set"),
       shouldNotBeEmpty(dbsnp, "dbsnp"),
@@ -49,7 +49,9 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(topmed_bravo, "topmed_bravo"),
       shouldNotBeEmpty(refseq_annotation, "refseq_annotation"),
       shouldNotBeEmpty(genes, "genes"),
-      shouldNotBeEmpty(dbnsfp_original, "dbnsfp_original")
+      shouldNotBeEmpty(dbnsfp_original, "dbnsfp_original"),
+      shouldNotBeEmpty(spliceai_indel, "spliceai_indel"),
+      shouldNotBeEmpty(spliceai_snv, "spliceai_snv")
     )
   }
 }

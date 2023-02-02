@@ -38,6 +38,7 @@ trait TestingApp extends App {
   lazy val fhir_service_request: DataFrame = spark.table("fhir_service_request")
   lazy val fhir_specimen: DataFrame = spark.table("fhir_specimen")
   lazy val fhir_task: DataFrame = spark.table("fhir_task")
+  lazy val fhir_family: DataFrame = spark.table("fhir_family")
   lazy val normalized_cnv: DataFrame = spark.table("normalized_cnv")
   lazy val normalized_consequences: DataFrame = spark.table("normalized_consequences")
   lazy val normalized_panels: DataFrame = spark.table("normalized_panels")
@@ -46,7 +47,6 @@ trait TestingApp extends App {
   lazy val gene_suggestions: DataFrame = spark.table(s"gene_suggestions_$release_id")
   lazy val variant_suggestions: DataFrame = spark.table(s"variant_suggestions_$release_id")
   lazy val thousand_genomes: DataFrame = spark.table("1000_genomes")
-  lazy val cancer_hotspots: DataFrame = spark.table("cancer_hotspots")
   lazy val clinvar: DataFrame = spark.table("clinvar")
   lazy val cosmic_gene_set: DataFrame = spark.table("cosmic_gene_set")
   lazy val dbsnp: DataFrame = spark.table("dbsnp")
@@ -60,6 +60,8 @@ trait TestingApp extends App {
   lazy val refseq_annotation: DataFrame = spark.table("refseq_annotation")
   lazy val genes: DataFrame = spark.table("genes")
   lazy val dbnsfp_original: DataFrame = spark.table("dbnsfp_original")
+  lazy val spliceai_indel: DataFrame = spark.table("spliceai_indel")
+  lazy val spliceai_snv: DataFrame = spark.table("spliceai_snv")
 
   def run(f: SparkSession => Unit): Unit = {
     spark.sql(s"use $database")
