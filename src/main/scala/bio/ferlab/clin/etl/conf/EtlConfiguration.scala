@@ -59,7 +59,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_service_request"            , clin_datalake, "/raw/landing/fhir/ServiceRequest"                       , JSON   , OverWrite),
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
-      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels_20220606.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
 
       //old version of gnomad, should be removed
       //DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
