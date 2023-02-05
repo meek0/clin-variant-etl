@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.qc
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 trait TestingApp extends App {
   lazy val database = args(0)
@@ -95,6 +95,38 @@ object TestingApp {
     val errorColumns: Seq[String] = columns.filter(colName => df.select(col(colName)).na.drop.distinct().count() == 1)
     if (errorColumns.nonEmpty) Some(s"Column(s) ${errorColumns.mkString(", ")} should not contain same value") else None
   }
+
+  def TestDfContainsAllVarFromBatch(df:org.apache.spark.sql.DataFrame, b:String, adAltFilter:Number): Option[String] = {
+    var bucket = "cqgc-prod-app-files-import"
+    
+    database match {
+      case "clin_qa"      => bucket = "cqgc-qa-app-files-import"
+      case "clin_staging" => bucket = "cqgc-staging-app-files-import"
+      case _              => bucket = "cqgc-prod-app-files-import"
+    }
+
+    val df_VCF = spark.read.format("vcf").load(s"s3a://$bucket/$b/$b.hard-filtered.formatted.norm.VEP.vcf.gz")
+    .filter(!col("contigName").contains("_") && !col("contigName").contains("chrM"))
+    .withColumn("start", $"start" + 1)
+    .select($"contigName" as "chromosome", $"start", $"referenceAllele" as "reference", explode($"alternateAlleles") as "alternate", $"genotypes" as "donors")
+    .select($"chromosome", $"start", $"reference", $"alternate", explode($"donors"))
+    .select("*", "col.*").drop("col")
+    .select($"chromosome", $"start", $"reference", $"alternate", $"sampleId" as "aliquot_id", $"alleleDepths"(1) as "ad_alt", $"calls")
+    .filter(array_contains(col("calls"), 1) && $"ad_alt" >= adAltFilter && $"alternate" =!= "*")
+
+    val df_ToTest = df
+    .filter($"batch_id" === s"$b")
+    .select($"chromosome", $"start", $"reference", $"alternate")
+    .withColumn("chromosome", concat(lit("chr"), col("chromosome")))
+
+    shouldBeEmpty(df_VCF.join(df_ToTest, Seq("chromosome", "start", "reference", "alternate"), "left_anti"))
+  }
+
+  def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
+  val includeFilter: Column = col("ad_alt") >= 3 && col("alternate") =!= "*"
+  val frequencyFilter: Column = array_contains(col("filters"), "PASS") && includeFilter && col("gq") >= 20
+  val ac: Column = sum(when(frequencyFilter, array_sum(filter(col("calls"), c => c === 1))).otherwise(0)) as "expected_ac"
+  val pc: Column = sum(when(array_contains(col("calls"), 1) and frequencyFilter, 1).otherwise(0)) as "expected_pc"
 
   def combineErrors(errors: Option[String]*): Option[String] = {
     val filteredErrors = errors.flatten
