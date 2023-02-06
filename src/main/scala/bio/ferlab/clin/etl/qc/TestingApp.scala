@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.qc
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import spark.implicits._
 
 trait TestingApp extends App {
   lazy val database = args(0)
@@ -96,13 +97,11 @@ object TestingApp {
     if (errorColumns.nonEmpty) Some(s"Column(s) ${errorColumns.mkString(", ")} should not contain same value") else None
   }
 
-  def TestDfContainsAllVarFromBatch(df:org.apache.spark.sql.DataFrame, b:String, adAltFilter:Number): Option[String] = {
-    var bucket = "cqgc-prod-app-files-import"
-    
-    database match {
-      case "clin_qa"      => bucket = "cqgc-qa-app-files-import"
-      case "clin_staging" => bucket = "cqgc-staging-app-files-import"
-      case _              => bucket = "cqgc-prod-app-files-import"
+  def TestDfContainsAllVarFromBatch(df:org.apache.spark.sql.DataFrame, b:String, adAltFilter:Number, database: String)(implicit spark: SparkSession): Option[String] = {
+    var bucket = database match {
+      case "clin_qa"      => "cqgc-qa-app-files-import"
+      case "clin_staging" => "cqgc-staging-app-files-import"
+      case _              => "cqgc-prod-app-files-import"
     }
 
     val df_VCF = spark.read.format("vcf").load(s"s3a://$bucket/$b/$b.hard-filtered.formatted.norm.VEP.vcf.gz")

@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.qc.frequency
 
+import org.apache.spark.sql.functions.lit
 import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.TestingApp._
 

@@ -7,7 +7,7 @@ object ContainedInSNV extends TestingApp {
   run { spark =>
     import spark.implicits._
 
-    val listBatchId = normalized_snv.select("batch_id").dropDuplicates.map(f=>f.getString(0)).collect.toList
-    listBatchId.foreach(b => handleErrors(TestDfContainsAllVarFromBatch(normalized_snv, b, 0)))
+    val listBatchId = normalized_snv.select("batch_id").dropDuplicates.as[String].collect.toList
+    listBatchId.foreach(b => handleErrors(TestDfContainsAllVarFromBatch(normalized_variants, b, 0, database)(spark)))
   }
 }

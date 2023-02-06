@@ -7,7 +7,7 @@ object ContainedInNorVariants extends TestingApp {
   run { spark =>
     import spark.implicits._
 
-    val listBatchId = normalized_variants.select("batch_id").dropDuplicates.map(f=>f.getString(0)).collect.toList
-    listBatchId.foreach(b => handleErrors(TestDfContainsAllVarFromBatch(normalized_variants, b, 3)))
+    val listBatchId = normalized_variants.select("batch_id").dropDuplicates.as[String].collect.toList
+    listBatchId.foreach(b => handleErrors(TestDfContainsAllVarFromBatch(normalized_variants, b, 3, database)(spark)))
   }
 }
