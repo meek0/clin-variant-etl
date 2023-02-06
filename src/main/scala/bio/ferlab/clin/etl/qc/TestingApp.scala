@@ -3,7 +3,6 @@ package bio.ferlab.clin.etl.qc
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import spark.implicits._
 
 trait TestingApp extends App {
   lazy val database = args(0)
@@ -98,7 +97,9 @@ object TestingApp {
   }
 
   def TestDfContainsAllVarFromBatch(df:org.apache.spark.sql.DataFrame, b:String, adAltFilter:Number, database: String)(implicit spark: SparkSession): Option[String] = {
-    var bucket = database match {
+    import spark.implicits._
+    
+    val bucket = database match {
       case "clin_qa"      => "cqgc-qa-app-files-import"
       case "clin_staging" => "cqgc-staging-app-files-import"
       case _              => "cqgc-prod-app-files-import"
