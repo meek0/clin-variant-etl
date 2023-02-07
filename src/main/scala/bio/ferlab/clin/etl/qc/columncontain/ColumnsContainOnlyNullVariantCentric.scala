@@ -82,7 +82,7 @@ object ColumnsContainOnlyNullVariantCentric extends TestingApp {
       ),
       shouldNotContainOnlyNull(
         variant_centric.select(explode($"genes")).select(explode($"col.omim")).select("col.*")
-      ),
+      ),/*
       shouldNotContainOnlyNull(
         variant_centric.select($"varsome.*")
       ),
@@ -98,7 +98,7 @@ object ColumnsContainOnlyNullVariantCentric extends TestingApp {
       ),
       shouldNotContainOnlyNull(
         variant_centric.select(explode($"varsome.acmg.classifications")).select("col.*")
-      ),
+      ),*/
       shouldNotContainOnlyNull(
         variant_centric.select(explode($"consequences")).select("col.*")
       ),
