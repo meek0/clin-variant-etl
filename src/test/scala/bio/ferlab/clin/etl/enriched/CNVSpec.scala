@@ -6,6 +6,7 @@ import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.explode
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -31,6 +32,16 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     normalized_panels.id -> panels,
   )
 
+  val refSeq_no_genes = Seq(
+    NormalizedRefSeq(`chromosome` = "42"),
+  ).toDF()
+
+  val data_no_genes_chr_2: Map[String, DataFrame] = Map(
+    normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
+    normalized_refseq_annotation.id -> refSeq_no_genes,
+    normalized_panels.id -> panels,
+  )
+
   "Enriched CNV job" should "enriched data" in {
 
     val results = new CNV().transformSingle(data).as[CnvEnrichedOutput]
@@ -42,6 +53,15 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
     results.collect() should contain theSameElementsAs Seq(
       CnvEnrichedOutput(),
+    )
+  }
+
+  "Enriched CNV job" should "have number_genes = 0 if no genes" in {
+
+    val results = new CNV().transformSingle(data_no_genes_chr_2).as[CnvEnrichedOutput]
+
+    results.collect() should contain theSameElementsAs Seq(
+      CnvEnrichedOutput(`genes` = List(), `number_genes` = 0),
     )
   }
 
