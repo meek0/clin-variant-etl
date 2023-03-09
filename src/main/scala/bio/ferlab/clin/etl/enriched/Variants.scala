@@ -5,7 +5,7 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus,locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import bio.ferlab.datalake.spark3.utils.FixedRepartition
 import org.apache.spark.sql.functions._
@@ -173,7 +173,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val byAnalysis = variants
       .withColumn("frequency_by_analysis", explode_outer($"frequencies_by_analysis"))
       .join(pn_an_by_analysis, col("frequency_by_analysis.analysis_code") === col("analysis_code"))
-      .groupBy((locus :+ $"frequency_by_analysis.analysis_code"): _*)
+      .groupBy(locus :+ $"frequency_by_analysis.analysis_code": _*)
       .agg(
         first($"frequency_by_analysis.analysis_display_name", ignoreNulls = true) as "analysis_display_name",
         first($"pn_an_total") as "pn_an_total",

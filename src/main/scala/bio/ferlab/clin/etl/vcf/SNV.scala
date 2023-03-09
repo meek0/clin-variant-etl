@@ -2,13 +2,14 @@ package bio.ferlab.clin.etl.vcf
 
 import bio.ferlab.clin.etl.vcf.SNV._
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.ParentalOrigin.{FTH, MTH}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, _}
 import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession, functions}
 
 import java.time.LocalDateTime
 
@@ -16,6 +17,12 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_snv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
+
+  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+    super.extract(lastRunDateTime, currentRunDateTime) + (rare_variants.id -> rare_variants.read)
+  }
 
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minDateTime,
@@ -27,8 +34,8 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(
         Seq(
-          col("gq"), col("dp"),  col("qd"), col("filters"),
-          col("ad_ref"),col("ad_alt"), col("ad_total"), col("ad_ratio"),
+          col("gq"), col("dp"), col("qd"), col("filters"),
+          col("ad_ref"), col("ad_alt"), col("ad_total"), col("ad_ratio"),
           col("calls"), col("affected_status")))
       )
       .withColumn("mother_calls", motherCalls)
@@ -60,17 +67,10 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .filter(col("has_alt"))
       .persist()
 
-    val het = occurrences.filter(col("zygosity") === "HET")
-    val hc: DataFrame = getCompoundHet(het)
-    val possiblyHC: DataFrame = getPossiblyCompoundHet(het)
-    occurrences
-      .drop("symbols")
-      .join(hc, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
-      .join(possiblyHC, Seq("chromosome", "start", "reference", "alternate", "patient_id"), "left")
-      .withColumn("is_hc", coalesce(col("is_hc"), lit(false)))
-      .withColumn("hc_complement", coalesce(col("hc_complement"), array()))
-      .withColumn("is_possibly_hc", coalesce(col("is_possibly_hc"), lit(false)))
-      .withColumn("possibly_hc_complement", coalesce(col("possibly_hc_complement"), array()))
+    val hcFilter = col("is_rare") and col("ad_alt") > 2 and col("gq") >= 20
+    addRareVariantColumn(occurrences, data(rare_variants.id))
+        .withCompoundHeterozygous(additionalFilter = Some(hcFilter))
+        .drop("symbols", "is_rare")
 
   }
 
@@ -122,39 +122,13 @@ object SNV {
       .drop("annotation")
   }
 
-
-  def getPossiblyCompoundHet(het: DataFrame): DataFrame = {
-    val hcWindow = Window.partitionBy("patient_id", "chromosome", "symbol").orderBy("start").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
-    val possiblyHC = het
-      .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), explode(col("symbols")) as "symbol")
-      .withColumn("possibly_hc_count", count(lit(1)).over(hcWindow))
-      .filter(col("possibly_hc_count") > 1)
-      .withColumn("possibly_hc_complement", struct(col("symbol") as "symbol", col("possibly_hc_count") as "count"))
-      .groupBy(col("patient_id") :: locus: _*)
-      .agg(collect_set("possibly_hc_complement") as "possibly_hc_complement")
-      .withColumn("is_possibly_hc", lit(true))
-    possiblyHC
+  def addRareVariantColumn(occurrences: DataFrame, rareVariants: DataFrame): DataFrame = {
+    val rareVariantsCleanup = rareVariants.select(locus: _*).withColumn("is_rare", lit(true))
+    occurrences
+      .joinAndMerge(rareVariantsCleanup, "rare_variant", "left")
+      .withColumn("is_rare", coalesce(col("rare_variant.is_rare"), lit(false)))
+      .drop("rare_variant")
   }
 
-  def getCompoundHet(het: DataFrame): DataFrame = {
-    val withParentalOrigin = het.filter(col("parental_origin").isin(FTH, MTH))
-
-    val hcWindow = Window.partitionBy("patient_id", "chromosome", "symbol", "parental_origin").orderBy("start")
-    val hc = withParentalOrigin
-      .select(col("patient_id"), col("chromosome"), col("start"), col("reference"), col("alternate"), col("symbols"), col("parental_origin"))
-      .withColumn("locus", concat_ws("-", locus: _*))
-      .withColumn("symbol", explode(col("symbols")))
-      .withColumn("coords", collect_set(col("locus")).over(hcWindow))
-      .withColumn("merged_coords", last("coords", ignoreNulls = true).over(hcWindow.rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
-      .withColumn("struct_coords", struct(col("parental_origin"), col("merged_coords").alias("coords")))
-      .withColumn("all_coords", collect_set("struct_coords").over(Window.partitionBy("patient_id", "chromosome", "symbol").rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)))
-      .withColumn("complement_coords", functions.filter(col("all_coords"), x => x.getItem("parental_origin") =!= col("parental_origin"))(0))
-      .withColumn("is_hc", col("complement_coords").isNotNull)
-      .filter(col("is_hc"))
-      .withColumn("hc_complement", struct(col("symbol") as "symbol", col("complement_coords.coords") as "locus"))
-      .groupBy(col("patient_id") :: locus: _*)
-      .agg(first("is_hc") as "is_hc", collect_set("hc_complement") as "hc_complement")
-    hc
-  }
 
 }
