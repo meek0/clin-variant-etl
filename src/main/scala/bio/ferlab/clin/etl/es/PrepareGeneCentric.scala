@@ -3,12 +3,10 @@ package bio.ferlab.clin.etl.es
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.locusColumnNames
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
-import scala.collection.Seq
 
 class PrepareGeneCentric(releaseId: String)
                         (override implicit val conf: Configuration) extends PrepareCentric(releaseId) {
@@ -48,7 +46,7 @@ class PrepareGeneCentric(releaseId: String)
       )
 
     val cnvs = data(enriched_cnv.id) // locus doest exist in CNV, build it
-      .withColumn("locus", concat(locus(0), lit("-"), locus(1), lit("-"), locus(2), lit("-"), locus(3)))
+      .withColumn("locus", concat(locus.head, lit("-"), locus(1), lit("-"), locus(2), lit("-"), locus(3)))
       .select(explode($"genes") as "genes", $"patient_id", $"locus")
       .select("patient_id", "genes.symbol", "locus")
       .dropDuplicates
@@ -63,7 +61,7 @@ class PrepareGeneCentric(releaseId: String)
         )) as "number_of_cnvs_per_patient"
       )
 
-    val all = variants.join(cnvs, Seq("symbol"), "full");
+    val all = variants.join(cnvs, Seq("symbol"), "full")
 
     data(enriched_genes.id)
       .join(all, Seq("symbol"), "full")

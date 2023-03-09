@@ -31,7 +31,6 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
       patient.id -> patient.read,
       task.id -> task.read,
       service_request.id -> service_request.read,
-      family.id -> family.read,
       clinical_impression.id -> clinical_impression.read,
       observation.id -> observation.read,
       specimen.id -> specimen.read

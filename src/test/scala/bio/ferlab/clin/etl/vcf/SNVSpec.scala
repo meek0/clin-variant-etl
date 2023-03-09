@@ -22,6 +22,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val family: DatasetConf = conf.getDataset("normalized_family")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
+  val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   val patientDf: DataFrame = Seq(
     PatientOutput(
@@ -125,7 +126,8 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     task.id -> taskDf,
     service_request.id -> serviceRequestDf,
     specimen.id -> specimenDf,
-    family.id -> familyDf
+    family.id -> familyDf,
+    rare_variants.id -> Seq(RareVariant()).toDF()
   )
 
   "occurrences transform" should "transform data in expected format" in {
@@ -172,74 +174,21 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNV", result, "src/test/scala/")
   }
 
-  "getCompoundHet" should "return compound het for one patient and one gene" in {
-
-    val input = Seq(
-      CompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
-      CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1"), "father")
+  "addRareVariantColumn" should "add a column that indicate if variant is rare or not" in {
+    val occurrences = Seq(
+      RareVariant(chromosome="1",start = 1000, reference = "A", alternate = "T"),
+      RareVariant(chromosome="1",start = 2000, reference = "C", alternate = "G")
     ).toDF()
 
-    SNV.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
-      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1030-C-G")))),
-      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T"))))
-    )
-  }
-  it should "return compound het for one patient and multiple genes" in {
-
-    val input = Seq(
-      CompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
-      CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1", "BRAF2"), "father"),
-      CompoundHetInput("PA001", "1", 1050, "C", "G", Seq("BRAF1", "BRAF2"), null),
-      CompoundHetInput("PA001", "1", 1070, "C", "G", Seq("BRAF2"), "father")
+    val rare = Seq(
+      RareVariant(chromosome = "1", start = 1000, reference = "A", alternate = "T")
     ).toDF()
 
-    SNV.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
-      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF2", Seq("1-1030-C-G", "1-1070-C-G")), HCComplement("BRAF1", Seq("1-1030-C-G")))),
-      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T")), HCComplement("BRAF2", Seq("1-1000-A-T")))),
-      CompoundHetOutput("PA001", "1", 1070, "C", "G", is_hc = true, Seq(HCComplement("BRAF2", Seq("1-1000-A-T"))))
-    )
-
-  }
-  it should "return compound het for two patients and one gene" in {
-
-    val input = Seq(
-      CompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
-      CompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1"), "father"),
-      CompoundHetInput("PA001", "1", 1050, "C", "G", Seq("BRAF1"), null),
-      CompoundHetInput("PA002", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2"), "mother"),
-      CompoundHetInput("PA002", "1", 1050, "C", "G", Seq("BRAF1"), "father"),
-    ).toDF()
-
-    SNV.getCompoundHet(input).as[CompoundHetOutput].collect() should contain theSameElementsAs Seq(
-      CompoundHetOutput("PA001", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1030-C-G")))),
-      CompoundHetOutput("PA001", "1", 1030, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T")))),
-      CompoundHetOutput("PA002", "1", 1000, "A", "T", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1050-C-G")))),
-      CompoundHetOutput("PA002", "1", 1050, "C", "G", is_hc = true, Seq(HCComplement("BRAF1", Seq("1-1000-A-T"))))
-    )
-
-  }
-
-  "getPossiblyCompoundHet" should "return possibly compound het for many patients" in {
-    val input = Seq(
-      PossiblyCompoundHetInput("PA001", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2")),
-      PossiblyCompoundHetInput("PA001", "1", 1030, "C", "G", Seq("BRAF1", "BRAF2")),
-      PossiblyCompoundHetInput("PA001", "1", 1070, "C", "G", Seq("BRAF2")),
-      PossiblyCompoundHetInput("PA001", "1", 1090, "C", "G", Seq("BRAF3")),
-      PossiblyCompoundHetInput("PA002", "1", 1000, "A", "T", Seq("BRAF1", "BRAF2")),
-      PossiblyCompoundHetInput("PA002", "1", 1030, "C", "G", Seq("BRAF1"))
-    ).toDF()
-
-    val result = SNV.getPossiblyCompoundHet(input).as[PossiblyCompoundHetOutput]
+    val result = SNV.addRareVariantColumn(occurrences, rare).as[RareVariantOutput]
     result.collect() should contain theSameElementsAs Seq(
-      PossiblyCompoundHetOutput("PA001", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2), PossiblyHCComplement("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA001", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2), PossiblyHCComplement("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA001", "1", 1070, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF2", 3))),
-      PossiblyCompoundHetOutput("PA002", "1", 1000, "A", "T", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2))),
-      PossiblyCompoundHetOutput("PA002", "1", 1030, "C", "G", is_possibly_hc = true, Seq(PossiblyHCComplement("BRAF1", 2))),
+      RareVariantOutput(chromosome = "1", start = 1000, reference = "A", alternate = "T", is_rare = true),
+      RareVariantOutput(chromosome = "1", start = 2000, reference = "C", alternate = "G")
     )
-
-
   }
-
 
 }
