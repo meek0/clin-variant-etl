@@ -123,11 +123,9 @@ object SNV {
   }
 
   def addRareVariantColumn(occurrences: DataFrame, rareVariants: DataFrame): DataFrame = {
-    val rareVariantsCleanup = rareVariants.select(locus: _*).withColumn("is_rare", lit(true))
     occurrences
-      .joinAndMerge(rareVariantsCleanup, "rare_variant", "left")
-      .withColumn("is_rare", coalesce(col("rare_variant.is_rare"), lit(false)))
-      .drop("rare_variant")
+      .joinByLocus(rareVariants, "left")
+      .withColumn("is_rare", coalesce(col("is_rare"), lit(true))) // if a variant is not found into table rare_variant then it's a rare variant
   }
 
 

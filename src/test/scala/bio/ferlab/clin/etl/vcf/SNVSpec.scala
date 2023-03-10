@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.vcf
 
-import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.{RareVariant, _}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import org.apache.spark.sql.DataFrame
@@ -98,9 +98,9 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ServiceRequestOutput(service_request_type = "sequencing", `id` = "SRS0003", `patient_id` = "PA0003", analysis_service_request_id = Some("SRA0001"), `service_request_description` = Some("Maladies musculaires (Panel global)"))
   ).toDF()
   val familyDf: DataFrame = Seq(
-    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id="PA0001", family = Some(FAMILY(mother = Some("PA0003"), father = Some("PA0002"))), family_id = Some("FM00001")),
-    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id="PA0002", family = None, family_id = Some("FM00001")),
-    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id="PA0003", family = None, family_id = Some("FM00001"))
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id = "PA0001", family = Some(FAMILY(mother = Some("PA0003"), father = Some("PA0002"))), family_id = Some("FM00001")),
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id = "PA0002", family = None, family_id = Some("FM00001")),
+    FamilyOutput(analysis_service_request_id = "SRA0001", patient_id = "PA0003", family = None, family_id = Some("FM00001"))
 
   ).toDF()
 
@@ -176,18 +176,21 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   "addRareVariantColumn" should "add a column that indicate if variant is rare or not" in {
     val occurrences = Seq(
-      RareVariant(chromosome="1",start = 1000, reference = "A", alternate = "T"),
-      RareVariant(chromosome="1",start = 2000, reference = "C", alternate = "G")
+      RareVariantOccurence(chromosome = "1", start = 1000, reference = "A", alternate = "T"),
+      RareVariantOccurence(chromosome = "1", start = 2000, reference = "C", alternate = "G"),
+      RareVariantOccurence(chromosome = "1", start = 3000, reference = "C", alternate = "G")
     ).toDF()
 
     val rare = Seq(
-      RareVariant(chromosome = "1", start = 1000, reference = "A", alternate = "T")
+      RareVariant(chromosome = "1", start = 1000, reference = "A", alternate = "T", is_rare = true),
+      RareVariant(chromosome = "1", start = 2000, reference = "C", alternate = "G", is_rare = false)
     ).toDF()
 
     val result = SNV.addRareVariantColumn(occurrences, rare).as[RareVariantOutput]
     result.collect() should contain theSameElementsAs Seq(
       RareVariantOutput(chromosome = "1", start = 1000, reference = "A", alternate = "T", is_rare = true),
-      RareVariantOutput(chromosome = "1", start = 2000, reference = "C", alternate = "G")
+      RareVariantOutput(chromosome = "1", start = 2000, reference = "C", alternate = "G", is_rare = false),
+      RareVariantOutput(chromosome = "1", start = 3000, reference = "C", alternate = "G", is_rare = true)
     )
   }
 
