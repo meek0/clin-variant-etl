@@ -35,7 +35,7 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
       .repartition(100)
 
     val consequences = data(enriched_consequences.id)
-      .drop("normalized_consequences_oid", "consequences_oid", "created_on", "updated_on", "pick", "original_canonical", "consequence")
+      .drop("normalized_consequences_oid", "consequences_oid", "created_on", "updated_on", "original_canonical", "consequence")
       .withColumn("symbol_id_1", col("symbol"))
       .as("consequences")
       .repartition(100)

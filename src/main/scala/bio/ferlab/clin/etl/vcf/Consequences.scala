@@ -66,7 +66,6 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
         protein_position,
         amino_acids,
         codons,
-        pick,
         original_canonical,
         array_distinct(split(col("annotation.RefSeq"), "&")) as "refseq_mrna_id"
       )

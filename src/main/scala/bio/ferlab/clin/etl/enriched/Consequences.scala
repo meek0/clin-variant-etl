@@ -2,13 +2,12 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
-import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
-import org.apache.spark.sql.functions.{coalesce, col, lit, struct}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -21,6 +20,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
   val normalized_consequences: DatasetConf = conf.getDataset("normalized_consequences")
   val dbnsfp_original: DatasetConf = conf.getDataset("enriched_dbnsfp")
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
+  val enriched_genes: DatasetConf = conf.getDataset("enriched_genes")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -28,13 +28,14 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
       normalized_consequences.id -> normalized_consequences.read
         .where(col("updated_on") >= Timestamp.valueOf(lastRunDateTime)),
       dbnsfp_original.id -> dbnsfp_original.read,
-      normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read
+      normalized_ensembl_mapping.id -> normalized_ensembl_mapping.read,
+      enriched_genes.id -> enriched_genes.read
     )
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                               lastRunDateTime: LocalDateTime = minDateTime,
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val consequences = data(normalized_consequences.id)
 
@@ -66,6 +67,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
       .withColumn("mane_select", coalesce(col("mane_select"), lit(false)))
       .withColumn("canonical", coalesce(col("is_canonical"), lit(false)))
       .drop("is_canonical")
+      .withPickedCsqPerLocus(data(enriched_genes.id))
   }
 
   override def publish()(implicit spark: SparkSession): Unit = {
@@ -101,5 +103,15 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
       .select(csq("*"), dbnsfpRenamed("predictions"), dbnsfpRenamed("conservations"))
       .withColumn(mainDestination.oid, col("created_on"))
 
+  }
+}
+
+object Consequences {
+  implicit class DataFrameOps(df: DataFrame) {
+    def pickRandomCsqPerVariant: DataFrame = {
+      df
+        .groupByLocus()
+        .agg(first("ensembl_transcript_id") as "ensembl_transcript_id")
+    }
   }
 }
