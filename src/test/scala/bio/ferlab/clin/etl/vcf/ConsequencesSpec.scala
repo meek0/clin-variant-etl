@@ -60,9 +60,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     val resultDf = results(job1.mainDestination.id)
     val result = resultDf.as[NormalizedConsequences].collect()
 
-    result.length shouldBe 3
-
-    result should contain allElementsOf Seq(
+    result should contain theSameElementsAs Seq(
       NormalizedConsequences(
         `ensembl_feature_id`= "bar",
         `ensembl_transcript_id`= "bar",
