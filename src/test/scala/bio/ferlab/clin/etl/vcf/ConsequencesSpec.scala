@@ -27,6 +27,16 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     raw_variant_calling.id -> Seq(VCF_SNV_Input()).toDF()
   )
 
+  val data_with_duplicates = Map(
+    raw_variant_calling.id -> Seq(
+      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "bar"))),  // not duplicated
+      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "foo"))),  // duplicated with bellow
+      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "foo"))),
+      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = null))), // duplicated with bellow
+      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = null))),
+    ).toDF()
+  )
+
   override def beforeAll(): Unit = {
     HadoopFileSystem.remove(job1.mainDestination.location)
   }
@@ -42,6 +52,34 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
         `created_on` = result.`created_on`,
         `updated_on` = result.`updated_on`,
         `normalized_consequences_oid` = result.`normalized_consequences_oid`)
+  }
+
+
+  "consequences job" should "remove duplicates" in {
+    val results = job1.transform(data_with_duplicates)
+    val resultDf = results(job1.mainDestination.id)
+    val result = resultDf.as[NormalizedConsequences].collect()
+
+    result should contain theSameElementsAs Seq(
+      NormalizedConsequences(
+        `ensembl_feature_id`= "bar",
+        `ensembl_transcript_id`= "bar",
+        `created_on` = result.head.`created_on`,
+        `updated_on` = result.head.`updated_on`,
+        `normalized_consequences_oid` = result.head.`normalized_consequences_oid`),
+      NormalizedConsequences(
+        `ensembl_feature_id`= "foo",
+        `ensembl_transcript_id`= "foo",
+        `created_on` = result.head.`created_on`,
+        `updated_on` = result.head.`updated_on`,
+        `normalized_consequences_oid` = result.head.`normalized_consequences_oid`),
+      NormalizedConsequences(
+        `ensembl_feature_id`= null,
+        `ensembl_transcript_id`= null,
+        `created_on` = result.head.`created_on`,
+        `updated_on` = result.head.`updated_on`,
+        `normalized_consequences_oid` = result.head.`normalized_consequences_oid`)
+    )
   }
 
   "consequences job" should "run" in {

@@ -83,6 +83,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
       .withColumn("created_on", lit(Timestamp.valueOf(currentRunDateTime)))
       .withColumn("updated_on", lit(Timestamp.valueOf(currentRunDateTime)))
       .withColumn(mainDestination.oid, col("created_on"))
+      .dropDuplicates("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")
     df
   }
 
