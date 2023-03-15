@@ -51,7 +51,8 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(genes, "genes"),
       shouldNotBeEmpty(dbnsfp_original, "dbnsfp_original"),
       shouldNotBeEmpty(spliceai_indel, "spliceai_indel"),
-      shouldNotBeEmpty(spliceai_snv, "spliceai_snv")
+      shouldNotBeEmpty(spliceai_snv, "spliceai_snv"),
+      shouldNotBeEmpty(rare_variant_enriched, "rare_variant_enriched")
     )
   }
 }
