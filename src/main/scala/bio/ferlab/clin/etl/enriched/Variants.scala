@@ -327,6 +327,9 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     import spark.implicits._
 
     val scores = spliceai.selectLocus($"symbol", $"max_score" as "spliceai")
+      .withColumn("type", when($"spliceai.ds" === 0, null).otherwise($"spliceai.type"))
+      .withColumn("spliceai", struct($"spliceai.ds" as "ds", $"type"))
+      .drop("type")
 
     variants
       .select($"*", explode_outer($"genes") as "gene", $"gene.symbol" as "symbol") // explode_outer since genes can be null
