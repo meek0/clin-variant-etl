@@ -68,7 +68,8 @@ case class CONSEQUENCES(`ensembl_transcript_id`: String = "ENST00000335137",
                         `uniprot_id`: Option[String] = None,
                         `mane_select`: Boolean = false,
                         `mane_plus`: Boolean = false,
-                        `canonical`: Boolean = false)
+                        `canonical`: Boolean = false,
+                        `picked`: Boolean = true)
 
 case class AnalysisCodeFrequencies(analysis_code: String = "MM_PG",
                                    analysis_display_name: String = "Maladies musculaires (Panel global)",

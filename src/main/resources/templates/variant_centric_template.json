@@ -85,6 +85,9 @@
             "consequences": {
               "type": "keyword"
             },
+            "picked": {
+              "type": "boolean"
+            },
             "conservations": {
               "properties": {
                 "phylo_p17way_primate_rankscore": {
