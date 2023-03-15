@@ -62,6 +62,7 @@ trait TestingApp extends App {
   lazy val dbnsfp_original: DataFrame = spark.table("dbnsfp_original")
   lazy val spliceai_indel: DataFrame = spark.table("spliceai_indel")
   lazy val spliceai_snv: DataFrame = spark.table("spliceai_snv")
+  lazy val rare_variant_enriched: DataFrame = spark.table("rare_variant_enriched")
 
   def run(f: SparkSession => Unit): Unit = {
     spark.sql(s"use $database")
