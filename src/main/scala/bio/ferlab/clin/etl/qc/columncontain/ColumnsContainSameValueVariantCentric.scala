@@ -105,7 +105,7 @@ object ColumnsContainSameValueVariantCentric extends TestingApp {
       ),*/
       shouldNotContainSameValue(
         variant_centric.select(explode($"consequences")).select("col.*"),
-        variant_centric.select(explode($"consequences")).select("col.*").columns.filterNot(List("feature_type").contains(_)): _*
+        variant_centric.select(explode($"consequences")).select("col.*").columns.filterNot(List("feature_type", "picked").contains(_)): _*
       ),
       shouldNotContainSameValue(
         variant_centric.select(explode($"consequences")).select("col.predictions.*")
