@@ -9,7 +9,7 @@ object NonDuplicationGnomad extends TestingApp {
 
     handleErrors(
       shouldBeEmpty(
-        gnomad_genomes_3_0
+        gnomad_genomes_v3
           .groupBy($"chromosome", $"start", $"reference", $"alternate").count
           .filter($"count" > 1)
       )
