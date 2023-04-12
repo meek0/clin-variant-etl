@@ -79,6 +79,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
     import spark.implicits._
     val dbnsfpRenamed =
       dbnsfp
+        .filter($"aaref".isNotNull)
         .withColumn("start", col("start").cast(LongType))
         .selectLocus(
           $"ensembl_transcript_id" as "ensembl_feature_id",
