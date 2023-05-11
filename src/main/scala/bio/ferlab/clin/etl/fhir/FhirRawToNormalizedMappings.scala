@@ -214,24 +214,44 @@ object FhirRawToNormalizedMappings {
       .withColumn("documents", transform(col("output"), c =>
         struct(
           regexp_replace(c("valueReference")("reference"), "DocumentReference/", "") as "id",
-          c("type")("text") as "document_type"
+          extractCodeFromCoding(c("type"), "http://fhir.cqgc.ferlab.bio/CodeSystem/data-type") as "document_type"
         )))
       .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzz"))
       .withTaskExtension
     ),
     Drop("meta", "requester", "authoredOn", "extension", "input", "output", "focus", "for", "code")
   )
-
-  def mappings(implicit c: Configuration): List[(DatasetConf, DatasetConf, List[Transformation])] = List(
-    (c.getDataset("raw_clinical_impression"), c.getDataset("normalized_clinical_impression"), defaultTransformations ++ clinicalImpressionMappings),
-    (c.getDataset("raw_observation"), c.getDataset("normalized_observation"), defaultTransformations ++ observationMappings),
-    (c.getDataset("raw_organization"), c.getDataset("normalized_organization"), defaultTransformations ++ organizationMappings),
-    (c.getDataset("raw_patient"), c.getDataset("normalized_patient"), defaultTransformations ++ patientMappings),
-    (c.getDataset("raw_practitioner"), c.getDataset("normalized_practitioner"), defaultTransformations ++ practitionerMappings),
-    (c.getDataset("raw_practitioner_role"), c.getDataset("normalized_practitioner_role"), defaultTransformations ++ practitionerRoleMappings),
-    (c.getDataset("raw_service_request"), c.getDataset("normalized_service_request"), defaultTransformations ++ serviceRequestMappings),
-    (c.getDataset("raw_specimen"), c.getDataset("normalized_specimen"), defaultTransformations ++ specimenMapping),
-    (c.getDataset("raw_task"), c.getDataset("normalized_task"), defaultTransformations ++ taskMapping),
-    (c.getDataset("raw_service_request"), c.getDataset("normalized_family"), defaultTransformations ++ familyMappings)
+  val documentMapping: String => List[Transformation] = clinDownloadPath => List(
+    Custom(_
+      .withColumn("type", extractCodeFromCoding(col("type"), "http://fhir.cqgc.ferlab.bio/CodeSystem/data-type"))
+      .withColumn("category", extractCodeFromCoding(col("category")(0), "http://fhir.cqgc.ferlab.bio/CodeSystem/data-category"))
+      .withColumn("patient_id", regexp_replace(col("subject")("reference"), "Patient/", ""))
+      .withColumn("specimen_id", regexp_replace(col("context")("related")(0)("reference"), "Specimen/", ""))
+      .withColumn("organization_id", regexp_replace(col("custodian")("reference"), "Organization/", ""))
+      .withColumn("master_identifier", col("masterIdentifier")("value"))
+      .withColumn("contents", transform(col("content"), c =>
+        struct(
+          c("attachment")("url") as "url",
+          regexp_replace(c("attachment")("url"), "(https?://)([^/]+)", clinDownloadPath) as "s3_url",
+          c("format")("code") as "format"
+        )))
+    ),
+    Drop("meta", "masterIdentifier", "subject", "custodian", "content", "context")
   )
+  def mappings(implicit c: Configuration): List[(DatasetConf, DatasetConf, List[Transformation])] = {
+
+    List(
+      (c.getDataset("raw_clinical_impression"), c.getDataset("normalized_clinical_impression"), defaultTransformations ++ clinicalImpressionMappings),
+      (c.getDataset("raw_observation"), c.getDataset("normalized_observation"), defaultTransformations ++ observationMappings),
+      (c.getDataset("raw_organization"), c.getDataset("normalized_organization"), defaultTransformations ++ organizationMappings),
+      (c.getDataset("raw_patient"), c.getDataset("normalized_patient"), defaultTransformations ++ patientMappings),
+      (c.getDataset("raw_practitioner"), c.getDataset("normalized_practitioner"), defaultTransformations ++ practitionerMappings),
+      (c.getDataset("raw_practitioner_role"), c.getDataset("normalized_practitioner_role"), defaultTransformations ++ practitionerRoleMappings),
+      (c.getDataset("raw_service_request"), c.getDataset("normalized_service_request"), defaultTransformations ++ serviceRequestMappings),
+      (c.getDataset("raw_specimen"), c.getDataset("normalized_specimen"), defaultTransformations ++ specimenMapping),
+      (c.getDataset("raw_task"), c.getDataset("normalized_task"), defaultTransformations ++ taskMapping),
+      (c.getDataset("raw_service_request"), c.getDataset("normalized_family"), defaultTransformations ++ familyMappings),
+      (c.getDataset("raw_document_reference"), c.getDataset("normalized_document_reference"), defaultTransformations ++ documentMapping(c.getStorage("clin_download").path))
+    )
+  }
 }

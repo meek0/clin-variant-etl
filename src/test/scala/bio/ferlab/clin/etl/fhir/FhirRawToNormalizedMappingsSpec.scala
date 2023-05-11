@@ -3,8 +3,6 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirToNormalizedETL.getSchema
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, StorageConf}
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import org.apache.spark.sql.functions._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -186,15 +184,29 @@ class FhirRawToNormalizedMappingsSpec extends AnyFlatSpec with WithTestConfig wi
 
     val inputDs = conf.getDataset("raw_task")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val inputDf = spark.read.schema(getSchema("raw_task")).json("src/test/resources/raw/landing/fhir/Task/Task_0_19000101_000000.json")
+    val inputPath = getClass.getResource("/raw/landing/fhir/Task/Task_0_19000101_000000.json").getPath
+    val inputDf = spark.read.schema(getSchema("raw_task")).json(inputPath)
     val job = new FhirToNormalizedETL(src, dst, mapping)
     val result = job.transformSingle(Map(inputDs.id -> inputDf)).where("id='109351'")
 
     result.count() shouldBe 1
     val head = result.as[TaskOutput].collect().head
     head shouldBe TaskOutput()
-      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `authored_on` = head.`authored_on`, `experiment` = head.`experiment`)
+      .copy(`ingestion_file_name` = s"file://$inputPath", `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `authored_on` = head.`authored_on`)
+  }
+
+  "documentReference raw job" should "return data in the expected format" in {
+    val inputDs = conf.getDataset("raw_document_reference")
+    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
+    val inputPath = getClass.getResource("/raw/landing/fhir/DocumentReference/DocumentReference.json").getPath
+    val inputDf = spark.read.schema(getSchema("raw_document_reference")).json(inputPath)
+    val job = new FhirToNormalizedETL(src, dst, mapping)
+    val result = job.transformSingle(Map(inputDs.id -> inputDf))
+    result.count() shouldBe 1
+    val head = result.as[DocumentReferenceOutput].collect().head
+    head shouldBe DocumentReferenceOutput()
+      .copy(ingestion_file_name = s"file://$inputPath", `ingested_on` = head.`ingested_on`, `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 
 }

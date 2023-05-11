@@ -14,6 +14,10 @@ object FhirCustomOperations {
 
   val extractmemberUdf: UserDefinedFunction = udf { entities: Seq[ENTITY] => entities.map(_.entity.reference.replace("Patient/", "")) }
 
+  def extractCodeFromCoding(c: Column, system: String): Column = {
+    filter(c("coding"), coding => coding("system") === system)(0)("code")
+  }
+
   val patientReference: Column => Column = patientIdColumn => regexp_replace(patientIdColumn, "Patient/", "")
   val patient_id: Column = patientReference(col("subject.reference"))
   val practitioner_id: Column = regexp_replace(col("assessor.reference"), "Practitioner/", "")
@@ -96,41 +100,6 @@ object FhirCustomOperations {
           ))
     }
 
-    def withPatientExtension: DataFrame = {
-      val familyRelationshipType =
-        ArrayType(StructType(List(StructField("patient2", StringType), StructField("patient1_to_patient2_relation", StringType))))
-
-      df.where(col("extension").isNull).drop("extension")
-        .withColumn("family_id", lit(null).cast(StringType))
-        .withColumn("is_fetus", lit(null).cast(BooleanType))
-        .withColumn("is_proband", lit(null).cast(BooleanType))
-        .withColumn("family_relationship", lit(null).cast(familyRelationshipType))
-        .unionByName {
-          df.withColumn("extension", explode(col("extension")))
-            .withColumn("family_relationship",
-              when(col("extension.url").like("%/family-relation"),
-                struct(
-                  regexp_replace(filter(col("extension")("extension"), c => c("url") === "subject")(0)("valueReference")("reference"), "Patient/", "") as "patient2",
-                  filter(col("extension")("extension"), c => c("url") === "relation")(0)("valueCodeableConcept")("coding")(0)("code") as "patient1_to_patient2_relation",
-                )))
-            .withColumn("family_id",
-              when(col("extension.url").like("%/family-id"),
-                regexp_replace(col("extension.valueReference.reference"), "Group/", "")))
-            .withColumn("is_fetus",
-              when(col("extension.url").like("%/is-fetus"), col("extension.valueBoolean")))
-            .withColumn("is_proband",
-              when(col("extension.url").like("%/is-proband"), col("extension.valueBoolean")))
-            .groupBy("id", INGESTION_TIMESTAMP)
-            .agg(
-              max("family_id") as "family_id",
-              df.drop("id", INGESTION_TIMESTAMP, "extension").columns.map(c => first(c) as c) :+
-                (max("is_proband") as "is_proband") :+
-                (max("is_fetus") as "is_fetus") :+
-                (collect_list("family_relationship") as "family_relationship"): _*
-            )
-        }
-    }
-
     def withFamilyIdentifier: DataFrame = {
       df.withColumn("family_identifier", filter(col("identifier"), i => i("system") === "https://cqgc.qc.ca/family"))
         .withColumn("family_id", col("family_identifier.value")(0))
@@ -146,6 +115,7 @@ object FhirCustomOperations {
     def withFamilyExtensions: DataFrame = {
       df.withColumn("family_extensions", filter(col("extension"), e => e("url") === "http://fhir.cqgc.ferlab.bio/StructureDefinition/family-member"))
     }
+
     def withFamily: DataFrame = {
       df.withColumn("family", aggregate(col("family_extensions"), struct(lit(null).cast("string").as("mother"), lit(null).cast("string").as("father")), (comb, current) => {
         val currentExtension = current("extension")
@@ -157,57 +127,6 @@ object FhirCustomOperations {
       }))
     }
 
-    def withObservationExtension: DataFrame = {
-      val hpo_category = "hpo_category"
-      val age_at_onset = "age_at_onset"
-      df.where(col("extension").isNull)
-        .drop("extension")
-        .withColumn(age_at_onset, lit(null).cast(StringType))
-        .withColumn(hpo_category, lit(null).cast(StringType))
-        .unionByName {
-          df.withColumn("extension", explode(col("extension")))
-            .withColumn(age_at_onset,
-              when(col("extension.url").like("%/age-at-onset"), col("extension.valueCoding.code")))
-            .withColumn(hpo_category,
-              when(col("extension.url").like("%/hpo-category"), col("extension.valueCoding.code")))
-            .groupBy("id")
-            .agg(
-              max(age_at_onset) as age_at_onset,
-              df.drop("id", "extension").columns.map(c => first(c) as c) :+
-                (max(hpo_category) as hpo_category): _*
-            )
-        }
-    }
-
-    def withNested(sourceColumn: String, destColName: String, valuePath: String, whenUrlExpr: String, urlLikeExpr: String, castInto: DataType): DataFrame = {
-      df.filter(col(sourceColumn).isNull)
-        .withColumn(destColName, lit(null).cast(castInto))
-        .unionByName {
-          df
-            .withColumn(sourceColumn, explode(col(sourceColumn)))
-            .withColumn(destColName,
-              when(col(whenUrlExpr).like(urlLikeExpr),
-                col(valuePath)))
-            .groupBy("id", INGESTION_TIMESTAMP)
-            .agg(
-              max(destColName) as destColName,
-              df.drop("id", INGESTION_TIMESTAMP, sourceColumn).columns.map(c => first(c) as c) :+
-                (collect_set(col(sourceColumn)) as sourceColumn): _*
-            )
-        }
-    }
-
-    def withExtention(destColName: String, valuePath: String, urlLikeExpr: String, castInto: DataType = StringType): DataFrame = {
-      withNested("extension", destColName, valuePath: String, "extension.url", urlLikeExpr, castInto)
-    }
-
-    def withPatientNames: DataFrame = {
-      //format : "name":[{"family":"Specter","given":["Harvey"]}]
-      df.withColumn("name", col("name")(0))
-        .withColumn("last_name", col("name.family"))
-        .withColumn("first_name", col("name.given")(0))
-        .withColumn("full_name", concat_ws(" ", col("first_name"), col("last_name")))
-    }
 
     def withFhirMetadata: DataFrame = {
       df.withColumn("version_id", col("meta.versionId"))
