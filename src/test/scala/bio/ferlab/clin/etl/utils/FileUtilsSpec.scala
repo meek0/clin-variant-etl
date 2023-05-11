@@ -38,9 +38,9 @@ class FileUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
     ).toDF
 
     val documents = Seq(
-      DocumentReferenceOutput(id= "exo1", contents = List(
-        Content(s3_url="s3a://file1.tsv", format = "TSV"), //Should be included
-        Content(s3_url="s3a://file1.json", format = "JSON")
+      DocumentReferenceOutput(id = "exo1", contents = List(
+        Content(s3_url = "s3a://file1.tsv", format = "TSV"), //Should be included
+        Content(s3_url = "s3a://file1.json", format = "JSON")
       )),
       DocumentReferenceOutput(id = "exo2", contents = List(
         Content(s3_url = "s3a://file2.tsv", format = "TSV"), //Should be included
@@ -63,10 +63,10 @@ class FileUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
 
     val results = filesUrlFromDF(tasks = tasks, documentReferences = documents, batchId = "B1", dataType = "EXOMISER", format = "TSV")
     results should contain theSameElementsAs Seq(
-      "s3a://file1.tsv",
-      "s3a://file2.tsv",
-      "s3a://file2b.tsv",
-      "s3a://file3.tsv"
+      FileInfo("s3a://file1.tsv", "16868", "438787", "440171"),
+      FileInfo("s3a://file2.tsv", "16868", "438787", "440171"),
+      FileInfo("s3a://file2b.tsv", "16868", "438787", "440171"),
+      FileInfo("s3a://file3.tsv", "16868", "438787", "440171")
     )
 
   }
