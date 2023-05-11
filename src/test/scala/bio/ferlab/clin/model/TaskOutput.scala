@@ -7,25 +7,25 @@ package bio.ferlab.clin.model
 import java.sql.{Date, Timestamp}
 
 
-case class TaskOutput(`id`: String = "109351",
-                      `intent`: String = "order",
-                      `priority`: String = "routine",
-                      `resource_type`: String = "Task",
-                      `status`: String = "completed",
-                      `ingestion_file_name`: String = "/raw/landing/fhir/Task/Task_0_19000101_000000.json",
-                      `ingested_on`: Timestamp = Timestamp.valueOf("1900-01-01 00:00:00.0"),
-                      `version_id`: String = "1",
-                      `updated_on`: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
-                      `created_on`: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
-                      `analysis_code`: String = "GEAN",
-                      `service_request_id`: String = "SR0095",
-                      `patient_id`: String = "PA00095",
-                      `organization_id`: String = "LDM-CHUSJ",
-                      `specimen_id`: String = "109673",
-                      `documents`: List[DOCUMENTS] = List(DOCUMENTS(), DOCUMENTS("109349", "VCF File"), DOCUMENTS("109350", "QC File")),
-                      `authored_on`: Timestamp = Timestamp.valueOf("2021-11-23 09:33:05.0"),
-                      `experiment`: EXPERIMENT = EXPERIMENT(),
-                      `workflow`: WORKFLOW = WORKFLOW())
+case class TaskOutput(id: String = "109351",
+                      intent: String = "order",
+                      priority: String = "routine",
+                      resource_type: String = "Task",
+                      status: String = "completed",
+                      ingestion_file_name: String = "/raw/landing/fhir/Task/Task_0_19000101_000000.json",
+                      ingested_on: Timestamp = Timestamp.valueOf("1900-01-01 00:00:00.0"),
+                      version_id: String = "1",
+                      updated_on: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
+                      created_on: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
+                      analysis_code: String = "GEAN",
+                      service_request_id: String = "SR0095",
+                      patient_id: String = "PA00095",
+                      organization_id: String = "LDM-CHUSJ",
+                      specimen_id: String = "109673",
+                      documents: List[DOCUMENTS] = List(DOCUMENTS(), DOCUMENTS("109349", "SNV"), DOCUMENTS("109350", "SSUP")),
+                      authored_on: Timestamp = Timestamp.valueOf("2021-11-23 09:33:05.0"),
+                      experiment: EXPERIMENT = EXPERIMENT(),
+                      workflow: WORKFLOW = WORKFLOW())
 
 case class WORKFLOW(`genome_build`: String = "GRCh38",
                     `name`: String = "Dragen",
@@ -41,4 +41,4 @@ case class EXPERIMENT(`sequencing_strategy`: String = "WXS",
                       `run_date`: Date = Date.valueOf("2020-11-06"))
 
 case class DOCUMENTS(`id`: String = "109348",
-                     `document_type`: String = "CRAM File")
+                     `document_type`: String = "ALIR")

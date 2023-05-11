@@ -10,6 +10,7 @@ object EtlConfiguration extends App {
 
   val clin_datalake = "clin_datalake"
   val clin_import = "clin_import"
+  val clin_download = "clin_download"
 
   val clin_qa_database = "clin_qa"
   val clin_staging_database = "clin_staging"
@@ -17,17 +18,21 @@ object EtlConfiguration extends App {
 
   val clin_qa_storage = List(
     StorageConf(clin_import, "s3a://cqgc-qa-app-files-import", S3),
-    StorageConf(clin_datalake, "s3a://cqgc-qa-app-datalake", S3)
+    StorageConf(clin_datalake, "s3a://cqgc-qa-app-datalake", S3),
+    StorageConf(clin_download, "s3a://cqgc-qa-app-download", S3)
   )
 
   val clin_staging_storage = List(
     StorageConf(clin_import, "s3a://cqgc-staging-app-files-import", S3),
-    StorageConf(clin_datalake, "s3a://cqgc-staging-app-datalake", S3)
+    StorageConf(clin_datalake, "s3a://cqgc-staging-app-datalake", S3),
+    StorageConf(clin_download, "s3a://cqgc-staging-app-download", S3)
+
   )
 
   val clin_prd_storage = List(
     StorageConf(clin_import, "s3a://cqgc-prod-app-files-import", S3),
-    StorageConf(clin_datalake, "s3a://cqgc-prod-app-datalake", S3)
+    StorageConf(clin_datalake, "s3a://cqgc-prod-app-datalake", S3),
+    StorageConf(clin_download, "s3a://cqgc-prod-app-download", S3)
   )
 
   val clin_spark_conf = Map(
@@ -59,6 +64,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_service_request"            , clin_datalake, "/raw/landing/fhir/ServiceRequest"                       , JSON   , OverWrite),
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
+      DatasetConf("raw_document_reference"         , clin_datalake, "/raw/landing/fhir/DocumentReference"                    , JSON   , OverWrite),
       DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
 
       //old version of gnomad, should be removed
@@ -82,6 +88,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_family"              , clin_datalake, "/normalized/fhir/family"            , DELTA  , OverWrite   , TableConf("clin", "fhir_family")),
       DatasetConf("normalized_specimen"            , clin_datalake, "/normalized/fhir/specimen"          , DELTA  , OverWrite   , TableConf("clin", "fhir_specimen")),
       DatasetConf("normalized_task"                , clin_datalake, "/normalized/fhir/task"              , DELTA  , OverWrite   , TableConf("clin", "fhir_task")),
+      DatasetConf("normalized_document_reference"  , clin_datalake, "/normalized/fhir/DocumentReference" , DELTA  , OverWrite   , TableConf("clin", "fhir_document_reference")),
 
       //clinical normalized
       DatasetConf("normalized_snv"                 , clin_datalake, "/normalized/snv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv"))),
