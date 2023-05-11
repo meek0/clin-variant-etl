@@ -4,7 +4,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.utils.ClassGenerator
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.apache.spark.sql.functions.explode
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
@@ -17,6 +17,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val normalized_refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
+  val genes: DatasetConf = conf.getDataset("enriched_genes")
 
   val refSeq = Seq(
     NormalizedRefSeq(),
@@ -26,10 +27,13 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     NormalizedPanels(),
   ).toDF()
 
+  val genesDf: DataFrame = Seq(GenesOutput()).toDF()
+
   val data: Map[String, DataFrame] = Map(
     normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
     normalized_refseq_annotation.id -> refSeq,
     normalized_panels.id -> panels,
+    genes.id -> genesDf,
   )
 
   val refSeq_no_genes = Seq(
@@ -40,6 +44,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
     normalized_refseq_annotation.id -> refSeq_no_genes,
     normalized_panels.id -> panels,
+    genes.id -> genesDf,
   )
 
   "Enriched CNV job" should "enriched data" in {
@@ -50,6 +55,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     //val genes = results.select(explode($"genes")).select("col.*")
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "EnrichedCNV", res, "src/test/scala/")
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "EnrichedCNVgenes", genes, "src/test/scala/")
+    // results.write.mode(SaveMode.Overwrite).json("results.json")
 
     results.collect() should contain theSameElementsAs Seq(
       CnvEnrichedOutput(),

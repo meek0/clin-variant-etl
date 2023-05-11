@@ -126,6 +126,8 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `orphanet`: List[ORPHANET] = List(ORPHANET()),
                  `hpo`: List[HPO] = List(HPO()),
                  `omim`: List[OMIM] = List(OMIM()),
+                 `ddd`: List[DDD] = List(DDD()),
+                 `cosmic`: List[COSMIC] = List(COSMIC()),
                  `spliceai`: Option[SPLICEAI] = Some(SPLICEAI()),
                  `gnomad`: Option[GNOMAD] = Some(GNOMAD()))
 
