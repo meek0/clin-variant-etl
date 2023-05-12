@@ -8,4 +8,4 @@ spark-warehouse
 .DS_Store
 hive
 
-clin-variant-etl-*.jar
+clin-variant-etl*.jar

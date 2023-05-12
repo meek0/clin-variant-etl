@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.normalized
 
 
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}

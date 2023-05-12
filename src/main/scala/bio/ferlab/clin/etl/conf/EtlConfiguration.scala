@@ -55,6 +55,7 @@ object EtlConfiguration extends App {
       //s3://clin-{env}-app-files-import/201106_A00516_0169_AHFM3HDSXY/201106_A00516_0169_AHFM3HDSXY.hard-filtered.formatted.norm.VEP.vcf.gz
       DatasetConf("raw_snv"                        , clin_import  , "/{{BATCH_ID}}/*.hard-filtered.formatted.norm.VEP.vcf.gz", VCF    , OverWrite),
       DatasetConf("raw_cnv"                        , clin_import  , "/{{BATCH_ID}}/*.cnv.vcf.gz"                             , VCF    , OverWrite),
+      DatasetConf("raw_exomiser"                   , clin_import,   "/{{BATCH_ID}}/*.exomiser.variants.tsv"                  , CSV    , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_clinical_impression"        , clin_datalake, "/raw/landing/fhir/ClinicalImpression"                   , JSON   , OverWrite),
       DatasetConf("raw_observation"                , clin_datalake, "/raw/landing/fhir/Observation"                          , JSON   , OverWrite),
       DatasetConf("raw_organization"               , clin_datalake, "/raw/landing/fhir/Organization"                         , JSON   , OverWrite),
@@ -65,7 +66,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_specimen"                   , clin_datalake, "/raw/landing/fhir/Specimen"                             , JSON   , OverWrite),
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
       DatasetConf("raw_document_reference"         , clin_datalake, "/raw/landing/fhir/DocumentReference"                    , JSON   , OverWrite),
-      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels.tsv"                , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels.tsv"                         , CSV    , OverWrite, readoptions = tsv_with_headers),
 
       //old version of gnomad, should be removed
       //DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
@@ -96,6 +97,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_variants"            , clin_datalake, "/normalized/variants"               , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_variants"))),
       DatasetConf("normalized_consequences"        , clin_datalake, "/normalized/consequences"           , DELTA  , Scd1              , partitionby = List("chromosome")            , table = Some(TableConf("clin", "normalized_consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
       DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "normalized_panels"))),
+      DatasetConf("normalized_exomiser"            , clin_datalake, "/normalized/panels"                 , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
 
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))),

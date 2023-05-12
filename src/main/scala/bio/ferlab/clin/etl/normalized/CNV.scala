@@ -1,6 +1,6 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.vcf.CNV.getCNV
+import bio.ferlab.clin.etl.normalized.CNV.getCNV
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.utils.RepartitionByColumns

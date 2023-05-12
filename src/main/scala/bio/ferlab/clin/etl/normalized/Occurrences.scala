@@ -1,6 +1,6 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.vcf.Occurrences.getDiseaseStatus
+import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.etl.v2.ETL

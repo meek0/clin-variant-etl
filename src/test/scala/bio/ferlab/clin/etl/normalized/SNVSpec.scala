@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl.vcf
+package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.model.{RareVariant, _}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
