@@ -18,6 +18,7 @@ object RunNormalized extends SparkApp {
     case "snv" => new SNV(batchId).run(steps)
     case "cnv" => new CNV(batchId).run(steps)
     case "panels" => new Panels().run(steps)
+    case "exomiser" => new Exomiser(batchId).run(steps)
     case "all" =>
       new SNV(batchId).run(steps)
       new CNV(batchId).run(steps)
