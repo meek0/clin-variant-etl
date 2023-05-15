@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.utils.FileUtils
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.transformation.Cast.{castFloat, castInt, castLong}
-import org.apache.spark.sql.functions.input_file_name
+import org.apache.spark.sql.functions.{input_file_name, lit}
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -55,6 +55,9 @@ class Exomiser(batchId: String)(implicit configuration: Configuration) extends E
         $"MOI" as "moi",
         $"EXOMISER_ACMG_CLASSIFICATION" as "acmg_classification",
         $"EXOMISER_ACMG_EVIDENCE" as "acmg_evidence",
+        lit(batchId) as "batch_id"
       )
   }
+
+  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
