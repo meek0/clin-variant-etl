@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.RawExomiser
 import bio.ferlab.clin.etl.utils.FileUtils
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
@@ -20,10 +21,13 @@ class Exomiser(batchId: String)(implicit configuration: Configuration) extends E
     val exomiserFiles = FileUtils.filesUrl(batchId, "EXOMISER", "TSV")
 
     Map(
-      raw_exomiser.id -> spark.read
-        .format(raw_exomiser.format.sparkFormat)
-        .options(raw_exomiser.readoptions)
-        .load(paths = exomiserFiles.map(_.url).toSeq: _*),
+      raw_exomiser.id -> {
+        if (exomiserFiles.isEmpty) Seq.empty[RawExomiser].toDF() else
+          spark.read
+            .format(raw_exomiser.format.sparkFormat)
+            .options(raw_exomiser.readoptions)
+            .load(paths = exomiserFiles.map(_.url).toSeq: _*)
+      },
       "file_info" -> exomiserFiles.toSeq.toDF()
     )
   }

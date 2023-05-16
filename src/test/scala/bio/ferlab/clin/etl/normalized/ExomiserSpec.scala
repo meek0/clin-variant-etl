@@ -1,9 +1,9 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.RawExomiser
 import bio.ferlab.clin.etl.utils.FileInfo
-import bio.ferlab.clin.model.normalized.NormalizedExomiser
-import bio.ferlab.clin.model.raw.RawExomiser
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.normalized.NormalizedExomiser
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
@@ -108,5 +108,10 @@ class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       .distinct()
       .as[String]
       .collect() should contain theSameElementsAs Seq("aliquot1")
+  }
+
+  it should "not fail when there is no exomiser data in batch" in {
+    val job = new Exomiser("NODATA")
+    noException should be thrownBy job.run()
   }
 }
