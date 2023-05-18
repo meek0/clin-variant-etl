@@ -162,6 +162,68 @@
             },
             "overlap_exons": {
               "type": "long"
+            },
+            "hpo": {
+              "type": "nested",
+              "properties": {
+                "hpo_term_id": {
+                  "type": "keyword"
+                },
+                "hpo_term_label": {
+                  "type": "keyword"
+                },
+                "hpo_term_name": {
+                  "type": "keyword",
+                  "index": false
+                }
+              }
+            },
+            "cosmic": {
+              "type": "nested",
+              "properties": {
+                "tumour_types_germline": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "ddd": {
+              "type": "nested",
+              "properties": {
+                "disease_name": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "omim": {
+              "type": "nested",
+              "properties": {
+                "inheritance": {
+                  "type": "keyword"
+                },
+                "inheritance_code": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "keyword"
+                },
+                "omim_id": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "orphanet": {
+              "type": "nested",
+              "properties": {
+                "disorder_id": {
+                  "type": "long"
+                },
+                "inheritance": {
+                  "type": "keyword"
+                },
+                "panel": {
+                  "type": "keyword"
+                }
+              }
             }
           }
         },
