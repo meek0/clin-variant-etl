@@ -28,6 +28,7 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(normalized_variants, "normalized_variants"),
       shouldNotBeEmpty(normalized_consequences, "normalized_consequences"),
       shouldNotBeEmpty(normalized_panels, "normalized_panels"),
+      shouldNotBeEmpty(snv, "snv"),
       shouldNotBeEmpty(cnv, "cnv"),
       shouldNotBeEmpty(variants, "variants"),
       shouldNotBeEmpty(consequences, "consequences"),

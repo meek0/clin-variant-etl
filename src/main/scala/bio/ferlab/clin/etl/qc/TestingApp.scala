@@ -42,6 +42,7 @@ trait TestingApp extends App {
   lazy val normalized_cnv: DataFrame = spark.table("normalized_cnv")
   lazy val normalized_consequences: DataFrame = spark.table("normalized_consequences")
   lazy val normalized_panels: DataFrame = spark.table("normalized_panels")
+  lazy val snv: DataFrame = spark.table("snv")
   lazy val cnv: DataFrame = spark.table("cnv")
   lazy val consequences: DataFrame = spark.table("consequences")
   lazy val gene_suggestions: DataFrame = spark.table(s"gene_suggestions_$release_id")

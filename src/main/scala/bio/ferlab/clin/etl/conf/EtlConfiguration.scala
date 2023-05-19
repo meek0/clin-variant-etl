@@ -100,7 +100,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_exomiser"            , clin_datalake, "/normalized/exomiser"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
 
       //clinical enriched
-      DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , Insert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))),
+      DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "snv")), keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
       DatasetConf("enriched_cnv"                   , clin_datalake, "/enriched/cnv"                      , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "cnv"))),
       DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variants"))),
       DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
