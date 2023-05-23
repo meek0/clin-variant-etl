@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.normalized.SNV._
+import bio.ferlab.clin.etl.utils.FrequencyUtils.includeFilter
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.ParentalOrigin.{FTH, MTH}
@@ -118,7 +119,7 @@ object SNV {
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
       .filter($"alternate" =!= "*")
-      //.filter(includeFilter)
+      .filter(includeFilter)
       .drop("annotation")
   }
 
