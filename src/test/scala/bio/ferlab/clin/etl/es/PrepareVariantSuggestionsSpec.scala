@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.enriched.CLINVAR
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL

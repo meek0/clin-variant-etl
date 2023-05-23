@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.enriched.EnrichedVariant
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
@@ -24,7 +25,7 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with W
   val bat2: Timestamp = Timestamp.valueOf("2021-03-26 14:50:08.108")
 
   val data = Map(
-    enriched_variants.id -> Seq(VariantEnrichedOutput("1"), VariantEnrichedOutput(
+    enriched_variants.id -> Seq(EnrichedVariant("1"), EnrichedVariant(
       "2",
       `created_on` = bat0,
       //`updated_on` = bat2

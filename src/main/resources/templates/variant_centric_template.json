@@ -446,6 +446,57 @@
                   "type": "long"
                 }
               }
+            },
+            "exomiser": {
+              "properties": {
+                "rank": {
+                  "type": "integer"
+                },
+                "gene_symbol": {
+                  "type": "keyword"
+                },
+                "gene_combined_score": {
+                  "type": "float"
+                },
+                "moi": {
+                  "type": "keyword"
+                },
+                "acmg_classification": {
+                  "type": "keyword"
+                },
+                "acmg_evidence": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "exomiser_other_moi": {
+              "index": false,
+              "properties": {
+                "rank": {
+                  "type": "integer",
+                  "index": false
+                },
+                "gene_symbol": {
+                  "type": "keyword",
+                  "index": false
+                },
+                "gene_combined_score": {
+                  "type": "float",
+                  "index": false
+                },
+                "moi": {
+                  "type": "keyword",
+                  "index": false
+                },
+                "acmg_classification": {
+                  "type": "keyword",
+                  "index": false
+                },
+                "acmg_evidence": {
+                  "type": "keyword",
+                  "index": false
+                }
+              }
             }
           }
         },
@@ -969,6 +1020,9 @@
                 }
               }
             }
+        },
+        "exomiser_variant_score": {
+          "type": "float"
         }
       }
     }

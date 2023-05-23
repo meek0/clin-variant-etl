@@ -5,11 +5,11 @@ import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus,locusColumnNames}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import bio.ferlab.datalake.spark3.utils.FixedRepartition
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
 
@@ -17,7 +17,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
-  val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
+  val snv: DatasetConf = conf.getDataset("enriched_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
@@ -36,7 +36,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_variants.id -> normalized_variants.read,
-      normalized_snv.id -> normalized_snv.read,
+      snv.id -> snv.read,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_constraint.id -> gnomad_constraint.read,
@@ -58,7 +58,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val occurrences = data(normalized_snv.id)
+    val occurrences = data(snv.id)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
     val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(occurrences)
@@ -207,10 +207,13 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   }
 
   def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
-    val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate").columns.map(col)
+    val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate", "exomiser_variant_score").columns.map(col)
     val donors = occurrences
       .groupByLocus()
-      .agg(filter(collect_list(struct(donorColumns: _*)), c => c("has_alt")) as "donors")
+      .agg(
+        max("exomiser_variant_score") as "exomiser_variant_score",
+        filter(collect_list(struct(donorColumns: _*)), c => c("has_alt")) as "donors"
+      )
     variants
       .joinByLocus(donors, "inner")
   }

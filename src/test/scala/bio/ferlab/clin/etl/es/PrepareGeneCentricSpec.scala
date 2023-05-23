@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.model.{CnvCentricOutput, CnvEnrichedOutput, DONORS, ENRICHED_CNV_GENES, GeneCentricOutput, GenesOutput, VARIANT_PER_PATIENT, VariantEnrichedOutput}
+import bio.ferlab.clin.model.enriched.{DONORS, EnrichedVariant}
+import bio.ferlab.clin.model.{CnvCentricOutput, CnvEnrichedOutput, ENRICHED_CNV_GENES, GeneCentricOutput, GenesOutput, VARIANT_PER_PATIENT}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
@@ -14,11 +15,11 @@ class PrepareGeneCentricSpec extends AnyFlatSpec with GivenWhenThen with WithTes
 
   val genesDf: DataFrame = Seq(GenesOutput(), GenesOutput(`symbol` = "OR4F6")).toDF()
   val variantsDf: DataFrame = Seq(
-    VariantEnrichedOutput(
+    EnrichedVariant(
       `locus` = "1-10000-A-TAA",
       `genes_symbol` = List("OR4F5", "OR4F4"),
       `donors` = List(DONORS(`patient_id` = "PA0001"), DONORS(`patient_id` = "PA0002"))),
-    VariantEnrichedOutput(
+    EnrichedVariant(
       `locus` = "1-10000-A-TA",
       `genes_symbol` = List("OR4F5"),
       `donors` = List(DONORS(`patient_id` = "PA0003"), DONORS(`patient_id` = "PA0002")))

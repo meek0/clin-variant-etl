@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.enriched.{DONORS, EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV, EnrichedVariant, GENES, GNOMAD, SPLICEAI}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -22,7 +23,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
-  val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
+  val snv: DatasetConf = conf.getDataset("enriched_snv")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
@@ -37,10 +38,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
 
-  val normalized_occurrencesDf: DataFrame = Seq(
-    NormalizedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-    NormalizedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
-    NormalizedSNV(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
+  val occurrencesDf: DataFrame = Seq(
+    EnrichedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    EnrichedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
+    EnrichedSNV(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
   ).toDF
   val normalized_variantsDf: DataFrame = Seq(NormalizedVariants()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
@@ -59,7 +60,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
-    normalized_snv.id -> normalized_occurrencesDf,
+    snv.id -> occurrencesDf,
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
     gnomad_constraint.id -> gnomad_constraintDf,
@@ -139,42 +140,42 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 */
 
     val occurrencesDf: DataFrame = Seq(
-      NormalizedSNV(`analysis_code` = "UseCase01",  `affected_status` = true,  `patient_id` = "PA01", `ad_alt`=30, `batch_id` = "BAT1", `start` = 101),
-      NormalizedSNV(`analysis_code` = "UseCase02",  `affected_status` = true,  `patient_id` = "PA02", `ad_alt`=30, `batch_id` = "BAT2", `start` = 102),
-      NormalizedSNV(`analysis_code` = "UseCase03",  `affected_status` = true,  `patient_id` = "PA03", `ad_alt`=30, `batch_id` = "BAT2", `start` = 103),
-      NormalizedSNV(`analysis_code` = "UseCase03",  `affected_status` = true,  `patient_id` = "PA04", `ad_alt`=30, `batch_id` = "BAT2", `start` = 103),
-      NormalizedSNV(`analysis_code` = "UseCase04",  `affected_status` = true,  `patient_id` = "PA05", `ad_alt`=30, `batch_id` = "BAT1", `start` = 104),
-      NormalizedSNV(`analysis_code` = "UseCase04",  `affected_status` = true,  `patient_id` = "PA06", `ad_alt`=30, `batch_id` = "BAT2", `start` = 104),
-      NormalizedSNV(`analysis_code` = "UseCase05",  `affected_status` = true,  `patient_id` = "PA07", `ad_alt`=30, `batch_id` = "BAT2", `start` = 105),
-      NormalizedSNV(`analysis_code` = "UseCase05",  `affected_status` = false, `patient_id` = "PA08", `ad_alt`=30, `batch_id` = "BAT2", `start` = 105),
-      NormalizedSNV(`analysis_code` = "UseCase06",  `affected_status` = true,  `patient_id` = "PA09", `ad_alt`=30, `batch_id` = "BAT1", `start` = 106),
-      NormalizedSNV(`analysis_code` = "UseCase06",  `affected_status` = false, `patient_id` = "PA10", `ad_alt`=30, `batch_id` = "BAT2", `start` = 106),
-      NormalizedSNV(`analysis_code` = "UseCase07a", `affected_status` = true,  `patient_id` = "PA11", `ad_alt`=30, `batch_id` = "BAT2", `start` = 107),
-      NormalizedSNV(`analysis_code` = "UseCase07b", `affected_status` = true,  `patient_id` = "PA12", `ad_alt`=30, `batch_id` = "BAT2", `start` = 107),
-      NormalizedSNV(`analysis_code` = "UseCase08a", `affected_status` = true,  `patient_id` = "PA13", `ad_alt`=30, `batch_id` = "BAT1", `start` = 108),
-      NormalizedSNV(`analysis_code` = "UseCase08b", `affected_status` = true,  `patient_id` = "PA14", `ad_alt`=30, `batch_id` = "BAT2", `start` = 108),
-      NormalizedSNV(`analysis_code` = "UseCase09a", `affected_status` = true,  `patient_id` = "PA15", `ad_alt`=30, `batch_id` = "BAT2", `start` = 109),
-      NormalizedSNV(`analysis_code` = "UseCase09b", `affected_status` = false, `patient_id` = "PA16", `ad_alt`=30, `batch_id` = "BAT2", `start` = 109),
-      NormalizedSNV(`analysis_code` = "UseCase10a", `affected_status` = true,  `patient_id` = "PA17", `ad_alt`=30, `batch_id` = "BAT1", `start` = 110),
-      NormalizedSNV(`analysis_code` = "UseCase10b", `affected_status` = false, `patient_id` = "PA18", `ad_alt`=30, `batch_id` = "BAT2", `start` = 110),
-      NormalizedSNV(`analysis_code` = "UseCase11",  `affected_status` = true,  `patient_id` = "PA19", `ad_alt`=30, `batch_id` = "BAT2", `start` = 111),
-      NormalizedSNV(`analysis_code` = "UseCase11",  `affected_status` = true,  `patient_id` = "PA19", `ad_alt`=30, `batch_id` = "BAT2", `start` = 211),
-      NormalizedSNV(`analysis_code` = "UseCase12",  `affected_status` = true,  `patient_id` = "PA20", `ad_alt`=30, `batch_id` = "BAT2", `start` = 112),
-      NormalizedSNV(`analysis_code` = "UseCase12",  `affected_status` = true,  `patient_id` = "PA21", `ad_alt`=30, `batch_id` = "BAT2", `start` = 212),
-      NormalizedSNV(`analysis_code` = "UseCase13",  `affected_status` = true,  `patient_id` = "PA22", `ad_alt`=30, `batch_id` = "BAT1", `start` = 113),
-      NormalizedSNV(`analysis_code` = "UseCase13",  `affected_status` = true,  `patient_id` = "PA23", `ad_alt`=30, `batch_id` = "BAT2", `start` = 213),
-      NormalizedSNV(`analysis_code` = "UseCase14",  `affected_status` = true,  `patient_id` = "PA24", `ad_alt`=30, `batch_id` = "BAT2", `start` = 114),
-      NormalizedSNV(`analysis_code` = "UseCase14",  `affected_status` = false, `patient_id` = "PA25", `ad_alt`=30, `batch_id` = "BAT2", `start` = 214),
-      NormalizedSNV(`analysis_code` = "UseCase15",  `affected_status` = true,  `patient_id` = "PA26", `ad_alt`=30, `batch_id` = "BAT1", `start` = 115),
-      NormalizedSNV(`analysis_code` = "UseCase15",  `affected_status` = false, `patient_id` = "PA27", `ad_alt`=30, `batch_id` = "BAT2", `start` = 215),
-      NormalizedSNV(`analysis_code` = "UseCase16a", `affected_status` = true,  `patient_id` = "PA28", `ad_alt`=30, `batch_id` = "BAT2", `start` = 116),
-      NormalizedSNV(`analysis_code` = "UseCase16b", `affected_status` = true,  `patient_id` = "PA29", `ad_alt`=30, `batch_id` = "BAT2", `start` = 216),
-      NormalizedSNV(`analysis_code` = "UseCase17a", `affected_status` = true,  `patient_id` = "PA30", `ad_alt`=30, `batch_id` = "BAT1", `start` = 117),
-      NormalizedSNV(`analysis_code` = "UseCase17b", `affected_status` = true,  `patient_id` = "PA31", `ad_alt`=30, `batch_id` = "BAT2", `start` = 217),
-      NormalizedSNV(`analysis_code` = "UseCase18a", `affected_status` = true,  `patient_id` = "PA32", `ad_alt`=30, `batch_id` = "BAT2", `start` = 118),
-      NormalizedSNV(`analysis_code` = "UseCase18b", `affected_status` = false, `patient_id` = "PA33", `ad_alt`=30, `batch_id` = "BAT2", `start` = 218),
-      NormalizedSNV(`analysis_code` = "UseCase19a", `affected_status` = true,  `patient_id` = "PA34", `ad_alt`=30, `batch_id` = "BAT1", `start` = 119),
-      NormalizedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt`=30, `batch_id` = "BAT2", `start` = 219)
+      EnrichedSNV(`analysis_code` = "UseCase01",  `affected_status` = true,  `patient_id` = "PA01", `ad_alt`=30, `batch_id` = "BAT1", `start` = 101),
+      EnrichedSNV(`analysis_code` = "UseCase02",  `affected_status` = true,  `patient_id` = "PA02", `ad_alt`=30, `batch_id` = "BAT2", `start` = 102),
+      EnrichedSNV(`analysis_code` = "UseCase03",  `affected_status` = true,  `patient_id` = "PA03", `ad_alt`=30, `batch_id` = "BAT2", `start` = 103),
+      EnrichedSNV(`analysis_code` = "UseCase03",  `affected_status` = true,  `patient_id` = "PA04", `ad_alt`=30, `batch_id` = "BAT2", `start` = 103),
+      EnrichedSNV(`analysis_code` = "UseCase04",  `affected_status` = true,  `patient_id` = "PA05", `ad_alt`=30, `batch_id` = "BAT1", `start` = 104),
+      EnrichedSNV(`analysis_code` = "UseCase04",  `affected_status` = true,  `patient_id` = "PA06", `ad_alt`=30, `batch_id` = "BAT2", `start` = 104),
+      EnrichedSNV(`analysis_code` = "UseCase05",  `affected_status` = true,  `patient_id` = "PA07", `ad_alt`=30, `batch_id` = "BAT2", `start` = 105),
+      EnrichedSNV(`analysis_code` = "UseCase05",  `affected_status` = false, `patient_id` = "PA08", `ad_alt`=30, `batch_id` = "BAT2", `start` = 105),
+      EnrichedSNV(`analysis_code` = "UseCase06",  `affected_status` = true,  `patient_id` = "PA09", `ad_alt`=30, `batch_id` = "BAT1", `start` = 106),
+      EnrichedSNV(`analysis_code` = "UseCase06",  `affected_status` = false, `patient_id` = "PA10", `ad_alt`=30, `batch_id` = "BAT2", `start` = 106),
+      EnrichedSNV(`analysis_code` = "UseCase07a", `affected_status` = true,  `patient_id` = "PA11", `ad_alt`=30, `batch_id` = "BAT2", `start` = 107),
+      EnrichedSNV(`analysis_code` = "UseCase07b", `affected_status` = true,  `patient_id` = "PA12", `ad_alt`=30, `batch_id` = "BAT2", `start` = 107),
+      EnrichedSNV(`analysis_code` = "UseCase08a", `affected_status` = true,  `patient_id` = "PA13", `ad_alt`=30, `batch_id` = "BAT1", `start` = 108),
+      EnrichedSNV(`analysis_code` = "UseCase08b", `affected_status` = true,  `patient_id` = "PA14", `ad_alt`=30, `batch_id` = "BAT2", `start` = 108),
+      EnrichedSNV(`analysis_code` = "UseCase09a", `affected_status` = true,  `patient_id` = "PA15", `ad_alt`=30, `batch_id` = "BAT2", `start` = 109),
+      EnrichedSNV(`analysis_code` = "UseCase09b", `affected_status` = false, `patient_id` = "PA16", `ad_alt`=30, `batch_id` = "BAT2", `start` = 109),
+      EnrichedSNV(`analysis_code` = "UseCase10a", `affected_status` = true,  `patient_id` = "PA17", `ad_alt`=30, `batch_id` = "BAT1", `start` = 110),
+      EnrichedSNV(`analysis_code` = "UseCase10b", `affected_status` = false, `patient_id` = "PA18", `ad_alt`=30, `batch_id` = "BAT2", `start` = 110),
+      EnrichedSNV(`analysis_code` = "UseCase11",  `affected_status` = true,  `patient_id` = "PA19", `ad_alt`=30, `batch_id` = "BAT2", `start` = 111),
+      EnrichedSNV(`analysis_code` = "UseCase11",  `affected_status` = true,  `patient_id` = "PA19", `ad_alt`=30, `batch_id` = "BAT2", `start` = 211),
+      EnrichedSNV(`analysis_code` = "UseCase12",  `affected_status` = true,  `patient_id` = "PA20", `ad_alt`=30, `batch_id` = "BAT2", `start` = 112),
+      EnrichedSNV(`analysis_code` = "UseCase12",  `affected_status` = true,  `patient_id` = "PA21", `ad_alt`=30, `batch_id` = "BAT2", `start` = 212),
+      EnrichedSNV(`analysis_code` = "UseCase13",  `affected_status` = true,  `patient_id` = "PA22", `ad_alt`=30, `batch_id` = "BAT1", `start` = 113),
+      EnrichedSNV(`analysis_code` = "UseCase13",  `affected_status` = true,  `patient_id` = "PA23", `ad_alt`=30, `batch_id` = "BAT2", `start` = 213),
+      EnrichedSNV(`analysis_code` = "UseCase14",  `affected_status` = true,  `patient_id` = "PA24", `ad_alt`=30, `batch_id` = "BAT2", `start` = 114),
+      EnrichedSNV(`analysis_code` = "UseCase14",  `affected_status` = false, `patient_id` = "PA25", `ad_alt`=30, `batch_id` = "BAT2", `start` = 214),
+      EnrichedSNV(`analysis_code` = "UseCase15",  `affected_status` = true,  `patient_id` = "PA26", `ad_alt`=30, `batch_id` = "BAT1", `start` = 115),
+      EnrichedSNV(`analysis_code` = "UseCase15",  `affected_status` = false, `patient_id` = "PA27", `ad_alt`=30, `batch_id` = "BAT2", `start` = 215),
+      EnrichedSNV(`analysis_code` = "UseCase16a", `affected_status` = true,  `patient_id` = "PA28", `ad_alt`=30, `batch_id` = "BAT2", `start` = 116),
+      EnrichedSNV(`analysis_code` = "UseCase16b", `affected_status` = true,  `patient_id` = "PA29", `ad_alt`=30, `batch_id` = "BAT2", `start` = 216),
+      EnrichedSNV(`analysis_code` = "UseCase17a", `affected_status` = true,  `patient_id` = "PA30", `ad_alt`=30, `batch_id` = "BAT1", `start` = 117),
+      EnrichedSNV(`analysis_code` = "UseCase17b", `affected_status` = true,  `patient_id` = "PA31", `ad_alt`=30, `batch_id` = "BAT2", `start` = 217),
+      EnrichedSNV(`analysis_code` = "UseCase18a", `affected_status` = true,  `patient_id` = "PA32", `ad_alt`=30, `batch_id` = "BAT2", `start` = 118),
+      EnrichedSNV(`analysis_code` = "UseCase18b", `affected_status` = false, `patient_id` = "PA33", `ad_alt`=30, `batch_id` = "BAT2", `start` = 218),
+      EnrichedSNV(`analysis_code` = "UseCase19a", `affected_status` = true,  `patient_id` = "PA34", `ad_alt`=30, `batch_id` = "BAT1", `start` = 119),
+      EnrichedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt`=30, `batch_id` = "BAT2", `start` = 219)
     ).toDF
 
     val variantDf = Seq(
@@ -512,8 +513,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
             `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1))))
     ).toDF()
 
-    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, normalized_snv.id -> occurrencesDf))
-    val result = resultDf.as[VariantEnrichedOutput].collect()
+    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf))
+    val result = resultDf.as[EnrichedVariant].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2
     val result101 = result.find(_.`start` == 101).head
@@ -592,7 +593,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
       Frequency(1, 16, 0.0625,               1, 8,  0.125,                1),
       Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714,  1))
-      
+
     // Use case #7: See table above for aggregation characteristics for this use case
     val result107 = result.find(_.`start` == 107).head
     result107.`frequencies_by_analysis` should contain allElementsOf List(
@@ -886,7 +887,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     new Variants().run(RunStep.initial_load)
 
     val resultDf = spark.table("clin.variants")
-    val result = resultDf.as[VariantEnrichedOutput].collect().head
+    val result = resultDf.as[EnrichedVariant].collect().head
+
+    resultDf.select(explode($"donors").as[DONORS]).show(false)
+    expectedDonors.toDF().show(false)
 
     result.`donors` should contain allElementsOf expectedDonors
     result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies(
@@ -896,7 +900,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     result.copy(
       `donors` = List(),
       `frequencies_by_analysis` = List()
-    ) shouldBe VariantEnrichedOutput(
+    ) shouldBe enriched.EnrichedVariant(
       `pubmed` = Some(List("29135816")),
       `donors` = List(),
       `frequencies_by_analysis` = List(),
@@ -908,12 +912,51 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     )
   }
 
+  "variantsWithDonors" should "enrich variants with donor info and exomiser scores" in {
+    val variants = Seq(
+      EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C"),
+      EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A"),
+      EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T"),
+    ).toDF()
+
+    // Remove donor and exomiser fields from variants df
+    val variantsWithoutDonors = variants.drop("donors", "exomiser_variant_score")
+
+    val occurrences = Seq(
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "11111", exomiser_variant_score = Some(0.65f), exomiser = Some(EXOMISER()), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())),
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "22222", exomiser_variant_score = Some(0.99f), exomiser = Some(EXOMISER()), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())), // should be max exomiser_variant_score
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "33333", exomiser_variant_score = None, exomiser = None, exomiser_other_moi = None),
+
+      // No exomiser data
+      EnrichedSNV(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", aliquot_id = "11111", exomiser_variant_score = None, exomiser = None, exomiser_other_moi = None),
+
+      // Only exomiser struct
+      EnrichedSNV(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", aliquot_id = "11111", exomiser_variant_score = Some(0.4f), exomiser = Some(EXOMISER()), exomiser_other_moi = None),
+    ).toDF()
+
+    val result = new Variants().variantsWithDonors(variantsWithoutDonors, occurrences)
+
+    val expected = Seq(
+      EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", exomiser_variant_score = Some(0.99f), donors = List(
+        DONORS(aliquot_id = "11111", exomiser = Some(EXOMISER()), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())),
+        DONORS(aliquot_id = "22222", exomiser = Some(EXOMISER()), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())),
+        DONORS(aliquot_id = "33333", exomiser = None, exomiser_other_moi = None),
+      )),
+      EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", exomiser_variant_score = None, donors = List(DONORS(aliquot_id = "11111", exomiser = None, exomiser_other_moi = None))),
+      EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", exomiser_variant_score = Some(0.4f), donors = List(DONORS(aliquot_id = "11111", exomiser = Some(EXOMISER()), exomiser_other_moi = None))),
+    ).toDF().selectLocus($"exomiser_variant_score", $"donors.aliquot_id", $"donors.exomiser", $"donors.exomiser_other_moi").collect()
+
+    result
+      .selectLocus($"exomiser_variant_score", $"donors.aliquot_id", $"donors.exomiser", $"donors.exomiser_other_moi")
+      .collect() should contain allElementsOf expected
+  }
+
   "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
     val variants = Seq(
-      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
-      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
-      VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
-      VariantEnrichedOutput(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes_symbol` = List(null), genes = List(null)),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes_symbol` = List(null), genes = List(null)),
     ).toDF()
 
     // Remove spliceai nested field from variants df
@@ -932,13 +975,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     val result = new Variants().joinWithSpliceAi(variantsWithoutSpliceAi, spliceai)
 
     val expected = Seq(
-      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
         GENES(`symbol` = Some("gene1"), `spliceai` = Some(SPLICEAI(`ds` = 2.0, `type` = List("AL")))),
         GENES(`symbol` = Some("gene2"), `spliceai` = Some(SPLICEAI(`ds` = 0.0, `type` = null))),
       )),
-      VariantEnrichedOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `genes` = List(GENES(`spliceai` = Some(SPLICEAI(`ds` = 1.0, `type` = List("AG", "AL")))))),
-      VariantEnrichedOutput(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `genes` = List(GENES(`spliceai` = None))),
-      VariantEnrichedOutput(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `genes` = List(GENES(`spliceai` = Some(SPLICEAI(`ds` = 1.0, `type` = List("AG", "AL")))))),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `genes` = List(GENES(`spliceai` = None))),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
     ).toDF().selectLocus($"genes.spliceai").collect()
 
     result
@@ -948,10 +991,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   "joinWithConstraint" should "enrich variants with gnomAD constraint metrics" in {
     val variants = Seq(
-      VariantEnrichedOutput(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
-      VariantEnrichedOutput(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`symbol` = Some("gene3")))),
-      VariantEnrichedOutput(`chromosome` = "3", `genes_symbol` = List(null), genes = List(null)),
-      VariantEnrichedOutput(`chromosome` = "4", `genes_symbol` = List("gene4"), genes = List(GENES(`symbol` = Some("gene4")))),
+      EnrichedVariant(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
+      EnrichedVariant(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`symbol` = Some("gene3")))),
+      EnrichedVariant(`chromosome` = "3", `genes_symbol` = List(null), genes = List(null)),
+      EnrichedVariant(`chromosome` = "4", `genes_symbol` = List("gene4"), genes = List(GENES(`symbol` = Some("gene4")))),
     ).toDF()
 
     // Remove gnomad nested field from variants df
@@ -967,13 +1010,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     val result = new Variants().joinWithConstraint(variantsWithoutConstraint, constraint)
 
     val expected = Seq(
-      VariantEnrichedOutput(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(
+      EnrichedVariant(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(
         GENES(`symbol` = Some("gene1"), `gnomad` = Some(GNOMAD(`pli` = 0.25f, `loeuf` = 1.86f))),
         GENES(`symbol` = Some("gene2"), `gnomad` = Some(GNOMAD(`pli` = 0.34f, `loeuf` = 0.54f))),
       )),
-      VariantEnrichedOutput(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`gnomad` = Some(GNOMAD(`pli` = 0.9236f, `loeuf` = 2.5f))))),
-      VariantEnrichedOutput(`chromosome` = "3", `genes_symbol` = List(null), `genes` = List(null)),
-      VariantEnrichedOutput(`chromosome` = "4", `genes_symbol` = List("gene4"), `genes` = List(GENES(`gnomad` = None))),
+      EnrichedVariant(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`gnomad` = Some(GNOMAD(`pli` = 0.9236f, `loeuf` = 2.5f))))),
+      EnrichedVariant(`chromosome` = "3", `genes_symbol` = List(null), `genes` = List(null)),
+      EnrichedVariant(`chromosome` = "4", `genes_symbol` = List("gene4"), `genes` = List(GENES(`gnomad` = None))),
     ).toDF().select("chromosome", "genes.gnomad").collect()
 
     result

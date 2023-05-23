@@ -5,6 +5,7 @@
 package bio.ferlab.clin.model
 
 import bio.ferlab.clin.etl.varsome._
+import bio.ferlab.clin.model.enriched.{CLINVAR, DONORS, FREQUENCIES, GENES, VARSOME}
 
 import java.sql.Date
 import java.time.LocalDate
@@ -38,7 +39,8 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `omim`: List[String] = List("618285"),
                               `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Pubmed"),
                               `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
-                              `varsome`: Option[VARSOME] = Some(VARSOME()))
+                              `varsome`: Option[VARSOME] = Some(VARSOME()),
+                              `exomiser_variant_score`: Option[Float] = Some(0.6581f))
 
 case class CONSEQUENCES(`ensembl_transcript_id`: String = "ENST00000335137",
                         `ensembl_gene_id`: String = "ENSG00000186092",
