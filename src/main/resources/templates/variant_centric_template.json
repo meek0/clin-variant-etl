@@ -472,22 +472,28 @@
             "exomiser_other_moi": {
               "properties": {
                 "rank": {
-                  "type": "integer"
+                  "type": "integer",
+                  "index": false
                 },
                 "gene_symbol": {
-                  "type": "keyword"
+                  "type": "keyword",
+                  "index": false
                 },
                 "gene_combined_score": {
-                  "type": "float"
+                  "type": "float",
+                  "index": false
                 },
                 "moi": {
-                  "type": "keyword"
+                  "type": "keyword",
+                  "index": false
                 },
                 "acmg_classification": {
-                  "type": "keyword"
+                  "type": "keyword",
+                  "index": false
                 },
                 "acmg_evidence": {
-                  "type": "keyword"
+                  "type": "keyword",
+                  "index": false
                 }
               }
             }
