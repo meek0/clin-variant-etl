@@ -470,31 +470,24 @@
               }
             },
             "exomiser_other_moi": {
-              "index": false,
               "properties": {
                 "rank": {
-                  "type": "integer",
-                  "index": false
+                  "type": "integer"
                 },
                 "gene_symbol": {
-                  "type": "keyword",
-                  "index": false
+                  "type": "keyword"
                 },
                 "gene_combined_score": {
-                  "type": "float",
-                  "index": false
+                  "type": "float"
                 },
                 "moi": {
-                  "type": "keyword",
-                  "index": false
+                  "type": "keyword"
                 },
                 "acmg_classification": {
-                  "type": "keyword",
-                  "index": false
+                  "type": "keyword"
                 },
                 "acmg_evidence": {
-                  "type": "keyword",
-                  "index": false
+                  "type": "keyword"
                 }
               }
             }
