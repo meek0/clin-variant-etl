@@ -1,16 +1,13 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.normalized.SNV._
-import bio.ferlab.clin.etl.utils.FrequencyUtils.includeFilter
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.ParentalOrigin.{FTH, MTH}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
-import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession, functions}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
@@ -68,7 +65,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .filter(col("has_alt"))
       .persist()
 
-    val hcFilter = col("is_rare") and col("ad_alt") > 2 and col("gq") >= 20
+    val hcFilter = col("is_rare")
     addRareVariantColumn(occurrences, data(rare_variants.id))
         .withCompoundHeterozygous(additionalFilter = Some(hcFilter))
         .drop("symbols", "is_rare")
@@ -81,6 +78,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 }
 
 object SNV {
+  val includeFilter: Column = (col("has_alt") and col("ad_alt") >= 3) or col("ad_ref") >= 3
 
   def getSNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._

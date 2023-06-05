@@ -7,9 +7,7 @@ object FrequencyUtils {
 
   def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
 
-  val includeFilter: Column = col("ad_alt") >= 3
-
-  val frequencyFilter: Column = array_contains(col("filters"), "PASS") && includeFilter && col("gq") >= 20
+  val frequencyFilter: Column = array_contains(col("filters"), "PASS") && col("ad_alt") >= 3 && col("gq") >= 20
 
   /**
    * allele count
