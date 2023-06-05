@@ -117,7 +117,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     raw_variant_calling.id -> Seq(VCF_SNV_Input(
       `genotypes` = List(
         SNV_GENOTYPES(), //proband
-        SNV_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0)), //father
+        SNV_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0), `alleleDepths` = List(30, 0)), //father
         SNV_GENOTYPES(`sampleId` = "33333")) //mother
     )).toDF(),
     patient.id -> patientDf,
