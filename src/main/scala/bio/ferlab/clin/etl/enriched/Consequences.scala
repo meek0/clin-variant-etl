@@ -84,19 +84,20 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
         .selectLocus(
           $"ensembl_transcript_id" as "ensembl_feature_id",
           struct(
-            $"SIFT_converted_rankscore" as "sift_converted_rank_score",
+            $"SIFT_score" as "sift_score",
             $"SIFT_pred" as "sift_pred",
-            $"Polyphen2_HVAR_rankscore" as "polyphen2_hvar_score",
+            $"Polyphen2_HVAR_score" as "polyphen2_hvar_score",
             $"Polyphen2_HVAR_pred" as "polyphen2_hvar_pred",
-            $"FATHMM_converted_rankscore" as "fathmm_converted_rankscore",
+            $"FATHMM_score" as "fathmm_score",
             $"FATHMM_pred" as "fathmm_pred",
-            $"CADD_raw_rankscore" as "cadd_score",
+            $"CADD_raw" as "cadd_score",
             $"CADD_phred" as "cadd_phred",
-            $"DANN_rankscore" as "dann_score",
-            $"REVEL_rankscore" as "revel_rankscore",
-            $"LRT_converted_rankscore" as "lrt_converted_rankscore",
+            $"DANN_score" as "dann_score",
+            $"REVEL_rankscore" as "revel_score",
+            $"LRT_converted_rankscore" as "lrt_score", // TODO - add in dbsfp table from file
+            $"phyloP100way_vertebrate" as "phyloP100way_vertebrate",
             $"LRT_pred" as "lrt_pred") as "predictions",
-          struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_rankscore") as "conservations",
+          struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_score") as "conservations",
         )
 
     csq

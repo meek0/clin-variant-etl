@@ -3440,21 +3440,22 @@
     "impact_score": 3,
     "consequence": ["missense"],
     "predictions": {
-      "sift_converted_rank_score": 0.53172,
+      "sift_score": 0.53172,
       "sift_pred": "D",
       "polyphen2_hvar_score": 0.59116,
       "polyphen2_hvar_pred": "P",
-      "FATHMM_converted_rankscore": 0.09635,
+      "FATHMM_score": 0.09635,
       "fathmm_pred": "T",
       "cadd_score": 0.21382,
       "cadd_phred": 27.3,
       "dann_score": 0.64374,
-      "revel_rankscore": 0.44471,
-      "lrt_converted_rankscore": 0.34245,
-      "lrt_pred": "N"
+      "revel_score": 0.44471,
+      "lrt_converted_score": 0.34245,
+      "lrt_pred": "N",
+      "phyloP100way_vertebrate": 0.156
     },
     "conservations": {
-      "phylo_p17way_primate_rankscore": 0.55757
+      "phylo_p17way_primate_score": 0.55757
     },
     "tags": ["Ensembl Canonical"],
     "refseq": [{
