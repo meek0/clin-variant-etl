@@ -67,8 +67,8 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 
     val hcFilter = col("is_rare")
     addRareVariantColumn(occurrences, data(rare_variants.id))
-        .withCompoundHeterozygous(additionalFilter = Some(hcFilter))
-        .drop("symbols", "is_rare")
+      .withCompoundHeterozygous(additionalFilter = Some(hcFilter))
+      .drop("symbols", "is_rare")
 
   }
 
@@ -78,7 +78,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 }
 
 object SNV {
-  val includeFilter: Column = (col("has_alt") and col("ad_alt") >= 3) or col("ad_ref") >= 3
+  val includeFilter: Column = (col("has_alt") and col("ad_alt") >= 3) or (not(col("has_alt")) and col("ad_ref") >= 3)
 
   def getSNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
