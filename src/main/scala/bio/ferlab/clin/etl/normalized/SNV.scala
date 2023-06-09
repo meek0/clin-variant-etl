@@ -78,7 +78,19 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 }
 
 object SNV {
-  val includeFilter: Column = (col("has_alt") and col("ad_alt") >= 3) or (not(col("has_alt")) and col("ad_ref") >= 3)
+  /**
+   * This column is used to adjust the genotype of a variant. It considers the following rules:
+   * - If the variant is HOM or HET and the AD_ALT is less than 3, then the genotype is set to -1/-1
+   * - If the variant is HEM and the AD_ALT is less than 3, then the genotype is set to -1
+   * - If the variant is WT and the AD_REF is less than 3 and the number of alleles is 1, then the genotype is set to -1
+   * - If the variant is WT and the AD_REF is less than 3 and the number of alleles is > 1, then the genotype is set to -1/-1
+   * - Otherwise, the genotype is set to the original value
+   */
+  private val adjustedGenotype: Column = when(col("zygosity").isin("HOM", "HET") and col("ad_alt") < 3, array(lit(-1), lit(-1)))
+    .when(col("zygosity") === "HEM" and col("ad_alt") < 3, array(lit(-1)))
+    .when(col("zygosity") === "WT" and col("ad_ref") < 3 and size(col("calls")) === 1, array(lit(-1)))
+    .when(col("zygosity") === "WT" and col("ad_ref") < 3, array(lit(-1), lit(-1)))
+    .otherwise(col("calls"))
 
   def getSNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -116,8 +128,10 @@ object SNV {
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
       .withColumn("variant_type", lit("germline"))
+      .withColumn("zygosity", zygosity(col("calls"))) // we temporary calculate zygosities for adjusting calls column
+      .withColumn("calls", adjustedGenotype)
+      .drop("zygosity") // we drop zygosity, it will be recalculated later with adjusted calls column
       .filter($"alternate" =!= "*")
-      .filter(includeFilter)
       .drop("annotation")
   }
 
