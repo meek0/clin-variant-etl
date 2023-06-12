@@ -111,7 +111,6 @@ object SNV {
         $"genotype.conditionalQuality" as "gq",
         $"genotype.calls" as "calls",
         $"INFO_QD" as "qd",
-        array_contains($"genotype.calls", 1) as "has_alt",
         is_multi_allelic,
         old_multi_allelic,
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
@@ -130,6 +129,7 @@ object SNV {
       .withColumn("variant_type", lit("germline"))
       .withColumn("zygosity", zygosity(col("calls"))) // we temporary calculate zygosities for adjusting calls column
       .withColumn("calls", adjustedGenotype)
+      .withColumn("has_alt", array_contains($"calls", 1))
       .drop("zygosity") // we drop zygosity, it will be recalculated later with adjusted calls column
       .filter($"alternate" =!= "*")
       .drop("annotation")
