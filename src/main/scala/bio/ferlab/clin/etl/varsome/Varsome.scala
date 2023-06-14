@@ -2,12 +2,12 @@ package bio.ferlab.clin.etl.varsome
 
 import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
 import bio.ferlab.datalake.commons.config.RunStep.reset
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,Coalesce}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import bio.ferlab.datalake.spark3.SparkApp
-import bio.ferlab.datalake.spark3.utils.Coalesce
+
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 

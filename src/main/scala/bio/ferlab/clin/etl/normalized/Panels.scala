@@ -1,9 +1,8 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
-import bio.ferlab.datalake.spark3.utils.FixedRepartition
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 

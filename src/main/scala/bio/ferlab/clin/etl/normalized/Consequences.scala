@@ -1,13 +1,12 @@
 package bio.ferlab.clin.etl.normalized
 
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
-import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -123,7 +122,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
 
 
   override def publish()(implicit spark: SparkSession): Unit = {
-    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq(col("start"))))
+    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq("start")))
     vacuum(mainDestination, 2)
   }
 

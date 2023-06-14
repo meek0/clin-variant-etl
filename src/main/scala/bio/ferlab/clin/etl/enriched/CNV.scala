@@ -1,11 +1,10 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.Region
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
@@ -94,7 +93,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
       .drop("refseq_exons.start", "refseq_exons.end", "refseq_exons.chromosome")
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n=Some(1), sortColumns = Seq(col("start")))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n=Some(1), sortColumns = Seq("start"))
 
 
 }

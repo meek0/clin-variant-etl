@@ -90,7 +90,7 @@
             },
             "conservations": {
               "properties": {
-                "phylo_p17way_primate_rankscore": {
+                "phylo_p17way_primate_score": {
                   "type": "long"
                 }
               }
@@ -147,9 +147,6 @@
             },
             "predictions": {
               "properties": {
-                "FATHMM_converted_rankscore": {
-                  "type": "float"
-                },
                 "cadd_score": {
                   "type": "float"
                 },
@@ -159,13 +156,13 @@
                 "dann_score": {
                   "type": "float"
                 },
-                "fathmm_converted_rankscore": {
+                "fathmm_score": {
                   "type": "float"
                 },
                 "fathmm_pred": {
                   "type": "keyword"
                 },
-                "lrt_converted_rankscore": {
+                "lrt_score": {
                   "type": "float"
                 },
                 "lrt_pred": {
@@ -177,14 +174,17 @@
                 "polyphen2_hvar_score": {
                   "type": "float"
                 },
-                "revel_rankscore": {
+                "revel_score": {
                   "type": "float"
                 },
-                "sift_converted_rank_score": {
+                "sift_score": {
                   "type": "float"
                 },
                 "sift_pred": {
                   "type": "keyword"
+                },
+                "phyloP100way_vertebrate":{
+                  "type": "float"
                 }
               }
             },

@@ -3,7 +3,7 @@ package bio.ferlab.clin.testutils
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, SimpleConfiguration, StorageConf}
 import bio.ferlab.datalake.commons.file.FileSystemType.{LOCAL, S3}
 import pureconfig.generic.auto._
-import pureconfig.module.enum._
+
 
 trait WithTestConfig {
   lazy val initConf: SimpleConfiguration = ConfigurationLoader.loadFromResources[SimpleConfiguration]("config/test.conf")
