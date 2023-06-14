@@ -1,12 +1,12 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
-import bio.ferlab.datalake.spark3.utils.RepartitionByColumns
+
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -71,7 +71,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
   }
 
   override def publish()(implicit spark: SparkSession): Unit = {
-    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(1), Seq(col("start"))))
+    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(1), Seq("start")))
     vacuum(mainDestination, 2)
   }
 

@@ -5,7 +5,7 @@ import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, OverWrite
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
 import bio.ferlab.datalake.spark3.publictables.PublicDatasets
-
+import pureconfig.generic.auto._
 object EtlConfiguration extends App {
 
   val clin_datalake = "clin_datalake"
