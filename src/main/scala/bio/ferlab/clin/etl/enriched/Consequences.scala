@@ -93,8 +93,8 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
             $"CADD_raw" as "cadd_score",
             $"CADD_phred" as "cadd_phred",
             $"DANN_score" as "dann_score",
-            $"REVEL_rankscore" as "revel_score",
-            $"LRT_converted_rankscore" as "lrt_score", // TODO - add in dbsfp table from file
+            $"REVEL_score" as "revel_score",
+            $"LRT_score" as "lrt_score",
             $"phyloP100way_vertebrate" as "phyloP100way_vertebrate",
             $"LRT_pred" as "lrt_pred") as "predictions",
           struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_score") as "conservations",
