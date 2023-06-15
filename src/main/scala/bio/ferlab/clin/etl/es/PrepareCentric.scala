@@ -10,8 +10,7 @@ import java.time.LocalDateTime
 abstract class PrepareCentric(releaseId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
   override def loadSingle(data: DataFrame,
                     lastRunDateTime: LocalDateTime = minDateTime,
-                    currentRunDateTime: LocalDateTime = LocalDateTime.now(),
-                    repartition: DataFrame => DataFrame = defaultRepartition)(implicit spark: SparkSession): DataFrame = {
+                    currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     loadForReleaseId(data, mainDestination, releaseId)
   }
 }
