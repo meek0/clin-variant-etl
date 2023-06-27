@@ -4,6 +4,7 @@
  */
 package bio.ferlab.clin.model
 
+import bio.ferlab.clin.etl.model.raw.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.varsome._
 import bio.ferlab.clin.model.enriched.{CLINVAR, DONORS, FREQUENCIES, GENES, VARSOME}
 

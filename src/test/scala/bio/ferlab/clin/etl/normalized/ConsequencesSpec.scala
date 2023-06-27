@@ -1,5 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw
+import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, VCF_SNV_Input}
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
@@ -29,11 +31,11 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
 
   val data_with_duplicates = Map(
     raw_variant_calling.id -> Seq(
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "bar"))),  // not duplicated
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "foo"))),  // duplicated with bellow
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "foo"))),
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = null))), // duplicated with bellow
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = null))),
+      VCF_SNV_Input(`INFO_CSQ` = List(INFO_CSQ(`Feature` = "bar"))),  // not duplicated
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = "foo"))),  // duplicated with bellow
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = "foo"))),
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = null))), // duplicated with bellow
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = null))),
     ).toDF()
   )
 

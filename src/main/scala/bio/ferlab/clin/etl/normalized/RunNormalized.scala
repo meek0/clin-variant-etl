@@ -16,11 +16,13 @@ object RunNormalized extends SparkApp {
     case "variants" => new Variants(batchId).run(steps)
     case "consequences" => new Consequences(batchId).run(steps)
     case "snv" => new SNV(batchId).run(steps)
+    case "snv_somatic" => new SNVSomatic(batchId).run(steps)
     case "cnv" => new CNV(batchId).run(steps)
     case "panels" => new Panels().run(steps)
     case "exomiser" => new Exomiser(batchId).run(steps)
     case "all" =>
       new SNV(batchId).run(steps)
+      new SNVSomatic(batchId).run(steps)
       new CNV(batchId).run(steps)
       new Variants(batchId).run(steps)
       new Consequences(batchId).run(steps)

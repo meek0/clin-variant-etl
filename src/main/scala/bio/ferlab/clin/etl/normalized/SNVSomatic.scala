@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
-import bio.ferlab.clin.etl.normalized.SNV._
+import bio.ferlab.clin.etl.model.raw.VCF_SNV_Somatic_Input
+import bio.ferlab.clin.etl.normalized.SNVSomatic.{addRareVariantColumn, getSNV}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -11,10 +11,10 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences[VCF_SNV_Input](batchId) {
+class SNVSomatic(batchId: String)(implicit configuration: Configuration) extends Occurrences[VCF_SNV_Somatic_Input](batchId) {
 
-  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv")
-  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic")
+  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
@@ -32,7 +32,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(
         Seq(
-          col("gq"), col("dp"), col("qd"), col("filters"),
+          col("sq"), col("dp"), col("qd"), col("filters"),
           col("ad_ref"), col("ad_alt"), col("ad_total"), col("ad_ratio"),
           col("calls"), col("affected_status")))
       )
@@ -77,7 +77,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
-object SNV {
+object SNVSomatic {
   /**
    * This column is used to adjust the genotype of a variant. It considers the following rules:
    * - If the variant is HOM or HET and the AD_ALT is less than 3, then the genotype is set to -1/-1
@@ -108,9 +108,8 @@ object SNV {
         $"genotype.sampleId" as "aliquot_id",
         $"genotype.alleleDepths" as "ad",
         $"genotype.depth" as "dp",
-        $"genotype.conditionalQuality" as "gq",
+        $"genotype.SQ" as "sq",
         $"genotype.calls" as "calls",
-        $"INFO_QD" as "qd",
         is_multi_allelic,
         old_multi_allelic,
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
