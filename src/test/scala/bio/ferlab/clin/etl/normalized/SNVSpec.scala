@@ -134,7 +134,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   it should "return empty Germline DataFrame if VCF is missing" in {
     spark.sparkContext.setLogLevel("WARN")
-    val result = new SNV("batchId").loadOptionalVCFDataFrame()(spark)
+    val result = loadOptionalVCFDataFrame[VCF_SNV_Input]("path")
     // empty and schema contains at least one column about Germline
     result.count() shouldBe 0
     result.columns.contains("INFO_AC") shouldBe true

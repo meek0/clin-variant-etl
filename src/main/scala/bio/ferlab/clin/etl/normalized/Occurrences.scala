@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
@@ -27,7 +28,7 @@ abstract class Occurrences[T <: Product : ClassTag : TypeTag](batchId: String)(i
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> loadOptionalVCFDataFrame(),
+      raw_variant_calling.id -> loadOptionalVCFDataFrame[T](raw_variant_calling.location.replace("{{BATCH_ID}}", batchId)),
       patient.id -> patient.read,
       task.id -> task.read,
       service_request.id -> service_request.read,
@@ -36,20 +37,6 @@ abstract class Occurrences[T <: Product : ClassTag : TypeTag](batchId: String)(i
       observation.id -> observation.read,
       specimen.id -> specimen.read
     )
-  }
-
-  def loadOptionalVCFDataFrame()(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-    val location = raw_variant_calling.location.replace("{{BATCH_ID}}", batchId)
-    try {
-      vcf(location, referenceGenomePath = None).where(col("contigName").isin(validContigNames: _*))
-    } catch {
-      case e: AnalysisException if e.message.contains("Path does not exist") => {
-          log.warn(s"No VCF files found at location: $location returning empty DataFrame of type: ${typeOf[T]}")
-          Seq.empty[T].toDF
-      }
-      case e: Exception => throw e
-    }
   }
 
   def getClinicalRelation(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {

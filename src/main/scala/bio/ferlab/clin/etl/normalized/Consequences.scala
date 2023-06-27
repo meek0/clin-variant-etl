@@ -1,13 +1,13 @@
 package bio.ferlab.clin.etl.normalized
 
-
+import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{AnalysisException, Column, DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -20,9 +20,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id ->
-        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-          .where(col("contigName").isin(validContigNames: _*))
+      raw_variant_calling.id -> loadOptionalVCFDataFrame[VCF_SNV_Input](raw_variant_calling.location.replace("{{BATCH_ID}}", batchId)),
     )
   }
 

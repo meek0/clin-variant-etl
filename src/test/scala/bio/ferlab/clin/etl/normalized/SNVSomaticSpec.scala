@@ -133,7 +133,7 @@ class SNVSomaticSpec extends AnyFlatSpec with WithSparkSession with WithTestConf
 
   it should "return empty Germline DataFrame if VCF is missing" in {
     spark.sparkContext.setLogLevel("WARN")
-    val result = new SNVSomatic("batchId").loadOptionalVCFDataFrame()(spark)
+    val result = loadOptionalVCFDataFrame[VCF_SNV_Somatic_Input]("path")
     // empty and schema contains at least one column about Extum
     result.count() shouldBe 0
     result.columns.contains("INFO_FractionInformativeReads") shouldBe true
@@ -141,7 +141,7 @@ class SNVSomaticSpec extends AnyFlatSpec with WithSparkSession with WithTestConf
 
   "occurrences transform" should "transform data in expected format" in {
     val results = new SNVSomatic("BAT1").transform(data)
-    val result = results("normalized_snv").as[NormalizedSNVSomatic].collect()
+    val result = results("normalized_snv_somatic").as[NormalizedSNVSomatic].collect()
 
     result.length shouldBe 2
     val probandSnv = result.find(_.patient_id == "PA0001")

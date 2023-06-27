@@ -32,7 +32,7 @@ class SNVSomatic(batchId: String)(implicit configuration: Configuration) extends
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(
         Seq(
-          col("sq"), col("dp"), col("qd"), col("filters"),
+          col("sq"), col("dp"), col("filters"),
           col("ad_ref"), col("ad_alt"), col("ad_total"), col("ad_ratio"),
           col("calls"), col("affected_status")))
       )
@@ -40,17 +40,17 @@ class SNVSomatic(batchId: String)(implicit configuration: Configuration) extends
       .withColumn("father_calls", fatherCalls)
       .withColumn("mother_affected_status", motherAffectedStatus)
       .withColumn("father_affected_status", fatherAffectedStatus)
-      .withColumn("mother_gq", motherGQ)
+      //.withColumn("mother_gq", motherGQ)
       .withColumn("mother_dp", motherDP)
-      .withColumn("mother_qd", motherQD)
+      //.withColumn("mother_qd", motherQD)
       .withColumn("mother_filters", motherFilters)
       .withColumn("mother_ad_ref", motherADRef)
       .withColumn("mother_ad_alt", motherADAlt)
       .withColumn("mother_ad_total", motherADTotal)
       .withColumn("mother_ad_ratio", motherADRatio)
-      .withColumn("father_gq", fatherGQ)
+      //.withColumn("father_gq", fatherGQ)
       .withColumn("father_dp", fatherDP)
-      .withColumn("father_qd", fatherQD)
+      //.withColumn("father_qd", fatherQD)
       .withColumn("father_filters", fatherFilters)
       .withColumn("father_ad_ref", fatherADRef)
       .withColumn("father_ad_alt", fatherADAlt)
