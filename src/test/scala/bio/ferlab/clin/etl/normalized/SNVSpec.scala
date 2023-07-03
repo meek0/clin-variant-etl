@@ -8,6 +8,7 @@ import bio.ferlab.datalake.commons.config.DatasetConf
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.sql.Date
 import java.time.LocalDate
@@ -15,6 +16,8 @@ import java.time.LocalDate
 class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
 
   import spark.implicits._
+
+  implicit val log: Logger = LoggerFactory.getLogger(getClass.getCanonicalName)
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val patient: DatasetConf = conf.getDataset("normalized_patient")

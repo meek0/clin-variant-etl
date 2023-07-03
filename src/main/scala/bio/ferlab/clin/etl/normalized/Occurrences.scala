@@ -1,21 +1,22 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{AnalysisException, DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.slf4j.Logger
 
 import java.time.LocalDateTime
-import scala.reflect.runtime.universe.{TypeTag, typeOf}
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.TypeTag
 
 abstract class Occurrences[T <: Product : ClassTag : TypeTag](batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
   def raw_variant_calling: DatasetConf
+
+  implicit var logger: Logger = log
 
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val task: DatasetConf = conf.getDataset("normalized_task")

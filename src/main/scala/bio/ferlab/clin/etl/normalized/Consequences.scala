@@ -8,11 +8,14 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{AnalysisException, Column, DataFrame, SparkSession}
+import org.slf4j.Logger
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 class Consequences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+
+  implicit var logger: Logger = log
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")

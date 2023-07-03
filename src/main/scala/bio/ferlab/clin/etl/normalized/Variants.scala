@@ -10,10 +10,13 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{AnalysisException, Column, DataFrame, SparkSession, functions}
+import org.slf4j.Logger
 
 import java.time.LocalDateTime
 
 class Variants(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+
+  implicit var logger: Logger = log
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
