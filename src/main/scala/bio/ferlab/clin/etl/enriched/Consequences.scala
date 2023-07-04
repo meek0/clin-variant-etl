@@ -97,7 +97,7 @@ class Consequences()(implicit configuration: Configuration) extends ETLSingleDes
             $"LRT_score" as "lrt_score",
             $"phyloP100way_vertebrate" as "phyloP100way_vertebrate",
             $"LRT_pred" as "lrt_pred") as "predictions",
-          struct($"phyloP17way_primate_rankscore" as "phylo_p17way_primate_score") as "conservations",
+          struct($"phyloP17way_primate" as "phylo_p17way_primate_score") as "conservations",
         )
 
     csq
