@@ -4,6 +4,7 @@ import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
@@ -12,7 +13,7 @@ import java.time.LocalDateTime
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
-abstract class Occurrences[T <: Product : ClassTag : TypeTag](batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+abstract class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
   def raw_variant_calling: DatasetConf
 
@@ -29,7 +30,7 @@ abstract class Occurrences[T <: Product : ClassTag : TypeTag](batchId: String)(i
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> loadOptionalVCFDataFrame[T](raw_variant_calling.location.replace("{{BATCH_ID}}", batchId)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, true),
       patient.id -> patient.read,
       task.id -> task.read,
       service_request.id -> service_request.read,

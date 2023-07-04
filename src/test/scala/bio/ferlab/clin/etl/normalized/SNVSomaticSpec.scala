@@ -16,8 +16,6 @@ class SNVSomaticSpec extends AnyFlatSpec with WithSparkSession with WithTestConf
 
   import spark.implicits._
 
-  implicit val log: Logger = LoggerFactory.getLogger(getClass.getCanonicalName)
-
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
@@ -133,14 +131,6 @@ class SNVSomaticSpec extends AnyFlatSpec with WithSparkSession with WithTestConf
     family.id -> familyDf,
     rare_variants.id -> Seq(RareVariant()).toDF()
   )
-
-  it should "return empty Germline DataFrame if VCF is missing" in {
-    spark.sparkContext.setLogLevel("WARN")
-    val result = loadOptionalVCFDataFrame[VCF_SNV_Somatic_Input]("path")
-    // empty and schema contains at least one column about Extum
-    result.count() shouldBe 0
-    result.columns.contains("INFO_FractionInformativeReads") shouldBe true
-  }
 
   "occurrences transform" should "transform data in expected format" in {
     val results = new SNVSomatic("BAT1").transform(data)

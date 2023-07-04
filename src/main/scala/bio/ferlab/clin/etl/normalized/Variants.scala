@@ -28,7 +28,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> loadOptionalVCFDataFrame[VCF_SNV_Input](raw_variant_calling.location.replace("{{BATCH_ID}}", batchId)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, true),
       clinical_impression.id -> clinical_impression.read,
       observation.id -> observation.read,
       task.id -> task.read,
@@ -40,7 +40,12 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
-    val variants = getVariants(data(raw_variant_calling.id))
+    import spark.implicits._
+
+    var inputVCF = data(raw_variant_calling.id)
+    if (inputVCF.isEmpty) inputVCF = Seq.empty[VCF_SNV_Input].toDF
+
+    val variants = getVariants(inputVCF)
     val clinicalInfos = getClinicalInfo(data)
     val variantsWithClinicalInfo = getVariantsWithClinicalInfo(data(raw_variant_calling.id), clinicalInfos)
     getVariantsWithFrequencies(variantsWithClinicalInfo)

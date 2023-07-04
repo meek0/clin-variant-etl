@@ -23,7 +23,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> loadOptionalVCFDataFrame[VCF_SNV_Input](raw_variant_calling.location.replace("{{BATCH_ID}}", batchId)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, true),
     )
   }
 
@@ -31,7 +31,11 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val df = data(raw_variant_calling.id)
+
+    var inputVCF = data(raw_variant_calling.id)
+    if (inputVCF.isEmpty) inputVCF = Seq.empty[VCF_SNV_Input].toDF
+
+    val df = inputVCF
       .select(
         chromosome,
         start,

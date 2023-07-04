@@ -1,14 +1,12 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl
 import bio.ferlab.clin.etl.model.raw.{SNV_GENOTYPES, VCF_SNV_Input}
-import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.{RareVariant, _}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.slf4j.{Logger, LoggerFactory}
 
 import java.sql.Date
 import java.time.LocalDate
@@ -16,8 +14,6 @@ import java.time.LocalDate
 class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
 
   import spark.implicits._
-
-  implicit val log: Logger = LoggerFactory.getLogger(getClass.getCanonicalName)
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
@@ -134,14 +130,6 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     family.id -> familyDf,
     rare_variants.id -> Seq(RareVariant()).toDF()
   )
-
-  it should "return empty Germline DataFrame if VCF is missing" in {
-    spark.sparkContext.setLogLevel("WARN")
-    val result = loadOptionalVCFDataFrame[VCF_SNV_Input]("path")
-    // empty and schema contains at least one column about Germline
-    result.count() shouldBe 0
-    result.columns.contains("INFO_AC") shouldBe true
-  }
 
   "occurrences transform" should "transform data in expected format" in {
     val results = new SNV("BAT1").transform(data)

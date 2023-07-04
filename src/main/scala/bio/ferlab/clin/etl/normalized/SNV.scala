@@ -11,7 +11,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences[VCF_SNV_Input](batchId) {
+class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_snv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
@@ -25,9 +25,15 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minDateTime,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+
+    import spark.implicits._
+
+    var inputVCF = data(raw_variant_calling.id)
+    if (inputVCF.isEmpty) inputVCF = Seq.empty[VCF_SNV_Input].toDF
+
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
-    val occurrences = getSNV(data(raw_variant_calling.id), batchId)
+    val occurrences = getSNV(inputVCF, batchId)
       .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(
