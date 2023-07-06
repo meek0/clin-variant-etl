@@ -12,11 +12,11 @@ import org.slf4j.{Logger, LoggerFactory}
 import java.sql.Date
 import java.time.LocalDate
 
-class SNVSomaticSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
+class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
 
   import spark.implicits._
 
-  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val task: DatasetConf = conf.getDataset("normalized_task")
@@ -133,8 +133,8 @@ class SNVSomaticSpec extends AnyFlatSpec with WithSparkSession with WithTestConf
   )
 
   "occurrences transform" should "transform data in expected format" in {
-    val results = new SNVSomatic("BAT1").transform(data)
-    val result = results("normalized_snv_somatic").as[NormalizedSNVSomatic].collect()
+    val results = new SNVSomaticTumorOnly("BAT1").transform(data)
+    val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomatic].collect()
 
     result.length shouldBe 2
     val probandSnv = result.find(_.patient_id == "PA0001")

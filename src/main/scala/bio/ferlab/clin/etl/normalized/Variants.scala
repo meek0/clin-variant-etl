@@ -42,8 +42,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
     import spark.implicits._
 
-    var inputVCF = data(raw_variant_calling.id)
-    if (inputVCF.isEmpty) inputVCF = Seq.empty[VCF_SNV_Input].toDF
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Input].toDF else data(raw_variant_calling.id)
 
     val variants = getVariants(inputVCF)
     val clinicalInfos = getClinicalInfo(data)

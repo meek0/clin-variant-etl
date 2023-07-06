@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw.VCF_SNV_Somatic_Input
-import bio.ferlab.clin.etl.normalized.SNVSomatic.{addRareVariantColumn, getSNV}
+import bio.ferlab.clin.etl.normalized.SNVSomaticTumorOnly.{addRareVariantColumn, getSNV}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -11,10 +11,10 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class SNVSomatic(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
+class SNVSomaticTumorOnly(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
-  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic")
-  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic_tumor_only")
+  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
@@ -28,8 +28,7 @@ class SNVSomatic(batchId: String)(implicit configuration: Configuration) extends
 
     import spark.implicits._
 
-    var inputVCF = data(raw_variant_calling.id)
-    if (inputVCF.isEmpty) inputVCF = Seq.empty[VCF_SNV_Somatic_Input].toDF
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Somatic_Input].toDF else data(raw_variant_calling.id)
 
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
@@ -83,7 +82,7 @@ class SNVSomatic(batchId: String)(implicit configuration: Configuration) extends
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
-object SNVSomatic {
+object SNVSomaticTumorOnly {
   /**
    * This column is used to adjust the genotype of a variant. It considers the following rules:
    * - If the variant is HOM or HET and the AD_ALT is less than 3, then the genotype is set to -1/-1

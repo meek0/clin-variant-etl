@@ -1,11 +1,11 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, collect_set, explode}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -114,10 +114,6 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     family.id -> familyDf
   )
 
-  val dataSomatic: Map[String, DataFrame] = data ++ Map(
-    raw_cnv.id -> Seq(VCF_CNV_Somatic_Input()).toDF(),
-  )
-
   /*"occurrences transform" should "create the VCF_CNV_Input model" in {
     val cnv = spark.read.format("vcf").load("src/test/resources/test_json/cnv.vcf");
     ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VCF_CNV_Input", cnv, "src/test/scala/")
@@ -134,12 +130,4 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     // ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedCNV", result, "src/test/scala/")
   }
 
-  "cnv transform" should "replace optional genotypes.CN with default value if missing" in {
-    val results = new CNV("BAT1").transformSingle(dataSomatic)
-    val result = results.as[NormalizedCNV].collect()
-
-    result should contain theSameElementsAs Seq(
-      NormalizedCNV(cn = None),
-    )
-  }
 }

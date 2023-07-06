@@ -28,8 +28,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 
     import spark.implicits._
 
-    var inputVCF = data(raw_variant_calling.id)
-    if (inputVCF.isEmpty) inputVCF = Seq.empty[VCF_SNV_Input].toDF
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Input].toDF else data(raw_variant_calling.id)
 
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
