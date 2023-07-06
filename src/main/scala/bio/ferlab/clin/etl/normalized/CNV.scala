@@ -1,12 +1,15 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.normalized.CNV.getCNV
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import org.apache.parquet.format.IntType
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.types.IntegerType
 
 import java.time.LocalDateTime
+import scala.util.Try
 
 class CNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
@@ -33,9 +36,12 @@ object CNV {
 
   def getCNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val df =
-      inputDf
-        .withColumn("genotype", explode(col("genotypes")))
+
+    val inputDfExploded = inputDf.withColumn("genotype", explode(col("genotypes")))
+    val inputDfWithOptionalCols = withOptionalCN(inputDfExploded)
+
+    val df = {
+      inputDfWithOptionalCols
         .select(
           chromosome,
           start,
@@ -47,7 +53,7 @@ object CNV {
           $"genotype.BC" as "bc",
           $"genotype.SM" as "sm",
           $"genotype.calls" as "calls",
-          $"genotype.CN" as "cn",
+          $"optional_CN" as "cn",
           $"genotype.pe" as "pe",
           is_multi_allelic,
           old_multi_allelic,
@@ -61,6 +67,14 @@ object CNV {
           lit(batchId) as "batch_id")
         .withColumn("type", split(col("name"), ":")(1))
         .withColumn("sort_chromosome", sortChromosome)
+    }
     df
+  }
+
+  private def withOptionalCN(df: DataFrame, srcCol: String = "genotype.CN", dstCol: String = "optional_CN") = {
+    Try(df(srcCol)).toOption match {
+      case Some(_) => df.withColumn(dstCol, coalesce(col(srcCol), lit(null).cast(IntegerType)))
+      case _ => df.withColumn(dstCol, lit(null))
+    }
   }
 }
