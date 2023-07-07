@@ -130,7 +130,7 @@ object SNVSomaticTumorOnly {
       .withColumn("variant_class", variant_class)
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
-      .withColumn("variant_type", lit("germline"))
+      .withColumn("variant_type", lit("somatic_tumor_only"))
       .withColumn("zygosity", zygosity(col("calls"))) // we temporary calculate zygosities for adjusting calls column
       .withColumn("calls", adjustedGenotype)
       .withColumn("has_alt", array_contains($"calls", 1))

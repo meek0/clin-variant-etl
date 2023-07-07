@@ -30,7 +30,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, true),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       patient.id -> patient.read,
       task.id -> task.read,
       service_request.id -> service_request.read,

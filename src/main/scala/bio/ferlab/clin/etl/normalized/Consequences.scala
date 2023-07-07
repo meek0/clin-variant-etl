@@ -1,13 +1,12 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{AnalysisException, Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.slf4j.Logger
 
 import java.sql.Timestamp
@@ -23,7 +22,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, true),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
     )
   }
 
@@ -32,7 +31,8 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Input].toDF else data(raw_variant_calling.id)
+    val inputVCF = data(raw_variant_calling.id)
+    if (inputVCF.isEmpty) return inputVCF
 
     val df = inputVCF
       .select(
@@ -91,6 +91,13 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
       .withColumn(mainDestination.oid, col("created_on"))
       .dropDuplicates("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")
     df
+  }
+
+  override def loadSingle(data: DataFrame, lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
+    if (!data.isEmpty) {
+      super.loadSingle(data, lastRunDateTime, currentRunDateTime)
+    }
+    data
   }
 
   def normalizeAminoAcid(amino_acid: Column): Column = {

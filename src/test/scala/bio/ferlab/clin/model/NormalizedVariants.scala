@@ -21,4 +21,5 @@ case class NormalizedVariants(`chromosome`: String = "1",
                               `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                               `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                               `batch_id`: String = "BAT1",
+                              `bioinfo_analysis_code`: String = "GEAN",
                               `created_on`: Timestamp = java.sql.Timestamp.valueOf("2022-04-06 13:21:08.019096"))

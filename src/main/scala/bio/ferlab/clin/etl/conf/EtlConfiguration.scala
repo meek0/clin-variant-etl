@@ -56,7 +56,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_snv"                        , clin_import  , "/{{BATCH_ID}}/*.hard-filtered.formatted.norm.VEP.vcf.gz"           , VCF    , OverWrite),
       DatasetConf("raw_snv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only.hard-filtered.vcf.gz", VCF    , OverWrite),
       DatasetConf("raw_cnv"                        , clin_import  , "/{{BATCH_ID}}/*.cnv.vcf.gz"                                        , VCF    , OverWrite),
-      DatasetConf("raw_cnv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only.cnv.vcf.gz"          , VCF    , OverWrite),
+      DatasetConf("raw_cnv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only_cnv.vcf.gz"          , VCF    , OverWrite),
       DatasetConf("raw_exomiser"                   , clin_import,   "/{{BATCH_ID}}/*.exomiser.variants.tsv"                  , CSV    , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_clinical_impression"        , clin_datalake, "/raw/landing/fhir/ClinicalImpression"                   , JSON   , OverWrite),
       DatasetConf("raw_observation"                , clin_datalake, "/raw/landing/fhir/Observation"                          , JSON   , OverWrite),
