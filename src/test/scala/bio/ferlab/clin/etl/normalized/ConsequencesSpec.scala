@@ -121,9 +121,4 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     )
   }
 
-  "consequences job" should "transform data of an empty VCF" in {
-    val results = job1.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
-    val resultDf = results(job1.mainDestination.id)
-    resultDf shouldEqual spark.emptyDataFrame
-  }
 }

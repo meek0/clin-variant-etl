@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -31,8 +32,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val inputVCF = data(raw_variant_calling.id)
-    if (inputVCF.isEmpty) return inputVCF
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Input].toDF else data(raw_variant_calling.id)
 
     val df = inputVCF
       .select(
@@ -91,13 +91,6 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
       .withColumn(mainDestination.oid, col("created_on"))
       .dropDuplicates("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")
     df
-  }
-
-  override def loadSingle(data: DataFrame, lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
-    if (!data.isEmpty) {
-      super.loadSingle(data, lastRunDateTime, currentRunDateTime)
-    }
-    data
   }
 
   def normalizeAminoAcid(amino_acid: Column): Column = {
