@@ -134,6 +134,7 @@ object SNVSomaticTumorOnly {
       .withColumn("zygosity", zygosity(col("calls"))) // we temporary calculate zygosities for adjusting calls column
       .withColumn("calls", adjustedGenotype)
       .withColumn("has_alt", array_contains($"calls", 1))
+      .withColumn("sq", element_at(col("sq"), lit(1)))
       .drop("zygosity") // we drop zygosity, it will be recalculated later with adjusted calls column
       .filter($"alternate" =!= "*")
       .drop("annotation")
