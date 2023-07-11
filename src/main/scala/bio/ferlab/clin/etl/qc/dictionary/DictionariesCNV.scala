@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.qc.dictionary
 
-import Dictionaries._
 import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.TestingApp._
+import org.apache.spark.sql.functions.explode
 
 object DictionariesCNV extends TestingApp {
   run { spark =>

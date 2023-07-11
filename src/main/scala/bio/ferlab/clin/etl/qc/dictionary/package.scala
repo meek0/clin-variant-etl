@@ -1,4 +1,7 @@
-object Variables {
+package bio.ferlab.clin.etl.qc
+
+package object dictionary {
+
   val DicAffectedStatusCode = Seq(
     "not_affected",
     "affected",
@@ -374,4 +377,5 @@ object Variables {
     "HEM",
     "HET",
   )
+
 }
