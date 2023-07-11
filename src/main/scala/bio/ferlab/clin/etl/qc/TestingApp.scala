@@ -98,7 +98,18 @@ object TestingApp {
     if (errorColumns.nonEmpty) Some(s"Column(s) ${errorColumns.mkString(", ")} should not contain same value") else None
   }
 
-  def TestDfContainsAllVarFromBatch(df:org.apache.spark.sql.DataFrame, b:String, adAltFilter:Number, database: String)(implicit spark: SparkSession): Option[String] = {
+  def shouldValuesContainedInDictionary(df: DataFrame, dic: String*)(dicName: String): Option[String] = {
+    val dictionary = dic.toSet
+    val values = df.dropDuplicates.collect().map { row =>
+      val value = Option(row.get(0)).map(String.valueOf).getOrElse("null")
+      value
+    }
+    val result = values.filterNot(dictionary.contains)
+    
+    if (!result.isEmpty) Some(s"Values ${result.mkString(", ")} should be in $dicName dictionary") else None
+  }
+
+  def TestDfContainsAllVarFromBatch(df: DataFrame, b:String, adAltFilter:Number, database: String)(implicit spark: SparkSession): Option[String] = {
     import spark.implicits._
     
     val bucket = database match {
