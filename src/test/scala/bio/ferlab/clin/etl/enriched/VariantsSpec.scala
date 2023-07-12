@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.model.enriched.{DONORS, EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV, EnrichedVariant, GENES, GNOMAD, SPLICEAI}
+import bio.ferlab.clin.model.enriched.{DONORS, EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV, EnrichedSNVSomaticTumorOnly, EnrichedVariant, GENES, GNOMAD, SPLICEAI}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -24,6 +24,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val snv: DatasetConf = conf.getDataset("enriched_snv")
+  val snv_somatic_tumor_only: DatasetConf = conf.getDataset("enriched_snv_somatic_tumor_only")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
@@ -43,6 +44,11 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     EnrichedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
     EnrichedSNV(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
   ).toDF
+  val occurrencesSomaticTumorOnlyDf: DataFrame = Seq(
+    EnrichedSNVSomaticTumorOnly(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    EnrichedSNVSomaticTumorOnly(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
+    EnrichedSNVSomaticTumorOnly(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
+  ).toDF
   val normalized_variantsDf: DataFrame = Seq(NormalizedVariants()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
   val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
@@ -61,6 +67,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
     snv.id -> occurrencesDf,
+    snv_somatic_tumor_only.id -> occurrencesSomaticTumorOnlyDf,
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
     gnomad_constraint.id -> gnomad_constraintDf,
@@ -93,8 +100,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   val expectedDonors =
     List(
-      DONORS(1, 30, List(0, 1), 8.07, true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
-      DONORS(1, 30, List(0, 1), 8.07, true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
+      DONORS(1, Some(30), None, List(0, 1), Some(8.07), true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","GEAN","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
+      DONORS(1, Some(30), None, List(0, 1), Some(8.07), true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","GEAN","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
   )
 
   "variants job" should "aggregate frequencies from normalized_variants" in {
@@ -889,8 +896,8 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     val resultDf = spark.table("clin.variants")
     val result = resultDf.as[EnrichedVariant].collect().head
 
-    resultDf.select(explode($"donors").as[DONORS]).show(false)
-    expectedDonors.toDF().show(false)
+    //resultDf.select(explode($"donors").as[DONORS]).show(false)
+    //expectedDonors.toDF().show(false)
 
     result.`donors` should contain allElementsOf expectedDonors
     result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies(

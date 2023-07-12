@@ -16,11 +16,13 @@ object RunEnriched extends SparkApp {
     case "consequences" => new Consequences().run(steps)
     case "cnv" => new CNV().run(steps)
     case "snv" => new SNV().run(steps)
+    case "snv_somatic_tumor_only" => new SNVSomaticTumorOnly().run(steps)
     case "all" =>
       new Variants().run(steps)
       new Consequences().run(steps)
       new CNV().run(steps)
       new SNV().run(steps)
+      new SNVSomaticTumorOnly().run(steps)
     case s: String => throw new IllegalArgumentException(s"jobName [$s] unknown.")
   }
 

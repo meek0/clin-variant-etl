@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -19,6 +18,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
@@ -27,12 +27,26 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
     )
   }
 
+  private def getVCF(data: Map[String, DataFrame]) = {
+
+    val vcfGermline = data(raw_variant_calling.id)
+    val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
+
+    if (!vcfGermline.isEmpty) {
+      vcfGermline
+    } else if (!vcfSomaticTumorOnly.isEmpty) {
+      vcfSomaticTumorOnly
+    } else {
+      throw new Exception("Not valid raw VCF available")
+    }
+  }
+
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Input].toDF else data(raw_variant_calling.id)
+    val inputVCF = getVCF(data)
 
     val df = inputVCF
       .select(

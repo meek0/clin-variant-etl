@@ -175,6 +175,12 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNV", result, "src/test/scala/")
   }
 
+  "occurrences transform" should "work with an empty input VCF Dataframe" in {
+    val results = new SNV("BAT1").transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
+    val result = results("normalized_snv").as[NormalizedSNV].collect()
+    result.length shouldBe 0
+  }
+
   "addRareVariantColumn" should "add a column that indicate if variant is rare or not" in {
     val occurrences = Seq(
       RareVariantOccurence(chromosome = "1", start = 1000, reference = "A", alternate = "T"),

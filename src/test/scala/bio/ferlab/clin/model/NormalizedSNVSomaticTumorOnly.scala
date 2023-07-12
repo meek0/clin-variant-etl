@@ -7,7 +7,7 @@ package bio.ferlab.clin.model
 import java.sql.Date
 
 
-case class NormalizedSNVSomatic(chromosome: String = "1",
+case class NormalizedSNVSomaticTumorOnly(chromosome: String = "1",
                          start: Long = 69897,
                          reference: String = "T",
                          alternate: String = "C",
@@ -31,6 +31,7 @@ case class NormalizedSNVSomatic(chromosome: String = "1",
                          batch_id: String = "BAT1",
                          last_update: Date = java.sql.Date.valueOf("2022-04-06"),
                          variant_type: String = "somatic_tumor_only",
+                         bioinfo_analysis_code: String = "TEBA",
                          service_request_id: String = "SR0095",
                          analysis_service_request_id: String = "SRA0001",
                          sequencing_strategy: String = "WXS",
@@ -58,12 +59,12 @@ case class NormalizedSNVSomatic(chromosome: String = "1",
                          parental_origin: Option[String] = Some("mother"),
                          transmission: Option[String] = Some("autosomal_dominant"),
                          is_hc: Boolean = false,
-                         hc_complement: List[HC_COMPLEMENT_SOMATIC] = List(HC_COMPLEMENT_SOMATIC()),
-                         possibly_hc_complement: List[POSSIBLY_HC_COMPLEMENT_SOMATIC] = List(POSSIBLY_HC_COMPLEMENT_SOMATIC()),
+                         hc_complement: List[HC_COMPLEMENT_SOMATIC_TUMOR_ONLY] = List(HC_COMPLEMENT_SOMATIC_TUMOR_ONLY()),
+                         possibly_hc_complement: List[POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY] = List(POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY()),
                          is_possibly_hc: Boolean = false)
 
-case class HC_COMPLEMENT_SOMATIC(`symbol`: Option[String] = None,
+case class HC_COMPLEMENT_SOMATIC_TUMOR_ONLY(`symbol`: Option[String] = None,
                          `locus`: Option[List[String]] = None)
 
-case class POSSIBLY_HC_COMPLEMENT_SOMATIC(`symbol`: Option[String] = None,
+case class POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY(`symbol`: Option[String] = None,
                                   `count`: Option[Long] = None)

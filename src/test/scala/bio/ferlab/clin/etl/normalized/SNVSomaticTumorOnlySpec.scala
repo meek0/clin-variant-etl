@@ -51,28 +51,32 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
-      `service_request_id` = "SRS0001"
+      `service_request_id` = "SRS0001",
+      `analysis_code` = "TEBA",
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0002",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "22222"),
-      `service_request_id` = "SRS0002"
+      `service_request_id` = "SRS0002",
+      `analysis_code` = "TEBA",
     ),
     TaskOutput(
       `id` = "73257",
       `patient_id` = "PA0003",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "33333"),
-      `service_request_id` = "SRS0003"
+      `service_request_id` = "SRS0003",
+      `analysis_code` = "TEBA",
     ),
     TaskOutput(
       `id` = "73255",
       `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
-      `service_request_id` = "SRS0099"
+      `service_request_id` = "SRS0099",
+      `analysis_code` = "TEBA",
     )
   ).toDF
 
@@ -134,11 +138,11 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
 
   "occurrences transform" should "transform data in expected format" in {
     val results = new SNVSomaticTumorOnly("BAT1").transform(data)
-    val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomatic].collect()
+    val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
 
     result.length shouldBe 2
     val probandSnv = result.find(_.patient_id == "PA0001")
-    probandSnv shouldBe Some(NormalizedSNVSomatic(
+    probandSnv shouldBe Some(NormalizedSNVSomaticTumorOnly(
       analysis_code = "MMG",
       specimen_id = "SP_001",
       sample_id = "SA_001",
@@ -149,7 +153,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
     ))
 
     val motherSnv = result.find(_.patient_id == "PA0003")
-    motherSnv shouldBe Some(NormalizedSNVSomatic(
+    motherSnv shouldBe Some(NormalizedSNVSomaticTumorOnly(
       patient_id = "PA0003",
       gender = "Female",
       aliquot_id = "33333",
@@ -174,6 +178,12 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       last_update = Date.valueOf(LocalDate.now())
     ))
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNVSomatic", result, "src/test/scala/")
+  }
+
+  "occurrences transform" should "work with an empty input VCF Dataframe" in {
+    val results = new SNVSomaticTumorOnly("BAT1").transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
+    val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
+    result.length shouldBe 0
   }
 
   "addRareVariantColumn" should "add a column that indicate if variant is rare or not" in {

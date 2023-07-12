@@ -175,8 +175,6 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     result.length shouldBe 1
     resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
 
-    result(0).`bioinfo_analysis_code` shouldBe "TEBA"
-    result(0).`variant_type` shouldBe "somatic_tumor_only"
     result(0).`frequencies_by_analysis`.size shouldBe 1
     result(0).`frequency_RQDM`.total shouldBe Frequency(0,0,0.0,0,0,0.0,0)
     result(0).`frequency_RQDM`.affected shouldBe Frequency(0,0,0.0,0,0,0.0,0)
