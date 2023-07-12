@@ -104,6 +104,14 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       DONORS(1, Some(30), None, List(0, 1), Some(8.07), true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","GEAN","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
   )
 
+  "variants job" should "union of all available enriched SNV" in {
+    val resultDf = new Variants().transformSingle(data)
+    resultDf.show(100)
+    val result = resultDf.as[EnrichedVariant].collect()
+    result.length shouldBe 1
+    result(0).`variant_type`.size shouldBe 2
+  }
+
   "variants job" should "aggregate frequencies from normalized_variants" in {
 /*
 +---------------------------------------------------------------+
@@ -520,7 +528,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
             `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1))))
     ).toDF()
 
-    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf))
+    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic_tumor_only.id -> Seq.empty[EnrichedSNVSomaticTumorOnly].toDF))
     val result = resultDf.as[EnrichedVariant].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2
