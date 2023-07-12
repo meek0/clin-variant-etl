@@ -1,11 +1,10 @@
 package bio.ferlab.clin.etl.normalized
 
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
-import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -43,13 +42,18 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
       )
       .withColumn("annotation", explode($"annotations"))
       .drop("annotations")
+      .groupByLocus(ensembl_transcript_id) // To avoid duplicate consequences in case of multiple runs in a batch
+      .agg(
+        first("end") as "end",
+        first("name") as "name",
+        first("annotation") as "annotation"
+      )
       .select($"*",
         consequences,
         impact,
         symbol,
         ensembl_gene_id,
         ensembl_feature_id,
-        ensembl_transcript_id,
         ensembl_regulatory_id,
         feature_type,
         strand,
