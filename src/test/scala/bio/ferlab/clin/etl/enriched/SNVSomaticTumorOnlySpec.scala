@@ -48,7 +48,6 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       normalized_exomiser.id -> exomiserDf
     )
     val result = job.transformSingle(data)
-    result.show(false)
 
     result
       .as[EnrichedSNVSomaticTumorOnly]

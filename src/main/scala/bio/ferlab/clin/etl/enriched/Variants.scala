@@ -63,6 +63,10 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val occurrences = data(snv.id)
       .withColumn("sq", lit(null).cast(DoubleType))
       .unionByName(data(snv_somatic_tumor_only.id)
+        .withColumn("mother_gq", lit(null).cast(IntegerType))
+        .withColumn("mother_qd", lit(null).cast(DoubleType))
+        .withColumn("father_gq", lit(null).cast(IntegerType))
+        .withColumn("father_qd", lit(null).cast(DoubleType))
         .withColumn("gq", lit(null).cast(IntegerType))
         .withColumn("qd", lit(null).cast(DoubleType)))
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
@@ -84,9 +88,6 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val gnomad_exomes_v2_1DF = data(gnomad_exomes_v2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_genomes_3_0DF = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_genomes_v3DF = data(gnomad_genomes_v3.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
-
-
-    // TODO union des SNVs germline + somatic, mettre les colonnes qg / sq a null
 
     val joinWithDonors = variantsWithDonors(variants, occurrences)
     val joinWithPop = joinWithPopulations(joinWithDonors, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)

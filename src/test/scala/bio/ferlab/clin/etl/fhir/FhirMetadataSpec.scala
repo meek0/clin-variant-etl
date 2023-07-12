@@ -118,7 +118,6 @@ object FhirMetadataSpec extends App with WithSparkSession {
           ),
         ) as "analyses")
 
-    finalDf.show(2)
     finalDf
       .repartition(1)
       .write
