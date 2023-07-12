@@ -61,6 +61,7 @@ package object dictionary {
   val DicCNVFilters = Seq(
     "PASS",
     "cnvQual",
+    "cnvCopyRatio",
     "null",
   )
 
