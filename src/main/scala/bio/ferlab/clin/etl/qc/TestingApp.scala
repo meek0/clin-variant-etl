@@ -118,7 +118,7 @@ object TestingApp {
       case _              => "cqgc-prod-app-files-import"
     }
 
-    val df_VCF = spark.read.format("vcf").load(s"s3a://$bucket/$b/$b.hard-filtered.formatted.norm.VEP.vcf.gz")
+    val df_VCF = spark.read.format("vcf").load(s"s3a://$bucket/$b/*.hard-filtered*.vcf.gz")
     .filter(!col("contigName").contains("_") && !col("contigName").contains("chrM"))
     .withColumn("start", $"start" + 1)
     .select($"contigName" as "chromosome", $"start", $"referenceAllele" as "reference", explode($"alternateAlleles") as "alternate", $"genotypes" as "donors")
