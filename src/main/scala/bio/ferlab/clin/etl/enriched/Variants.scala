@@ -60,15 +60,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val occurrences = data(snv.id)
-      .withColumn("sq", lit(null).cast(DoubleType))
-      .unionByName(data(snv_somatic_tumor_only.id)
-        .withColumn("mother_gq", lit(null).cast(IntegerType))
-        .withColumn("mother_qd", lit(null).cast(DoubleType))
-        .withColumn("father_gq", lit(null).cast(IntegerType))
-        .withColumn("father_qd", lit(null).cast(DoubleType))
-        .withColumn("gq", lit(null).cast(IntegerType))
-        .withColumn("qd", lit(null).cast(DoubleType)))
+    val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
     val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(occurrences)

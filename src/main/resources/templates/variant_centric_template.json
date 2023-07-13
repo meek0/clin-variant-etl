@@ -333,7 +333,7 @@
               "type": "long"
             },
             "sq": {
-              "type": "long"
+              "type": "float"
             },
             "has_alt": {
               "type": "boolean"
