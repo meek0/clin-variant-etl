@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 class Variants(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
-  implicit var logger: Logger = log
+  implicit val logger: Logger = log
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")

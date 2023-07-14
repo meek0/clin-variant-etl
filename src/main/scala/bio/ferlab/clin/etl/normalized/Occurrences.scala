@@ -17,7 +17,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
 
   def raw_variant_calling: DatasetConf
 
-  implicit var logger: Logger = log
+  implicit val logger: Logger = log
 
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val task: DatasetConf = conf.getDataset("normalized_task")
