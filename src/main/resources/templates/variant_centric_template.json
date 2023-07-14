@@ -332,6 +332,9 @@
             "gq": {
               "type": "long"
             },
+            "sq": {
+              "type": "float"
+            },
             "has_alt": {
               "type": "boolean"
             },
@@ -414,6 +417,9 @@
               "type": "keyword"
             },
             "variant_type": {
+              "type": "keyword"
+            },
+            "bioinfo_analysis_code": {
               "type": "keyword"
             },
             "zygosity": {

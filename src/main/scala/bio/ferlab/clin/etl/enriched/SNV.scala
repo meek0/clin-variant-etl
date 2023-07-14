@@ -1,11 +1,11 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
+import bio.ferlab.clin.etl.enriched.SNV.transformSingleSNV
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
-
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -28,10 +28,18 @@ class SNV()(implicit configuration: Configuration) extends ETLSingleDestination 
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minDateTime,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+   transformSingleSNV(data(normalized_snv.id), data(normalized_exomiser.id))
+  }
+
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
+}
+
+object SNV {
+  def transformSingleSNV(snv: DataFrame, exomiser: DataFrame)(implicit spark: SparkSession): DataFrame = {
+
     import spark.implicits._
 
-    val snv = data(normalized_snv.id)
-    val exomiser = data(normalized_exomiser.id).selectLocus(
+    val exo = exomiser.selectLocus(
       $"aliquot_id",
       $"exomiser_variant_score",
       $"contributing_variant",
@@ -58,8 +66,6 @@ class SNV()(implicit configuration: Configuration) extends ETLSingleDestination 
         $"exomiser_other_moi",
       )
 
-    snv.join(exomiser, locusColumnNames :+ "aliquot_id", "left")
+    snv.join(exo, locusColumnNames :+ "aliquot_id", "left")
   }
-
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
 }

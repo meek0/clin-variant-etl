@@ -2,20 +2,24 @@ package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
+import org.slf4j.Logger
 
 import java.time.LocalDateTime
 
 class Variants(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
+  implicit val logger: Logger = log
+
   override val mainDestination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
   val task: DatasetConf = conf.getDataset("normalized_task")
@@ -24,8 +28,8 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .filter(col("contigName").isin(validContigNames: _*)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
+      raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       clinical_impression.id -> clinical_impression.read,
       observation.id -> observation.read,
       task.id -> task.read,
@@ -33,20 +37,38 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     )
   }
 
+  private def getVCF(data: Map[String, DataFrame]) = {
+
+    val vcfGermline = data(raw_variant_calling.id)
+    val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
+
+    if (!vcfGermline.isEmpty) {
+      (vcfGermline, "genotype.conditionalQuality", "gq", true)
+    } else if (!vcfSomaticTumorOnly.isEmpty) {
+      (vcfSomaticTumorOnly, "genotype.SQ", "sq", false)
+    } else {
+      throw new Exception("Not valid raw VCF available")
+    }
+  }
+
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
 
-    val variants = getVariants(data(raw_variant_calling.id))
+    val (inputVCF, srcScoreColumn, dstScoreColumn, computeFrequencies) = getVCF(data)
+
+    val variants = getVariants(inputVCF)
     val clinicalInfos = getClinicalInfo(data)
-    val variantsWithClinicalInfo = getVariantsWithClinicalInfo(data(raw_variant_calling.id), clinicalInfos)
-    getVariantsWithFrequencies(variantsWithClinicalInfo)
+    val variantsWithClinicalInfo = getVariantsWithClinicalInfo(inputVCF, clinicalInfos, srcScoreColumn, dstScoreColumn)
+
+    val res = getVariantsWithFrequencies(variantsWithClinicalInfo, computeFrequencies)
       .joinByLocus(variants, "right")
-      .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array()))
+      .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array(emptyFrequencies)))
       .withColumn("frequency_RQDM", coalesce(col("frequency_RQDM"), emptyFrequencyRQDM))
       .withColumn("batch_id", lit(batchId))
       .withColumn("created_on", current_timestamp())
 
+    res
   }
 
   def getVariants(vcf: DataFrame): DataFrame = {
@@ -67,10 +89,9 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         pubmed
       )
       .drop("annotation")
-      .withColumn("variant_type", lit("germline"))
   }
 
-  def getVariantsWithClinicalInfo(vcf: DataFrame, clinicalInfos: DataFrame): DataFrame = {
+  def getVariantsWithClinicalInfo(vcf: DataFrame, clinicalInfos: DataFrame, srcScoreColumn: String, dstScoreColumn: String): DataFrame = {
     vcf
       .withColumn("annotation", firstCsq)
       .select(
@@ -83,7 +104,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       )
       .withColumn("ad", col("genotype.alleleDepths"))
       .withColumn("ad_alt", col("ad")(1))
-      .withColumn("gq", col("genotype.conditionalQuality"))
+      .withColumn(dstScoreColumn, col(srcScoreColumn))
       .withColumn("aliquot_id", col("genotype.sampleId"))
       .withColumn("calls", col("genotype.calls"))
       .withColumn("zygosity", zygosity(col("calls")))
@@ -93,13 +114,13 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   val emptyFrequency =
     struct(
-      lit(0) as "ac",
-      lit(0) as "an",
+      lit(0L) as "ac",
+      lit(0L) as "an",
       lit(0.0) as "af",
-      lit(0) as "pc",
-      lit(0) as "pn",
+      lit(0L) as "pc",
+      lit(0L) as "pn",
       lit(0.0) as "pf",
-      lit(0) as "hom"
+      lit(0L) as "hom"
     )
 
   val emptyFrequencyRQDM = struct(
@@ -108,8 +129,27 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     emptyFrequency as "total"
   )
 
-  def getVariantsWithFrequencies(variants: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  val emptyFrequencies = struct(
+    lit("") as "analysis_display_name",
+    lit("") as "analysis_code",
+    emptyFrequency as "affected",
+    emptyFrequency as "non_affected",
+    emptyFrequency as "total"
+  )
+
+  def getVariantsEmptyFrequencies(variants: DataFrame): DataFrame = {
+    variants
+      .selectLocus()
+      .dropDuplicates("chromosome", "start", "reference", "alternate")
+      .withColumn("frequencies_by_analysis", lit(null))
+      .withColumn("frequency_RQDM", lit(null))
+  }
+
+  def getVariantsWithFrequencies(variants: DataFrame, computeFrequency: Boolean)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
+
+    if (!computeFrequency)
+      return getVariantsEmptyFrequencies(variants)
 
     val frequency: String => Column = {
       case "" =>

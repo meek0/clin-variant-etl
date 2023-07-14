@@ -1,14 +1,14 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,FixedRepartition}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
-
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{collect_set, _}
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
@@ -18,6 +18,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   override val mainDestination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val snv: DatasetConf = conf.getDataset("enriched_snv")
+  val snv_somatic_tumor_only: DatasetConf = conf.getDataset("enriched_snv_somatic_tumor_only")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
@@ -37,6 +38,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     Map(
       normalized_variants.id -> normalized_variants.read,
       snv.id -> snv.read,
+      snv_somatic_tumor_only.id -> snv_somatic_tumor_only.read,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_constraint.id -> gnomad_constraint.read,
@@ -58,7 +60,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val occurrences = data(snv.id)
+    val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
     val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(occurrences)
@@ -78,7 +80,6 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val gnomad_exomes_v2_1DF = data(gnomad_exomes_v2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_genomes_3_0DF = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
     val gnomad_genomes_v3DF = data(gnomad_genomes_v3.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
-
 
     val joinWithDonors = variantsWithDonors(variants, occurrences)
     val joinWithPop = joinWithPopulations(joinWithDonors, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)
@@ -156,7 +157,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     import spark.implicits._
     val originalVariants = variants
       .select("chromosome", "start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
-        "variant_class", "pubmed", "variant_type", "created_on")
+        "variant_class", "pubmed", "created_on")
       .groupByLocus()
       .agg(
         first("end") as "end",
@@ -165,7 +166,6 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
         first($"hgvsg") as "hgvsg",
         first($"variant_class") as "variant_class",
         first($"pubmed") as "pubmed",
-        first($"variant_type") as "variant_type",
         max($"created_on") as "updated_on",
         min($"created_on") as "created_on"
       )
@@ -206,11 +206,14 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
-  def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
+  def variantsWithDonors(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
     val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate", "exomiser_variant_score").columns.map(col)
     val donors = occurrences
       .groupByLocus()
       .agg(
+        collect_set($"variant_type") as "variant_type",
         max("exomiser_variant_score") as "exomiser_variant_score",
         filter(collect_list(struct(donorColumns: _*)), c => c("has_alt")) as "donors"
       )

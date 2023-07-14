@@ -1,10 +1,11 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.model._
+import bio.ferlab.clin.etl.model.raw.{SNV_GENOTYPES, SNV_SOMATIC_GENOTYPES, VCF_SNV_Input, VCF_SNV_Somatic_Input}
+import bio.ferlab.clin.model.{TaskOutput, _}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.file.HadoopFileSystem
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{AnalysisException, DataFrame}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -14,6 +15,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
@@ -77,6 +79,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       `patient_id` = "PA0004",
       `service_request_id` = "SRS0004",
       `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "4")
+    ),
+    TaskOutput(
+      `id` = "73257",
+      `analysis_code` = "TEBA",
+      `patient_id` = "PA0004",
+      `service_request_id` = "SRS0004",
+      `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "5")
     )
   ).toDF
 
@@ -113,16 +122,26 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
           SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1), `alleleDepths` = List(0, 30)),
         ))
     ).toDF(),
+    raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame,
     clinical_impression.id -> clinicalImpressionsDf,
     observation.id -> observationsDf,
     task.id -> taskDf,
     service_request.id -> serviceRequestDf
   )
 
+  val dataSomaticTumorOnly: Map[String, DataFrame] = data ++ Map(
+    raw_variant_calling.id -> spark.emptyDataFrame,
+    raw_variant_calling_somatic_tumor_only.id -> Seq(VCF_SNV_Somatic_Input(
+      `genotypes` = List(
+        SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(1, 1)),
+      ))).toDF(),
+  )
+
   "variants job" should "transform data in expected format" in {
     val results = job1.transform(data)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
+    result.length shouldBe 3
     resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
     val variantWithFreq = result.find(_.`reference` == "T")
     variantWithFreq.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
@@ -146,8 +165,28 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       `frequency_RQDM` = AnalysisFrequencies(Frequency(0,2,0.0,0,1,0.0,0),Frequency(0,0,0.0,0,0,0.0,0),Frequency(0,2,0.0,0,1,0.0,0)),
       `created_on` = null)
     )
+  }
 
+  "variants job" should "transform data somatic tumor only in expected format" in {
+    val results = job1.transform(dataSomaticTumorOnly)
+    val resultDf = results("normalized_variants")
+    val result = resultDf.as[NormalizedVariants].collect()
 
+    result.length shouldBe 1
+    resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
+
+    result(0).`frequencies_by_analysis`.size shouldBe 1
+    result(0).`frequency_RQDM`.total shouldBe Frequency(0,0,0.0,0,0,0.0,0)
+    result(0).`frequency_RQDM`.affected shouldBe Frequency(0,0,0.0,0,0,0.0,0)
+    result(0).`frequency_RQDM`.non_affected shouldBe Frequency(0,0,0.0,0,0,0.0,0)
+  }
+
+  "variants job" should "throw exception if no valid VCF" in {
+    val exception = intercept[Exception] {
+      job1.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame,
+        raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame))
+    }
+    exception.getMessage shouldBe "Not valid raw VCF available"
 
   }
 }

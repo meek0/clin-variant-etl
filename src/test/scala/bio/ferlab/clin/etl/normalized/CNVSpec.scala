@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf

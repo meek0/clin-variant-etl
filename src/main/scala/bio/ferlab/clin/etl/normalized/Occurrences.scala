@@ -3,17 +3,21 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
-import bio.ferlab.datalake.spark3.etl.v2.ETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.transformation.Implicits._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.slf4j.Logger
 
 import java.time.LocalDateTime
+import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.TypeTag
 
 abstract class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+
   def raw_variant_calling: DatasetConf
+
+  implicit val logger: Logger = log
 
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val task: DatasetConf = conf.getDataset("normalized_task")
@@ -26,8 +30,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-        .where(col("contigName").isin(validContigNames: _*)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       patient.id -> patient.read,
       task.id -> task.read,
       service_request.id -> service_request.read,
@@ -79,6 +82,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
     val taskDf = data(task.id)
       .where(col("experiment.name") === batchId)
       .select(
+        col("analysis_code") as "bioinfo_analysis_code",
         col("experiment.aliquot_id") as "aliquot_id",
         col("experiment.sequencing_strategy") as "sequencing_strategy",
         col("workflow.genome_build") as "genome_build",

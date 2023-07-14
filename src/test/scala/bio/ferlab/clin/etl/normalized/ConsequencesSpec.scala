@@ -1,5 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw
+import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, VCF_SNV_Input}
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
@@ -22,19 +24,21 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
 
   val data = Map(
-    raw_variant_calling.id -> Seq(VCF_SNV_Input()).toDF()
+    raw_variant_calling.id -> Seq(VCF_SNV_Input()).toDF(),
+    raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame,
   )
 
-  val data_with_duplicates = Map(
+  val data_with_duplicates = data ++ Map(
     raw_variant_calling.id -> Seq(
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "bar"))),  // not duplicated
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "foo"))),  // duplicated with bellow
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = "foo"))),
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = null))), // duplicated with bellow
-      VCF_SNV_Input(`INFO_CSQ` = List(bio.ferlab.clin.model.INFO_CSQ(`Feature` = null))),
-    ).toDF()
+      VCF_SNV_Input(`INFO_CSQ` = List(INFO_CSQ(`Feature` = "bar"))),  // not duplicated
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = "foo"))),  // duplicated with bellow
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = "foo"))),
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = null))), // duplicated with bellow
+      VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = null))),
+    ).toDF(),
   )
 
   override def beforeAll(): Unit = {
@@ -94,7 +98,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
 
 
-    val job1Results = job1.transform(Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
+    val job1Results = job1.transform(data ++ Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
     val job1Df = job1Results(job1.mainDestination.id)
     job1Df.as[NormalizedConsequences].collect() should contain allElementsOf Seq(
       NormalizedConsequences(
@@ -105,7 +109,7 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
 
     job1.load(job1Results)
 
-    val job2Results = job2.transform(Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
+    val job2Results = job2.transform(data ++ Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
     job2.load(job2Results)
     val resultDf = job2.mainDestination.read
 
@@ -118,4 +122,14 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
         `normalized_consequences_oid` = Timestamp.valueOf(date2))
     )
   }
+
+  "consequences job" should "throw exception if no valid VCF" in {
+    val exception = intercept[Exception] {
+      job1.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame,
+        raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame))
+    }
+    exception.getMessage shouldBe "Not valid raw VCF available"
+
+  }
+
 }

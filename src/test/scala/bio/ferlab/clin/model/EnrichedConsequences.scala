@@ -4,6 +4,8 @@
  */
 package bio.ferlab.clin.model
 
+import bio.ferlab.clin.etl.model.raw.{AMINO_ACIDS, CODONS, EXON, INTRON}
+
 import java.sql.Timestamp
 
 

@@ -1,6 +1,5 @@
 package bio.ferlab.clin.etl.normalized
 
-
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -8,29 +7,49 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.slf4j.Logger
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 class Consequences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
 
+  implicit val logger: Logger = log
+
   override val mainDestination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id ->
-        vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), referenceGenomePath = None)
-          .where(col("contigName").isin(validContigNames: _*))
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
+      raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
     )
+  }
+
+  private def getVCF(data: Map[String, DataFrame]) = {
+
+    val vcfGermline = data(raw_variant_calling.id)
+    val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
+
+    if (!vcfGermline.isEmpty) {
+      vcfGermline
+    } else if (!vcfSomaticTumorOnly.isEmpty) {
+      vcfSomaticTumorOnly
+    } else {
+      throw new Exception("Not valid raw VCF available")
+    }
   }
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val df = data(raw_variant_calling.id)
+
+    val inputVCF = getVCF(data)
+
+    val df = inputVCF
       .select(
         chromosome,
         start,

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
-import bio.ferlab.clin.etl.normalized.SNV._
+import bio.ferlab.clin.etl.model.raw.VCF_SNV_Somatic_Input
+import bio.ferlab.clin.etl.normalized.SNVSomaticTumorOnly.{addRareVariantColumn, getSNV}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -11,10 +11,10 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
+class SNVSomaticTumorOnly(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
-  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv")
-  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic_tumor_only")
+  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
@@ -28,7 +28,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 
     import spark.implicits._
 
-    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Input].toDF else data(raw_variant_calling.id)
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Somatic_Input].toDF else data(raw_variant_calling.id)
 
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
@@ -37,7 +37,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(
         Seq(
-          col("gq"), col("dp"), col("qd"), col("filters"),
+          col("sq"), col("dp"), col("filters"),
           col("ad_ref"), col("ad_alt"), col("ad_total"), col("ad_ratio"),
           col("calls"), col("affected_status")))
       )
@@ -45,17 +45,17 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
       .withColumn("father_calls", fatherCalls)
       .withColumn("mother_affected_status", motherAffectedStatus)
       .withColumn("father_affected_status", fatherAffectedStatus)
-      .withColumn("mother_gq", motherGQ)
+      //.withColumn("mother_gq", motherGQ)
       .withColumn("mother_dp", motherDP)
-      .withColumn("mother_qd", motherQD)
+      //.withColumn("mother_qd", motherQD)
       .withColumn("mother_filters", motherFilters)
       .withColumn("mother_ad_ref", motherADRef)
       .withColumn("mother_ad_alt", motherADAlt)
       .withColumn("mother_ad_total", motherADTotal)
       .withColumn("mother_ad_ratio", motherADRatio)
-      .withColumn("father_gq", fatherGQ)
+      //.withColumn("father_gq", fatherGQ)
       .withColumn("father_dp", fatherDP)
-      .withColumn("father_qd", fatherQD)
+      //.withColumn("father_qd", fatherQD)
       .withColumn("father_filters", fatherFilters)
       .withColumn("father_ad_ref", fatherADRef)
       .withColumn("father_ad_alt", fatherADAlt)
@@ -82,7 +82,7 @@ class SNV(batchId: String)(implicit configuration: Configuration) extends Occurr
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
-object SNV {
+object SNVSomaticTumorOnly {
   /**
    * This column is used to adjust the genotype of a variant. It considers the following rules:
    * - If the variant is HOM or HET and the AD_ALT is less than 3, then the genotype is set to -1/-1
@@ -113,9 +113,8 @@ object SNV {
         $"genotype.sampleId" as "aliquot_id",
         $"genotype.alleleDepths" as "ad",
         $"genotype.depth" as "dp",
-        $"genotype.conditionalQuality" as "gq",
+        $"genotype.SQ" as "sq",
         $"genotype.calls" as "calls",
-        $"INFO_QD" as "qd",
         is_multi_allelic,
         old_multi_allelic,
         flatten(transform($"INFO_FILTERS", c => split(c, ";"))) as "filters"
@@ -131,10 +130,11 @@ object SNV {
       .withColumn("variant_class", variant_class)
       .withColumn("batch_id", lit(batchId))
       .withColumn("last_update", current_date())
-      .withColumn("variant_type", lit("germline"))
+      .withColumn("variant_type", lit("somatic_tumor_only"))
       .withColumn("zygosity", zygosity(col("calls"))) // we temporary calculate zygosities for adjusting calls column
       .withColumn("calls", adjustedGenotype)
       .withColumn("has_alt", array_contains($"calls", 1))
+      .withColumn("sq", element_at(col("sq"), lit(1)))
       .drop("zygosity") // we drop zygosity, it will be recalculated later with adjusted calls column
       .filter($"alternate" =!= "*")
       .drop("annotation")

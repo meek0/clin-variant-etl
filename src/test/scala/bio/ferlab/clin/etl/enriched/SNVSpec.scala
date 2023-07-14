@@ -48,7 +48,6 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       normalized_exomiser.id -> exomiserDf
     )
     val result = job.transformSingle(data)
-    result.show(false)
 
     result
       .as[EnrichedSNV]

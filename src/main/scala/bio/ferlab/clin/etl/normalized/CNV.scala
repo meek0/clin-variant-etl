@@ -1,7 +1,8 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.etl.normalized.CNV.getCNV
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -16,9 +17,14 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+
+    import spark.implicits._
+
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_CNV_Input].toDF else data(raw_variant_calling.id)
+
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
-    val occurrences = getCNV(data(raw_variant_calling.id), batchId)
+    val occurrences = getCNV(inputVCF, batchId)
       .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
     occurrences
   }

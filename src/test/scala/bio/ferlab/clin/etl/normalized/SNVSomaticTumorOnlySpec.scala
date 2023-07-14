@@ -1,21 +1,22 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.{SNV_GENOTYPES, VCF_SNV_Input}
-import bio.ferlab.clin.model.{RareVariant, _}
+import bio.ferlab.clin.etl.model.raw.{SNV_SOMATIC_GENOTYPES, VCF_SNV_Somatic_Input}
+import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.sql.Date
 import java.time.LocalDate
 
-class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
+class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
 
   import spark.implicits._
 
-  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
+  val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val task: DatasetConf = conf.getDataset("normalized_task")
@@ -50,28 +51,32 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
-      `service_request_id` = "SRS0001"
+      `service_request_id` = "SRS0001",
+      `analysis_code` = "TEBA",
     ),
     TaskOutput(
       `id` = "73256",
       `patient_id` = "PA0002",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "22222"),
-      `service_request_id` = "SRS0002"
+      `service_request_id` = "SRS0002",
+      `analysis_code` = "TEBA",
     ),
     TaskOutput(
       `id` = "73257",
       `patient_id` = "PA0003",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "33333"),
-      `service_request_id` = "SRS0003"
+      `service_request_id` = "SRS0003",
+      `analysis_code` = "TEBA",
     ),
     TaskOutput(
       `id` = "73255",
       `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
-      `service_request_id` = "SRS0099"
+      `service_request_id` = "SRS0099",
+      `analysis_code` = "TEBA",
     )
   ).toDF
 
@@ -115,11 +120,11 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   ).toDF
 
   val data: Map[String, DataFrame] = Map(
-    raw_variant_calling.id -> Seq(VCF_SNV_Input(
+    raw_variant_calling.id -> Seq(VCF_SNV_Somatic_Input(
       `genotypes` = List(
-        SNV_GENOTYPES(), //proband
-        SNV_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0), `alleleDepths` = List(30, 0)), //father
-        SNV_GENOTYPES(`sampleId` = "33333")) //mother
+        SNV_SOMATIC_GENOTYPES(), //proband
+        SNV_SOMATIC_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0), `alleleDepths` = List(30, 0)), //father
+        SNV_SOMATIC_GENOTYPES(`sampleId` = "33333")) //mother
     )).toDF(),
     patient.id -> patientDf,
     clinical_impression.id -> clinicalImpressionsDf,
@@ -132,12 +137,12 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   )
 
   "occurrences transform" should "transform data in expected format" in {
-    val results = new SNV("BAT1").transform(data)
-    val result = results("normalized_snv").as[NormalizedSNV].collect()
+    val results = new SNVSomaticTumorOnly("BAT1").transform(data)
+    val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
 
     result.length shouldBe 2
     val probandSnv = result.find(_.patient_id == "PA0001")
-    probandSnv shouldBe Some(NormalizedSNV(
+    probandSnv shouldBe Some(NormalizedSNVSomaticTumorOnly(
       analysis_code = "MMG",
       specimen_id = "SP_001",
       sample_id = "SA_001",
@@ -148,7 +153,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ))
 
     val motherSnv = result.find(_.patient_id == "PA0003")
-    motherSnv shouldBe Some(NormalizedSNV(
+    motherSnv shouldBe Some(NormalizedSNVSomaticTumorOnly(
       patient_id = "PA0003",
       gender = "Female",
       aliquot_id = "33333",
@@ -160,10 +165,6 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       hc_complement = List(),
       possibly_hc_complement = List(),
       is_proband = false,
-      mother_gq = None,
-      mother_qd = None,
-      father_gq = None,
-      father_qd = None,
       mother_id = null,
       father_id = null,
       mother_calls = None,
@@ -176,12 +177,12 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       transmission = Some("unknown_parents_genotype"),
       last_update = Date.valueOf(LocalDate.now())
     ))
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNV", result, "src/test/scala/")
+    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNVSomatic", result, "src/test/scala/")
   }
 
   "occurrences transform" should "work with an empty input VCF Dataframe" in {
-    val results = new SNV("BAT1").transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
-    val result = results("normalized_snv").as[NormalizedSNV].collect()
+    val results = new SNVSomaticTumorOnly("BAT1").transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
+    val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
     result.length shouldBe 0
   }
 
