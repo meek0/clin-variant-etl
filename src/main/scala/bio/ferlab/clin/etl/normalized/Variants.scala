@@ -89,6 +89,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
         pubmed
       )
       .drop("annotation")
+      .dropDuplicates("chromosome", "start", "reference", "alternate")
   }
 
   def getVariantsWithClinicalInfo(vcf: DataFrame, clinicalInfos: DataFrame, srcScoreColumn: String, dstScoreColumn: String): DataFrame = {
