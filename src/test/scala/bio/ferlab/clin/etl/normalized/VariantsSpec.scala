@@ -137,6 +137,11 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       ))).toDF(),
   )
 
+  val dataSomaticTumorOnlyWithDuplicates: Map[String, DataFrame] = data ++ Map(
+    raw_variant_calling.id -> spark.emptyDataFrame,
+    raw_variant_calling_somatic_tumor_only.id -> Seq(VCF_SNV_Somatic_Input(),VCF_SNV_Somatic_Input(),VCF_SNV_Somatic_Input()).toDF(),
+  )
+
   "variants job" should "transform data in expected format" in {
     val results = job1.transform(data)
     val resultDf = results("normalized_variants")
@@ -169,6 +174,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   "variants job" should "transform data somatic tumor only in expected format" in {
     val results = job1.transform(dataSomaticTumorOnly)
+    val resultDf = results("normalized_variants")
+    val result = resultDf.as[NormalizedVariants].collect()
+    result.length shouldBe 1
+  }
+
+  "variants job" should "not create duplicated variants freqs" in {
+    val results = job1.transform(dataSomaticTumorOnlyWithDuplicates)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
 
