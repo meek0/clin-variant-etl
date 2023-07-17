@@ -120,7 +120,7 @@ class CNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
     val result = results("normalized_cnv_somatic_tumor_only").as[NormalizedCNVSomaticTumorOnly].collect()
 
     result should contain theSameElementsAs Seq(
-      NormalizedCNVSomaticTumorOnly(),
+      NormalizedCNVSomaticTumorOnly(`aliquot_id` = "11111"),
     )
 
     // ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedCNV", result, "src/test/scala/")
