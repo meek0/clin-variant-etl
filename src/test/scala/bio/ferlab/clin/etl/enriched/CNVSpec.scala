@@ -32,7 +32,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   val data: Map[String, DataFrame] = Map(
     normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
-    normalized_cnv_somatic_tumor_only.id -> Seq(NormalizedCNVSomaticTumorOnly()).toDF(),
+    normalized_cnv_somatic_tumor_only.id -> Seq(NormalizedCNVSomaticTumorOnly(`aliquot_id` = "11112")).toDF(),
     normalized_refseq_annotation.id -> refSeq,
     normalized_panels.id -> panels,
     genes.id -> genesDf,

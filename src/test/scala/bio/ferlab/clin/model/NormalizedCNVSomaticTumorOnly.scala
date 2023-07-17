@@ -4,7 +4,7 @@
  */
 package bio.ferlab.clin.model
 
-case class NormalizedCNVSomaticTumorOnly(`aliquot_id`: String = "11112",
+case class NormalizedCNVSomaticTumorOnly(`aliquot_id`: String = "11111",
                                          `chromosome`: String = "1",
                                          `start`: Long = 10000,
                                          `end`: Long = 10059,
