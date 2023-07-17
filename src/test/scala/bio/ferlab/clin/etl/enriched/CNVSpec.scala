@@ -15,6 +15,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   import spark.implicits._
 
   val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
+  val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
   val normalized_refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -31,6 +32,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   val data: Map[String, DataFrame] = Map(
     normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
+    normalized_cnv_somatic_tumor_only.id -> Seq(NormalizedCNVSomaticTumorOnly()).toDF(),
     normalized_refseq_annotation.id -> refSeq,
     normalized_panels.id -> panels,
     genes.id -> genesDf,
@@ -42,6 +44,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   val data_no_genes_chr_2: Map[String, DataFrame] = Map(
     normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
+    normalized_cnv_somatic_tumor_only.id -> spark.emptyDataFrame,
     normalized_refseq_annotation.id -> refSeq_no_genes,
     normalized_panels.id -> panels,
     genes.id -> genesDf,
@@ -59,6 +62,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
     results.collect() should contain theSameElementsAs Seq(
       CnvEnrichedOutput(),
+      CnvEnrichedOutput(`aliquot_id` = "11112", `variant_type` = "somatic_tumor_only", `cn` = None, `hash` = "3802349cec5a9cac34daf58dd5a63ee05d7b2f1e"),
     )
   }
 

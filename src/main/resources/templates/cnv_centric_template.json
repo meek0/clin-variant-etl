@@ -44,6 +44,9 @@
         "sm": {
           "type": "double"
         },
+        "variant_type": {
+          "type": "keyword"
+        },
         "calls": {
           "type": "long"
         },

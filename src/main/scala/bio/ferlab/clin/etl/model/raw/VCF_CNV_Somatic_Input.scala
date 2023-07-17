@@ -22,7 +22,7 @@ case class VCF_CNV_Somatic_Input(`contigName`: String = "chr1",
                          `INFO_FILTERS`: Seq[String] = Seq("cnvQual"),
                          `genotypes`: Seq[CNV_GENOTYPES_somatic] = Seq(CNV_GENOTYPES_somatic()))
 
-case class CNV_GENOTYPES_somatic(`sampleId`: String = "11111",
+case class CNV_GENOTYPES_somatic(`sampleId`: String = "11112",
                      `SM`: Double = 0.57165,
                      `phased`: Boolean = false,
                      `calls`: Seq[Int] = Seq(0, 1),

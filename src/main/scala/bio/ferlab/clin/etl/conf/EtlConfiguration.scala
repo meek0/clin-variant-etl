@@ -55,7 +55,7 @@ object EtlConfiguration extends App {
       //s3://clin-{env}-app-files-import/201106_A00516_0169_AHFM3HDSXY/201106_A00516_0169_AHFM3HDSXY.hard-filtered.formatted.norm.VEP.vcf.gz
       DatasetConf("raw_snv"                        , clin_import  , "/{{BATCH_ID}}/*.hard-filtered.formatted.norm.VEP.vcf.gz"           , VCF    , OverWrite),
       DatasetConf("raw_snv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only.hard-filtered.vcf.gz", VCF    , OverWrite),
-      DatasetConf("raw_cnv"                        , clin_import  , "/{{BATCH_ID}}/*[0-9].cnv.vcf.gz"                                        , VCF    , OverWrite),
+      DatasetConf("raw_cnv"                        , clin_import  , "/{{BATCH_ID}}/*[0-9].cnv.vcf.gz"                                   , VCF    , OverWrite),
       DatasetConf("raw_cnv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only.cnv.vcf.gz"          , VCF    , OverWrite),
       DatasetConf("raw_exomiser"                   , clin_import,   "/{{BATCH_ID}}/*.exomiser.variants.tsv"                  , CSV    , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_clinical_impression"        , clin_datalake, "/raw/landing/fhir/ClinicalImpression"                   , JSON   , OverWrite),
@@ -107,6 +107,7 @@ object EtlConfiguration extends App {
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))                   , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
       DatasetConf("enriched_snv_somatic_tumor_only", clin_datalake, "/enriched/snv_somatic_tumor_only"   , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "snv_somatic_tumor_only")), keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
       DatasetConf("enriched_cnv"                   , clin_datalake, "/enriched/cnv"                      , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "cnv"))),
+      DatasetConf("enriched_cnv_somatic_tumor_only", clin_datalake, "/enriched/cnv_somatic_tumor_only"   , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "cnv_somatic_tumor_only"))),
       DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "variants"))),
       DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1     , partitionby = List("chromosome"), table = Some(TableConf("clin", "consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
 

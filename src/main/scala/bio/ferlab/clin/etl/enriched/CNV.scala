@@ -14,6 +14,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_cnv")
   val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
+  val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
   val refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val cnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
@@ -23,6 +24,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
       normalized_cnv.id -> normalized_cnv.read,
+      normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read,
       genes.id -> genes.read
@@ -33,7 +35,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
                          lastRunDateTime: LocalDateTime = minDateTime,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
-    val cnv = data(normalized_cnv.id)
+    val cnv = data(normalized_cnv.id).unionByName(data(normalized_cnv_somatic_tumor_only.id), allowMissingColumns = true)
     val refseq = data(refseq_annotation.id)
 
     val joinedWithPanels = joinWithPanels(cnv, refseq, data(normalized_panels.id))
