@@ -20,7 +20,7 @@ class CNVSomaticTumorOnly(batchId: String)(implicit configuration: Configuration
 
     import spark.implicits._
 
-    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_CNV_Somatic_Input].toDF else data(raw_variant_calling.id)
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_CNV_Somatic_Input].toDF else data(raw_variant_calling.id).where(col("contigName").isin(validContigNames: _*))
 
     val joinedRelation: DataFrame = getClinicalRelation(data)
 

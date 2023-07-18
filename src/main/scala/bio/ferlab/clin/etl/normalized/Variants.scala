@@ -28,10 +28,8 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
-        .where(col("contigName").isin(validContigNames: _*)),
-      raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
-        .where(col("contigName").isin(validContigNames: _*)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
+      raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       clinical_impression.id -> clinical_impression.read,
       observation.id -> observation.read,
       task.id -> task.read,
@@ -45,9 +43,9 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
     val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
 
     if (!vcfGermline.isEmpty) {
-      (vcfGermline, "genotype.conditionalQuality", "gq", true)
+      (vcfGermline.where(col("contigName").isin(validContigNames: _*)), "genotype.conditionalQuality", "gq", true)
     } else if (!vcfSomaticTumorOnly.isEmpty) {
-      (vcfSomaticTumorOnly, "genotype.SQ", "sq", false)
+      (vcfSomaticTumorOnly.where(col("contigName").isin(validContigNames: _*)), "genotype.SQ", "sq", false)
     } else {
       throw new Exception("Not valid raw VCF available")
     }

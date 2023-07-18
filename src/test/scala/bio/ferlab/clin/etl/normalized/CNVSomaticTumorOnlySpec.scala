@@ -126,4 +126,14 @@ class CNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
     // ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedCNV", result, "src/test/scala/")
   }
 
+  "cnv transform" should "ignore invalid contigName" in {
+    val results = new CNVSomaticTumorOnly("BAT1").transform(data ++ Map(raw_cnv.id -> Seq(
+      VCF_CNV_Somatic_Input(`contigName` = "chr2"),
+      VCF_CNV_Somatic_Input(`contigName` = "chrY"),
+      VCF_CNV_Somatic_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_cnv_somatic_tumor_only").as[NormalizedCNVSomaticTumorOnly].collect()
+    result.length shouldBe > (0)
+    result.foreach(r => r.chromosome shouldNot be("foo"))
+  }
+
 }

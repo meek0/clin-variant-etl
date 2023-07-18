@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw
-import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, VCF_SNV_Input}
+import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, SNV_SOMATIC_GENOTYPES, VCF_SNV_Input, VCF_SNV_Somatic_Input}
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
@@ -39,6 +39,11 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
       VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = null))), // duplicated with bellow
       VCF_SNV_Input(`INFO_CSQ` = List(raw.INFO_CSQ(`Feature` = null))),
     ).toDF(),
+  )
+
+  val dataSomaticTumorOnly= data ++ Map(
+    raw_variant_calling.id -> spark.emptyDataFrame,
+    raw_variant_calling_somatic_tumor_only.id -> Seq(VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input()).toDF(),
   )
 
   override def beforeAll(): Unit = {
@@ -130,6 +135,35 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     }
     exception.getMessage shouldBe "Not valid raw VCF available"
 
+  }
+
+  "consequences job" should "transform data somatic tumor only in expected format" in {
+    val results = job1.transform(dataSomaticTumorOnly)
+    val resultDf = results("normalized_consequences")
+    val result = resultDf.as[NormalizedConsequences].collect()
+    result.length shouldBe 1
+  }
+
+  "consequences job" should "ignore invalid contigName in VCF Germline" in {
+    val results = job1.transform(data ++ Map(raw_variant_calling.id -> Seq(
+      VCF_SNV_Input(`contigName` = "chr2"),
+      VCF_SNV_Input(`contigName` = "chrY"),
+      VCF_SNV_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_consequences").as[NormalizedConsequences].collect()
+    result.length shouldBe > (0)
+    result.foreach(r => r.chromosome shouldNot be("foo"))
+  }
+
+  "consequences job" should "ignore invalid contigName in VCF Somatic tumor only" in {
+    val results = job1.transform(data ++ Map(
+      raw_variant_calling.id -> spark.emptyDataFrame,
+      raw_variant_calling_somatic_tumor_only.id -> Seq(
+        VCF_SNV_Somatic_Input(`contigName` = "chr2"),
+        VCF_SNV_Somatic_Input(`contigName` = "chrY"),
+        VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_consequences").as[NormalizedConsequences].collect()
+    result.length shouldBe > (0)
+    result.foreach(r => r.chromosome shouldNot be("foo"))
   }
 
 }
