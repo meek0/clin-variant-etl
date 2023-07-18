@@ -1,18 +1,18 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
-import bio.ferlab.clin.etl.normalized.CNV.getCNV
+import bio.ferlab.clin.etl.model.raw.{VCF_CNV_Somatic_Input}
+import bio.ferlab.clin.etl.normalized.CNVSomaticTumorOnly.getCNV
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class CNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
+class CNVSomaticTumorOnly(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
 
-  override val mainDestination: DatasetConf = conf.getDataset("normalized_cnv")
-  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
+  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv_somatic_tumor_only")
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
@@ -20,7 +20,7 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 
     import spark.implicits._
 
-    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_CNV_Input].toDF else data(raw_variant_calling.id)
+    val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_CNV_Somatic_Input].toDF else data(raw_variant_calling.id)
 
     val joinedRelation: DataFrame = getClinicalRelation(data)
 
@@ -35,7 +35,7 @@ class CNV(batchId: String)(implicit configuration: Configuration) extends Occurr
 
 }
 
-object CNV {
+object CNVSomaticTumorOnly {
 
   def getCNV(inputDf: DataFrame, batchId: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -53,7 +53,6 @@ object CNV {
           $"genotype.BC" as "bc",
           $"genotype.SM" as "sm",
           $"genotype.calls" as "calls",
-          $"genotype.CN" as "cn",
           $"genotype.pe" as "pe",
           is_multi_allelic,
           old_multi_allelic,
@@ -67,7 +66,7 @@ object CNV {
           lit(batchId) as "batch_id")
         .withColumn("type", split(col("name"), ":")(1))
         .withColumn("sort_chromosome", sortChromosome)
-        .withColumn("variant_type", lit("germline"))
+        .withColumn("variant_type", lit("somatic_tumor_only"))
     df
   }
 }
