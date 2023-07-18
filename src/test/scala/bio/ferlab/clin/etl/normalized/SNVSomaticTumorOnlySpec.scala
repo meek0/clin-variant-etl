@@ -192,6 +192,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       VCF_SNV_Somatic_Input(`contigName` = "chrY"),
       VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))
     val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
+    result.length shouldBe > (0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
   }
 

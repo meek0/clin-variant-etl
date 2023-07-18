@@ -136,6 +136,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       VCF_CNV_Input(`contigName` = "chrY"),
       VCF_CNV_Input(`contigName` = "foo")).toDF))
     val result = results("normalized_cnv").as[NormalizedCNV].collect()
+    result.length shouldBe > (0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
   }
 

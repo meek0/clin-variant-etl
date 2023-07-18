@@ -191,6 +191,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
         VCF_SNV_Input(`contigName` = "chrY"),
         VCF_SNV_Input(`contigName` = "foo")).toDF))
     val result = results("normalized_snv").as[NormalizedSNV].collect()
+    result.length shouldBe > (0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
   }
 
