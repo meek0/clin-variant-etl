@@ -185,6 +185,15 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     result.length shouldBe 0
   }
 
+  "occurrences transform" should "ignore invalid contigName" in {
+    val results = new SNV("BAT1").transform(data ++ Map(raw_variant_calling.id -> Seq(
+        VCF_SNV_Input(`contigName` = "chr2"),
+        VCF_SNV_Input(`contigName` = "chrY"),
+        VCF_SNV_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_snv").as[NormalizedSNV].collect()
+    result.foreach(r => r.chromosome shouldNot be("foo"))
+  }
+
   "addRareVariantColumn" should "add a column that indicate if variant is rare or not" in {
     val occurrences = Seq(
       RareVariantOccurence(chromosome = "1", start = 1000, reference = "A", alternate = "T"),

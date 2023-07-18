@@ -23,10 +23,8 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
-        .where(col("contigName").isin(validContigNames: _*)),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
-        .where(col("contigName").isin(validContigNames: _*)),
     )
   }
 
@@ -36,9 +34,9 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
     val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
 
     if (!vcfGermline.isEmpty) {
-      vcfGermline
+      vcfGermline.where(col("contigName").isin(validContigNames: _*))
     } else if (!vcfSomaticTumorOnly.isEmpty) {
-      vcfSomaticTumorOnly
+      vcfSomaticTumorOnly.where(col("contigName").isin(validContigNames: _*))
     } else {
       throw new Exception("Not valid raw VCF available")
     }

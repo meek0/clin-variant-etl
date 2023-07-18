@@ -199,6 +199,27 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
         raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame))
     }
     exception.getMessage shouldBe "Not valid raw VCF available"
+  }
 
+  "variants job" should "ignore invalid contigName in VCF Germnline" in {
+    val results = job1.transform(data ++ Map(raw_variant_calling.id -> Seq(
+      VCF_SNV_Input(`contigName` = "chr2"),
+      VCF_SNV_Input(`contigName` = "chrY"),
+      VCF_SNV_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_variants").as[NormalizedVariants].collect()
+    result.length shouldBe > (0)
+    result.foreach(r => r.chromosome shouldNot be("foo"))
+  }
+
+  "variants job" should "ignore invalid contigName in VCF Somatic tumor only" in {
+    val results = job1.transform(data ++ Map(
+      raw_variant_calling.id -> spark.emptyDataFrame,
+      raw_variant_calling_somatic_tumor_only.id -> Seq(
+        VCF_SNV_Somatic_Input(`contigName` = "chr2"),
+        VCF_SNV_Somatic_Input(`contigName` = "chrY"),
+        VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_variants").as[NormalizedVariants].collect()
+    result.length shouldBe > (0)
+    result.foreach(r => r.chromosome shouldNot be("foo"))
   }
 }

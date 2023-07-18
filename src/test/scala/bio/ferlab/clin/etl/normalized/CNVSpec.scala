@@ -130,4 +130,13 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     // ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedCNV", result, "src/test/scala/")
   }
 
+  "cnv transform" should "ignore invalid contigName" in {
+    val results = new CNV("BAT1").transform(data ++ Map(raw_cnv.id -> Seq(
+      VCF_CNV_Input(`contigName` = "chr2"),
+      VCF_CNV_Input(`contigName` = "chrY"),
+      VCF_CNV_Input(`contigName` = "foo")).toDF))
+    val result = results("normalized_cnv").as[NormalizedCNV].collect()
+    result.foreach(r => r.chromosome shouldNot be("foo"))
+  }
+
 }
