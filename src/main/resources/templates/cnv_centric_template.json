@@ -47,6 +47,12 @@
         "variant_type": {
           "type": "keyword"
         },
+        "batch_id": {
+          "type": "keyword"
+        },
+        "bioinfo_analysis_code": {
+          "type": "keyword"
+        },
         "calls": {
           "type": "long"
         },

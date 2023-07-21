@@ -45,6 +45,15 @@
             "aa_change": {
               "type": "keyword"
             },
+            "alternate": {
+              "type": "keyword"
+            },
+            "chromosome": {
+              "type": "keyword"
+            },
+            "reference": {
+              "type": "keyword"
+            },
             "amino_acids": {
               "properties": {
                 "reference": {
