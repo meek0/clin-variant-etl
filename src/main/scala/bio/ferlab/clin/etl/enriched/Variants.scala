@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, FixedRepartition}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -99,15 +99,16 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .withColumn(mainDestination.oid, col("updated_on"))
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = FixedRepartition(56)
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
 
   override def publish()(implicit spark: SparkSession): Unit = {
     vacuum(mainDestination, 2)
   }
 
-  private def getPnAnPerAnalysis(occurrences: DataFrame): DataFrame = {
-    import occurrences.sparkSession.implicits._
+  private def getPnAnPerAnalysis(occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
     val byAnalysis = occurrences
+      .filter($"bioinfo_analysis_code" =!= "TEBA")
       .select($"patient_id", $"affected_status", $"analysis_code")
       .distinct
       .groupBy("analysis_code", "affected_status")

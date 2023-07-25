@@ -527,7 +527,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
             `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1))))
     ).toDF()
 
-    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic_tumor_only.id -> Seq.empty[EnrichedSNVSomaticTumorOnly].toDF))
+    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf))
     val result = resultDf.as[EnrichedVariant].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2
