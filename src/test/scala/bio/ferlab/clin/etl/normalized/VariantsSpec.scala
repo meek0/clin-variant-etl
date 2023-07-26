@@ -56,6 +56,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   val taskDf: DataFrame = Seq(
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73254",
       `patient_id` = "PA0001",
       `service_request_id` = "SRS0001",
@@ -63,24 +64,28 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "1")
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73255",
       `patient_id` = "PA0002",
       `service_request_id` = "SRS0002",
       `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "2")
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73256",
       `patient_id` = "PA0003",
       `service_request_id` = "SRS0003",
       `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "3")
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73256",
       `patient_id` = "PA0004",
       `service_request_id` = "SRS0004",
       `experiment` = EXPERIMENT(`name` = "BAT1", `aliquot_id` = "4")
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73257",
       `analysis_code` = "TEBA",
       `patient_id` = "PA0004",

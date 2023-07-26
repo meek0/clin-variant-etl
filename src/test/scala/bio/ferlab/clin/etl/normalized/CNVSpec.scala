@@ -75,6 +75,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val taskDf: DataFrame = Seq(
     TaskOutput(
       `id` = "73254",
+      batch_id = "BAT1",
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),
@@ -82,6 +83,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ),
     TaskOutput(
       `id` = "73256",
+      batch_id = "BAT1",
       `patient_id` = "PA0002",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "22222"),
@@ -89,6 +91,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ),
     TaskOutput(
       `id` = "73257",
+      batch_id = "BAT1",
       `patient_id` = "PA0003",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "33333"),
@@ -96,6 +99,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
     ),
     TaskOutput(
       `id` = "73255",
+      batch_id = "BAT1",
       `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
       `experiment` = EXPERIMENT(`name` = "BAT1", `sequencing_strategy` = "WXS", `aliquot_id` = "11111"),

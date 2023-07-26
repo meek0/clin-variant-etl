@@ -46,6 +46,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   val taskDf: DataFrame = Seq(
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73254",
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
@@ -53,6 +54,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       `service_request_id` = "SRS0001"
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73256",
       `patient_id` = "PA0002",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
@@ -60,6 +62,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       `service_request_id` = "SRS0002"
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73257",
       `patient_id` = "PA0003",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
@@ -67,6 +70,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
       `service_request_id` = "SRS0003"
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73255",
       `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",

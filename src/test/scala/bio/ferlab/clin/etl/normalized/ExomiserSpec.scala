@@ -32,6 +32,7 @@ class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
 
   val taskDf: DataFrame = Seq(
     TaskOutput(
+      batch_id = "BAT1",
       experiment = EXPERIMENT(name = "BAT1", aliquot_id = "aliquot1"),
       documents = List(
         DOCUMENTS(id = "exo1", document_type = "EXOMISER")
@@ -39,12 +40,14 @@ class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     ),
     TaskOutput(
       experiment = EXPERIMENT(name = "BAT2", aliquot_id = "aliquot2"),
+      batch_id = "BAT2",
       documents = List(
         DOCUMENTS(id = "exo2", document_type = "EXOMISER")
       )
     ),
     TaskOutput(
       experiment = EXPERIMENT(name = "BAT2", aliquot_id = "aliquot3"),
+      batch_id = "BAT2",
       documents = List(
         DOCUMENTS(id = "exo3", document_type = "EXOMISER")
       )
