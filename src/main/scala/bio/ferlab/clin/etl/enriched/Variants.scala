@@ -8,7 +8,6 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import org.apache.spark.sql.functions.{collect_set, _}
-import org.apache.spark.sql.types.{DoubleType, IntegerType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
@@ -63,7 +62,10 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
-    val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(occurrences)
+    val pnOccurrences = data(snv.id)
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
+
+    val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(pnOccurrences)
     val variants = mergeVariantFrequencies(data(normalized_variants.id), pn_an_by_analysis)
 
     val genomesDf = data(`thousand_genomes`.id)
@@ -105,8 +107,8 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     vacuum(mainDestination, 2)
   }
 
-  private def getPnAnPerAnalysis(occurrences: DataFrame): DataFrame = {
-    import occurrences.sparkSession.implicits._
+  private def getPnAnPerAnalysis(occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
     val byAnalysis = occurrences
       .select($"patient_id", $"affected_status", $"analysis_code")
       .distinct
