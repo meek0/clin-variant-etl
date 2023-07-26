@@ -1,14 +1,13 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import org.apache.spark.sql.functions.{collect_set, _}
-import org.apache.spark.sql.types.{DoubleType, IntegerType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
@@ -63,7 +62,10 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
-    val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(occurrences)
+    val pnOccurrences = data(snv.id)
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
+
+    val pn_an_by_analysis: DataFrame = getPnAnPerAnalysis(pnOccurrences)
     val variants = mergeVariantFrequencies(data(normalized_variants.id), pn_an_by_analysis)
 
     val genomesDf = data(`thousand_genomes`.id)
@@ -99,7 +101,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .withColumn(mainDestination.oid, col("updated_on"))
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = FixedRepartition(56)
 
   override def publish()(implicit spark: SparkSession): Unit = {
     vacuum(mainDestination, 2)
@@ -108,7 +110,6 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   private def getPnAnPerAnalysis(occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val byAnalysis = occurrences
-      .filter($"bioinfo_analysis_code" =!= "TEBA")
       .select($"patient_id", $"affected_status", $"analysis_code")
       .distinct
       .groupBy("analysis_code", "affected_status")
