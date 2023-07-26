@@ -134,6 +134,22 @@
       "metadata": {}
     },
     {
+      "name": "groupIdentifier",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "value",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
       "name": "for",
       "type": {
         "type": "struct",

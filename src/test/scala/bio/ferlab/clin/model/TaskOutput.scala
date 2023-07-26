@@ -8,6 +8,7 @@ import java.sql.{Date, Timestamp}
 
 
 case class TaskOutput(id: String = "109351",
+                      batch_id: String = "bat1",
                       intent: String = "order",
                       priority: String = "routine",
                       resource_type: String = "Task",

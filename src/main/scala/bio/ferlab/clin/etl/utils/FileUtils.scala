@@ -26,7 +26,7 @@ object FileUtils {
   def filesUrlFromDF(tasks: DataFrame, documentReferences: DataFrame, batchId: String, dataType: String, format: String)(implicit spark: SparkSession): Set[FileInfo] = {
     import spark.implicits._
     val documentIdsFromTasks = tasks
-      .where(col("experiment.name") === batchId)
+      .where(col("batch_id") === batchId)
       .select(explode(col("documents")) as "document", col("experiment.aliquot_id") as "aliquot_id")
       .where(col("document.document_type") === dataType)
       .select(col("document.id") as "id", col("aliquot_id") )

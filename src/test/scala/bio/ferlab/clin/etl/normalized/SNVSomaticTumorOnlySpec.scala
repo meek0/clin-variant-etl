@@ -47,6 +47,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
 
   val taskDf: DataFrame = Seq(
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73254",
       `patient_id` = "PA0001",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
@@ -55,6 +56,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       `analysis_code` = "TEBA",
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73256",
       `patient_id` = "PA0002",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
@@ -63,6 +65,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       `analysis_code` = "TEBA",
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73257",
       `patient_id` = "PA0003",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",
@@ -71,6 +74,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
       `analysis_code` = "TEBA",
     ),
     TaskOutput(
+      batch_id = "BAT1",
       `id` = "73255",
       `patient_id` = "PA00095",
       `specimen_id` = "TCGA-02-0001-01B-02D-0182-06",

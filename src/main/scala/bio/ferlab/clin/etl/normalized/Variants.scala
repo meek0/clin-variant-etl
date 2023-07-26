@@ -276,7 +276,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
 
     val taskDf = data(task.id)
-      .where(col("experiment.name") === batchId)
+      .where(col("batch_id") === batchId)
       .select(
         col("experiment.aliquot_id") as "aliquot_id",
         col("patient_id"),

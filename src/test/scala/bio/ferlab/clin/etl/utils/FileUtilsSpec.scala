@@ -13,6 +13,7 @@ class FileUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
   "filesUrlFromDF" should "return list of expectd urls for a given batch id" in {
     val tasks = Seq(
       TaskOutput(
+        batch_id = "B1",
         experiment = EXPERIMENT(name = "B1"),
         documents = List(
           DOCUMENTS(id = "exo1", document_type = "EXOMISER"), //Should be included
@@ -21,6 +22,7 @@ class FileUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
         )
       ),
       TaskOutput(
+        batch_id = "B1",
         experiment = EXPERIMENT(name = "B1"),
         documents = List(
           DOCUMENTS(id = "exo3", document_type = "EXOMISER"), //Should be included
@@ -29,6 +31,7 @@ class FileUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
         )
       ),
       TaskOutput(
+        batch_id = "B2",
         experiment = EXPERIMENT(name = "B2"),
         documents = List(
           DOCUMENTS(id = "exo5", document_type = "EXOMISER") //Should be excluded because wrong batch

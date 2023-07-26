@@ -206,6 +206,7 @@ object FhirRawToNormalizedMappings {
   val taskMapping: List[Transformation] = List(
     Custom(_
       .withColumn("analysis_code", col("code")("coding")(0)("code"))
+      .withColumn("batch_id", col("groupIdentifier")("value"))
       .withColumn("service_request_id", regexp_replace(col("focus")("reference"), "ServiceRequest/", ""))
       .withColumn("patient_id", regexp_replace(col("for")("reference"), "Patient/", ""))
       .withColumn("organization_id", regexp_replace(col("requester")("reference"), "Organization/", ""))
@@ -219,7 +220,7 @@ object FhirRawToNormalizedMappings {
       .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzz"))
       .withTaskExtension
     ),
-    Drop("meta", "requester", "authoredOn", "extension", "input", "output", "focus", "for", "code")
+    Drop("meta", "requester", "authoredOn", "extension", "input", "output", "focus", "for", "code", "groupIdentifier")
   )
   val documentMapping: String => List[Transformation] = clinDownloadPath => List(
     Custom(_
