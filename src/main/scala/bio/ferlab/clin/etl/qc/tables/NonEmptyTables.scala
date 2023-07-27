@@ -23,11 +23,16 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(fhir_specimen, "fhir_specimen"),
       shouldNotBeEmpty(fhir_task, "fhir_task"),
       shouldNotBeEmpty(fhir_family, "fhir_family"),
+      shouldNotBeEmpty(fhir_document_reference, "fhir_document_reference"),
       shouldNotBeEmpty(normalized_snv, "normalized_snv"),
       shouldNotBeEmpty(normalized_cnv, "normalized_cnv"),
       shouldNotBeEmpty(normalized_variants, "normalized_variants"),
       shouldNotBeEmpty(normalized_consequences, "normalized_consequences"),
       shouldNotBeEmpty(normalized_panels, "normalized_panels"),
+      shouldNotBeEmpty(normalized_exomiser, "normalized_exomiser"),
+      shouldNotBeEmpty(normalized_snv_somatic_tumor_only, "normalized_snv_somatic_tumor_only"),
+      shouldNotBeEmpty(normalized_cnv_somatic_tumor_only, "normalized_cnv_somatic_tumor_only"),
+      shouldNotBeEmpty(snv_somatic_tumor_only, "snv_somatic_tumor_only"),
       shouldNotBeEmpty(snv, "snv"),
       shouldNotBeEmpty(cnv, "cnv"),
       shouldNotBeEmpty(variants, "variants"),
@@ -51,9 +56,12 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(refseq_annotation, "refseq_annotation"),
       shouldNotBeEmpty(genes, "genes"),
       shouldNotBeEmpty(dbnsfp_original, "dbnsfp_original"),
+      shouldNotBeEmpty(dbnsfp_annovar, "dbnsfp_annovar"),
+      shouldNotBeEmpty(dbnsfp, "dbnsfp"),
       shouldNotBeEmpty(spliceai_indel, "spliceai_indel"),
       shouldNotBeEmpty(spliceai_snv, "spliceai_snv"),
-      shouldNotBeEmpty(rare_variant_enriched, "rare_variant_enriched")
+      shouldNotBeEmpty(rare_variant_enriched, "rare_variant_enriched"),
+      shouldNotBeEmpty(spliceai_enriched, "spliceai_enriched")
     )
   }
 }
