@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
+import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
@@ -112,31 +113,6 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .drop("genotype")
       .join(broadcast(clinicalInfos), Seq("aliquot_id"))
   }
-
-  val emptyFrequency =
-    struct(
-      lit(0L) as "ac",
-      lit(0L) as "an",
-      lit(0.0) as "af",
-      lit(0L) as "pc",
-      lit(0L) as "pn",
-      lit(0.0) as "pf",
-      lit(0L) as "hom"
-    )
-
-  val emptyFrequencyRQDM = struct(
-    emptyFrequency as "affected",
-    emptyFrequency as "non_affected",
-    emptyFrequency as "total"
-  )
-
-  val emptyFrequencies = struct(
-    lit("") as "analysis_display_name",
-    lit("") as "analysis_code",
-    emptyFrequency as "affected",
-    emptyFrequency as "non_affected",
-    emptyFrequency as "total"
-  )
 
   def getVariantsEmptyFrequencies(variants: DataFrame): DataFrame = {
     variants

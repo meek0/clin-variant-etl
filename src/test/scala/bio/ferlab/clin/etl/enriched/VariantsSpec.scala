@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model._
+import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequency, emptyFrequencyRQDM}
+import bio.ferlab.clin.model.{NormalizedVariants, _}
 import bio.ferlab.clin.model.enriched.{DONORS, EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV, EnrichedSNVSomaticTumorOnly, EnrichedVariant, GENES, GNOMAD, SPLICEAI}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
@@ -189,7 +190,13 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       EnrichedSNV(`analysis_code` = "UseCase18a", `affected_status` = true,  `patient_id` = "PA32", `ad_alt`=30, `batch_id` = "BAT2", `start` = 118),
       EnrichedSNV(`analysis_code` = "UseCase18b", `affected_status` = false, `patient_id` = "PA33", `ad_alt`=30, `batch_id` = "BAT2", `start` = 218),
       EnrichedSNV(`analysis_code` = "UseCase19a", `affected_status` = true,  `patient_id` = "PA34", `ad_alt`=30, `batch_id` = "BAT1", `start` = 119),
-      EnrichedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt`=30, `batch_id` = "BAT2", `start` = 219)
+      EnrichedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt`=30, `batch_id` = "BAT2", `start` = 219),
+    ).toDF
+
+    val occurrencesDfSomaticTumorOnly = Seq(
+      EnrichedSNVSomaticTumorOnly(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 219),
+      EnrichedSNVSomaticTumorOnly(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 301),
+      EnrichedSNVSomaticTumorOnly(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 302)
     ).toDF
 
     val variantDf = Seq(
@@ -524,10 +531,49 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
             `analysis_display_name` = "Analysis B for the use case 19",
             `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1))))
+            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+      NormalizedVariants(
+        `batch_id` = "BAT3",
+        `start` = 219,
+        `frequencies_by_analysis` = List(
+          AnalysisCodeFrequencies(
+            `analysis_code` = "UseCaseSomatic",
+            `analysis_display_name` = "Analysis Somatic with both germline and somatic",
+            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `total` =        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+          ))),
+      NormalizedVariants(
+        `batch_id` = "BAT3",
+        `start` = 301,
+        `frequency_RQDM` = null,
+        `frequencies_by_analysis` = List(
+          AnalysisCodeFrequencies(
+            `analysis_code` = "UseCaseSomatic",
+            `analysis_display_name` = "Analysis Somatic with missing frequency_RQDM",
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `total` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+          ))),
+        NormalizedVariants(
+        `batch_id` = "BAT3",
+        `start` = 302,
+        `frequency_RQDM` = AnalysisFrequencies(
+          `affected` = Frequency(1, 0, 2.0, 0, 0, 3.0, 0),
+          `non_affected` = Frequency(0, 5, 0.0, 0, 4, 0.0, 0),
+          `total` = Frequency(0, 0, 0.0, 6, 0, 0.0, 7)
+        ),
+        `frequencies_by_analysis` = List(
+          AnalysisCodeFrequencies(
+            `analysis_code` = "UseCaseSomatic",
+            `analysis_display_name` = "Analysis Somatic with non-empty frequencies",
+            `affected` = Frequency(1, 0, 2.0, 0, 0, 3.0, 0),
+            `non_affected` = Frequency(0, 5, 0.0, 0, 4, 0.0, 0),
+            `total` = Frequency(0, 0, 0.0, 6, 0, 0.0, 7)
+          ))),
     ).toDF()
 
-    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf))
+    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic_tumor_only.id -> occurrencesDfSomaticTumorOnly))
     val result = resultDf.as[EnrichedVariant].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2
@@ -884,6 +930,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
       Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+
     val result219 = result.find(_.`start` == 219).head
     result219.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
@@ -895,6 +942,26 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       Frequency(0, 54, 0.0,                  0, 27, 0.0,                 0),
       Frequency(1, 16, 0.0625,               1, 8,  0.125,               1),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
+    // is both germline and somatic_tumor_only
+    result219.`variant_type` should contain allElementsOf List("germline", "somatic_tumor_only")
+
+    // should have empty frequencies
+    val result301 = result.find(_.`start` == 301).head
+    result301.`frequencies_by_analysis`.size shouldBe 0
+    result301.`frequency_RQDM` shouldBe AnalysisFrequencies(
+      Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+      Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+      Frequency(0, 0, 0.0, 0, 0, 0.0, 0))
+    result301.`variant_type` should contain allElementsOf List("somatic_tumor_only")
+
+    // should have empty frequencies
+    val result302 = result.find(_.`start` == 302).head
+    result302.`frequencies_by_analysis`.size shouldBe 0
+    result302.`frequency_RQDM` shouldBe AnalysisFrequencies(
+      Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+      Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+      Frequency(0, 0, 0.0, 0, 0, 0.0, 0))
+    result302.`variant_type` should contain allElementsOf List("somatic_tumor_only")
   }
 
   "variants job" should "run" in {
