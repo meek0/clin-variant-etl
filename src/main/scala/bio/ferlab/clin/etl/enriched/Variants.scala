@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
+import bio.ferlab.clin.etl.utils.FrequencyUtils.emptyFrequencyRQDM
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -84,7 +85,8 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     val gnomad_genomes_v3DF = data(gnomad_genomes_v3.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
 
     val joinWithDonors = variantsWithDonors(variants, occurrences)
-    val joinWithPop = joinWithPopulations(joinWithDonors, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)
+    val joinWithCleanFreqs = cleanupSomaticTumorOnlyFreqs(joinWithDonors)
+    val joinWithPop = joinWithPopulations(joinWithCleanFreqs, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
@@ -221,6 +223,14 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       )
     variants
       .joinByLocus(donors, "inner")
+  }
+
+  def cleanupSomaticTumorOnlyFreqs(variants: DataFrame) = {
+    val isSomaticTumorOnlyCondition = array_contains(col("variant_type"), "somatic_tumor_only") && size(col("variant_type")) === 1
+
+    variants
+      .withColumn("frequencies_by_analysis", when(isSomaticTumorOnlyCondition, lit(array())).otherwise(coalesce(col("frequencies_by_analysis"), lit(array()))))
+      .withColumn("frequency_RQDM", when(isSomaticTumorOnlyCondition, lit(emptyFrequencyRQDM)).otherwise(coalesce(col("frequency_RQDM"), emptyFrequencyRQDM)))
   }
 
   def joinWithPopulations(variants: DataFrame,

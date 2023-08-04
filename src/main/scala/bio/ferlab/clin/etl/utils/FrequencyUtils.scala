@@ -32,4 +32,29 @@ object FrequencyUtils {
   val hom: Column = sum(when(col("zygosity") === "HOM" and frequencyFilter, 1).otherwise(0)) as "hom"
   val het: Column = sum(when(col("zygosity") === "HET" and frequencyFilter, 1).otherwise(0)) as "het"
 
+  val emptyFrequency =
+    struct(
+      lit(0L) as "ac",
+      lit(0L) as "an",
+      lit(0.0) as "af",
+      lit(0L) as "pc",
+      lit(0L) as "pn",
+      lit(0.0) as "pf",
+      lit(0L) as "hom"
+    )
+
+  val emptyFrequencyRQDM = struct(
+    emptyFrequency as "affected",
+    emptyFrequency as "non_affected",
+    emptyFrequency as "total"
+  )
+
+  val emptyFrequencies = struct(
+    lit("") as "analysis_display_name",
+    lit("") as "analysis_code",
+    emptyFrequency as "affected",
+    emptyFrequency as "non_affected",
+    emptyFrequency as "total"
+  )
+
 }
