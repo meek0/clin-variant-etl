@@ -62,6 +62,7 @@ package object dictionary {
     "PASS",
     "cnvQual",
     "cnvCopyRatio",
+    "LoDFail",
     "null",
   )
 
@@ -137,6 +138,17 @@ package object dictionary {
     "PloidyConflict",
     "base_quality",
     "lod_fstar",
+    "mapping_quality",
+    "weak_evidence",
+    "no_reliable_supporting_read",
+    "systematic_noise",
+    "filtered_reads",
+    "fragment_length",
+    "too_few_supporting_reads",
+    "low_frac_info_reads",
+    "read_position",
+    "multiallelic",
+    "long_indel",
     "null",
   )
 
@@ -267,6 +279,7 @@ package object dictionary {
     "RHAB",
     "SSOLID",
     "SHEMA",
+    "EXTUM",
   )
 
   val DicParentalOrigin = Seq(
@@ -315,6 +328,9 @@ package object dictionary {
     "insertion",
     "deletion",
     "SNV",
+    "indel",
+    "substitution",
+    "sequence_alteration",
     "null",
   )
 
