@@ -3,15 +3,9 @@ package bio.ferlab.clin.etl.es
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.spark3.utils.ClassGenerator
-import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import java.io.File
-import java.sql.Timestamp
 
 class PrepareCnvCentricSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
 

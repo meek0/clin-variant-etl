@@ -1,14 +1,11 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw
-import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, SNV_SOMATIC_GENOTYPES, VCF_SNV_Input, VCF_SNV_Somatic_Input}
-import bio.ferlab.clin.model._
+import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, VCF_SNV_Input, VCF_SNV_Somatic_Input}
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.file.HadoopFileSystem
+import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.commons.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

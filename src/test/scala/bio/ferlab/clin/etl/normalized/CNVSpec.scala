@@ -4,13 +4,9 @@ import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import java.sql.Date
-import java.time.LocalDate
 
 class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
 

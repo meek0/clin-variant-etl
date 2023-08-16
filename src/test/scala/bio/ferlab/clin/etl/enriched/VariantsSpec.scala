@@ -1,13 +1,11 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequency, emptyFrequencyRQDM}
-import bio.ferlab.clin.model.{NormalizedVariants, _}
-import bio.ferlab.clin.model.enriched.{DONORS, EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV, EnrichedSNVSomaticTumorOnly, EnrichedVariant, GENES, GNOMAD, SPLICEAI}
+import bio.ferlab.clin.model.enriched._
+import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.spark3.utils.ClassGenerator
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._

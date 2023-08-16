@@ -6,7 +6,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.normalized.NormalizedExomiser
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.spark3.file.HadoopFileSystem
+import bio.ferlab.datalake.commons.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.input_file_name

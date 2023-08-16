@@ -3,10 +3,7 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.spark3.utils.ClassGenerator
-import org.apache.spark.sql.{DataFrame, SaveMode}
-import org.apache.spark.sql.functions.explode
-import org.scalatest.BeforeAndAfterEach
+import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
