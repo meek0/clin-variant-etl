@@ -1,16 +1,14 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw.{SNV_GENOTYPES, SNV_SOMATIC_GENOTYPES, VCF_SNV_Input, VCF_SNV_Somatic_Input}
-import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.{normalized, _}
+import bio.ferlab.clin.model.normalized.NormalizedVariants
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.commons.file.HadoopFileSystem
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll {
 
   import spark.implicits._
 
@@ -95,14 +93,11 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   ).toDF
 
 
-  val job1 = new Variants("BAT1")
-  val job2 = new Variants("BAT2")
+  val job1 = Variants(TestETLContext(), "BAT1")
+  val job2 = Variants(TestETLContext(), "BAT2")
 
-  override def beforeAll(): Unit = {
-    spark.sql(s"CREATE DATABASE IF NOT EXISTS ${raw_variant_calling.table.map(_.database).getOrElse("clin")}")
-    HadoopFileSystem.remove(job1.mainDestination.location)
-  }
-
+  override val dbToCreate: List[String] = List(raw_variant_calling.table.map(_.database).getOrElse("clin"))
+  override val dsToClean: List[DatasetConf] = List(job1.mainDestination)
 
   val data: Map[String, DataFrame] = Map(
     raw_variant_calling.id -> Seq(
@@ -154,14 +149,14 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     result.length shouldBe 3
     resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
     val variantWithFreq = result.find(_.`reference` == "T")
-    variantWithFreq.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
+    variantWithFreq.map(_.copy(`created_on` = null)) shouldBe Some(normalized.NormalizedVariants(
       `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1))),
       `frequency_RQDM` = AnalysisFrequencies(Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1)),
       `created_on` = null)
     )
 
     val variantWithoutFreqG = result.find(_.`reference` == "G")
-    variantWithoutFreqG.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
+    variantWithoutFreqG.map(_.copy(`created_on` = null)) shouldBe Some(normalized.NormalizedVariants(
       reference= "G",
       `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)",Frequency(0,4,0.0,0,2,0.0,0),Frequency(0,0,0.0,0,0,0.0,0),Frequency(0,4,0.0,0,2,0.0,0))),
       `frequency_RQDM` = AnalysisFrequencies(Frequency(0,4,0.0,0,2,0.0,0), Frequency(0, 0, 0, 0, 0, 0, 0), Frequency(0,4,0.0,0,2,0.0,0)),
@@ -169,7 +164,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     )
 
     val variantWithoutFreqA = result.find(_.`reference` == "A")
-    variantWithoutFreqA.map(_.copy(`created_on` = null)) shouldBe Some(NormalizedVariants(
+    variantWithoutFreqA.map(_.copy(`created_on` = null)) shouldBe Some(normalized.NormalizedVariants(
       reference= "A",
       `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG","Maladies musculaires (Panel global)",Frequency(0,2,0.0,0,1,0.0,0),Frequency(0,0,0.0,0,0,0.0,0),Frequency(0,2,0.0,0,1,0.0,0))),
       `frequency_RQDM` = AnalysisFrequencies(Frequency(0,2,0.0,0,1,0.0,0),Frequency(0,0,0.0,0,0,0.0,0),Frequency(0,2,0.0,0,1,0.0,0)),

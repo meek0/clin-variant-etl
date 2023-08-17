@@ -1,22 +1,20 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.model.{normalized, _}
 import bio.ferlab.clin.model.enriched._
-import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.normalized.{NormalizedPanels, NormalizedVariants}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import org.apache.commons.io.FileUtils
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-import java.io.File
 import java.sql.Date
 
-class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll with BeforeAndAfterAll {
 
   import spark.implicits._
 
@@ -37,6 +35,10 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
+
+  val job = Variants(TestETLContext(RunStep.initial_load))
+  override val dbToCreate: List[String] = List("clin", "clin_normalized")
+  override val dsToClean: List[DatasetConf] = List(enriched_variants)
 
   val occurrencesDf: DataFrame = Seq(
     EnrichedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -83,10 +85,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   )
 
   override def beforeAll(): Unit = {
-    FileUtils.deleteDirectory(new File("spark-warehouse"))
-    FileUtils.deleteDirectory(new File(enriched_variants.location))
-    spark.sql("CREATE DATABASE IF NOT EXISTS clin_normalized")
-    spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+    super.beforeAll()
 
     data.foreach { case (id, df) =>
       val ds = conf.getDataset(id)
@@ -104,7 +103,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   )
 
   "variants job" should "union of all available enriched SNV" in {
-    val resultDf = new Variants().transformSingle(data)
+    val resultDf = job.transformSingle(data)
     val result = resultDf.as[EnrichedVariant].collect()
     result.length shouldBe 1
     result(0).`variant_type`.size shouldBe 2
@@ -541,7 +540,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `total` =        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
           ))),
-      NormalizedVariants(
+      normalized.NormalizedVariants(
         `batch_id` = "BAT3",
         `start` = 301,
         `frequency_RQDM` = null,
@@ -553,7 +552,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `total` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
           ))),
-        NormalizedVariants(
+        normalized.NormalizedVariants(
         `batch_id` = "BAT3",
         `start` = 302,
         `frequency_RQDM` = AnalysisFrequencies(
@@ -571,7 +570,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
           ))),
     ).toDF()
 
-    val resultDf = new Variants().transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic_tumor_only.id -> occurrencesDfSomaticTumorOnly))
+    val resultDf = job.transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic_tumor_only.id -> occurrencesDfSomaticTumorOnly))
     val result = resultDf.as[EnrichedVariant].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2
@@ -963,7 +962,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   }
 
   "variants job" should "run" in {
-    new Variants().run(RunStep.initial_load)
+    job.run()
 
     val resultDf = spark.table("clin.variants")
     val result = resultDf.as[EnrichedVariant].collect().head
@@ -1013,7 +1012,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       EnrichedSNV(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", aliquot_id = "11111", exomiser_variant_score = Some(0.4f), exomiser = Some(EXOMISER()), exomiser_other_moi = None),
     ).toDF()
 
-    val result = new Variants().variantsWithDonors(variantsWithoutDonors, occurrences)
+    val result = job.variantsWithDonors(variantsWithoutDonors, occurrences)
 
     val expected = Seq(
       EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", exomiser_variant_score = Some(0.99f), donors = List(
@@ -1051,7 +1050,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `symbol` = "OR4F5", `max_score` = MAX_SCORE(`ds` = 1.0, `type` = Seq("AG", "AL")))
     ).toDF()
 
-    val result = new Variants().joinWithSpliceAi(variantsWithoutSpliceAi, spliceai)
+    val result = job.joinWithSpliceAi(variantsWithoutSpliceAi, spliceai)
 
     val expected = Seq(
       EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
@@ -1086,7 +1085,7 @@ class VariantsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
       GnomadConstraintOutput(`chromosome` = "2", `symbol` = "gene3", `transcript` = "transcriptD", `pLI` = 0.9236f, `oe_lof_upper` = 1.458f),
     ).toDF()
 
-    val result = new Variants().joinWithConstraint(variantsWithoutConstraint, constraint)
+    val result = job.joinWithConstraint(variantsWithoutConstraint, constraint)
 
     val expected = Seq(
       EnrichedVariant(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(

@@ -2,13 +2,13 @@ package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw.VCF_CNV_Somatic_Input
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.normalized.NormalizedCNVSomaticTumorOnly
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class CNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
+class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -20,6 +20,8 @@ class CNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
   val patient: DatasetConf = conf.getDataset("normalized_patient")
   val task: DatasetConf = conf.getDataset("normalized_task")
   val family: DatasetConf = conf.getDataset("normalized_family")
+
+  val job = CNVSomaticTumorOnly(TestETLContext(), "BAT1")
 
   val specimenDf: DataFrame = Seq(
     SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_001"), `specimen_id` = None),
@@ -120,7 +122,7 @@ class CNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
   }*/
 
   "cnv transform" should "transform data in expected format" in {
-    val results = new CNVSomaticTumorOnly("BAT1").transform(data)
+    val results = job.transform(data)
     val result = results("normalized_cnv_somatic_tumor_only").as[NormalizedCNVSomaticTumorOnly].collect()
 
     result should contain theSameElementsAs Seq(
@@ -131,7 +133,7 @@ class CNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
   }
 
   "cnv transform" should "ignore invalid contigName" in {
-    val results = new CNVSomaticTumorOnly("BAT1").transform(data ++ Map(raw_cnv.id -> Seq(
+    val results = job.transform(data ++ Map(raw_cnv.id -> Seq(
       VCF_CNV_Somatic_Input(`contigName` = "chr2"),
       VCF_CNV_Somatic_Input(`contigName` = "chrY"),
       VCF_CNV_Somatic_Input(`contigName` = "foo")).toDF))

@@ -1,18 +1,20 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.clin.etl.mainutils.Release
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 
 import java.time.LocalDateTime
 
-class PrepareCnvCentric(releaseId: String)(implicit configuration: Configuration) extends PrepareCentric(releaseId) {
+case class PrepareCnvCentric(rc: RuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_cnv_centric")
   val enriched_cnv: DatasetConf = conf.getDataset("enriched_cnv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       enriched_cnv.id -> enriched_cnv.read
     )
@@ -20,10 +22,18 @@ class PrepareCnvCentric(releaseId: String)(implicit configuration: Configuration
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     data(enriched_cnv.id)
 
   }
 
 }
 
+object PrepareCnvCentric {
+  @main
+  def run(rc: RuntimeETLContext, release: Release): Unit = {
+    PrepareCnvCentric(rc, release.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
+}

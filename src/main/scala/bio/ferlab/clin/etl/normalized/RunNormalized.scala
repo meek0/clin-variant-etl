@@ -1,35 +1,45 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.datalake.spark3.SparkApp
+import bio.ferlab.clin.etl.mainutils.Batch
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
+import mainargs.{ParserForMethods, main}
 
-object RunNormalized extends SparkApp {
+object RunNormalized {
+  @main
+  def variants(rc: RuntimeETLContext, batch: Batch): Unit = Variants.run(rc, batch)
 
-  val Array(_, _, batchId, jobName) = args
+  @main
+  def consequences(rc: RuntimeETLContext, batch: Batch): Unit = Consequences.run(rc, batch)
 
-  implicit val (conf, steps, spark) = init(appName = s"Normalize $jobName $batchId")
+  @main
+  def snv(rc: RuntimeETLContext, batch: Batch): Unit = SNV.run(rc, batch)
 
-  log.info(s"batchId: $batchId")
-  log.info(s"Job: $jobName")
-  log.info(s"runType: ${steps.mkString(" -> ")}")
+  @main
+  def snv_somatic_tumor_only(rc: RuntimeETLContext, batch: Batch): Unit = SNVSomaticTumorOnly.run(rc, batch)
 
-  jobName match {
-    case "variants" => new Variants(batchId).run(steps)
-    case "consequences" => new Consequences(batchId).run(steps)
-    case "snv" => new SNV(batchId).run(steps)
-    case "snv_somatic_tumor_only" => new SNVSomaticTumorOnly(batchId).run(steps)
-    case "cnv" => new CNV(batchId).run(steps)
-    case "cnv_somatic_tumor_only" => new CNVSomaticTumorOnly(batchId).run(steps)
-    case "panels" => new Panels().run(steps)
-    case "exomiser" => new Exomiser(batchId).run(steps)
-    case "all" =>
-      new SNV(batchId).run(steps)
-      new SNVSomaticTumorOnly(batchId).run(steps)
-      new CNV(batchId).run(steps)
-      new CNVSomaticTumorOnly(batchId).run(steps)
-      new Variants(batchId).run(steps)
-      new Consequences(batchId).run(steps)
-      new Panels().run(steps)
-      new Exomiser(batchId).run(steps)
-    case s: String => throw new IllegalArgumentException(s"Runtype [$s] unknown.")
+  @main
+  def cnv(rc: RuntimeETLContext, batch: Batch): Unit = CNV.run(rc, batch)
+
+  @main
+  def cnv_somatic_tumor_only(rc: RuntimeETLContext, batch: Batch): Unit = CNVSomaticTumorOnly.run(rc, batch)
+
+  @main
+  def panels(rc: RuntimeETLContext): Unit = Panels.run(rc)
+
+  @main
+  def exomiser(rc: RuntimeETLContext, batch: Batch): Unit = Exomiser.run(rc, batch)
+
+  @main
+  def all(rc: RuntimeETLContext, batch: Batch): Unit = {
+    snv(rc, batch)
+    snv_somatic_tumor_only(rc, batch)
+    cnv(rc, batch)
+    cnv_somatic_tumor_only(rc, batch)
+    variants(rc, batch)
+    consequences(rc, batch)
+    panels(rc)
+    exomiser(rc, batch)
   }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }

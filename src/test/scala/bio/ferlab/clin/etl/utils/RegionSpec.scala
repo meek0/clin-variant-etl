@@ -1,12 +1,10 @@
 package bio.ferlab.clin.etl.utils
 
 import bio.ferlab.clin.model.Track
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.datalake.testutils.SparkSpec
 import org.apache.spark.sql.functions.col
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class RegionSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class RegionSpec extends SparkSpec {
 
   "overlap" should "return T1.end - T2.start" in {
     println(

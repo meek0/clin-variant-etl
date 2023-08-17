@@ -1,30 +1,32 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_SNV_Input
 import bio.ferlab.clin.etl.normalized.SNV._
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class SNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
+case class SNV(rc: RuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_snv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     super.extract(lastRunDateTime, currentRunDateTime) + (rare_variants.id -> rare_variants.read)
   }
 
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minDateTime,
-                               currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     import spark.implicits._
 
@@ -146,5 +148,10 @@ object SNV {
       .withColumn("is_rare", coalesce(col("is_rare"), lit(true))) // if a variant is not found into table rare_variant then it's a rare variant
   }
 
+  @main
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+    SNV(rc, batch.id).run()
+  }
 
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

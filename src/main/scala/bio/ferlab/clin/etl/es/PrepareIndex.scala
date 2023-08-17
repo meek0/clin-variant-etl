@@ -1,24 +1,25 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.spark3.SparkApp
+import bio.ferlab.clin.etl.mainutils.Release
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
+import mainargs.{ParserForMethods, main}
 
-object PrepareIndex extends SparkApp {
 
-  val Array(_, _, jobName, releaseId) = args
+object PrepareIndex {
+  @main
+  def gene_centric(rc: RuntimeETLContext, release: Release): Unit = PrepareGeneCentric.run(rc, release)
 
-  implicit val (conf, steps, spark) = init(appName = s"Prepare index $jobName")
+  @main
+  def gene_suggestions(rc: RuntimeETLContext, release: Release): Unit = PrepareGeneSuggestions.run(rc, release)
 
-  log.info(s"Job: $jobName")
-  log.info(s"releaseId: $releaseId")
-  log.info(s"runType: ${steps.mkString(" -> ")}")
+  @main
+  def variant_centric(rc: RuntimeETLContext, release: Release): Unit = PrepareVariantCentric.run(rc, release)
 
-  jobName match {
-    case "gene_centric" => new PrepareGeneCentric(releaseId).run(steps)
-    case "gene_suggestions" => new PrepareGeneSuggestions(releaseId).run(steps)
-    case "variant_centric" => new PrepareVariantCentric(releaseId).run(steps)
-    case "variant_suggestions" => new PrepareVariantSuggestions(releaseId).run(steps)
-    case "cnv_centric" => new PrepareCnvCentric(releaseId).run(steps)
-  }
+  @main
+  def variant_suggestions(rc: RuntimeETLContext, release: Release): Unit = PrepareVariantSuggestions.run(rc, release)
 
+  @main
+  def cnv_centric(rc: RuntimeETLContext, release: Release): Unit = PrepareCnvCentric.run(rc, release)
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }
-

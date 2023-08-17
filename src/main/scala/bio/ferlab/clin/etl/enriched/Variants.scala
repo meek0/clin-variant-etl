@@ -2,18 +2,21 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.clin.etl.utils.FrequencyUtils.emptyFrequencyRQDM
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, FixedRepartition}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
-import org.apache.spark.sql.functions.{collect_set, _}
+import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
 
-class Variants()(implicit configuration: Configuration) extends ETLSingleDestination {
+case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
+
+  import spark.implicits._
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
@@ -34,7 +37,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_variants.id -> normalized_variants.read,
       snv.id -> snv.read,
@@ -57,9 +60,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
@@ -105,12 +106,11 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
 
   override def defaultRepartition: DataFrame => DataFrame = FixedRepartition(56)
 
-  override def publish()(implicit spark: SparkSession): Unit = {
+  override def publish(): Unit = {
     vacuum(mainDestination, 2)
   }
 
-  private def getPnAnPerAnalysis(occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  private def getPnAnPerAnalysis(occurrences: DataFrame): DataFrame = {
     val byAnalysis = occurrences
       .select($"patient_id", $"affected_status", $"analysis_code")
       .distinct
@@ -156,9 +156,8 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
     ) as as
   }
 
-  def mergeVariantFrequencies(variants: DataFrame, pn_an_by_analysis: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def mergeVariantFrequencies(variants: DataFrame, pn_an_by_analysis: DataFrame): DataFrame = {
 
-    import spark.implicits._
     val originalVariants = variants
       .select("chromosome", "start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
         "variant_class", "pubmed", "created_on")
@@ -210,9 +209,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
-  def variantsWithDonors(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-
+  def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
     val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate", "exomiser_variant_score").columns.map(col)
     val donors = occurrences
       .groupByLocus()
@@ -239,7 +236,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
                           gnomad_genomes_2_1Df: DataFrame,
                           gnomad_exomes_2_1Df: DataFrame,
                           gnomad_genomes_3_0Df: DataFrame,
-                          gnomad_genomes_3_1_1Df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+                          gnomad_genomes_3_1_1Df: DataFrame): DataFrame = {
 
     broadcast(variants)
       .joinAndMerge(genomesDf, "thousand_genomes", "left")
@@ -258,15 +255,14 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
           col("gnomad_genomes_3_1_1")) as "external_frequencies")
   }
 
-  def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def joinWithDbSNP(variants: DataFrame, dbsnp: DataFrame): DataFrame = {
     //We first take rsnumber from variants.name, and then from dbsnp if variants.name is null
     variants
       .joinByLocus(dbsnp, "left")
       .select(variants.drop("name")("*"), coalesce(variants("name"), dbsnp("name")) as "rsnumber")
   }
 
-  def joinWithClinvar(variants: DataFrame, clinvar: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  def joinWithClinvar(variants: DataFrame, clinvar: DataFrame): DataFrame = {
     variants
       .joinAndMerge(
         clinvar.selectLocus($"name" as "clinvar_id", $"clin_sig", $"conditions", $"inheritance", $"interpretations"),
@@ -274,7 +270,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
         "left")
   }
 
-  def joinWithGenes(variants: DataFrame, genes: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def joinWithGenes(variants: DataFrame, genes: DataFrame): DataFrame = {
     variants
       .join(genes, variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
       .drop(genes("chromosome"))
@@ -287,8 +283,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .select("variant.*", "genes", "omim")
   }
 
-  def joinWithConstraint(variants: DataFrame, constraint: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  def joinWithConstraint(variants: DataFrame, constraint: DataFrame): DataFrame = {
 
     val joinCols = Seq("chromosome", "symbol")
 
@@ -314,8 +309,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .select("variant.*", "genes")
   }
 
-  def joinWithVarsome(variants: DataFrame, varsome: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  def joinWithVarsome(variants: DataFrame, varsome: DataFrame): DataFrame = {
     val df = varsome.select($"chromosome", $"start", $"reference", $"alternate", $"variant_id",
       $"publications.publications" as "publications",
       size($"publications.publications") > 0 as "has_publication",
@@ -332,7 +326,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
 
   }
 
-  def joinWithPanels(variants: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def joinWithPanels(variants: DataFrame, panels: DataFrame): DataFrame = {
     val variantColumns = variants.drop("chromosome", "start", "reference", "alternate").columns.map(c => first(c) as c)
     variants
       .join(panels, array_contains(variants("genes_symbol"), panels("symbol")), "left")
@@ -341,9 +335,7 @@ class Variants()(implicit configuration: Configuration) extends ETLSingleDestina
       .drop("symbol", "version")
   }
 
-  def joinWithSpliceAi(variants: DataFrame, spliceai: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-
+  def joinWithSpliceAi(variants: DataFrame, spliceai: DataFrame): DataFrame = {
     val scores = spliceai.selectLocus($"symbol", $"max_score" as "spliceai")
       .withColumn("type", when($"spliceai.ds" === 0, null).otherwise($"spliceai.type"))
       .withColumn("spliceai", struct($"spliceai.ds" as "ds", $"type"))
@@ -398,5 +390,12 @@ object Variants {
     }
 
   }
+
+  @main
+  def run(rc: RuntimeETLContext): Unit = {
+    Variants(rc).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }
 

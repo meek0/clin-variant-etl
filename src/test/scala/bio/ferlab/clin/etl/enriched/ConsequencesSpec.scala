@@ -1,21 +1,16 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.enriched.Consequences._
-import bio.ferlab.clin.etl.model.raw.NormalizedConsequences
+import bio.ferlab.clin.etl.model.normalized.NormalizedConsequences
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.enriched.EnrichedConsequences
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import org.apache.commons.io.FileUtils
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-import java.io.File
-
-class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll with BeforeAndAfterAll {
 
   import spark.implicits._
 
@@ -32,12 +27,13 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     enriched_genes.id -> Seq(GenesOutput()).toDF,
   )
 
-  val etl = new Consequences()
+  override val dbToCreate: List[String] = List("clin")
+  override val dsToClean: List[DatasetConf] = List(enriched_consequences)
+
+  val etl = Consequences(TestETLContext(RunStep.default_load))
 
   override def beforeAll(): Unit = {
-    FileUtils.deleteDirectory(new File("spark-warehouse"))
-    FileUtils.deleteDirectory(new File(enriched_consequences.location))
-    spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+    super.beforeAll()
 
     data.foreach { case (id, df) =>
       val ds = conf.getDataset(id)

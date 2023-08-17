@@ -2,21 +2,19 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV}
-import bio.ferlab.clin.model.normalized.NormalizedExomiser
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.normalized.{NormalizedExomiser, NormalizedSNV}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 
-class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class SNVSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val normalized_exomiser: DatasetConf = conf.getDataset("normalized_exomiser")
 
-  val job = new SNV()
+  val job = SNV(TestETLContext())
 
   it should "enrich data with exomiser" in {
     val snvDf = Seq(

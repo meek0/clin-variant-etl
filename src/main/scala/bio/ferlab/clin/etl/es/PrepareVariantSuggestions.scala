@@ -1,13 +1,15 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.clin.etl.mainutils.Release
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
-class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Configuration) extends PrepareCentric(releaseId) {
+case class PrepareVariantSuggestions(rc: RuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_suggestions")
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
@@ -19,7 +21,7 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
     List("type", "locus", "suggestion_id", "hgvsg", "suggest", "chromosome", "rsnumber", "symbol_aa_change")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
       es_index_variant_centric.id ->
@@ -31,7 +33,7 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
     val variants = data(es_index_variant_centric.id)
 
@@ -75,3 +77,11 @@ class PrepareVariantSuggestions(releaseId: String)(implicit configuration: Confi
 
 }
 
+object PrepareVariantSuggestions {
+  @main
+  def run(rc: RuntimeETLContext, release: Release): Unit = {
+    PrepareVariantSuggestions(rc, release.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
+}

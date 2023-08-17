@@ -1,16 +1,18 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.Region
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
-import bio.ferlab.datalake.spark3.etl.v2.ETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class CNV()(implicit configuration: Configuration) extends ETLSingleDestination {
+case class CNV(rc: RuntimeETLContext) extends SingleETL(rc) {
+
+  import spark.implicits._
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_cnv")
   val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
@@ -21,7 +23,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_cnv.id -> normalized_cnv.read,
       normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
@@ -33,8 +35,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val cnv = data(normalized_cnv.id).unionByName(data(normalized_cnv_somatic_tumor_only.id), allowMissingColumns = true)
     val refseq = data(refseq_annotation.id)
 
@@ -56,13 +57,12 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
     groupedCnv
   }
 
-  def joinWithGenes(cnv: DataFrame, genes: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def joinWithGenes(cnv: DataFrame, genes: DataFrame): DataFrame = {
     cnv
       .join(genes, cnv("cnv.chromosome") === genes("chromosome") && cnv("refseq_genes.gene") === genes("symbol"), "left")
   }
 
-  def joinWithPanels(cnv: DataFrame, refseq: DataFrame, panels: DataFrame)(implicit sparkSession: SparkSession): DataFrame = {
-    import sparkSession.implicits._
+  def joinWithPanels(cnv: DataFrame, refseq: DataFrame, panels: DataFrame): DataFrame = {
     val refseqGenes = refseq.where($"type" === "gene")
       .select($"seqId" as "refseq_id", $"chromosome", $"start", $"end", $"gene")
     val joinedPanels = panels.select("symbol", "panels")
@@ -81,8 +81,7 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
       .withColumn("gene_length", geneRegion.nbBases)
   }
 
-  def joinWithExons(cnv: DataFrame, refseq: DataFrame)(implicit sparkSession: SparkSession): DataFrame = {
-    import sparkSession.implicits._
+  def joinWithExons(cnv: DataFrame, refseq: DataFrame): DataFrame = {
     val refseqExons = refseq.where($"type" === "exon" and $"tag" === "MANE Select")
       .select($"seqId" as "refseq_id", $"chromosome", $"start", $"end", $"gene")
 
@@ -97,5 +96,14 @@ class CNV()(implicit configuration: Configuration) extends ETLSingleDestination 
 
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n=Some(1), sortColumns = Seq("start"))
 
-
 }
+
+object CNV {
+  @main
+  def run(rc: RuntimeETLContext): Unit = {
+    CNV(rc).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
+}
+

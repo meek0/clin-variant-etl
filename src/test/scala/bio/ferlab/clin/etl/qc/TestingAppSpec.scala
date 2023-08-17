@@ -1,15 +1,12 @@
 package bio.ferlab.clin.etl.qc
 
-import bio.ferlab.clin.etl.qc.TestingApp.{combineErrors, shouldBeEmpty, shouldNotContainNull, shouldNotContainOnlyNull, shouldNotContainSameValue, shouldNotBeEmpty}
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.clin.etl.qc.TestingApp._
+import bio.ferlab.datalake.testutils.SparkSpec
 import org.apache.spark.sql.DataFrame
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
 case class FooBar(foo: Option[String], bar: Option[String])
 
-class TestingAppSpec extends AnyFlatSpec with WithSparkSession with Matchers with BeforeAndAfterAll {
+class TestingAppSpec extends SparkSpec {
   import spark.implicits._
 
   "shouldBeEmpty" should "return errors" in {

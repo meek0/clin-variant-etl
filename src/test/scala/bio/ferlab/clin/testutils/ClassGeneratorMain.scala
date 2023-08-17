@@ -1,16 +1,11 @@
 package bio.ferlab.clin.testutils
 
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.{defaultTransformations, serviceRequestMappings}
-import bio.ferlab.datalake.commons.config.{Configuration, DatalakeConf, SimpleConfiguration, StorageConf}
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
-import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
-import bio.ferlab.datalake.testutils.ClassGenerator
+import bio.ferlab.datalake.spark3.etl.v3.TransformationsETL
+import bio.ferlab.datalake.testutils.{ClassGenerator, TestETLContext, WithSparkSession}
 
-object ClassGeneratorMain extends App with WithSparkSession {
+object ClassGeneratorMain extends App with WithSparkSession with WithTestConfig {
 
-  val output: String = getClass.getClassLoader.getResource(".").getFile
-
-  implicit val conf: Configuration = SimpleConfiguration(DatalakeConf(List(StorageConf("clin", output, LOCAL))))
   val inputDs = conf.getDataset("raw_service_request")
   val outputDs = conf.getDataset("normalized_service_request")
 
@@ -18,9 +13,9 @@ object ClassGeneratorMain extends App with WithSparkSession {
     spark.read.json("src/test/resources/raw/landing/fhir/ServiceRequest")
 
   )
-  val job = new RawToNormalizedETL(inputDs, outputDs , defaultTransformations ++ serviceRequestMappings)
+  val job = new TransformationsETL(TestETLContext(), inputDs, outputDs, defaultTransformations ++ serviceRequestMappings)
   val df = job.transformSingle(data)
-//
+
   //df.show(false)
   //df.printSchema()
 

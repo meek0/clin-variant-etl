@@ -1,12 +1,10 @@
 package bio.ferlab.clin.etl.utils
 
 import bio.ferlab.clin.etl.utils.FileUtils.filesUrlFromDF
-import bio.ferlab.clin.model.{Content, DOCUMENTS, DocumentReferenceOutput, EXPERIMENT, TaskOutput}
-import bio.ferlab.clin.testutils.WithSparkSession
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import bio.ferlab.clin.model._
+import bio.ferlab.datalake.testutils.SparkSpec
 
-class FileUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class FileUtilsSpec extends SparkSpec {
 
   import spark.implicits._
 

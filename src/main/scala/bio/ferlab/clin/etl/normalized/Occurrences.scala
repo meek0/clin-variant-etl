@@ -1,19 +1,17 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.slf4j.Logger
 
 import java.time.LocalDateTime
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe.TypeTag
 
-abstract class Occurrences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+abstract class Occurrences(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
 
   def raw_variant_calling: DatasetConf
 
@@ -28,7 +26,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
   val specimen: DatasetConf = conf.getDataset("normalized_specimen")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
    Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       patient.id -> patient.read,
@@ -41,7 +39,7 @@ abstract class Occurrences(batchId: String)(implicit configuration: Configuratio
     )
   }
 
-  def getClinicalRelation(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+  def getClinicalRelation(data: Map[String, DataFrame]): DataFrame = {
     val specimenDf = data(specimen.id)
       .groupBy("service_request_id", "patient_id")
       .agg(

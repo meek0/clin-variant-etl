@@ -1,22 +1,24 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.etl.normalized.CNV.getCNV
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class CNV(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
+case class CNV(rc: RuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_cnv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv")
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     import spark.implicits._
 
@@ -70,4 +72,11 @@ object CNV {
         .withColumn("variant_type", lit("germline"))
     df
   }
+
+  @main
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+    CNV(rc, batch.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

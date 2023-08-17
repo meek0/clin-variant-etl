@@ -1,15 +1,16 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.clin.etl.mainutils.Release
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
+import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class PrepareGeneCentric(releaseId: String)
-                        (override implicit val conf: Configuration) extends PrepareCentric(releaseId) {
+case class PrepareGeneCentric(rc: RuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_gene_centric")
   val enriched_genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -17,7 +18,7 @@ class PrepareGeneCentric(releaseId: String)
   val enriched_cnv: DatasetConf = conf.getDataset("enriched_cnv")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       enriched_genes.id -> spark.table(s"${enriched_genes.table.get.fullName}"),
       enriched_variants.id -> enriched_variants.read,
@@ -27,7 +28,7 @@ class PrepareGeneCentric(releaseId: String)
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
 
     val variants = data(enriched_variants.id)
@@ -76,3 +77,11 @@ class PrepareGeneCentric(releaseId: String)
 
 }
 
+object PrepareGeneCentric {
+  @main
+  def run(rc: RuntimeETLContext, release: Release): Unit = {
+    PrepareGeneCentric(rc, release.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
+}

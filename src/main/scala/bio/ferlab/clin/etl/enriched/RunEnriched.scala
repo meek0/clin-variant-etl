@@ -1,30 +1,33 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.spark3.SparkApp
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
+import mainargs.{ParserForMethods, main}
 
-object RunEnriched extends SparkApp {
+object RunEnriched {
 
-  val Array(_, _, jobName) = args
+  @main
+  def variants(rc: RuntimeETLContext): Unit = Variants.run(rc)
 
-  implicit val (conf, steps, spark) = init(appName = s"Enrich $jobName")
+  @main
+  def consequences(rc: RuntimeETLContext): Unit = Consequences.run(rc)
 
-  log.info(s"Job: $jobName")
-  log.info(s"runType: ${steps.mkString(" -> ")}")
+  @main
+  def cnv(rc: RuntimeETLContext): Unit = CNV.run(rc)
 
-  jobName match {
-    case "variants" => new Variants().run(steps)
-    case "consequences" => new Consequences().run(steps)
-    case "cnv" => new CNV().run(steps)
-    case "snv" => new SNV().run(steps)
-    case "snv_somatic_tumor_only" => new SNVSomaticTumorOnly().run(steps)
-    case "all" =>
-      new Variants().run(steps)
-      new Consequences().run(steps)
-      new CNV().run(steps)
-      new SNV().run(steps)
-      new SNVSomaticTumorOnly().run(steps)
-    case s: String => throw new IllegalArgumentException(s"jobName [$s] unknown.")
+  @main
+  def snv(rc: RuntimeETLContext): Unit = SNV.run(rc)
+
+  @main
+  def snv_somatic_tumor_only(rc: RuntimeETLContext): Unit = SNVSomaticTumorOnly.run(rc)
+
+  @main
+  def all(rc: RuntimeETLContext): Unit = {
+    variants(rc)
+    consequences(rc)
+    cnv(rc)
+    snv(rc)
+    snv_somatic_tumor_only(rc)
   }
 
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }
-

@@ -4,19 +4,15 @@ import bio.ferlab.clin.etl.model.raw.RawExomiser
 import bio.ferlab.clin.etl.utils.FileInfo
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.normalized.NormalizedExomiser
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.commons.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.input_file_name
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-import scala.util.Try
-
-class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll with CreateDatabasesBeforeAll with CleanUpBeforeAll {
 
   import spark.implicits._
 
@@ -25,8 +21,8 @@ class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   val normalized_task: DatasetConf = conf.getDataset("normalized_task")
   val normalized_document_reference: DatasetConf = conf.getDataset("normalized_document_reference")
 
-  val job1 = new Exomiser("BAT1")
-  val job2 = new Exomiser("BAT2")
+  val job1 = Exomiser(TestETLContext(), "BAT1")
+  val job2 = Exomiser(TestETLContext(), "BAT2")
 
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
@@ -66,28 +62,22 @@ class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
     )),
   ).toDF()
 
+  override val dbToCreate: List[String] = List(normalized_task.table.get.database, normalized_document_reference.table.get.database)
+  override val dsToClean: List[DatasetConf] = List(normalized_task, normalized_document_reference)
+
   override def beforeAll(): Unit = {
-    normalized_task.table.foreach(table => spark.sql(s"CREATE DATABASE IF NOT EXISTS ${table.database}"))
+    super.beforeAll()
     LoadResolver
       .write(spark, conf)(normalized_task.format -> normalized_task.loadtype)
       .apply(normalized_task, taskDf)
 
-    normalized_document_reference.table.foreach(table => spark.sql(s"CREATE DATABASE IF NOT EXISTS ${table.database}"))
     LoadResolver
       .write(spark, conf)(normalized_document_reference.format -> normalized_document_reference.loadtype)
       .apply(normalized_document_reference, documentDf)
   }
 
-  override def afterAll(): Unit = {
-    spark.sql(s"DROP TABLE IF EXISTS ${normalized_task.table.get.name}")
-    Try(HadoopFileSystem.remove(normalized_task.location))
-
-    spark.sql(s"DROP TABLE IF EXISTS ${normalized_document_reference.table.get.name}")
-    Try(HadoopFileSystem.remove(normalized_document_reference.location))
-  }
-
   it should "extract all files from the batch with its info" in {
-    val result = job2.extract()(spark)
+    val result = job2.extract()
 
     result(raw_exomiser.id)
       .as[RawExomiser]
@@ -114,7 +104,7 @@ class ExomiserSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig
   }
 
   it should "not fail when there is no exomiser data in batch" in {
-    val job = new Exomiser("NODATA")
+    val job = Exomiser(TestETLContext(), "NODATA")
     noException should be thrownBy job.run()
   }
 }

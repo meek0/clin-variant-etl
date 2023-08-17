@@ -1,27 +1,27 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.model.normalized.NormalizedConsequences
 import bio.ferlab.clin.etl.model.raw
-import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, NormalizedConsequences, VCF_SNV_Input, VCF_SNV_Somatic_Input}
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, VCF_SNV_Input, VCF_SNV_Somatic_Input}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.commons.file.HadoopFileSystem
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, SparkSpec, TestETLContext}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeAll {
 
-  val job1 = new Consequences("BAT1")
-  val job2 = new Consequences("BAT2")
+  val job1 = Consequences(TestETLContext(), "BAT1")
+  val job2 = Consequences(TestETLContext(), "BAT2")
 
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
+
+  override val dsToClean: List[DatasetConf] = List(job1.mainDestination)
 
   val data = Map(
     raw_variant_calling.id -> Seq(VCF_SNV_Input()).toDF(),
@@ -42,10 +42,6 @@ class ConsequencesSpec extends AnyFlatSpec with WithSparkSession with WithTestCo
     raw_variant_calling.id -> spark.emptyDataFrame,
     raw_variant_calling_somatic_tumor_only.id -> Seq(VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input()).toDF(),
   )
-
-  override def beforeAll(): Unit = {
-    HadoopFileSystem.remove(job1.mainDestination.location)
-  }
 
   "consequences job" should "transform data in expected format" in {
     val results = job1.transform(data)

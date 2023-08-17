@@ -1,13 +1,11 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 
-class PrepareCnvCentricSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class PrepareCnvCentricSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -19,7 +17,7 @@ class PrepareCnvCentricSpec extends AnyFlatSpec with WithSparkSession with WithT
 
   "Cnv_centric transform" should "return data as CnvCentricOutput" in {
 
-    val result = new PrepareCnvCentric("re_000").transformSingle(data);
+    val result = PrepareCnvCentric(TestETLContext(), "re_000").transformSingle(data);
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "CnvCentricOutput", result, "src/test/scala/")
 
     result.count() shouldBe 2

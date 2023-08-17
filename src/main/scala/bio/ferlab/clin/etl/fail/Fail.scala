@@ -1,12 +1,17 @@
 package bio.ferlab.clin.etl.fail
 
-import bio.ferlab.datalake.spark3.SparkApp
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
+import mainargs.{ParserForMethods, main}
+import org.slf4j
 
-object Fail extends SparkApp {
+object Fail {
+  val log: slf4j.Logger = slf4j.LoggerFactory.getLogger(getClass.getCanonicalName)
 
-  implicit val (conf, steps, spark) = init()
+  @main
+  def run(rc: RuntimeETLContext): Unit = {
+    log.info("This job will fail on purpose")
+    throw new Exception("On purpose failure")
+  }
 
-  log.info("This job will fail on purpose")
-
-  throw new Exception("On purpose failure")
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

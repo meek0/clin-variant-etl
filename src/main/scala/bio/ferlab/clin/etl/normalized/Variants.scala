@@ -1,20 +1,25 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 import org.slf4j.Logger
 
 import java.time.LocalDateTime
 
-class Variants(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
+
+  import spark.implicits._
 
   implicit val logger: Logger = log
 
@@ -27,7 +32,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
   val service_request: DatasetConf = conf.getDataset("normalized_service_request")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
@@ -54,7 +59,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     val (inputVCF, srcScoreColumn, dstScoreColumn, computeFrequencies) = getVCF(data)
 
@@ -122,8 +127,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .withColumn("frequency_RQDM", lit(null))
   }
 
-  def getVariantsWithFrequencies(variants: DataFrame, computeFrequency: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  def getVariantsWithFrequencies(variants: DataFrame, computeFrequency: Boolean): DataFrame = {
 
     if (!computeFrequency)
       return getVariantsEmptyFrequencies(variants)
@@ -233,7 +237,7 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
 
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 
-  def getClinicalInfo(data: Map[String, DataFrame])(implicit spark: SparkSession): DataFrame = {
+  def getClinicalInfo(data: Map[String, DataFrame]): DataFrame = {
     val serviceRequestDf = data(service_request.id)
       .filter(col("service_request_type") === "sequencing")
       .select(
@@ -263,4 +267,13 @@ class Variants(batchId: String)(implicit configuration: Configuration) extends E
       .join(serviceRequestDf, Seq("service_request_id"), "left")
       .join(analysisServiceRequestWithDiseaseStatus, Seq("analysis_service_request_id", "patient_id"))
   }
+}
+
+object Variants {
+  @main
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+    Variants(rc, batch.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

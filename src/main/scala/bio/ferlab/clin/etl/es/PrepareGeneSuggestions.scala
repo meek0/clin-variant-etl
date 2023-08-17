@@ -1,13 +1,15 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.clin.etl.mainutils.Release
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, functions}
 
 import java.time.LocalDateTime
 
-class PrepareGeneSuggestions(releaseId: String)(implicit configuration: Configuration) extends PrepareCentric(releaseId){
+case class PrepareGeneSuggestions(rc: RuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId){
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_gene_suggestions")
   val es_index_gene_centric: DatasetConf = conf.getDataset("es_index_gene_centric")
@@ -16,7 +18,7 @@ class PrepareGeneSuggestions(releaseId: String)(implicit configuration: Configur
   final val low_priority_weight  = 2
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
       es_index_gene_centric.id ->
@@ -28,7 +30,7 @@ class PrepareGeneSuggestions(releaseId: String)(implicit configuration: Configur
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
     val genes = data(es_index_gene_centric.id)
 
@@ -62,3 +64,11 @@ class PrepareGeneSuggestions(releaseId: String)(implicit configuration: Configur
 
 }
 
+object PrepareGeneSuggestions {
+  @main
+  def run(rc: RuntimeETLContext, release: Release): Unit = {
+    PrepareGeneSuggestions(rc, release.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
+}
