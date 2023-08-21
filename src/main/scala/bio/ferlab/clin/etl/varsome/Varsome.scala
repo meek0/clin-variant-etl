@@ -1,53 +1,45 @@
 package bio.ferlab.clin.etl.varsome
 
+import bio.ferlab.clin.etl.mainutils.{Chromosome, OptionalBatch}
 import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
-import bio.ferlab.datalake.commons.config.RunStep.reset
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf,Coalesce}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.commons.config.{Coalesce, DatasetConf, RunStep, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
-import bio.ferlab.datalake.spark3.SparkApp
-
+import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-object Varsome extends SparkApp {
-
-  val chromosome = if (args.length >= 3 && args(2) != "all") {
-    Some(args(2))
-  } else {
-    None
-  }
-
-  implicit val (conf, steps, spark) = init(s"Varsome $chromosome")
-  val varsomeToken = spark.conf.get("spark.varsome.token")
-  val varsomeUrl = spark.conf.get("spark.varsome.url")
-
-  if (steps.contains(reset)) {
-    new Varsome(Reload, varsomeUrl, varsomeToken, chromosome).run()
-  } else {
-    if (args.length < 4) {
-      throw new IllegalArgumentException("Batch id is required if reset is not included in steps")
+object Varsome {
+  @main
+  def run(rc: RuntimeETLContext, chromosome: Chromosome, batch: OptionalBatch): Unit = {
+    val varsomeToken = rc.spark.conf.get("spark.varsome.token")
+    val varsomeUrl = rc.spark.conf.get("spark.varsome.url")
+    val jobType = if (rc.runSteps.contains(RunStep.reset)) Reload else batch.id match {
+      case Some(id) => ForBatch(id)
+      case None => throw new IllegalArgumentException("Batch id is required if reset is not included in steps")
     }
-    val batchId = args(3)
-    new Varsome(ForBatch(batchId), varsomeUrl, varsomeToken, chromosome).run()
+    Varsome(rc, jobType, varsomeUrl, varsomeToken, chromosome.name).run()
   }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }
 
 
-class Varsome(jobType: VarsomeJobType,
-              varsomeUrl: String,
-              varsomeToken: String,
-              chromosome: Option[String] = None)(override implicit val conf: Configuration) extends ETLSingleDestination {
+case class Varsome(rc: RuntimeETLContext,
+                   jobType: VarsomeJobType,
+                   varsomeUrl: String,
+                   varsomeToken: String,
+                   chromosome: Option[String] = None) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
 
-  override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = {
+  override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime): Map[String, DataFrame] = {
     val variants = normalized_variants.read.select("chromosome", "start", "reference", "alternate", "batch_id", "genes_symbol")
     val panels = normalized_panels.read.select("symbol")
 
@@ -80,7 +72,7 @@ class Varsome(jobType: VarsomeJobType,
 
   override def defaultRepartition: DataFrame => DataFrame = Coalesce(1)
 
-  override def transformSingle(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
+  override def transformSingle(data: Map[String, DataFrame], lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime): DataFrame = {
     import spark.implicits._
     val input = data(normalized_variants.id).persist()
     val numPartitions = (input.count() / 1000) + 1

@@ -1,16 +1,13 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model.enriched.{DONORS, EnrichedVariant}
-import bio.ferlab.clin.model.{CnvCentricOutput, CnvEnrichedOutput, ENRICHED_CNV_GENES, GeneCentricOutput, GenesOutput, VARIANT_PER_PATIENT}
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
-import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, StorageConf}
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.clin.model._
+import bio.ferlab.clin.testutils.WithTestConfig
+import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.GivenWhenThen
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class PrepareGeneCentricSpec extends AnyFlatSpec with GivenWhenThen with WithTestConfig with WithSparkSession with Matchers {
+class PrepareGeneCentricSpec extends SparkSpec with WithTestConfig {
   import spark.implicits._
 
   val genesDf: DataFrame = Seq(GenesOutput(), GenesOutput(`symbol` = "OR4F6")).toDF()
@@ -41,7 +38,7 @@ class PrepareGeneCentricSpec extends AnyFlatSpec with GivenWhenThen with WithTes
   )
 
   "Gene_centric transform" should "return data as GeneCentricOutput" in {
-    val result = new PrepareGeneCentric("re_000").transformSingle(data)
+    val result = PrepareGeneCentric(TestETLContext(), "re_000").transformSingle(data)
     result.columns should contain allElementsOf Seq("hash")
     result.as[GeneCentricOutput].collect() should contain allElementsOf Seq(
       GeneCentricOutput(symbol = "OR4F4", `entrez_gene_id` = 0, `omim_gene_id` = null, `hgnc` = null, `ensembl_gene_id` = null, `location` = null, name= null, `alias` = List(), `biotype` = null, `orphanet` = null,hpo=null,`omim` = null, chromosome=null, ddd=null, cosmic=null, `number_of_patients_snvs` = 2, `number_of_patients_cnvs` = 1, `number_of_snvs_per_patient` = List(VARIANT_PER_PATIENT("PA0002", 1), VARIANT_PER_PATIENT("PA0001", 1)), `number_of_cnvs_per_patient` = List(VARIANT_PER_PATIENT("PA0001", 1)), hash="63592aea532cb1c022cbc13ea463513df18baf57"),

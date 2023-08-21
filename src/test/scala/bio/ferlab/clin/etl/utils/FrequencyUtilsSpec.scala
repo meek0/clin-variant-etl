@@ -1,12 +1,10 @@
 package bio.ferlab.clin.etl.utils
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils._
-import bio.ferlab.clin.testutils.WithSparkSession
+import bio.ferlab.datalake.testutils.SparkSpec
 import org.apache.spark.sql.DataFrame
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class FrequencyUtilsSpec extends AnyFlatSpec with WithSparkSession with Matchers {
+class FrequencyUtilsSpec extends SparkSpec {
   import spark.implicits._
 
   val occurrences: DataFrame = Seq(

@@ -1,23 +1,26 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.RawExomiser
 import bio.ferlab.clin.etl.utils.FileUtils
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castFloat, castInt, castLong}
+import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{input_file_name, lit}
 import org.apache.spark.sql.types.BooleanType
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class Exomiser(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+case class Exomiser(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
+  import spark.implicits._
+
   override val mainDestination: DatasetConf = conf.getDataset("normalized_exomiser")
   val raw_exomiser: DatasetConf = conf.getDataset("raw_exomiser")
 
   override def extract(lastRunDateTime: LocalDateTime,
-                       currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): Map[String, DataFrame] = {
-    import spark.implicits._
+                       currentRunDateTime: LocalDateTime): Map[String, DataFrame] = {
     val exomiserFiles = FileUtils.filesUrl(batchId, "EXOMISER", "TSV")
 
     Map(
@@ -34,8 +37,7 @@ class Exomiser(batchId: String)(implicit configuration: Configuration) extends E
 
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime,
-                               currentRunDateTime: LocalDateTime)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+                               currentRunDateTime: LocalDateTime): DataFrame = {
     val fileInfo = data("file_info").select("url", "aliquot_id")
     val withAliquotId = data(raw_exomiser.id)
       .withColumn("url", input_file_name())
@@ -64,4 +66,13 @@ class Exomiser(batchId: String)(implicit configuration: Configuration) extends E
   }
 
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
+}
+
+object Exomiser {
+  @main
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+    Exomiser(rc, batch.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

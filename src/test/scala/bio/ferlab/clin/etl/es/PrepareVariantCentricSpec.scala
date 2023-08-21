@@ -1,20 +1,16 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.model.enriched.EnrichedVariant
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.enriched.{EnrichedConsequences, EnrichedVariant}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import org.apache.commons.io.FileUtils
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-import java.io.File
 import java.sql.Timestamp
 
-class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class PrepareVariantCentricSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll with BeforeAndAfterAll {
 
   import spark.implicits._
 
@@ -23,6 +19,9 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with W
   val bat0: Timestamp = Timestamp.valueOf("2021-01-26 14:50:08.108")
   val bat1: Timestamp = Timestamp.valueOf("2021-02-26 14:50:08.108")
   val bat2: Timestamp = Timestamp.valueOf("2021-03-26 14:50:08.108")
+
+  override val dbToCreate: List[String] = List("clin")
+  override val dsToClean: List[DatasetConf] = List(enriched_consequences, enriched_variants)
 
   val data = Map(
     enriched_variants.id -> Seq(EnrichedVariant("1"), EnrichedVariant(
@@ -35,9 +34,7 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with W
   )
 
   override def beforeAll(): Unit = {
-    FileUtils.deleteDirectory(new File(enriched_consequences.location))
-    FileUtils.deleteDirectory(new File(enriched_variants.location))
-    spark.sql("CREATE DATABASE IF NOT EXISTS clin")
+    super.beforeAll()
     spark.sql("USE clin")
 
     data.foreach { case (id, df) =>
@@ -50,12 +47,13 @@ class PrepareVariantCentricSpec extends AnyFlatSpec with WithSparkSession with W
   }
 
   "run" should "produce parquet files in the right format" in {
+    val job = PrepareVariantCentric(TestETLContext(), "re_000")
 
-    val result = new PrepareVariantCentric("re_000").transformSingle(data)
+    val result = job.transformSingle(data)
     result.count() shouldBe 2
     result.as[VariantIndexOutput].collect() should contain allElementsOf Seq(VariantIndexOutput("1"))
 
-    new PrepareVariantCentric("re_000").loadSingle(result)
+    job.loadSingle(result)
     result.write.mode("overwrite").json(this.getClass.getClassLoader.getResource(".").getFile + "/es_index/variant_centric")
   }
 

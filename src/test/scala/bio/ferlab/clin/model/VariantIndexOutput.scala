@@ -4,9 +4,9 @@
  */
 package bio.ferlab.clin.model
 
-import bio.ferlab.clin.etl.model.raw.{AMINO_ACIDS, CODONS, EXON, INTRON}
+import bio.ferlab.clin.etl.model.normalized.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.varsome._
-import bio.ferlab.clin.model.enriched.{CLINVAR, DONORS, FREQUENCIES, GENES, VARSOME}
+import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, FREQUENCIES, GENES, PREDICTIONS, VARSOME}
 
 import java.sql.Date
 import java.time.LocalDate

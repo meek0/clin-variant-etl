@@ -1,17 +1,12 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-import scala.collection.Seq
-
-class PrepareGeneSuggestionsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class PrepareGeneSuggestionsSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -28,7 +23,7 @@ class PrepareGeneSuggestionsSpec extends AnyFlatSpec with WithSparkSession with 
 
   "transform PrepareGeneSuggestions" should "produce suggestions for genes" in {
 
-    val result = new PrepareGeneSuggestions("re_000").transformSingle(data)
+    val result = PrepareGeneSuggestions(TestETLContext(), "re_000").transformSingle(data)
 
     result.as[GeneSuggestionsOutput].collect() should contain allElementsOf Seq(
       GeneSuggestionsOutput(symbol = "OR4F4", `chromosome` = null, `ensembl_gene_id` = null, suggestion_id = "63592aea532cb1c022cbc13ea463513df18baf57", `suggest` = List(SUGGEST(4, List("OR4F4")), SUGGEST(2, List()))),

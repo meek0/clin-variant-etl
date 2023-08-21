@@ -2,15 +2,12 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.enriched.CLINVAR
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class PrepareVariantSuggestionsSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class PrepareVariantSuggestionsSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -23,7 +20,7 @@ class PrepareVariantSuggestionsSpec extends AnyFlatSpec with WithSparkSession wi
 
   "transform PrepareVariantSuggestions" should "produce suggestions for variants" in {
 
-    val result = new PrepareVariantSuggestions("re_000").transformSingle(data)
+    val result = PrepareVariantSuggestions(TestETLContext(), "re_000").transformSingle(data)
 
     result.as[VariantSuggestionsOutput].collect().head shouldBe VariantSuggestionsOutput()
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VariantSuggestionsOutput", result, "src/test/scala/")

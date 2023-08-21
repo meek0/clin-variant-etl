@@ -1,24 +1,20 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.datalake.spark3.etl.RawToNormalizedETL
-import bio.ferlab.datalake.spark3.etl.v2.ETL
-import bio.ferlab.datalake.spark3.SparkApp
+import bio.ferlab.clin.etl.mainutils.Destination
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
+import mainargs.{ParserForMethods, main}
 
-object FhirRawToNormalized extends SparkApp {
+object FhirRawToNormalized {
 
-  val Array(_, _, jobName) = args
+  @main
+  def run(rc: RuntimeETLContext, destination: Destination): Unit = {
+    val jobs = FhirRawToNormalizedMappings
+      .mappings(rc.config)
+      .filter { case (_, dst, _) => (destination.id == "all") || destination.id == dst.id }
+      .map { case (src, dst, transformations) => FhirToNormalizedETL(rc, src, dst, transformations) }
 
-  implicit val (conf, steps, spark) = init(s"Normalize FHIR $jobName")
+    jobs.foreach(_.run())
+  }
 
-  val jobs: List[ETL] =
-    FhirRawToNormalizedMappings
-      .mappings
-      .filter { case (_, dst, _) => (jobName == "all") || jobName == dst.id }
-      .map { case (src, dst, transformations) =>
-        dst.table.map(_.database).foreach(database => spark.sql(s"CREATE DATABASE IF NOT EXISTS $database"))
-        new FhirToNormalizedETL(src, dst, transformations)
-      }
-
-  jobs.foreach(_.run(steps))
-
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }

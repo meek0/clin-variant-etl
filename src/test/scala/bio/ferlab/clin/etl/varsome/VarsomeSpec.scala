@@ -1,21 +1,20 @@
 package bio.ferlab.clin.etl.varsome
 
-import bio.ferlab.clin.model.{NormalizedVariants, NormalizedPanels, VarsomeExtractOutput, VarsomeOutput}
+import bio.ferlab.clin.model.normalized.{NormalizedPanels, NormalizedVariants}
+import bio.ferlab.clin.model.{VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
 import java.io.File
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers with BeforeAndAfterAll {
+class VarsomeSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -65,7 +64,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
 
   "extract" should "return a dataframe that contains only variants not in varsome table or older than 7 days in varsome table and in panels" in {
     withData() { _ =>
-      val dataframes = new Varsome(ForBatch("BAT1"), "url", "").extract(currentRunDateTime = current)
+      val dataframes = Varsome(TestETLContext(), ForBatch("BAT1"), "url", "").extract(currentRunDateTime = current)
       dataframes(normalized_variants.id).as[VarsomeExtractOutput].collect() should contain theSameElementsAs Seq(
         VarsomeExtractOutput("1", 1000, "A", "T"),
         VarsomeExtractOutput("1", 1004, "A", "T")
@@ -77,7 +76,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
   "transform" should "return a dataframe representing Varsome response" in {
     withData() { data =>
       withVarsomeServer() { url =>
-        val df = new Varsome(ForBatch("BAT1"), url, "").transformSingle(data, currentRunDateTime = current)
+        val df = Varsome(TestETLContext(), ForBatch("BAT1"), url, "").transformSingle(data, currentRunDateTime = current)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(
           VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None),
           VarsomeOutput("1", 1004, "A", "T", "1234", ts, None, None)
@@ -91,7 +90,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
     withData() { data =>
 
       withVarsomeServer("varsome_full.json") { url =>
-        val df = new Varsome(ForBatch("BAT1"), url, "").transformSingle(data, currentRunDateTime = current)
+        val df = Varsome(TestETLContext(), ForBatch("BAT1"), url, "").transformSingle(data, currentRunDateTime = current)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(VarsomeOutput(`updated_on` = ts))
       }
 
@@ -102,7 +101,7 @@ class VarsomeSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig 
     withData() { _ =>
 
       withVarsomeServer() { url =>
-        new Varsome(ForBatch("BAT1"), url, "").run(currentRunDateTime = Some(current))
+        Varsome(TestETLContext(runSteps = RunStep.default_load), ForBatch("BAT1"), url, "").run(currentRunDateTime = Some(current))
         val df = spark.table(normalized_varsome.table.get.fullName)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(
           VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None), // updated because more than 7 days

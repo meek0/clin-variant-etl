@@ -4,6 +4,7 @@
  */
 package bio.ferlab.clin.etl.model.raw
 
+import bio.ferlab.clin.etl.model.normalized.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.model.raw
 
 case class VCF_SNV_Input(`contigName`: String = "chr1",
@@ -41,8 +42,8 @@ case class INFO_CSQ(`Allele`: String = "C",
                     `Feature_type`: String = "Transcript",
                     `Feature`: String = "ENST00000335137",
                     `BIOTYPE`: String = "protein_coding",
-                    `EXON`: EXON = bio.ferlab.clin.etl.model.raw.EXON(1, 1),
-                    `INTRON`: INTRON = bio.ferlab.clin.etl.model.raw.INTRON(None, None),
+                    `EXON`: EXON = bio.ferlab.clin.etl.model.normalized.EXON(1, 1),
+                    `INTRON`: INTRON = bio.ferlab.clin.etl.model.normalized.INTRON(None, None),
                     `HGVSc`: String = "ENST00000335137.4:c.807T>C",
                     `HGVSp`: String = "ENSP00000334393.3:p.Ser269%3D",
                     `cDNA_position`: Int = 843,

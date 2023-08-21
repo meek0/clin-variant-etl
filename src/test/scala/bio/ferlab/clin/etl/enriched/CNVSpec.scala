@@ -1,13 +1,13 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedPanels, NormalizedRefSeq}
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
+class CNVSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -16,6 +16,8 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val normalized_refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
+
+  val job = CNV(TestETLContext())
 
   val refSeq = Seq(
     NormalizedRefSeq(),
@@ -49,7 +51,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   "Enriched CNV job" should "enriched data" in {
 
-    val results = new CNV().transformSingle(data).as[CnvEnrichedOutput]
+    val results = job.transformSingle(data).as[CnvEnrichedOutput]
 
     //val res = results.select(explode($"genes")).select("col.*")
     //val genes = results.select(explode($"genes")).select("col.*")
@@ -65,7 +67,7 @@ class CNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
 
   "Enriched CNV job" should "have number_genes = 0 if no genes" in {
 
-    val results = new CNV().transformSingle(data_no_genes_chr_2).as[CnvEnrichedOutput]
+    val results = job.transformSingle(data_no_genes_chr_2).as[CnvEnrichedOutput]
 
     results.collect() should contain theSameElementsAs Seq(
       CnvEnrichedOutput(`genes` = List(), `number_genes` = 0),

@@ -1,19 +1,17 @@
 package bio.ferlab.clin.etl.fhir
 
-import bio.ferlab.clin.testutils.WithSparkSession
-import bio.ferlab.datalake.commons.config.{Configuration, DatalakeConf, SimpleConfiguration, StorageConf}
-import bio.ferlab.datalake.commons.file.FileSystemType.LOCAL
+import bio.ferlab.clin.testutils.WithTestConfig
+import bio.ferlab.datalake.testutils.SparkSpec
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 import scala.util.Random
 
-object FhirMetadataSpec extends App with WithSparkSession {
+object FhirMetadataSpec extends SparkSpec with WithTestConfig {
 
   val output: String = getClass.getClassLoader.getResource(".").getFile
 
-  implicit val conf: Configuration = SimpleConfiguration(DatalakeConf(List(StorageConf("raw", output, LOCAL), StorageConf("normalized", output, LOCAL))))
   import spark.implicits._
 
     val orgDs = conf.getDataset("normalized_organization")

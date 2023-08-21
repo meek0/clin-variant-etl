@@ -2,17 +2,16 @@ package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw.{SNV_SOMATIC_GENOTYPES, VCF_SNV_Somatic_Input}
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model.normalized.NormalizedSNVSomaticTumorOnly
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.slf4j.{Logger, LoggerFactory}
 
 import java.sql.Date
 import java.time.LocalDate
 
-class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
+class SNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -25,6 +24,8 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
+
+  val job = SNVSomaticTumorOnly(TestETLContext(), "BAT1")
 
   val patientDf: DataFrame = Seq(
     PatientOutput(
@@ -141,7 +142,7 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
   )
 
   "occurrences transform" should "transform data in expected format" in {
-    val results = new SNVSomaticTumorOnly("BAT1").transform(data)
+    val results = job.transform(data)
     val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
 
     result.length shouldBe 2
@@ -185,13 +186,13 @@ class SNVSomaticTumorOnlySpec extends AnyFlatSpec with WithSparkSession with Wit
   }
 
   "occurrences transform" should "work with an empty input VCF Dataframe" in {
-    val results = new SNVSomaticTumorOnly("BAT1").transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
+    val results = job.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
     val result = results("normalized_snv_somatic_tumor_only").as[NormalizedSNVSomaticTumorOnly].collect()
     result.length shouldBe 0
   }
 
   "occurrences transform" should "ignore invalid contigName" in {
-    val results = new SNVSomaticTumorOnly("BAT1").transform(data ++ Map(raw_variant_calling.id -> Seq(
+    val results = job.transform(data ++ Map(raw_variant_calling.id -> Seq(
       VCF_SNV_Somatic_Input(`contigName` = "chr2"),
       VCF_SNV_Somatic_Input(`contigName` = "chrY"),
       VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))

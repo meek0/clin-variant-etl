@@ -1,17 +1,17 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.model.raw.{SNV_GENOTYPES, VCF_SNV_Input}
-import bio.ferlab.clin.model.{RareVariant, _}
-import bio.ferlab.clin.testutils.{WithSparkSession, WithTestConfig}
+import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.normalized.NormalizedSNV
+import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
 import java.sql.Date
 import java.time.LocalDate
 
-class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with Matchers {
+class SNVSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
@@ -24,6 +24,8 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
   val observation: DatasetConf = conf.getDataset("normalized_observation")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
+
+  val job = SNV(TestETLContext(), "BAT1")
 
   val patientDf: DataFrame = Seq(
     PatientOutput(
@@ -136,7 +138,7 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   )
 
   "occurrences transform" should "transform data in expected format" in {
-    val results = new SNV("BAT1").transform(data)
+    val results = job.transform(data)
     val result = results("normalized_snv").as[NormalizedSNV].collect()
 
     result.length shouldBe 2
@@ -184,13 +186,13 @@ class SNVSpec extends AnyFlatSpec with WithSparkSession with WithTestConfig with
   }
 
   "occurrences transform" should "work with an empty input VCF Dataframe" in {
-    val results = new SNV("BAT1").transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
+    val results = job.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
     val result = results("normalized_snv").as[NormalizedSNV].collect()
     result.length shouldBe 0
   }
 
   "occurrences transform" should "ignore invalid contigName" in {
-    val results = new SNV("BAT1").transform(data ++ Map(raw_variant_calling.id -> Seq(
+    val results = job.transform(data ++ Map(raw_variant_calling.id -> Seq(
         VCF_SNV_Input(`contigName` = "chr2"),
         VCF_SNV_Input(`contigName` = "chrY"),
         VCF_SNV_Input(`contigName` = "foo")).toDF))

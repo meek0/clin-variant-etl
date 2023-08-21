@@ -1,18 +1,20 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import bio.ferlab.clin.etl.mainutils.Batch
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame}
 import org.slf4j.Logger
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class Consequences(batchId: String)(implicit configuration: Configuration) extends ETLSingleDestination {
+case class Consequences(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
 
   implicit val logger: Logger = log
 
@@ -21,7 +23,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
       raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
@@ -44,7 +46,7 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
 
     val inputVCF = getVCF(data)
@@ -144,9 +146,18 @@ class Consequences(batchId: String)(implicit configuration: Configuration) exten
   }
 
 
-  override def publish()(implicit spark: SparkSession): Unit = {
+  override def publish(): Unit = {
     compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq("start")))
     vacuum(mainDestination, 2)
   }
 
+}
+
+object Consequences {
+  @main
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+    Consequences(rc, batch.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

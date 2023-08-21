@@ -1,22 +1,24 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.{VCF_CNV_Somatic_Input}
+import bio.ferlab.clin.etl.mainutils.Batch
+import bio.ferlab.clin.etl.model.raw.VCF_CNV_Somatic_Input
 import bio.ferlab.clin.etl.normalized.CNVSomaticTumorOnly.getCNV
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
+import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-class CNVSomaticTumorOnly(batchId: String)(implicit configuration: Configuration) extends Occurrences(batchId) {
+case class CNVSomaticTumorOnly(rc : RuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv_somatic_tumor_only")
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     import spark.implicits._
 
@@ -69,4 +71,11 @@ object CNVSomaticTumorOnly {
         .withColumn("variant_type", lit("somatic_tumor_only"))
     df
   }
+
+  @main
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+    CNVSomaticTumorOnly(rc, batch.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }

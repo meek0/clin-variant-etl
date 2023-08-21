@@ -1,22 +1,24 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf}
+import bio.ferlab.clin.etl.mainutils.Release
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
+import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-class PrepareVariantCentric(releaseId: String)(implicit configuration: Configuration) extends PrepareCentric(releaseId) {
+case class PrepareVariantCentric(rc: RuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_centric")
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
-                       currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): Map[String, DataFrame] = {
+                       currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
       enriched_variants.id -> enriched_variants.read,
@@ -26,7 +28,7 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
 
   override def transformSingle(data: Map[String, DataFrame],
                          lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now())(implicit spark: SparkSession): DataFrame = {
+                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val variants = data(enriched_variants.id)
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab",
         "normalized_variants_oid", "variants_oid", "created_on", "updated_on")
@@ -44,8 +46,7 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
   }
 
   private def joinWithConsequences(variantDF: DataFrame,
-                                   consequencesDf: DataFrame)
-                                  (implicit spark: SparkSession): DataFrame = {
+                                   consequencesDf: DataFrame): DataFrame = {
     import spark.implicits._
 
     variantDF
@@ -60,8 +61,7 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
 
   private def getUpdate(consequencesDf: DataFrame,
                         variantsDf: DataFrame,
-                        lastExecution: Timestamp)
-                       (implicit spark: SparkSession): DataFrame = {
+                        lastExecution: Timestamp): DataFrame = {
     val updatedVariants = variantsDf
       .where(col("updated_on") >= lastExecution and col("created_on") =!= col("updated_on"))
       .drop("created_on", "updated_on")
@@ -73,3 +73,11 @@ class PrepareVariantCentric(releaseId: String)(implicit configuration: Configura
   }
 }
 
+object PrepareVariantCentric {
+  @main
+  def run(rc: RuntimeETLContext, release: Release): Unit = {
+    PrepareVariantCentric(rc, release.id).run()
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
+}
