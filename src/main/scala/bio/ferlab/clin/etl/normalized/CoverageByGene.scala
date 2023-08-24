@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
   import spark.implicits._
 
-  override val mainDestination: DatasetConf = conf.getDataset("normalized_exomiser")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_coverage_by_gene")
   val raw_coverage_by_gene: DatasetConf = conf.getDataset("raw_coverage_by_gene")
 
   override def extract(lastRunDateTime: LocalDateTime,

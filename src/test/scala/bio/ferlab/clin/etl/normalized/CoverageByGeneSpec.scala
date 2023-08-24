@@ -16,7 +16,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
 
   import spark.implicits._
 
-  val mainDestination: DatasetConf = conf.getDataset("normalized_exomiser")
+  val mainDestination: DatasetConf = conf.getDataset("normalized_coverage_by_gene")
   val raw_coverage_by_gene: DatasetConf = conf.getDataset("raw_coverage_by_gene")
   val normalized_task: DatasetConf = conf.getDataset("normalized_task")
   val normalized_document_reference: DatasetConf = conf.getDataset("normalized_document_reference")
@@ -105,7 +105,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
     all.head() shouldBe NormalizedCoverageByGene()
   }
 
-  it should "not fail when there is no exomiser data in batch" in {
+  it should "not fail when there is no coverage data in batch" in {
     val job = CoverageByGene(TestETLContext(), "NODATA")
     noException should be thrownBy job.run()
   }
