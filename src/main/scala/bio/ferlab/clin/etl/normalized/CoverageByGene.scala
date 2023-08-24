@@ -62,6 +62,8 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Single
         lit(batchId) as "batch_id"
       )
   }
+
+  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object CoverageByGene {
