@@ -46,24 +46,22 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Single
     withAliquotId
       .select(
         $"#gene" as "gene",
-        castInt("size") as "size",
-        castDouble("average_coverage") as "average_coverage",
-        castFloat("coverage5") as "coverage5",
-        castFloat("coverage15") as "coverage15",
-        castFloat("coverage30") as "coverage30",
-        castFloat("coverage50") as "coverage50",
-        castFloat("coverage100") as "coverage100",
-        castFloat("coverage200") as "coverage200",
-        castFloat("coverage300") as "coverage300",
-        castFloat("coverage400") as "coverage400",
-        castFloat("coverage500") as "coverage500",
-        castFloat("coverage1000") as "coverage1000",
+        castInt("size"),
+        castDouble("average_coverage"),
+        castFloat("coverage5"),
+        castFloat("coverage15"),
+        castFloat("coverage30"),
+        castFloat("coverage50"),
+        castFloat("coverage100"),
+        castFloat("coverage200"),
+        castFloat("coverage300"),
+        castFloat("coverage400"),
+        castFloat("coverage500"),
+        castFloat("coverage1000"),
         $"aliquot_id",
         lit(batchId) as "batch_id"
       )
   }
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object CoverageByGene {
