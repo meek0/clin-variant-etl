@@ -49,6 +49,7 @@ object EtlConfiguration extends App {
   )
 
   val tsv_with_headers = Map("sep" -> "\t", "header" -> "true")
+  val csv_with_headers = Map("sep" -> ",", "header" -> "true")
 
   val sources =
     List(
@@ -57,7 +58,8 @@ object EtlConfiguration extends App {
       DatasetConf("raw_snv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only.hard-filtered.vcf.gz", VCF    , OverWrite),
       DatasetConf("raw_cnv"                        , clin_import  , "/{{BATCH_ID}}/*[0-9].cnv.vcf.gz"                                   , VCF    , OverWrite),
       DatasetConf("raw_cnv_somatic_tumor_only"     , clin_import  , "/{{BATCH_ID}}/*.dragen.WES_somatic-tumor_only.cnv.vcf.gz"          , VCF    , OverWrite),
-      DatasetConf("raw_exomiser"                   , clin_import,   "/{{BATCH_ID}}/*.exomiser.variants.tsv"                  , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_exomiser"                   , clin_import,   "/{{BATCH_ID}}/*.exomiser.variants.tsv"                           , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_coverage_by_gene"           , clin_import,   "/{{BATCH_ID}}/*.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"   , CSV    , OverWrite, readoptions = csv_with_headers),
       DatasetConf("raw_clinical_impression"        , clin_datalake, "/raw/landing/fhir/ClinicalImpression"                   , JSON   , OverWrite),
       DatasetConf("raw_observation"                , clin_datalake, "/raw/landing/fhir/Observation"                          , JSON   , OverWrite),
       DatasetConf("raw_organization"               , clin_datalake, "/raw/landing/fhir/Organization"                         , JSON   , OverWrite),
@@ -102,6 +104,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_consequences"        , clin_datalake, "/normalized/consequences"           , DELTA  , Scd1              , partitionby = List("chromosome")            , table = Some(TableConf("clin", "normalized_consequences")), keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
       DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "normalized_panels"))),
       DatasetConf("normalized_exomiser"            , clin_datalake, "/normalized/exomiser"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
+      DatasetConf("normalized_coverage_by_gene"    , clin_datalake, "/normalized/coverage_by_gene"       , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
 
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))                   , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),

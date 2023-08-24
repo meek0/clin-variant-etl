@@ -30,6 +30,9 @@ object RunNormalized {
   def exomiser(rc: RuntimeETLContext, batch: Batch): Unit = Exomiser.run(rc, batch)
 
   @main
+  def coverage_by_gene(rc: RuntimeETLContext, batch: Batch): Unit = CoverageByGene.run(rc, batch)
+
+  @main
   def all(rc: RuntimeETLContext, batch: Batch): Unit = {
     snv(rc, batch)
     snv_somatic_tumor_only(rc, batch)
@@ -39,6 +42,7 @@ object RunNormalized {
     consequences(rc, batch)
     panels(rc)
     exomiser(rc, batch)
+    coverage_by_gene(rc, batch)
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
