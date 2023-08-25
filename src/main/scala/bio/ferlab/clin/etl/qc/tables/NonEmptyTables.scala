@@ -32,6 +32,7 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(normalized_exomiser, "normalized_exomiser"),
       shouldNotBeEmpty(normalized_snv_somatic_tumor_only, "normalized_snv_somatic_tumor_only"),
       shouldNotBeEmpty(normalized_cnv_somatic_tumor_only, "normalized_cnv_somatic_tumor_only"),
+      shouldNotBeEmpty(normalized_coverage_by_gene, "normalized_coverage_by_gene"),
       shouldNotBeEmpty(snv_somatic_tumor_only, "snv_somatic_tumor_only"),
       shouldNotBeEmpty(snv, "snv"),
       shouldNotBeEmpty(cnv, "cnv"),
