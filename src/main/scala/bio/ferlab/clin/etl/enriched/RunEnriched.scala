@@ -20,6 +20,7 @@ object RunEnriched {
   @main
   def snv_somatic_tumor_only(rc: RuntimeETLContext): Unit = SNVSomaticTumorOnly.run(rc)
 
+  def coverage_by_gene(rc: RuntimeETLContext): Unit = SNV.run(rc)
   @main
   def all(rc: RuntimeETLContext): Unit = {
     variants(rc)
