@@ -27,19 +27,19 @@ object FileUtils {
     import spark.implicits._
     val documentIdsFromTasks = tasks
       .where(col("batch_id") === batchId)
-      .select(explode(col("documents")) as "document", col("experiment.aliquot_id") as "aliquot_id")
+      .select(explode(col("documents")) as "document", col("experiment.aliquot_id") as "aliquot_id", col("service_request_id"))
       .where(col("document.document_type") === dataType)
-      .select(col("document.id") as "id", col("aliquot_id") )
+      .select(col("document.id") as "id", col("aliquot_id") , col("service_request_id"))
     val documents = documentReferences
       .where(col("type") === dataType)
       .select(col("id"), explode(col("contents")) as "content", col("patient_id"), col("specimen_id"))
       .where(col("content.format") === format)
       .join(documentIdsFromTasks, Seq("id"), "inner")
-      .select(col("content.s3_url") as "url", col("aliquot_id"), col("patient_id"), col("specimen_id"))
+      .select(col("content.s3_url") as "url", col("aliquot_id"), col("patient_id"), col("specimen_id"), col("service_request_id"))
     documents.as[FileInfo].collect().toSet
   }
 
 
 }
 
-case class FileInfo(url: String, aliquot_id: String, patient_id: String, specimen_id: String)
+case class FileInfo(url: String, aliquot_id: String, patient_id: String, specimen_id: String, service_request_id: String)

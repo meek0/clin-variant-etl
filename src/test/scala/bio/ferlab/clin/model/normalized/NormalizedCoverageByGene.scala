@@ -18,5 +18,6 @@ case class NormalizedCoverageByGene(`gene`: String = "A1BG",
                                     `coverage500`: Float = 0.484001361470388f,
                                     `coverage1000`: Float = 0.0f,
                                     `aliquot_id`: String = "aliquot1",
+                                    `service_request_id`: String = "SR0095",
                                     `batch_id`: String = "BAT1")
 
