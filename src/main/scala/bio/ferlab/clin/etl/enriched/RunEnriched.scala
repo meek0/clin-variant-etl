@@ -21,12 +21,15 @@ object RunEnriched {
   def snv_somatic_tumor_only(rc: RuntimeETLContext): Unit = SNVSomaticTumorOnly.run(rc)
 
   @main
+  def coverage_by_gene(rc: RuntimeETLContext): Unit = CoverageByGene.run(rc)
+  @main
   def all(rc: RuntimeETLContext): Unit = {
     variants(rc)
     consequences(rc)
     cnv(rc)
     snv(rc)
     snv_somatic_tumor_only(rc)
+    coverage_by_gene(rc)
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
