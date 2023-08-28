@@ -64,10 +64,10 @@ class FileUtilsSpec extends SparkSpec {
 
     val results = filesUrlFromDF(tasks = tasks, documentReferences = documents, batchId = "B1", dataType = "EXOMISER", format = "TSV")
     results should contain theSameElementsAs Seq(
-      FileInfo("s3a://file1.tsv", "16868", "438787", "440171"),
-      FileInfo("s3a://file2.tsv", "16868", "438787", "440171"),
-      FileInfo("s3a://file2b.tsv", "16868", "438787", "440171"),
-      FileInfo("s3a://file3.tsv", "16868", "438787", "440171")
+      FileInfo("s3a://file1.tsv", "16868", "438787", "440171", "SR0095"),
+      FileInfo("s3a://file2.tsv", "16868", "438787", "440171", "SR0095"),
+      FileInfo("s3a://file2b.tsv", "16868", "438787", "440171", "SR0095"),
+      FileInfo("s3a://file3.tsv", "16868", "438787", "440171", "SR0095")
     )
 
   }
