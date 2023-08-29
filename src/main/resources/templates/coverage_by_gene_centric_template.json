@@ -51,10 +51,12 @@
           "type": "float"
         },
         "aliquot_id": {
-          "type": "keyword"
+          "type": "keyword",
+          "index": false
         },
         "batch_id": {
-          "type": "keyword"
+          "type": "keyword",
+          "index": false
         },
         "chromosome": {
           "type": "keyword"
@@ -69,7 +71,8 @@
           "type": "keyword"
         },
         "ensembl_gene_id": {
-          "type": "keyword"
+          "type": "keyword",
+          "index": false
         },
         "omim_gene_id": {
           "type": "keyword"
