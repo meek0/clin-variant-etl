@@ -1,0 +1,89 @@
+{
+  "index_patterns": [
+    "clin_qa_blue_coverage_by_gene_centric*",
+    "clin_qa_green_coverage_by_gene_centric*",
+    "clin_staging_coverage_by_gene_centric*",
+    "clin_prod_coverage_by_gene_centric*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 3
+    },
+    "mappings": {
+      "properties": {
+        "gene": {
+          "type": "keyword"
+        },
+        "size": {
+          "type": "long"
+        },
+        "average_coverage": {
+          "type": "double"
+        },
+        "coverage5": {
+          "type": "float"
+        },
+        "coverage15": {
+          "type": "float"
+        },
+        "coverage30": {
+          "type": "float"
+        },
+        "coverage50": {
+          "type": "float"
+        },
+        "coverage100": {
+          "type": "float"
+        },
+        "coverage200": {
+          "type": "float"
+        },
+        "coverage300": {
+          "type": "float"
+        },
+        "coverage400": {
+          "type": "float"
+        },
+        "coverage500": {
+          "type": "float"
+        },
+        "coverage1000": {
+          "type": "float"
+        },
+        "aliquot_id": {
+          "type": "keyword",
+          "index": false
+        },
+        "batch_id": {
+          "type": "keyword",
+          "index": false
+        },
+        "chromosome": {
+          "type": "keyword"
+        },
+        "start": {
+          "type": "long"
+        },
+        "end": {
+          "type": "long"
+        },
+        "service_request_id": {
+          "type": "keyword"
+        },
+        "ensembl_gene_id": {
+          "type": "keyword",
+          "index": false
+        },
+        "omim_gene_id": {
+          "type": "keyword"
+        },
+        "panels": {
+          "type": "keyword"
+        },
+        "hash": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

@@ -21,5 +21,8 @@ object PrepareIndex {
   @main
   def cnv_centric(rc: RuntimeETLContext, release: Release): Unit = PrepareCnvCentric.run(rc, release)
 
+  @main
+  def coverage_by_gene_centric(rc: RuntimeETLContext, release: Release): Unit = PrepareCoverageByGeneCentric.run(rc, release)
+
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }

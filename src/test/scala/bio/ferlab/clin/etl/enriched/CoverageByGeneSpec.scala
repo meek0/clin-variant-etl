@@ -29,7 +29,8 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig {
     ).toDF()
 
     val refseqDf = Seq(
-      NormalizedRefSeq(gene = "OR4F5", start = "10000", end = "10059", chromosome = "12")
+      NormalizedRefSeq(gene = "OR4F5", start = "10000", end = "10059", chromosome = "12", `type` = "gene"),
+      NormalizedRefSeq(gene = "OR4F5", start = "10000", end = "10059", chromosome = "12", `type` = "exon")
     ).toDF()
 
     val panelsDf = Seq(

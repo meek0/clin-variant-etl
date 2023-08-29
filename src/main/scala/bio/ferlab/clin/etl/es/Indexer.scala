@@ -54,6 +54,7 @@ object Indexer extends App {
     case "variant_centric" => conf.getDataset("es_index_variant_centric")
     case "cnv_centric" => conf.getDataset("es_index_cnv_centric")
     case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
+    case "coverage_by_gene_centric" => conf.getDataset("es_index_coverage_by_gene_centric")
   }
 
   val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
