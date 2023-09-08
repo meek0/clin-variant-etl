@@ -1,16 +1,16 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.clin.etl.utils.FrequencyUtils.emptyFrequencyRQDM
 import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.spark3.genomics.enriched.Variants._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame}
 
 import java.time.{LocalDate, LocalDateTime}
 
@@ -35,6 +35,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
+  val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
@@ -55,6 +56,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
       normalized_panels.id -> normalized_panels.read,
       varsome.id -> varsome.read,
       spliceai.id -> spliceai.read,
+      cosmic.id -> cosmic.read,
     )
   }
 
@@ -97,6 +99,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
     val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai.id))
 
     joinSpliceAi
+      .withCosmic(data(cosmic.id))
       .withGeneExternalReference
       .withVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
@@ -356,40 +359,6 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
 }
 
 object Variants {
-  implicit class DataFrameOps(df: DataFrame) {
-    def withGeneExternalReference(implicit spark: SparkSession): DataFrame = {
-      import spark.implicits._
-      val outputColumn = "gene_external_reference"
-
-      val conditionValueMap: List[(Column, String)] = List(
-        exists($"genes", gene => gene("orphanet").isNotNull and size(gene("orphanet")) > 0) -> "Orphanet",
-        exists($"genes", gene => gene("omim").isNotNull and size(gene("omim")) > 0) -> "OMIM"
-      )
-      conditionValueMap.foldLeft {
-        df.withColumn(outputColumn, when(exists($"genes", gene => gene("hpo").isNotNull and size(gene("hpo")) > 0), array(lit("HPO"))).otherwise(array()))
-      } { case (d, (condition, value)) => d
-        .withColumn(outputColumn,
-          when(condition, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
-      }
-    }
-
-    def withVariantExternalReference(implicit spark: SparkSession): DataFrame = {
-      import spark.implicits._
-      val outputColumn = "variant_external_reference"
-
-      val conditionValueMap: List[(Column, String)] = List(
-        $"clinvar".isNotNull -> "Clinvar",
-        $"pubmed".isNotNull -> "Pubmed"
-      )
-      conditionValueMap.foldLeft {
-        df.withColumn(outputColumn, when($"rsnumber".isNotNull, array(lit("DBSNP"))).otherwise(array()))
-      } { case (d, (condition, value)) => d
-        .withColumn(outputColumn,
-          when(condition, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
-      }
-    }
-
-  }
 
   @main
   def run(rc: RuntimeETLContext): Unit = {

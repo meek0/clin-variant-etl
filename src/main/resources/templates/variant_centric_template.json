@@ -192,7 +192,7 @@
                 "sift_pred": {
                   "type": "keyword"
                 },
-                "phyloP100way_vertebrate":{
+                "phyloP100way_vertebrate": {
                   "type": "float"
                 }
               }
@@ -374,7 +374,7 @@
             "mother_qd": {
               "type": "float",
               "index": false
-            },            
+            },
             "mother_ad_alt": {
               "type": "long",
               "index": false
@@ -394,7 +394,7 @@
             "mother_filters": {
               "type": "keyword",
               "index": false
-            },            
+            },
             "mother_id": {
               "type": "keyword"
             },
@@ -438,7 +438,7 @@
               "type": "boolean"
             },
             "hc_complement": {
-              "type" : "nested",
+              "type": "nested",
               "properties": {
                 "symbol": {
                   "type": "keyword"
@@ -452,7 +452,7 @@
               "type": "boolean"
             },
             "possibly_hc_complement": {
-              "type" : "nested",
+              "type": "nested",
               "properties": {
                 "symbol": {
                   "type": "keyword"
@@ -952,91 +952,120 @@
           "type": "keyword"
         },
         "varsome": {
-            "properties": {
-              "variant_id":{
-                "type": "keyword",
-                "index": false
-              },
-              "has_publication":{
-                "type": "boolean"
-              },
-              "publications": {
-                "type": "nested",
-                "properties": {
-                  "referenced_by": {
-                    "type": "keyword"
-                  },
-                  "pub_med_id": {
-                    "type": "keyword",
-                    "index": false
-                  }
+          "properties": {
+            "variant_id": {
+              "type": "keyword",
+              "index": false
+            },
+            "has_publication": {
+              "type": "boolean"
+            },
+            "publications": {
+              "type": "nested",
+              "properties": {
+                "referenced_by": {
+                  "type": "keyword"
+                },
+                "pub_med_id": {
+                  "type": "keyword",
+                  "index": false
                 }
-              },
-              "acmg": {
-                "properties": {
-                  "verdict": {
-                    "properties": {
-                      "clinical_score": {
-                        "type": "double",
-                        "index": false
-                      },
-                      "verdict": {
-                        "type": "keyword"
-                      },
-                      "pathogenic_subscore": {
-                        "type": "keyword",
-                        "index": false
-                      },
-                      "benign_subscore": {
-                        "type": "keyword",
-                        "index": false
-                      },
-                      "approx_score": {
-                        "type": "integer",
-                        "index": false
-                      }
+              }
+            },
+            "acmg": {
+              "properties": {
+                "verdict": {
+                  "properties": {
+                    "clinical_score": {
+                      "type": "double",
+                      "index": false
+                    },
+                    "verdict": {
+                      "type": "keyword"
+                    },
+                    "pathogenic_subscore": {
+                      "type": "keyword",
+                      "index": false
+                    },
+                    "benign_subscore": {
+                      "type": "keyword",
+                      "index": false
+                    },
+                    "approx_score": {
+                      "type": "integer",
+                      "index": false
                     }
-                  },
-                  "classifications": {
-                    "type": "nested",
-                    "properties": {
-                      "met_criteria": {
-                        "type": "boolean"
-                      },
-                      "strength": {
-                        "type": "keyword"
-                      },
-                      "name": {
-                        "type": "keyword"
-                      },
-                      "user_explain": {
-                        "type": "keyword",
-                        "index": false
-                      }
-                    }
-                  },
-                  "transcript": {
-                    "type": "keyword",
-                    "index": false
-                  },
-                  "transcript_reason": {
-                    "type": "keyword",
-                    "index": false
-                  },
-                  "gene_symbol": {
-                    "type": "keyword",
-                    "index": false
-                  },
-                  "coding_impact": {
-                    "type": "keyword",
-                    "index": false
                   }
+                },
+                "classifications": {
+                  "type": "nested",
+                  "properties": {
+                    "met_criteria": {
+                      "type": "boolean"
+                    },
+                    "strength": {
+                      "type": "keyword"
+                    },
+                    "name": {
+                      "type": "keyword"
+                    },
+                    "user_explain": {
+                      "type": "keyword",
+                      "index": false
+                    }
+                  }
+                },
+                "transcript": {
+                  "type": "keyword",
+                  "index": false
+                },
+                "transcript_reason": {
+                  "type": "keyword",
+                  "index": false
+                },
+                "gene_symbol": {
+                  "type": "keyword",
+                  "index": false
+                },
+                "coding_impact": {
+                  "type": "keyword",
+                  "index": false
                 }
               }
             }
+          }
         },
         "exomiser_variant_score": {
           "type": "float"
+        },
+        "cmc": {
+          "mutation_url": {
+            "rank": {
+              "type": "keyword",
+              "index": false
+            },
+            "shared_aa": {
+              "type": "integer",
+              "index": false
+            },
+            "cosmic_id": {
+              "type": "keyword",
+              "index": false
+            },
+            "sample_mutated": {
+              "type": "integer"
+            },
+            "sample_tested": {
+              "type": "integer",
+              "index": false
+            },
+            "tier": {
+              "type": "keyword"
+            },
+            "sample_ratio": {
+              "type": "double"
+            }
+          }
         }
       }
     }

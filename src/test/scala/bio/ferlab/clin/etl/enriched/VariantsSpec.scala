@@ -7,6 +7,7 @@ import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.testutils.models.normalized.NormalizedCosmicMutationSet
 import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
@@ -35,6 +36,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
+  val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
 
   val job = Variants(TestETLContext(RunStep.initial_load))
   override val dbToCreate: List[String] = List("clin", "clin_normalized")
@@ -64,6 +66,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
   val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
+  val cosmicDf: DataFrame = Seq(NormalizedCosmicMutationSet(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -82,6 +85,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     normalized_panels.id -> normalized_panelsDf,
     varsome.id -> varsomeDf,
     spliceai.id -> spliceaiDf,
+    cosmic.id -> cosmicDf
   )
 
   override def beforeAll(): Unit = {

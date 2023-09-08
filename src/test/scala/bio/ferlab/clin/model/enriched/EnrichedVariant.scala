@@ -7,6 +7,7 @@ package bio.ferlab.clin.model.enriched
 import bio.ferlab.clin.etl.varsome.{Classification, Publication}
 import bio.ferlab.clin.model.VarsomeOutput.{defaultClassifications, defaultPublications}
 import bio.ferlab.clin.model._
+import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedVariant.CMC
 
 import java.sql.{Date, Timestamp}
 import java.time.LocalDate
@@ -37,11 +38,12 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `dna_change`: String = "T>C",
                            `genes`: List[GENES] = List(GENES()),
                            `omim`: List[String] = List("618285"),
-                           `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Pubmed"),
-                           `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM"),
+                           `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Cosmic", "PubMed"),
+                           `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
                            `varsome`: Option[VARSOME] = Some(VARSOME()),
-                           `exomiser_variant_score`: Option[Float] = Some(0.6581f))
+                           `exomiser_variant_score`: Option[Float] = Some(0.6581f),
+                           `cmc`: CMC = CMC())
 
 
 case class DONORS(`dp`: Int = 1,
