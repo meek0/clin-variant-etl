@@ -93,8 +93,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
-    val joinConstraint = joinWithConstraint(joinGenes, data(gnomad_constraint.id))
-    val joinPanels = joinWithPanels(joinConstraint, data(normalized_panels.id))
+    val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
     val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
     val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai.id))
 
@@ -284,32 +283,6 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
         flatten(collect_set(genes("omim.omim_id"))) as "omim"
       )
       .select("variant.*", "genes", "omim")
-  }
-
-  def joinWithConstraint(variants: DataFrame, constraint: DataFrame): DataFrame = {
-
-    val joinCols = Seq("chromosome", "symbol")
-
-    val gnomadStruct = constraint
-      .groupBy("chromosome", "symbol")
-      .agg(
-        max("pLI") as "pli",
-        max("oe_lof_upper") as "loeuf"
-      )
-      .withColumn("gnomad", struct("pli", "loeuf"))
-      .select("gnomad", joinCols: _*)
-
-    variants
-      .select($"*", explode_outer($"genes") as "gene", $"gene.symbol" as "symbol") // explode_outer since genes can be null
-      .join(broadcast(gnomadStruct), joinCols, "left")
-      .drop("symbol") // only used for joining
-      .withColumn("gene", struct($"gene.*", $"gnomad")) // add gnomad struct as nested field of gene struct
-      .groupByLocus()
-      .agg(
-        first(struct(variants.drop("genes")("*"))) as "variant",
-        collect_list("gene") as "genes" // re-create genes list for each locus, now containing gnomad struct
-      )
-      .select("variant.*", "genes")
   }
 
   def joinWithVarsome(variants: DataFrame, varsome: DataFrame): DataFrame = {

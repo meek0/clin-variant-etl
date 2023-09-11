@@ -8,6 +8,7 @@ import bio.ferlab.clin.etl.varsome.{Classification, Publication}
 import bio.ferlab.clin.model.VarsomeOutput.{defaultClassifications, defaultPublications}
 import bio.ferlab.clin.model._
 import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedVariant.CMC
+import bio.ferlab.datalake.spark3.testmodels.enriched._
 
 import java.sql.{Date, Timestamp}
 import java.time.LocalDate
@@ -165,5 +166,5 @@ case class VERDICT(
 case class SPLICEAI(`ds`: Double = 0.01,
                     `type`: Seq[String] = Seq("AG"))
 
-case class GNOMAD(`pli`: Float = 0.030354f,
-                  `loeuf`: Float = 1.84f)
+case class GNOMAD(`pli`: Float = 1.0f,
+                  `loeuf`: Float = 0.054f)

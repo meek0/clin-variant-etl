@@ -7,6 +7,7 @@ import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedGenes
 import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.scalatest.BeforeAndAfterAll
 
@@ -24,7 +25,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabase
     normalized_consequences.id -> Seq(NormalizedConsequences()).toDF(),
     dbnsfp_original.id -> Seq(Dbnsfp_originalOutput()).toDF,
     normalized_ensembl_mapping.id -> Seq(EnsemblMappingOutput()).toDF,
-    enriched_genes.id -> Seq(GenesOutput()).toDF,
+    enriched_genes.id -> Seq(EnrichedGenes()).toDF,
   )
 
   override val dbToCreate: List[String] = List("clin")
