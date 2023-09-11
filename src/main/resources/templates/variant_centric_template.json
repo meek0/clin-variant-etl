@@ -1039,8 +1039,8 @@
           "type": "float"
         },
         "cmc": {
-          "mutation_url": {
-            "rank": {
+          "properties": {
+            "mutation_url": {
               "type": "keyword",
               "index": false
             },
