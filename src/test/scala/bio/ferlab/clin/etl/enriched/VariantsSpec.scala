@@ -1,12 +1,13 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model.{normalized, _}
 import bio.ferlab.clin.model.enriched._
 import bio.ferlab.clin.model.normalized.{NormalizedPanels, NormalizedVariants}
+import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedGenes
 import bio.ferlab.datalake.testutils.models.normalized.NormalizedCosmicMutationSet
 import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
@@ -62,7 +63,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val gnomad_genomes_3_1_1Df: DataFrame = Seq(GnomadGenomes311Output()).toDF
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
-  val genesDf: DataFrame = Seq(GenesOutput()).toDF()
+  val genesDf: DataFrame = Seq(EnrichedGenes()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
   val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
@@ -1068,41 +1069,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     result
       .selectLocus($"genes.spliceai")
-      .collect() should contain theSameElementsAs expected
-  }
-
-  "joinWithConstraint" should "enrich variants with gnomAD constraint metrics" in {
-    val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
-      EnrichedVariant(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`symbol` = Some("gene3")))),
-      EnrichedVariant(`chromosome` = "3", `genes_symbol` = List(null), genes = List(null)),
-      EnrichedVariant(`chromosome` = "4", `genes_symbol` = List("gene4"), genes = List(GENES(`symbol` = Some("gene4")))),
-    ).toDF()
-
-    // Remove gnomad nested field from variants df
-    val variantsWithoutConstraint = removeNestedField(variants, "gnomad", "genes")
-
-    val constraint = Seq(
-      GnomadConstraintOutput(`chromosome` = "1", `symbol` = "gene1", `transcript` = "transcriptA", `pLI` = 0.25f, `oe_lof_upper` = 1.86f),
-      GnomadConstraintOutput(`chromosome` = "1", `symbol` = "gene2", `transcript` = "transcriptB", `pLI` = 0.34f, `oe_lof_upper` = 0.54f),
-      GnomadConstraintOutput(`chromosome` = "2", `symbol` = "gene3", `transcript` = "transcriptC", `pLI` = 0.89f, `oe_lof_upper` = 2.5f),
-      GnomadConstraintOutput(`chromosome` = "2", `symbol` = "gene3", `transcript` = "transcriptD", `pLI` = 0.9236f, `oe_lof_upper` = 1.458f),
-    ).toDF()
-
-    val result = job.joinWithConstraint(variantsWithoutConstraint, constraint)
-
-    val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `genes_symbol` = List("gene1", "gene2"), `genes` = List(
-        GENES(`symbol` = Some("gene1"), `gnomad` = Some(GNOMAD(`pli` = 0.25f, `loeuf` = 1.86f))),
-        GENES(`symbol` = Some("gene2"), `gnomad` = Some(GNOMAD(`pli` = 0.34f, `loeuf` = 0.54f))),
-      )),
-      EnrichedVariant(`chromosome` = "2", `genes_symbol` = List("gene3"), `genes` = List(GENES(`gnomad` = Some(GNOMAD(`pli` = 0.9236f, `loeuf` = 2.5f))))),
-      EnrichedVariant(`chromosome` = "3", `genes_symbol` = List(null), `genes` = List(null)),
-      EnrichedVariant(`chromosome` = "4", `genes_symbol` = List("gene4"), `genes` = List(GENES(`gnomad` = None))),
-    ).toDF().select("chromosome", "genes.gnomad").collect()
-
-    result
-      .select("chromosome", "genes.gnomad")
       .collect() should contain theSameElementsAs expected
   }
 

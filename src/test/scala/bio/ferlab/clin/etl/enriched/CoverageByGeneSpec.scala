@@ -1,11 +1,10 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedCoverageByGene, EnrichedSNV}
-import bio.ferlab.clin.model.normalized.{NormalizedCoverageByGene, NormalizedExomiser, NormalizedPanels, NormalizedRefSeq, NormalizedSNV}
-import bio.ferlab.clin.model.GenesOutput
+import bio.ferlab.clin.model.enriched.EnrichedCoverageByGene
+import bio.ferlab.clin.model.normalized.{NormalizedCoverageByGene, NormalizedPanels, NormalizedRefSeq}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.spark3.publictables.enriched.Genes
+import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedGenes
 import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 
 class CoverageByGeneSpec extends SparkSpec with WithTestConfig {
@@ -42,7 +41,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig {
     ).toDF()
 
     val genesDf = Seq(
-      GenesOutput(chromosome = "12",
+      EnrichedGenes(chromosome = "12",
         ensembl_gene_id = "EBS123414",
         omim_gene_id = "1234")
     ).toDF()

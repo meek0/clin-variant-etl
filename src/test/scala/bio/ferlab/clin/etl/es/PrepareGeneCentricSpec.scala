@@ -1,16 +1,18 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.model.enriched.{DONORS, EnrichedVariant}
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.enriched.{DONORS, EnrichedVariant}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedGenes
 import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
+
 
 class PrepareGeneCentricSpec extends SparkSpec with WithTestConfig {
   import spark.implicits._
 
-  val genesDf: DataFrame = Seq(GenesOutput(), GenesOutput(`symbol` = "OR4F6")).toDF()
+  val genesDf: DataFrame = Seq(EnrichedGenes(), EnrichedGenes(`symbol` = "OR4F6")).toDF()
   val variantsDf: DataFrame = Seq(
     EnrichedVariant(
       `locus` = "1-10000-A-TAA",
