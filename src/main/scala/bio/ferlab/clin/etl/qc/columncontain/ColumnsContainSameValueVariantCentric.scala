@@ -51,6 +51,12 @@ object ColumnsContainSameValueVariantCentric extends TestingApp {
         variant_centric.select(explode($"donors")).select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
+        variant_centric.select(explode($"donors")).select($"col.exomiser.*")
+      ),
+      shouldNotContainSameValue(
+        variant_centric.select(explode($"donors")).select($"col.exomiser_other_moi.*")
+      ),
+      shouldNotContainSameValue(
         variant_centric.select($"external_frequencies.*")
       ),
       shouldNotContainSameValue(
@@ -86,6 +92,12 @@ object ColumnsContainSameValueVariantCentric extends TestingApp {
       ),
       shouldNotContainSameValue(
         variant_centric.select(explode($"genes")).select(explode($"col.omim")).select("col.*")
+      ),
+      shouldNotContainSameValue(
+        variant_centric.select(explode($"genes")).select($"col.gnomad.*")
+      ),
+      shouldNotContainSameValue(
+        variant_centric.select(explode($"genes")).select($"col.spliceai.*")
       ),/*
       shouldNotContainSameValue(
         variant_centric.select($"varsome.*")
@@ -103,6 +115,9 @@ object ColumnsContainSameValueVariantCentric extends TestingApp {
         variant_centric.select(explode($"varsome.acmg.classifications")).select("col.*"),
         variant_centric.select(explode($"varsome.acmg.classifications")).select("col.*").columns.filterNot(List("met_criteria").contains(_)): _*
       ),*/
+      shouldNotContainSameValue(
+        variant_centric.select($"cmc.*")
+      ),
       shouldNotContainSameValue(
         variant_centric.select(explode($"consequences")).select("col.*"),
         variant_centric.select(explode($"consequences")).select("col.*").columns.filterNot(List("feature_type", "picked").contains(_)): _*

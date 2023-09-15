@@ -163,6 +163,10 @@ package object dictionary {
     "OMIM",
     "HPO",
     "Orphanet",
+    "SpliceAI",
+    "Cosmic",
+    "gnomAD",
+    "DDD",
     "null",
   )
 
@@ -338,7 +342,8 @@ package object dictionary {
     "insertion",
     "DBSNP",
     "Clinvar",
-    "Pubmed",
+    "PubMed",
+    "Cosmic",
     "null",
   )
 
