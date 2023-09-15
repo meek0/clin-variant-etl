@@ -48,6 +48,12 @@ object ColumnsContainOnlyNullVariantCentric extends TestingApp {
         variant_centric.select(explode($"donors")).select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
+        variant_centric.select(explode($"donors")).select($"col.exomiser.*")
+      ),
+      shouldNotContainOnlyNull(
+        variant_centric.select(explode($"donors")).select($"col.exomiser_other_moi.*")
+      ),
+      shouldNotContainOnlyNull(
         variant_centric.select($"external_frequencies.*")
       ),
       shouldNotContainOnlyNull(
@@ -82,6 +88,12 @@ object ColumnsContainOnlyNullVariantCentric extends TestingApp {
       ),
       shouldNotContainOnlyNull(
         variant_centric.select(explode($"genes")).select(explode($"col.omim")).select("col.*")
+      ),
+      shouldNotContainOnlyNull(
+        variant_centric.select(explode($"genes")).select($"col.gnomad.*")
+      ),
+      shouldNotContainOnlyNull(
+        variant_centric.select(explode($"genes")).select($"col.spliceai.*")
       ),/*
       shouldNotContainOnlyNull(
         variant_centric.select($"varsome.*")
@@ -99,6 +111,9 @@ object ColumnsContainOnlyNullVariantCentric extends TestingApp {
       shouldNotContainOnlyNull(
         variant_centric.select(explode($"varsome.acmg.classifications")).select("col.*")
       ),*/
+      shouldNotContainOnlyNull(
+        variant_centric.select($"cmc.*")
+      ),
       shouldNotContainOnlyNull(
         variant_centric.select(explode($"consequences")).select("col.*")
       ),
