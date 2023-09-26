@@ -918,6 +918,9 @@
         "last_annotation_update": {
           "type": "long"
         },
+        "hotspot": {
+          "type": "boolean"
+        },
         "locus": {
           "type": "keyword"
         },

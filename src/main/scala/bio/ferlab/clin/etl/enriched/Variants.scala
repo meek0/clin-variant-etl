@@ -162,7 +162,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
 
     val originalVariants = variants
       .select("chromosome", "start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
-        "variant_class", "pubmed", "created_on")
+        "variant_class", "pubmed", "created_on", "hotspot")
       .groupByLocus()
       .agg(
         first("end") as "end",
@@ -171,6 +171,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
         first($"hgvsg") as "hgvsg",
         first($"variant_class") as "variant_class",
         first($"pubmed") as "pubmed",
+        first($"hotspot") as "hotspot",
         max($"created_on") as "updated_on",
         min($"created_on") as "created_on"
       )

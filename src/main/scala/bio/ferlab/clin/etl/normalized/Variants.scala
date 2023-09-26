@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
+import bio.ferlab.clin.etl.normalized.Variants.hotspot
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
 import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
@@ -43,7 +44,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc
     )
   }
 
-  private def getVCF(data: Map[String, DataFrame]) = {
+  private def getVCF(data: Map[String, DataFrame]): (DataFrame, String, String, Boolean) = {
 
     val vcfGermline = data(raw_variant_calling.id)
     val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
@@ -92,7 +93,8 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc
         array_distinct(csq("symbol")) as "genes_symbol",
         hgvsg,
         variant_class,
-        pubmed
+        pubmed,
+        hotspot(vcf)
       )
       .drop("annotation")
       .dropDuplicates("chromosome", "start", "reference", "alternate")
@@ -270,6 +272,11 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc
 }
 
 object Variants {
+  def hotspot(df: DataFrame): Column = {
+    if (df.columns.contains("INFO_hotspot")) col("INFO_hotspot") as "hotspot"
+    else lit(null) as "hotspot"
+  }
+
   @main
   def run(rc: RuntimeETLContext, batch: Batch): Unit = {
     Variants(rc, batch.id).run()
