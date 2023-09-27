@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.etl.enriched.VariantsSpec.removeNestedField
 import bio.ferlab.clin.model.enriched._
 import bio.ferlab.clin.model.normalized.{NormalizedPanels, NormalizedVariants}
 import bio.ferlab.clin.model._
@@ -995,6 +996,54 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     )
   }
 
+  "variants job" should "prioritize hotspot true values" in {
+    val normalizedVariantsDf = Seq(
+      // Only true
+      NormalizedVariants(`batch_id` = "BAT1", `start` = 101, `hotspot` = Some(true)),
+      // True over false
+      NormalizedVariants(`batch_id` = "BAT1", `start` = 102, `hotspot` = Some(true)),
+      NormalizedVariants(`batch_id` = "BAT2", `start` = 102, `hotspot` = Some(false)),
+      // True over false and null
+      NormalizedVariants(`batch_id` = "BAT1", `start` = 103, `hotspot` = Some(false)),
+      NormalizedVariants(`batch_id` = "BAT2", `start` = 103, `hotspot` = None),
+      NormalizedVariants(`batch_id` = "BAT3", `start` = 103, `hotspot` = Some(true)),
+      // False over null
+      NormalizedVariants(`batch_id` = "BAT1", `start` = 104, `hotspot` = None),
+      NormalizedVariants(`batch_id` = "BAT2", `start` = 104, `hotspot` = Some(false)),
+    ).toDF()
+
+    val snvDf = Seq(
+      EnrichedSNV(`batch_id` = "BAT2", `start` = 103),
+      EnrichedSNV(`batch_id` = "BAT1", `start` = 104),
+    ).toDF()
+
+    val SNVSomaticTumorOnlyDf = Seq(
+      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT1", `start` = 101),
+      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT1", `start` = 102),
+      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT2", `start` = 102),
+      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT1", `start` = 103),
+      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT3", `start` = 103),
+      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT2", `start` = 104),
+    ).toDF()
+
+    val testData = data ++ Map(
+      normalized_variants.id -> normalizedVariantsDf,
+      snv.id -> snvDf,
+      snv_somatic_tumor_only.id -> SNVSomaticTumorOnlyDf,
+    )
+    val resultDf = job.transformSingle(testData).select("start", "hotspot")
+    val result = resultDf.as[(Long, Boolean)].collect()
+
+    resultDf.show(false)
+
+    result should contain theSameElementsAs Seq(
+      (101, true),
+      (102, true),
+      (103, true),
+      (104, false),
+    )
+  }
+
   "variantsWithDonors" should "enrich variants with donor info and exomiser scores" in {
     val variants = Seq(
       EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C"),
@@ -1072,8 +1121,11 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       .collect() should contain theSameElementsAs expected
   }
 
+}
+
+object VariantsSpec {
   def removeNestedField(df: DataFrame, field: String, parent: String): DataFrame = {
-    df.select($"*", explode_outer(col(parent)) as "temp")
+    df.select(col("*"), explode_outer(col(parent)) as "temp")
       .withColumn("temp", col("temp").dropFields(field))
       .groupByLocus()
       .agg(

@@ -171,7 +171,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
         first($"hgvsg") as "hgvsg",
         first($"variant_class") as "variant_class",
         first($"pubmed") as "pubmed",
-        first($"hotspot") as "hotspot",
+        max($"hotspot") as "hotspot",
         max($"created_on") as "updated_on",
         min($"created_on") as "created_on"
       )
