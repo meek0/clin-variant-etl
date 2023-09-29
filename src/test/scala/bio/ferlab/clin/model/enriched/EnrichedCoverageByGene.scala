@@ -29,5 +29,5 @@ case class EnrichedCoverageByGene(`gene`: String = "A1BG",
                                   `ensembl_gene_id`: String = "ENS1230912",
                                   `omim_gene_id`: String = "365432",
                                   `panels`: Seq[String] = Seq("DYSTM", "MITN"),
-                                  `hash`: String = "f0f5be6ab4e10640235ca5529401ade728c94736"
+                                  `hash`: String = "bb299edc1d67ea7f7ae0f0d649aeb29558b3a967"
                                  )

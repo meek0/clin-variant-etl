@@ -67,7 +67,7 @@ object CoverageByGene {
       .select(joinedWithGenes("*"), panels("panels"))
 
     val withHash = joinedWithPanels
-      .withColumn("hash", sha1(concat_ws("-", col("batch_id"), col("aliquot_id"), col("gene"))))
+      .withColumn("hash", sha1(concat_ws("-", col("batch_id"), col("aliquot_id"), col("gene"), col("chromosome"))))
 
     withHash
   }
