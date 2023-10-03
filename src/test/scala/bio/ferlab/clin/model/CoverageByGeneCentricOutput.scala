@@ -29,5 +29,5 @@ case class CoverageByGeneCentricOutput(`gene`: String = "A1BG",
                                   `ensembl_gene_id`: String = "ENS1230912",
                                   `omim_gene_id`: String = "365432",
                                   `panels`: Seq[String] = Seq("DYSTM", "MITN"),
-                                  `hash`: String = "bb299edc1d67ea7f7ae0f0d649aeb29558b3a967"
+                                  `hash`: String = "0100ad84901f6552c8269267da966037622c14f8"
                                  )
