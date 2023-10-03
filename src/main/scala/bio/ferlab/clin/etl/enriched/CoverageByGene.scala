@@ -54,7 +54,7 @@ object CoverageByGene {
 
     val refseqGenesWithoutChrY = refseqGenes
       .orderBy(col("gene"), col("chromosome")) // chr X entries first
-      .dropDuplicates(Seq("gene"))
+      .dropDuplicates("gene")
 
     val joinWithAnnotation = coverage
       .join(refseqGenesWithoutChrY, Seq("gene"), "left")
