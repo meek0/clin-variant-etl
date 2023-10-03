@@ -52,8 +52,12 @@ object CoverageByGene {
 
     val refseqGenes = refseq.filter(col("type") === "gene")
 
+    val refseqGenesWithoutChrY = refseqGenes
+      .orderBy(col("gene"), col("chromosome")) // chr X entries first
+      .dropDuplicates("gene")
+
     val joinWithAnnotation = coverage
-      .join(refseqGenes, Seq("gene"), "left")
+      .join(refseqGenesWithoutChrY, Seq("gene"), "left")
       .select(coverage("*"), refseq("start"), refseq("end"), refseq("chromosome"))
       .withColumn("start", col("start").cast(LongType))
       .withColumn("end", col("end").cast(LongType))
@@ -67,7 +71,7 @@ object CoverageByGene {
       .select(joinedWithGenes("*"), panels("panels"))
 
     val withHash = joinedWithPanels
-      .withColumn("hash", sha1(concat_ws("-", col("batch_id"), col("aliquot_id"), col("gene"))))
+      .withColumn("hash", sha1(concat_ws("-", col("batch_id"), col("aliquot_id"), col("gene"), col("chromosome"))))
 
     withHash
   }
