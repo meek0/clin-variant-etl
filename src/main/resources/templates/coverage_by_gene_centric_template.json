@@ -80,6 +80,9 @@
         "panels": {
           "type": "keyword"
         },
+        "patient_id": {
+          "type": "keyword"
+        },
         "hash": {
           "type": "keyword"
         }
