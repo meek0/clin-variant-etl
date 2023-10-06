@@ -58,6 +58,14 @@ package object dictionary {
     "Uncertain_significance",
   )
 
+  val DicCmcTier = Seq(
+    "1",
+    "2",
+    "3",
+    "Other",
+    "null",
+  )
+
   val DicCNVFilters = Seq(
     "PASS",
     "cnvQual",
@@ -219,7 +227,7 @@ package object dictionary {
     "ambiguous_orf",
     "sense_intronic",
     "sense_overlapping",
-    "antisense/antisense_RNA",
+    "antisense_RNA",
     "known_ncrna",
     "pseudogene",
     "processed_pseudogene",
@@ -237,8 +245,14 @@ package object dictionary {
     "macro_lncRNA",
     "3prime_overlapping_ncRNA",
     "disrupted_domain",
-    "vaultRNA/vault_RNA",
+    "vault_RNA",
     "bidirectional_promoter_lncRNA",
+    "null",
+  )
+
+  val DicHotspot = Seq(
+    "true",
+    "false",
     "null",
   )
 
