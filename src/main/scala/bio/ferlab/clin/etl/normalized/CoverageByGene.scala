@@ -37,7 +37,7 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Single
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime,
                                currentRunDateTime: LocalDateTime): DataFrame = {
-    val fileInfo = data("file_info").select("url", "aliquot_id", "service_request_id")
+    val fileInfo = data("file_info").select("url", "aliquot_id", "service_request_id", "patient_id")
     val withFileInfo = data(raw_coverage_by_gene.id)
       .withColumn("url", input_file_name())
       .join(fileInfo, Seq("url"))
@@ -59,6 +59,7 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Single
         castFloat("coverage500"),
         castFloat("coverage1000"),
         $"aliquot_id",
+        $"patient_id",
         $"service_request_id",
         lit(batchId) as "batch_id"
       )
