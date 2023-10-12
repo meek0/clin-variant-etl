@@ -13,6 +13,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 import org.slf4j.Logger
 
@@ -274,7 +275,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc
 object Variants {
   def hotspot(df: DataFrame): Column = {
     if (df.columns.contains("INFO_hotspot")) col("INFO_hotspot") as "hotspot"
-    else lit(null) as "hotspot"
+    else lit(null).cast(BooleanType) as "hotspot"
   }
 
   @main
