@@ -274,7 +274,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc
 object Variants {
   def hotspot(df: DataFrame): Column = {
     if (df.columns.contains("INFO_hotspot")) col("INFO_hotspot") as "hotspot"
-    else lit(null) as "hotspot"
+    else lit(null).cast("boolean") as "hotspot"
   }
 
   @main
