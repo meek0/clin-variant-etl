@@ -23,7 +23,6 @@ trait TestingApp extends App {
   lazy val normalized_variants: DataFrame = spark.table("normalized_variants")
   lazy val variant_centric = spark.table(s"variant_centric_$release_id")
   lazy val variants: DataFrame = spark.table("variants")
-  lazy val varsome: DataFrame = spark.table("varsome")
 
   lazy val gnomad_genomes_v2_1_1: DataFrame = spark.table("gnomad_genomes_v2_1_1")
   lazy val gnomad_exomes_v2_1_1: DataFrame = spark.table("gnomad_exomes_v2_1_1")
