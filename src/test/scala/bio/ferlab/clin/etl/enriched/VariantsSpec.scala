@@ -36,7 +36,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  //val varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
 
@@ -66,7 +65,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(EnrichedGenes()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
-  //val varsomeDf: DataFrame = Seq(VarsomeOutput()).toDF()
   val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
   val cosmicDf: DataFrame = Seq(NormalizedCosmicMutationSet(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
 
@@ -85,7 +83,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
-    //varsome.id -> varsomeDf,
     spliceai.id -> spliceaiDf,
     cosmic.id -> cosmicDf
   )
