@@ -43,7 +43,7 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Cosmic", "PubMed"),
                            `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
-                           `varsome`: Option[VARSOME] = Some(VARSOME()),
+                           //`varsome`: Option[VARSOME] = Some(VARSOME()),
                            `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                            `cmc`: CMC = CMC())
 

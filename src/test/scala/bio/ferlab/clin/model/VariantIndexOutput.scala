@@ -42,7 +42,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `omim`: List[String] = List("618285"),
                               `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Cosmic", "PubMed"),
                               `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
-                              `varsome`: Option[VARSOME] = Some(VARSOME()),
+                              //`varsome`: Option[VARSOME] = Some(VARSOME()),
                               `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                               `cmc`: CMC = CMC())
 

@@ -33,7 +33,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  val varsome: DatasetConf = conf.getDataset("normalized_varsome")
+  //val varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
 
@@ -54,7 +54,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
       clinvar.id -> clinvar.read,
       genes.id -> genes.read,
       normalized_panels.id -> normalized_panels.read,
-      varsome.id -> varsome.read,
+      //varsome.id -> varsome.read,
       spliceai.id -> spliceai.read,
       cosmic.id -> cosmic.read,
     )
@@ -94,8 +94,8 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
-    val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
-    val joinSpliceAi = joinWithSpliceAi(joinVarsome, data(spliceai.id))
+    //val joinVarsome = joinWithVarsome(joinPanels, data(varsome.id))
+    val joinSpliceAi = joinWithSpliceAi(joinPanels, data(spliceai.id))
 
     joinSpliceAi
       .withCosmic(data(cosmic.id))
@@ -285,7 +285,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
       )
       .select("variant.*", "genes", "omim")
   }
-
+/*
   def joinWithVarsome(variants: DataFrame, varsome: DataFrame): DataFrame = {
     val df = varsome.select($"chromosome", $"start", $"reference", $"alternate", $"variant_id",
       $"publications.publications" as "publications",
@@ -302,7 +302,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
     variants.joinAndMerge(df, "varsome", "left")
 
   }
-
+*/
   def joinWithPanels(variants: DataFrame, panels: DataFrame): DataFrame = {
     val variantColumns = variants.drop("chromosome", "start", "reference", "alternate").columns.map(c => first(c) as c)
     variants
