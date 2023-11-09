@@ -43,7 +43,6 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Cosmic", "PubMed"),
                            `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
-                           `varsome`: Option[VARSOME] = Some(VARSOME()),
                            `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                            `cmc`: CMC = CMC())
 
@@ -143,13 +142,6 @@ case class GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `cosmic`: List[COSMIC] = List(COSMIC()),
                  `spliceai`: Option[SPLICEAI] = Some(SPLICEAI()),
                  `gnomad`: Option[GNOMAD] = Some(GNOMAD()))
-
-case class VARSOME(
-                    `variant_id`: Option[String] = Some("10190150730274780002"),
-                    `publications`: Seq[Publication] = defaultPublications,
-                    `has_publication`:Boolean = true,
-                    `acmg`: Option[ACMG] = Some(ACMG())
-                  )
 
 case class ACMG(
                  `verdict`: Option[VERDICT] = Some(VERDICT()),
