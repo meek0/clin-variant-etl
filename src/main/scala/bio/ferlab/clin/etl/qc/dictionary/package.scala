@@ -298,6 +298,7 @@ package object dictionary {
     "SSOLID",
     "SHEMA",
     "EXTUM",
+    "SCID",
   )
 
   val DicParentalOrigin = Seq(
