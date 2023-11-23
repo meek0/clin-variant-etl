@@ -1,29 +1,29 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.RuntimeETLContext
+import bio.ferlab.datalake.commons.config.DeprecatedRuntimeETLContext
 import mainargs.{ParserForMethods, main}
 
 object RunEnriched {
 
   @main
-  def variants(rc: RuntimeETLContext): Unit = Variants.run(rc)
+  def variants(rc: DeprecatedRuntimeETLContext): Unit = Variants.run(rc)
 
   @main
-  def consequences(rc: RuntimeETLContext): Unit = Consequences.run(rc)
+  def consequences(rc: DeprecatedRuntimeETLContext): Unit = Consequences.run(rc)
 
   @main
-  def cnv(rc: RuntimeETLContext): Unit = CNV.run(rc)
+  def cnv(rc: DeprecatedRuntimeETLContext): Unit = CNV.run(rc)
 
   @main
-  def snv(rc: RuntimeETLContext): Unit = SNV.run(rc)
+  def snv(rc: DeprecatedRuntimeETLContext): Unit = SNV.run(rc)
 
   @main
-  def snv_somatic_tumor_only(rc: RuntimeETLContext): Unit = SNVSomaticTumorOnly.run(rc)
+  def snv_somatic_tumor_only(rc: DeprecatedRuntimeETLContext): Unit = SNVSomaticTumorOnly.run(rc)
 
   @main
-  def coverage_by_gene(rc: RuntimeETLContext): Unit = CoverageByGene.run(rc)
+  def coverage_by_gene(rc: DeprecatedRuntimeETLContext): Unit = CoverageByGene.run(rc)
   @main
-  def all(rc: RuntimeETLContext): Unit = {
+  def all(rc: DeprecatedRuntimeETLContext): Unit = {
     variants(rc)
     consequences(rc)
     cnv(rc)

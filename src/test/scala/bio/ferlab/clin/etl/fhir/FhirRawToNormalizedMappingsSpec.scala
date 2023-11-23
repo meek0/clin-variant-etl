@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirToNormalizedETL.getSchema
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithTestConfig
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.functions._
 
 class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
@@ -13,7 +13,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
   "clinicalImpression raw job" should "return data in the expected format" in {
     val inputDs = conf.getDataset("raw_clinical_impression")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_clinical_impression")).json("src/test/resources/raw/landing/fhir/ClinicalImpression/ClinicalImpression_0_19000101_000000.json")
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -30,7 +30,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputDs = conf.getDataset("raw_observation")
 
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_observation")).json("src/test/resources/raw/landing/fhir/Observation/Observation_0_19000101_000000.json")
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -47,7 +47,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputDs = conf.getDataset("raw_organization")
 
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_organization")).json("src/test/resources/raw/landing/fhir/Organization/Organization_0_19000101_000000.json")
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -63,7 +63,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputDs = conf.getDataset("raw_patient")
 
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_patient")).json("src/test/resources/raw/landing/fhir/Patient/Patient_1_19000101_102715.json")
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -79,7 +79,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputDs = conf.getDataset("raw_practitioner")
 
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_practitioner")).json("src/test/resources/raw/landing/fhir/Practitioner/Practitioner_0_19000101_000000.json")
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -95,7 +95,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
 
     val inputDs = conf.getDataset("raw_practitioner_role")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_practitioner_role")).json("src/test/resources/raw/landing/fhir/PractitionerRole/PractitionerRole_0_19000101_000000.json")
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -111,7 +111,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
 
     val inputDs = conf.getDataset("raw_service_request")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_service_request")).json("src/test/resources/raw/landing/fhir/ServiceRequest/service_request_with_family.json")
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -133,7 +133,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputDs = conf.getDataset("raw_service_request")
     val outputDs = conf.getDataset("normalized_family")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._2 == outputDs).get
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val inputDf = spark.read.schema(getSchema("raw_service_request")).json("src/test/resources/raw/landing/fhir/ServiceRequest/service_request_with_siblings.json")
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -167,7 +167,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputDs = conf.getDataset("raw_specimen")
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val inputDf = spark.read.schema(getSchema("raw_specimen")).json("src/test/resources/raw/landing/fhir/Specimen/Specimen_0_19000101_000000.json")
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
 
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
 
@@ -185,7 +185,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val inputPath = getClass.getResource("/raw/landing/fhir/Task/Task_0_19000101_000000.json").getPath
     val inputDf = spark.read.schema(getSchema("raw_task")).json(inputPath)
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val result = job.transformSingle(Map(inputDs.id -> inputDf)).where("id='109351'")
 
     result.count() shouldBe 1
@@ -200,7 +200,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
     val inputPath = getClass.getResource("/raw/landing/fhir/DocumentReference/DocumentReference.json").getPath
     val inputDf = spark.read.schema(getSchema("raw_document_reference")).json(inputPath)
-    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
     result.count() shouldBe 1
     val head = result.as[DocumentReferenceOutput].collect().head

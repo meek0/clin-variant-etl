@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
-import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
@@ -11,7 +11,7 @@ import org.slf4j.Logger
 
 import java.time.LocalDateTime
 
-abstract class Occurrences(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
+abstract class Occurrences(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
 
   def raw_variant_calling: DatasetConf
 

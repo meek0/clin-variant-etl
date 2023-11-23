@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.varsome
 
 import bio.ferlab.clin.etl.mainutils.{Chromosome, OptionalBatch}
 import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
-import bio.ferlab.datalake.commons.config.{Coalesce, DatasetConf, RunStep, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{Coalesce, DatasetConf, RunStep, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 object Varsome {
   @main
-  def run(rc: RuntimeETLContext, chromosome: Chromosome, batch: OptionalBatch): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, chromosome: Chromosome, batch: OptionalBatch): Unit = {
     val varsomeToken = rc.spark.conf.get("spark.varsome.token")
     val varsomeUrl = rc.spark.conf.get("spark.varsome.url")
     val jobType = if (rc.runSteps.contains(RunStep.reset)) Reload else batch.id match {
@@ -29,7 +29,7 @@ object Varsome {
 }
 
 
-case class Varsome(rc: RuntimeETLContext,
+case class Varsome(rc: DeprecatedRuntimeETLContext,
                    jobType: VarsomeJobType,
                    varsomeUrl: String,
                    varsomeToken: String,

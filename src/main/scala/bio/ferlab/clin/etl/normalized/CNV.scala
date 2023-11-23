@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.etl.normalized.CNV.getCNV
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class CNV(rc: RuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
+case class CNV(rc: DeprecatedRuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_cnv")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv")
@@ -74,7 +74,7 @@ object CNV {
   }
 
   @main
-  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
     CNV(rc, batch.id).run()
   }
 

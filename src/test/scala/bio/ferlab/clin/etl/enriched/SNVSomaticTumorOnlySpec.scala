@@ -5,7 +5,7 @@ import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV
 import bio.ferlab.clin.model.normalized.{NormalizedExomiser, NormalizedSNVSomaticTumorOnly}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 
 class SNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
 
@@ -14,7 +14,7 @@ class SNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv_somatic_tumor_only")
   val normalized_exomiser: DatasetConf = conf.getDataset("normalized_exomiser")
 
-  val job = SNVSomaticTumorOnly(TestETLContext())
+  val job = SNVSomaticTumorOnly(DeprecatedTestETLContext())
 
   it should "enrich data with exomiser" in {
     val snvDf = Seq(

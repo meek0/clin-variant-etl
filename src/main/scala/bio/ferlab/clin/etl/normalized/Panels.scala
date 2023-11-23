@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import mainargs.{ParserForMethods, main}
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, functions}
 
 import java.time.LocalDateTime
 
-case class Panels(rc: RuntimeETLContext) extends SingleETL(rc) {
+case class Panels(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_panels")
   val raw_panels: DatasetConf = conf.getDataset("raw_panels")
@@ -39,7 +39,7 @@ case class Panels(rc: RuntimeETLContext) extends SingleETL(rc) {
 
 object Panels {
   @main
-  def run(rc: RuntimeETLContext): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
     Panels(rc).run()
   }
 

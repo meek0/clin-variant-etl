@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.es
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class PrepareGeneSuggestionsSpec extends SparkSpec with WithTestConfig {
@@ -23,7 +23,7 @@ class PrepareGeneSuggestionsSpec extends SparkSpec with WithTestConfig {
 
   "transform PrepareGeneSuggestions" should "produce suggestions for genes" in {
 
-    val result = PrepareGeneSuggestions(TestETLContext(), "re_000").transformSingle(data)
+    val result = PrepareGeneSuggestions(DeprecatedTestETLContext(), "re_000").transformSingle(data)
 
     result.as[GeneSuggestionsOutput].collect() should contain allElementsOf Seq(
       GeneSuggestionsOutput(symbol = "OR4F4", `chromosome` = null, `ensembl_gene_id` = null, suggestion_id = "63592aea532cb1c022cbc13ea463513df18baf57", `suggest` = List(SUGGEST(4, List("OR4F4")), SUGGEST(2, List()))),

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.etl.mainutils.Release
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession, functions}
 
 import java.time.LocalDateTime
 
-case class PrepareVariantSuggestions(rc: RuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
+case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_suggestions")
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
@@ -79,7 +79,7 @@ case class PrepareVariantSuggestions(rc: RuntimeETLContext, releaseId: String) e
 
 object PrepareVariantSuggestions {
   @main
-  def run(rc: RuntimeETLContext, release: Release): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, release: Release): Unit = {
     PrepareVariantSuggestions(rc, release.id).run()
   }
 

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils.emptyFrequencyRQDM
-import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.genomics.enriched.Variants._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -14,7 +14,7 @@ import org.apache.spark.sql.{Column, DataFrame}
 
 import java.time.{LocalDate, LocalDateTime}
 
-case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
+case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   import spark.implicits._
 
@@ -315,7 +315,7 @@ case class Variants(rc: RuntimeETLContext) extends SingleETL(rc) {
 object Variants {
 
   @main
-  def run(rc: RuntimeETLContext): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
     Variants(rc).run()
   }
 

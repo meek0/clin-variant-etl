@@ -7,8 +7,8 @@ package bio.ferlab.clin.model.enriched
 import bio.ferlab.clin.etl.varsome.{Classification, Publication}
 import bio.ferlab.clin.model.VarsomeOutput.{defaultClassifications, defaultPublications}
 import bio.ferlab.clin.model._
-import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedVariant.CMC
-import bio.ferlab.datalake.spark3.testmodels.enriched._
+import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
+import bio.ferlab.datalake.testutils.models.enriched._
 
 import java.sql.{Date, Timestamp}
 import java.time.LocalDate

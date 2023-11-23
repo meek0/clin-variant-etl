@@ -4,7 +4,7 @@
  */
 package bio.ferlab.clin.model
 
-import bio.ferlab.datalake.spark3.testmodels.enriched._
+import bio.ferlab.datalake.testutils.models.enriched._
 
 
 case class CnvEnrichedOutput(`aliquot_id`: String = "11111",

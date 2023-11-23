@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.CoverageByGene.transformSingleCoverage
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
@@ -13,7 +13,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class CoverageByGene(rc: RuntimeETLContext) extends SingleETL(rc) {
+case class CoverageByGene(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_coverage_by_gene")
   val refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
@@ -77,7 +77,7 @@ object CoverageByGene {
   }
 
   @main
-  def run(rc: RuntimeETLContext): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
     CoverageByGene(rc).run()
   }
 

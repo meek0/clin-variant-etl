@@ -1,12 +1,11 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.clin.etl.normalized.Variants.hotspot
+import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns, RuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -14,12 +13,12 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations,
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.BooleanType
-import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{Column, DataFrame, functions}
 import org.slf4j.Logger
 
 import java.time.LocalDateTime
 
-case class Variants(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
+case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
 
   import spark.implicits._
 
@@ -279,7 +278,7 @@ object Variants {
   }
 
   @main
-  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
     Variants(rc, batch.id).run()
   }
 

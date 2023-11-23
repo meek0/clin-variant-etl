@@ -6,15 +6,15 @@ import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, VCF_SNV_Input, VCF_SNV_Somatic_I
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, SparkSpec, DeprecatedTestETLContext}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeAll {
 
-  val job1 = Consequences(TestETLContext(), "BAT1")
-  val job2 = Consequences(TestETLContext(), "BAT2")
+  val job1 = Consequences(DeprecatedTestETLContext(), "BAT1")
+  val job2 = Consequences(DeprecatedTestETLContext(), "BAT2")
 
   import spark.implicits._
 

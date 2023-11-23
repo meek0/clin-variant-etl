@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_SNV_Somatic_Input
 import bio.ferlab.clin.etl.normalized.SNVSomaticTumorOnly.{addRareVariantColumn, getSNV}
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -13,7 +13,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class SNVSomaticTumorOnly(rc: RuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
+case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic_tumor_only")
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
@@ -149,7 +149,7 @@ object SNVSomaticTumorOnly {
   }
 
   @main
-  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
     SNVSomaticTumorOnly(rc, batch.id).run()
   }
 

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.Region
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
@@ -10,7 +10,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class CNV(rc: RuntimeETLContext) extends SingleETL(rc) {
+case class CNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   import spark.implicits._
 
@@ -100,7 +100,7 @@ case class CNV(rc: RuntimeETLContext) extends SingleETL(rc) {
 
 object CNV {
   @main
-  def run(rc: RuntimeETLContext): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
     CNV(rc).run()
   }
 

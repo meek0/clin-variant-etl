@@ -1,19 +1,15 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.SNV.transformSingleSNV
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, RepartitionByColumns, RuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.ETLSingleDestination
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import mainargs.{ParserForMethods, main}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.DataFrame
 
 import java.time.LocalDateTime
 
-case class SNVSomaticTumorOnly(rc: RuntimeETLContext) extends SingleETL(rc) {
+case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_snv_somatic_tumor_only")
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv_somatic_tumor_only")
@@ -38,7 +34,7 @@ case class SNVSomaticTumorOnly(rc: RuntimeETLContext) extends SingleETL(rc) {
 
 object SNVSomaticTumorOnly {
   @main
-  def run(rc: RuntimeETLContext): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
     SNVSomaticTumorOnly(rc).run()
   }
 

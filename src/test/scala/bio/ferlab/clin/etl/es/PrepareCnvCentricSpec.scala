@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.es
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 
 class PrepareCnvCentricSpec extends SparkSpec with WithTestConfig {
 
@@ -17,7 +17,7 @@ class PrepareCnvCentricSpec extends SparkSpec with WithTestConfig {
 
   "Cnv_centric transform" should "return data as CnvCentricOutput" in {
 
-    val result = PrepareCnvCentric(TestETLContext(), "re_000").transformSingle(data);
+    val result = PrepareCnvCentric(DeprecatedTestETLContext(), "re_000").transformSingle(data);
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "CnvCentricOutput", result, "src/test/scala/")
 
     result.count() shouldBe 2

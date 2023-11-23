@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.RawExomiser
 import bio.ferlab.clin.etl.utils.FileUtils
-import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castFloat, castInt, castLong}
 import mainargs.{ParserForMethods, main}
@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.BooleanType
 
 import java.time.LocalDateTime
 
-case class Exomiser(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
+case class Exomiser(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
   import spark.implicits._
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_exomiser")
@@ -70,7 +70,7 @@ case class Exomiser(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc
 
 object Exomiser {
   @main
-  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
     Exomiser(rc, batch.id).run()
   }
 

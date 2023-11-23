@@ -5,7 +5,7 @@ import bio.ferlab.clin.model.{normalized, _}
 import bio.ferlab.clin.model.normalized.NormalizedVariants
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll {
@@ -93,8 +93,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   ).toDF
 
 
-  val job1 = Variants(TestETLContext(), "BAT1")
-  val job2 = Variants(TestETLContext(), "BAT2")
+  val job1 = Variants(DeprecatedTestETLContext(), "BAT1")
+  val job2 = Variants(DeprecatedTestETLContext(), "BAT2")
 
   override val dbToCreate: List[String] = List(raw_variant_calling.table.map(_.database).getOrElse("clin"))
   override val dsToClean: List[DatasetConf] = List(job1.mainDestination)

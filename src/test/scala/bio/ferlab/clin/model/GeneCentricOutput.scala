@@ -1,6 +1,6 @@
 package bio.ferlab.clin.model
 
-import bio.ferlab.datalake.spark3.testmodels.prepared._
+import bio.ferlab.datalake.testutils.models.prepared._
 
 case class GeneCentricOutput(`hash`: String = "9b8016c31b93a7504a8314ce3d060792f67ca2ad",
                              `symbol`: String = "OR4F5",

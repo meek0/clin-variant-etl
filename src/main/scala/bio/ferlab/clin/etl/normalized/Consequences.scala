@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -14,7 +14,7 @@ import org.slf4j.Logger
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-case class Consequences(rc: RuntimeETLContext, batchId: String) extends SingleETL(rc) {
+case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
 
   implicit val logger: Logger = log
 
@@ -155,7 +155,7 @@ case class Consequences(rc: RuntimeETLContext, batchId: String) extends SingleET
 
 object Consequences {
   @main
-  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
     Consequences(rc, batch.id).run()
   }
 

@@ -7,7 +7,7 @@ package bio.ferlab.clin.model
 import bio.ferlab.clin.etl.model.normalized.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.varsome._
 import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, FREQUENCIES, GENES, PREDICTIONS}
-import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedVariant.CMC
+import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 
 import java.sql.Date
 import java.time.LocalDate

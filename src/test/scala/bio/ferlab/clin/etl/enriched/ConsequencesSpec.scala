@@ -7,8 +7,8 @@ import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedGenes
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, DeprecatedTestETLContext}
 import org.scalatest.BeforeAndAfterAll
 
 class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll with BeforeAndAfterAll {
@@ -31,7 +31,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabase
   override val dbToCreate: List[String] = List("clin")
   override val dsToClean: List[DatasetConf] = List(enriched_consequences)
 
-  val etl = Consequences(TestETLContext(RunStep.default_load))
+  val etl = Consequences(DeprecatedTestETLContext(RunStep.default_load))
 
   override def beforeAll(): Unit = {
     super.beforeAll()

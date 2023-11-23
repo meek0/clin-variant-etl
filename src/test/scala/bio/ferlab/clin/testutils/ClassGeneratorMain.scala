@@ -2,7 +2,7 @@ package bio.ferlab.clin.testutils
 
 import bio.ferlab.clin.etl.fhir.FhirRawToNormalizedMappings.{defaultTransformations, serviceRequestMappings}
 import bio.ferlab.datalake.spark3.etl.v3.TransformationsETL
-import bio.ferlab.datalake.testutils.{ClassGenerator, TestETLContext, WithSparkSession}
+import bio.ferlab.datalake.testutils.{ClassGenerator, DeprecatedTestETLContext, WithSparkSession}
 
 object ClassGeneratorMain extends App with WithSparkSession with WithTestConfig {
 
@@ -13,7 +13,7 @@ object ClassGeneratorMain extends App with WithSparkSession with WithTestConfig 
     spark.read.json("src/test/resources/raw/landing/fhir/ServiceRequest")
 
   )
-  val job = new TransformationsETL(TestETLContext(), inputDs, outputDs, defaultTransformations ++ serviceRequestMappings)
+  val job = new TransformationsETL(DeprecatedTestETLContext(), inputDs, outputDs, defaultTransformations ++ serviceRequestMappings)
   val df = job.transformSingle(data)
 
   //df.show(false)

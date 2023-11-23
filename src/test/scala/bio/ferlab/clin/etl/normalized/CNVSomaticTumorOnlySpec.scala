@@ -5,7 +5,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.normalized.NormalizedCNVSomaticTumorOnly
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
@@ -21,7 +21,7 @@ class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
   val task: DatasetConf = conf.getDataset("normalized_task")
   val family: DatasetConf = conf.getDataset("normalized_family")
 
-  val job = CNVSomaticTumorOnly(TestETLContext(), "BAT1")
+  val job = CNVSomaticTumorOnly(DeprecatedTestETLContext(), "BAT1")
 
   val specimenDf: DataFrame = Seq(
     SpecimenOutput(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_001"), `specimen_id` = None),

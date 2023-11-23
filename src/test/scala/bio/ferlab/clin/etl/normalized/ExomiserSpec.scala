@@ -7,7 +7,7 @@ import bio.ferlab.clin.model.normalized.NormalizedExomiser
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.input_file_name
 import org.scalatest.BeforeAndAfterAll
@@ -21,8 +21,8 @@ class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll 
   val normalized_task: DatasetConf = conf.getDataset("normalized_task")
   val normalized_document_reference: DatasetConf = conf.getDataset("normalized_document_reference")
 
-  val job1 = Exomiser(TestETLContext(), "BAT1")
-  val job2 = Exomiser(TestETLContext(), "BAT2")
+  val job1 = Exomiser(DeprecatedTestETLContext(), "BAT1")
+  val job2 = Exomiser(DeprecatedTestETLContext(), "BAT2")
 
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
@@ -104,7 +104,7 @@ class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll 
   }
 
   it should "not fail when there is no exomiser data in batch" in {
-    val job = Exomiser(TestETLContext(), "NODATA")
+    val job = Exomiser(DeprecatedTestETLContext(), "NODATA")
     noException should be thrownBy job.run()
   }
 }

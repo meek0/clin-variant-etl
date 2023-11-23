@@ -5,7 +5,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.normalized.NormalizedSNVSomaticTumorOnly
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.DataFrame
 
 import java.sql.Date
@@ -25,7 +25,7 @@ class SNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
   val observation: DatasetConf = conf.getDataset("normalized_observation")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
-  val job = SNVSomaticTumorOnly(TestETLContext(), "BAT1")
+  val job = SNVSomaticTumorOnly(DeprecatedTestETLContext(), "BAT1")
 
   val patientDf: DataFrame = Seq(
     PatientOutput(

@@ -4,8 +4,8 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedPanels, NormalizedRefSeq}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.spark3.testmodels.enriched.EnrichedGenes
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
+import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class CNVSpec extends SparkSpec with WithTestConfig {
@@ -18,7 +18,7 @@ class CNVSpec extends SparkSpec with WithTestConfig {
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
-  val job = CNV(TestETLContext())
+  val job = CNV(DeprecatedTestETLContext())
 
   val refSeq = Seq(
     NormalizedRefSeq(),

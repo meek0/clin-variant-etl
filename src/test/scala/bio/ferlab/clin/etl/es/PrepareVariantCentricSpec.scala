@@ -5,7 +5,7 @@ import bio.ferlab.clin.model.enriched.{EnrichedConsequences, EnrichedVariant}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, DeprecatedTestETLContext}
 import org.scalatest.BeforeAndAfterAll
 
 import java.sql.Timestamp
@@ -47,7 +47,7 @@ class PrepareVariantCentricSpec extends SparkSpec with WithTestConfig with Creat
   }
 
   "run" should "produce parquet files in the right format" in {
-    val job = PrepareVariantCentric(TestETLContext(), "re_000")
+    val job = PrepareVariantCentric(DeprecatedTestETLContext(), "re_000")
 
     val result = job.transformSingle(data)
     result.count() shouldBe 2
