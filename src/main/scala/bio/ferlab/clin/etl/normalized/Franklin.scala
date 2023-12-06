@@ -45,22 +45,24 @@ case class Franklin(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
                                currentRunDateTime: LocalDateTime): DataFrame = {
     data(raw_franklin.id)
       .select(
-        ltrim($"variant.chromosome", "chr") as "chromosome",
-        $"variant.start_position" as "start",
-        $"variant.end_position" as "end",
-        $"variant.ref" as "reference",
-        $"variant.alt" as "alternate",
+        explode($"variants") as "variant",
+        ltrim($"variant.variant.chromosome", "chr") as "chromosome",
+        $"variant.variant.start_position" as "start",
+        $"variant.variant.end_position" as "end",
+        $"variant.variant.ref" as "reference",
+        $"variant.variant.alt" as "alternate",
         lit(batchId) as "batch_id",
         parseNullString("family_id"),
         parseNullString("aliquot_id"),
         $"analysis_id",
-        $"priority.score" as "franklin_score",
-        $"classification.acmg_classification" as "franklin_acmg_classification",
-        $"variant_franklin_link" as "franklin_link",
+        $"variant.priority.score" as "franklin_score",
+        $"variant.classification.acmg_classification" as "franklin_acmg_classification",
+        $"variant.variant_franklin_link" as "franklin_link",
         functions.transform(
-          filter($"classification.acmg_rules", col => col("is_met")), col => col("name")
+          filter($"variant.classification.acmg_rules", col => col("is_met")), col => col("name")
         ) as "franklin_acmg_evidence"
       )
+      .drop("variant")
   }
 }
 

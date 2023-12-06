@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.model.raw.{ACMG_RULES, CLASSIFICATION, RawFranklin}
+import bio.ferlab.clin.etl.model.raw._
 import bio.ferlab.clin.etl.normalized.Franklin.parseNullString
 import bio.ferlab.clin.model.normalized.NormalizedFranklin
 import bio.ferlab.clin.testutils.WithTestConfig
@@ -23,22 +23,27 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach 
   override val dsToClean: List[DatasetConf] = List(raw_franklin, normalized_franklin)
 
   val rawDf: DataFrame = Seq(
-    RawFranklin(`batch_id` = "BAT1", `family_id` = "1", `aliquot_id` = "1", `analysis_id` = "1",
-      `classification` = CLASSIFICATION(`acmg_rules` = Seq(
+    RawFranklin(`batch_id` = "BAT1", `family_id` = "1", `aliquot_id` = "1", `analysis_id` = "1", `variants` = Seq(
+      VARIANTS(`variant` = VARIANT(`chromosome` = "chr1"), `classification` = CLASSIFICATION(`acmg_rules` = Seq(
         ACMG_RULES(`name` = "PS1", `is_met` = true),
         ACMG_RULES(`name` = "PS2", `is_met` = false),
         ACMG_RULES(`name` = "PS3", `is_met` = true)))),
-  ).toDF()
+      VARIANTS(`variant` = VARIANT(`chromosome` = "chr2")))
+    )).toDF()
 
   val batchId = "BAT1"
   val etl = Franklin(TestETLContext(runSteps = default_load), batchId = batchId)
 
   it should "normalize franklin data" in {
+    val expected = Seq(
+      NormalizedFranklin(),
+      NormalizedFranklin(`chromosome` = "2", `franklin_acmg_evidence` = Set())
+    )
     val result = etl.transformSingle(Map(raw_franklin.id -> rawDf))
 
     result
       .as[NormalizedFranklin]
-      .collect() should contain theSameElementsAs Seq(NormalizedFranklin())
+      .collect() should contain theSameElementsAs expected
   }
 
   it should "not fail when there is no franklin data" in {
