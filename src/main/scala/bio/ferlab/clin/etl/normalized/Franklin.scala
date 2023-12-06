@@ -54,7 +54,7 @@ case class Franklin(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         lit(batchId) as "batch_id",
         parseNullString("family_id"),
         parseNullString("aliquot_id"),
-        $"analysis_id",
+        $"analysis_id".cast(StringType) as "analysis_id", // Spark infers it as int but should be String
         $"variant.priority.score" as "franklin_score",
         $"variant.classification.acmg_classification" as "franklin_acmg_classification",
         $"variant.variant_franklin_link" as "franklin_link",
