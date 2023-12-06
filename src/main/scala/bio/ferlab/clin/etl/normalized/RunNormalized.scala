@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.datalake.commons.config.DeprecatedRuntimeETLContext
+import bio.ferlab.datalake.commons.config.{DeprecatedRuntimeETLContext, RuntimeETLContext}
 import mainargs.{ParserForMethods, main}
 
 object RunNormalized {
@@ -31,6 +31,9 @@ object RunNormalized {
 
   @main
   def coverage_by_gene(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = CoverageByGene.run(rc, batch)
+
+  @main
+  def franklin(rc: RuntimeETLContext, batch: Batch): Unit = Franklin.run(rc, batch)
 
   @main
   def all(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {

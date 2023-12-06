@@ -71,6 +71,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_task"                       , clin_datalake, "/raw/landing/fhir/Task"                                 , JSON   , OverWrite),
       DatasetConf("raw_document_reference"         , clin_datalake, "/raw/landing/fhir/DocumentReference"                    , JSON   , OverWrite),
       DatasetConf("raw_panels"                     , clin_datalake, "/raw/landing/panels/panels.tsv"                         , CSV    , OverWrite, readoptions = tsv_with_headers),
+      DatasetConf("raw_franklin"                   , clin_datalake, "/raw/landing/franklin/batch_id={{BATCH_ID}}"            , JSON   , OverWrite, partitionby = List("family_id","aliquot_id","analysis_id")),
 
       //old version of gnomad, should be removed
       //DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
@@ -105,6 +106,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "normalized_panels"))),
       DatasetConf("normalized_exomiser"            , clin_datalake, "/normalized/exomiser"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
       DatasetConf("normalized_coverage_by_gene"    , clin_datalake, "/normalized/coverage_by_gene"       , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_coverage_by_gene"))),
+      DatasetConf("normalized_franklin"            , clin_datalake, "/normalized/franklin"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_franklin"))),
 
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "snv"))                   , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
