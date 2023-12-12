@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.enriched.SNV.transformSingleSNV
+import bio.ferlab.clin.etl.enriched.SNV._
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -26,7 +26,8 @@ case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext) extends SingleET
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minDateTime,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
-    transformSingleSNV(data(normalized_snv.id), data(normalized_exomiser.id))
+    data(normalized_snv.id)
+      .withExomiser(data(normalized_exomiser.id))
   }
 
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
