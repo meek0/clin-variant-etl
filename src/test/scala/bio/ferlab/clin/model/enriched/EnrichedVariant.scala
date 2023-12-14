@@ -44,6 +44,7 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
                            `exomiser_variant_score`: Option[Float] = Some(0.6581f),
+                           `exomiser_max_acmg`: Option[String] = Some("UNCERTAIN_SIGNIFICANCE"),
                            `cmc`: CMC = CMC())
 
 

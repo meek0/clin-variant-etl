@@ -957,6 +957,9 @@
         "exomiser_variant_score": {
           "type": "float"
         },
+        "exomiser_max_acmg": {
+          "type": "keyword"
+        },
         "cmc": {
           "properties": {
             "mutation_url": {

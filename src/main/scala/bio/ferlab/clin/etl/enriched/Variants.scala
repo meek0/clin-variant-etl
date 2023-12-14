@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.FrequencyUtils.emptyFrequencyRQDM
-import bio.ferlab.datalake.commons.config.{DatasetConf, FixedRepartition, DeprecatedRuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.genomics.enriched.Variants._
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
@@ -10,7 +10,8 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, loc
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.{Column, DataFrame, functions}
 
 import java.time.{LocalDate, LocalDateTime}
 
@@ -209,6 +210,21 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
+  private def getExomiserMaxAcmg: Column = {
+    val mapAcmgToPriority: Column => Column = col => when(col === "BENIGN", lit(1))
+        .when(col === "LIKELY_BENIGN", lit(2))
+        .when(col === "UNCERTAIN_SIGNIFICANCE", lit(3))
+        .when(col === "LIKELY_PATHOGENIC", lit(4))
+        .when(col === "PATHOGENIC", lit(5))
+        .otherwise(lit(0))
+
+    val allAcmg = collect_set($"exomiser.acmg_classification") as "all_acmg"
+    val allAcmgMapped = functions.transform(allAcmg, acmg => struct(acmg as "acmg", mapAcmgToPriority(acmg) as "priority"))
+
+    val baseStruct = struct(lit(null).cast(StringType) as "acmg", lit(0) as "priority")
+    aggregate(allAcmgMapped, baseStruct, (s1, s2) => when(s1("priority") > s2("priority"), s1).otherwise(s2), _.getField("acmg"))
+  }
+
   def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
     val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate", "exomiser_variant_score").columns.map(col)
     val donors = occurrences
@@ -216,6 +232,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .agg(
         collect_set($"variant_type") as "variant_type",
         max("exomiser_variant_score") as "exomiser_variant_score",
+        getExomiserMaxAcmg as "exomiser_max_acmg",
         filter(collect_list(struct(donorColumns: _*)), c => c("has_alt")) as "donors"
       )
     variants
