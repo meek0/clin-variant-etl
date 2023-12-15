@@ -1,17 +1,19 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.etl.enriched.Variants.{DataFrameOps => ClinDataFrameOps}
 import bio.ferlab.clin.etl.utils.FrequencyUtils.emptyFrequencyRQDM
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
-import bio.ferlab.datalake.spark3.genomics.enriched.Variants._
+import bio.ferlab.datalake.spark3.genomics.enriched.Variants.{DataFrameOps => LibDataFrameOps}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
+import bio.ferlab.datalake.spark3.implicits.SparkUtils.firstAs
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.{Column, DataFrame, functions}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 
 import java.time.{LocalDate, LocalDateTime}
 
@@ -36,6 +38,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
+  val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
@@ -56,12 +59,13 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       normalized_panels.id -> normalized_panels.read,
       spliceai.id -> spliceai.read,
       cosmic.id -> cosmic.read,
+      franklin.id -> franklin.read
     )
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
+                               lastRunDateTime: LocalDateTime = minDateTime,
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
@@ -97,8 +101,9 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
     joinSpliceAi
       .withCosmic(data(cosmic.id))
+      .withFranklin(data(franklin.id))
       .withGeneExternalReference
-      .withVariantExternalReference
+      .withClinVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
       .withColumn("hash", sha1(col("locus")))
       .withColumn(mainDestination.oid, col("updated_on"))
@@ -330,6 +335,46 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 }
 
 object Variants {
+
+  implicit class DataFrameOps(df: DataFrame) {
+    def withFranklin(franklin: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      val franklinPrepared = franklin
+        .filter($"aliquot_id".isNotNull) // Remove analyses in trio
+        .groupByLocus()
+        .agg(
+          // Always the same link, ACMG classification and evidence for all occurrences of a variant
+          firstAs("franklin_acmg_classification", ignoreNulls = true),
+          firstAs("franklin_acmg_evidence", ignoreNulls = true),
+          firstAs("franklin_link", ignoreNulls = true),
+          max("franklin_score") as "franklin_max_score"
+        )
+
+      df.joinAndMerge(franklinPrepared, "franklin", "left")
+    }
+
+    def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+      val outputColumn = "variant_external_reference"
+
+      val conditionValueMap: List[(Column, String)] = List(
+        $"rsnumber".isNotNull -> "DBSNP",
+        $"pubmed".isNotNull -> "PubMed",
+        $"clinvar".isNotNull -> "Clinvar",
+        $"cmc".isNotNull -> "Cosmic",
+        $"franklin".isNotNull -> "Franklin"
+      )
+
+      conditionValueMap
+        .tail
+        .foldLeft(
+          df.withColumn(outputColumn, when(conditionValueMap.head._1, array(lit(conditionValueMap.head._2))).otherwise(array()))
+        ) { case (currDf, (cond, value)) =>
+          currDf.withColumn(outputColumn, when(cond, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
+        }
+    }
+  }
 
   @main
   def run(rc: DeprecatedRuntimeETLContext): Unit = {

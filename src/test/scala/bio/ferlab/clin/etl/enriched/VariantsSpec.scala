@@ -1,16 +1,18 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.etl.enriched.Variants._
 import bio.ferlab.clin.etl.enriched.VariantsSpec.removeNestedField
-import bio.ferlab.clin.model.enriched._
-import bio.ferlab.clin.model.normalized.{NormalizedPanels, NormalizedVariants}
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.enriched._
+import bio.ferlab.clin.model.normalized.{NormalizedFranklin, NormalizedPanels, NormalizedVariants}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
+import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 import bio.ferlab.datalake.testutils.models.normalized.NormalizedCosmicMutationSet
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, DeprecatedTestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, DeprecatedTestETLContext, SparkSpec}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.BeforeAndAfterAll
@@ -38,6 +40,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
+  val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
   val job = Variants(DeprecatedTestETLContext(RunStep.initial_load))
   override val dbToCreate: List[String] = List("clin", "clin_normalized")
@@ -67,6 +70,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
   val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
   val cosmicDf: DataFrame = Seq(NormalizedCosmicMutationSet(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
+  val franklinDf: DataFrame = Seq(NormalizedFranklin(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
 
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
@@ -84,7 +88,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
     spliceai.id -> spliceaiDf,
-    cosmic.id -> cosmicDf
+    cosmic.id -> cosmicDf,
+    franklin.id -> franklinDf
   )
 
   override def beforeAll(): Unit = {
@@ -1118,6 +1123,56 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       .collect() should contain theSameElementsAs expected
   }
 
+  "withFranklin" should "enrich variants with Franklin scores" in {
+    val variants = Seq(
+      EnrichedVariant(`chromosome` = "1", `donors` = List(
+        DONORS(`aliquot_id` = "11111",`franklin_score` = Some(0.5)),
+        DONORS(`aliquot_id` = "22222",`franklin_score` = Some(0.99)),
+        DONORS(`aliquot_id` = "33333",`franklin_score` = Some(0.15)),
+        DONORS(`aliquot_id` = "44444",`franklin_score` = None))), // No Franklin data for this donor
+      EnrichedVariant(`chromosome` = "2", `donors` = List(DONORS(`aliquot_id` = "11111", `franklin_score` = Some(0.6)))),
+      EnrichedVariant(`chromosome` = "3", `donors` = List(DONORS(`aliquot_id` = "22222", `franklin_score` = None))), // No Franklin data for this variant
+    ).toDF().drop("franklin")
+
+    val franklin = Seq(
+      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("11111"), `franklin_score` = 0.5, `franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2")),
+      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("22222"), `franklin_score` = 0.99, `franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2")),
+      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("33333"), `franklin_score` = 0.15, `franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2")),
+      NormalizedFranklin(`chromosome` = "2", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("11111"), `franklin_score` = 0.6, `franklin_acmg_classification` = "BENIGN", `franklin_acmg_evidence` = Set("PS1", "PM2", "PVS1")),
+    ).toDF()
+
+    val result = variants.withFranklin(franklin)
+
+    val expected = Seq(
+      EnrichedVariant(`chromosome` = "1", `franklin` = Some(FRANKLIN(`franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2"), `franklin_max_score` = 0.99))),
+      EnrichedVariant(`chromosome` = "2", `franklin` = Some(FRANKLIN(`franklin_acmg_classification` = "BENIGN", `franklin_acmg_evidence` = Set("PS1", "PM2", "PVS1"), `franklin_max_score` = 0.6))),
+      EnrichedVariant(`chromosome` = "3", `franklin` = None),
+    ).toDF().selectLocus($"franklin").collect()
+
+    result
+      .selectLocus($"franklin")
+      .collect() should contain theSameElementsAs expected
+  }
+
+  "withClinVariantExternalReference" should "add all external references to the variant" in {
+    val variants = Seq(
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin` = None),
+    ).toDF().drop("variant_external_reference")
+
+    val result = variants.withClinVariantExternalReference
+
+    val expected = Seq(
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin"), `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("Clinvar", "Cosmic", "Franklin"), `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set(), `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin` = None),
+    )
+
+    result
+      .as[EnrichedVariant]
+      .collect() should contain theSameElementsAs expected
+  }
 }
 
 object VariantsSpec {

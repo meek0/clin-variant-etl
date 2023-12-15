@@ -40,12 +40,13 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `dna_change`: String = "T>C",
                            `genes`: List[GENES] = List(GENES()),
                            `omim`: List[String] = List("618285"),
-                           `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Cosmic", "PubMed"),
-                           `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
+                           `variant_external_reference`: Set[String] = Set("DBSNP", "Clinvar", "Cosmic", "PubMed", "Franklin"),
+                           `gene_external_reference`: Set[String] = Set("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
                            `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                            `exomiser_max_acmg`: Option[String] = Some("UNCERTAIN_SIGNIFICANCE"),
-                           `cmc`: CMC = CMC())
+                           `cmc`: CMC = CMC(),
+                           `franklin`: Option[FRANKLIN] = Some(FRANKLIN()))
 
 
 case class DONORS(`dp`: Int = 1,
@@ -96,7 +97,8 @@ case class DONORS(`dp`: Int = 1,
                   `possibly_hc_complement`: List[POSSIBLY_HC_COMPLEMENT] = List(POSSIBLY_HC_COMPLEMENT()),
                   `is_possibly_hc`: Boolean = false,
                   `exomiser`: Option[EXOMISER] = Some(EXOMISER()),
-                  `exomiser_other_moi`: Option[EXOMISER_OTHER_MOI] = Some(EXOMISER_OTHER_MOI()))
+                  `exomiser_other_moi`: Option[EXOMISER_OTHER_MOI] = Some(EXOMISER_OTHER_MOI()),
+                  `franklin_score`: Option[Double] = Some(0.0036969461275872164))
 
 case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFreq(3446, 5008, 0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),
@@ -162,3 +164,8 @@ case class SPLICEAI(`ds`: Double = 0.01,
 
 case class GNOMAD(`pli`: Float = 1.0f,
                   `loeuf`: Float = 0.054f)
+
+case class FRANKLIN(`franklin_acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
+                    `franklin_acmg_evidence`: Set[String] = Set("PS1", "PS3"),
+                    `franklin_link`: String = "https://franklin.genoox.com/clinical-db/variant/snp/chr7-100960420-C-A-HG38",
+                    `franklin_max_score`: Double = 0.0036969461275872164)

@@ -6,7 +6,7 @@ package bio.ferlab.clin.model
 
 import bio.ferlab.clin.etl.model.normalized.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.varsome._
-import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, FREQUENCIES, GENES, PREDICTIONS}
+import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, FRANKLIN, FREQUENCIES, GENES, PREDICTIONS}
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 
 import java.sql.Date
@@ -40,10 +40,12 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `rsnumber`: String = "rs200676709",
                               `genes`: List[GENES] = List(GENES()),
                               `omim`: List[String] = List("618285"),
-                              `variant_external_reference`: List[String] = List("DBSNP", "Clinvar", "Cosmic", "PubMed"),
-                              `gene_external_reference`: List[String] = List("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
+                              `variant_external_reference`: Set[String] = Set("DBSNP", "Clinvar", "Cosmic", "PubMed", "Franklin"),
+                              `gene_external_reference`: Set[String] = Set("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                               `exomiser_variant_score`: Option[Float] = Some(0.6581f),
-                              `cmc`: CMC = CMC())
+                              `exomiser_max_acmg`: Option[String] = Some("UNCERTAIN_SIGNIFICANCE"),
+                              `cmc`: CMC = CMC(),
+                              `franklin`: Option[FRANKLIN] = Some(FRANKLIN()))
 
 case class CONSEQUENCES(`ensembl_transcript_id`: String = "ENST00000335137",
                         `ensembl_gene_id`: String = "ENSG00000186092",

@@ -511,6 +511,9 @@
                   "index": false
                 }
               }
+            },
+            "franklin_score": {
+              "type": "double"
             }
           }
         },
@@ -985,6 +988,23 @@
               "type": "keyword"
             },
             "sample_ratio": {
+              "type": "double"
+            }
+          }
+        },
+        "franklin": {
+          "properties": {
+            "franklin_acmg_classification": {
+              "type": "keyword"
+            },
+            "franklin_acmg_evidence": {
+              "type": "keyword"
+            },
+            "franklin_link": {
+              "type": "keyword",
+              "index": false
+            },
+            "franklin_max_score": {
               "type": "double"
             }
           }
