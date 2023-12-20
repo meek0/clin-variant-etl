@@ -80,10 +80,10 @@ object SNV {
         .where($"aliquot_id".isNotNull) // Remove family analyses
         .selectLocus(
           $"aliquot_id",
-          $"franklin_score"
+          $"score"
         )
         .groupByLocus($"aliquot_id")
-        .agg(first("franklin_score", ignoreNulls = true) as "franklin_score") // There should only be one franklin score per locus+aliquot
+        .agg(first("score", ignoreNulls = true) as "franklin_combined_score") // There should only be one franklin score per locus+aliquot
 
       df.join(preparedFranklin, locusColumnNames :+ "aliquot_id", "left")
     }

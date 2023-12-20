@@ -37,7 +37,7 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach 
   it should "normalize franklin data" in {
     val expected = Seq(
       NormalizedFranklin(),
-      NormalizedFranklin(`chromosome` = "2", `franklin_acmg_evidence` = Set())
+      NormalizedFranklin(`chromosome` = "2", `acmg_evidence` = Set())
     )
     val result = etl.transformSingle(Map(raw_franklin.id -> rawDf))
 

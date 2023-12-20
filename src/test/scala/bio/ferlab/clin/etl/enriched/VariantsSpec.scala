@@ -44,7 +44,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   val job = Variants(DeprecatedTestETLContext(RunStep.initial_load))
   override val dbToCreate: List[String] = List("clin", "clin_normalized")
-  override val dsToClean: List[DatasetConf] = List(enriched_variants)
+  override val dsToClean: List[DatasetConf] = List(snv, enriched_variants)
 
   val occurrencesDf: DataFrame = Seq(
     EnrichedSNV(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
@@ -1126,47 +1126,47 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   "withFranklin" should "enrich variants with Franklin scores" in {
     val variants = Seq(
       EnrichedVariant(`chromosome` = "1", `donors` = List(
-        DONORS(`aliquot_id` = "11111",`franklin_score` = Some(0.5)),
-        DONORS(`aliquot_id` = "22222",`franklin_score` = Some(0.99)),
-        DONORS(`aliquot_id` = "33333",`franklin_score` = Some(0.15)),
-        DONORS(`aliquot_id` = "44444",`franklin_score` = None))), // No Franklin data for this donor
-      EnrichedVariant(`chromosome` = "2", `donors` = List(DONORS(`aliquot_id` = "11111", `franklin_score` = Some(0.6)))),
-      EnrichedVariant(`chromosome` = "3", `donors` = List(DONORS(`aliquot_id` = "22222", `franklin_score` = None))), // No Franklin data for this variant
-    ).toDF().drop("franklin")
+        DONORS(`aliquot_id` = "11111",`franklin_combined_score` = Some(0.5)),
+        DONORS(`aliquot_id` = "22222",`franklin_combined_score` = Some(0.99)),
+        DONORS(`aliquot_id` = "33333",`franklin_combined_score` = Some(0.15)),
+        DONORS(`aliquot_id` = "44444",`franklin_combined_score` = None))), // No Franklin data for this donor
+      EnrichedVariant(`chromosome` = "2", `donors` = List(DONORS(`aliquot_id` = "11111", `franklin_combined_score` = Some(0.6)))),
+      EnrichedVariant(`chromosome` = "3", `donors` = List(DONORS(`aliquot_id` = "22222", `franklin_combined_score` = None))), // No Franklin data for this variant
+    ).toDF().drop("franklin_max")
 
     val franklin = Seq(
-      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("11111"), `franklin_score` = 0.5, `franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2")),
-      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("22222"), `franklin_score` = 0.99, `franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2")),
-      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("33333"), `franklin_score` = 0.15, `franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2")),
-      NormalizedFranklin(`chromosome` = "2", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("11111"), `franklin_score` = 0.6, `franklin_acmg_classification` = "BENIGN", `franklin_acmg_evidence` = Set("PS1", "PM2", "PVS1")),
+      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("11111"), `score` = 0.5, `acmg_classification` = "PATHOGENIC", `acmg_evidence` = Set("PS1", "PS2")),
+      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("22222"), `score` = 0.99, `acmg_classification` = "PATHOGENIC", `acmg_evidence` = Set("PS1", "PS2")),
+      NormalizedFranklin(`chromosome` = "1", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("33333"), `score` = 0.15, `acmg_classification` = "PATHOGENIC", `acmg_evidence` = Set("PS1", "PS2")),
+      NormalizedFranklin(`chromosome` = "2", `start` = 69897, `end` = 69898, `reference` = "T", `alternate` = "C", `aliquot_id` = Some("11111"), `score` = 0.6, `acmg_classification` = "BENIGN", `acmg_evidence` = Set("PS1", "PM2", "PVS1")),
     ).toDF()
 
     val result = variants.withFranklin(franklin)
 
     val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `franklin` = Some(FRANKLIN(`franklin_acmg_classification` = "PATHOGENIC", `franklin_acmg_evidence` = Set("PS1", "PS2"), `franklin_max_score` = 0.99))),
-      EnrichedVariant(`chromosome` = "2", `franklin` = Some(FRANKLIN(`franklin_acmg_classification` = "BENIGN", `franklin_acmg_evidence` = Set("PS1", "PM2", "PVS1"), `franklin_max_score` = 0.6))),
-      EnrichedVariant(`chromosome` = "3", `franklin` = None),
-    ).toDF().selectLocus($"franklin").collect()
+      EnrichedVariant(`chromosome` = "1", `franklin_max` = Some(FRANKLIN_MAX(`acmg_classification` = "PATHOGENIC", `acmg_evidence` = Set("PS1", "PS2"), `combined_score` = 0.99))),
+      EnrichedVariant(`chromosome` = "2", `franklin_max` = Some(FRANKLIN_MAX(`acmg_classification` = "BENIGN", `acmg_evidence` = Set("PS1", "PM2", "PVS1"), `combined_score` = 0.6))),
+      EnrichedVariant(`chromosome` = "3", `franklin_max` = None),
+    ).toDF().selectLocus($"franklin_max").collect()
 
     result
-      .selectLocus($"franklin")
+      .selectLocus($"franklin_max")
       .collect() should contain theSameElementsAs expected
   }
 
   "withClinVariantExternalReference" should "add all external references to the variant" in {
     val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin` = None),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin_max` = None),
     ).toDF().drop("variant_external_reference")
 
     val result = variants.withClinVariantExternalReference
 
     val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin"), `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("Clinvar", "Cosmic", "Franklin"), `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin` = Some(FRANKLIN())),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set(), `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin` = None),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin"), `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("Clinvar", "Cosmic", "Franklin"), `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set(), `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin_max` = None),
     )
 
     result

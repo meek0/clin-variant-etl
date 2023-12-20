@@ -70,7 +70,7 @@ case class EnrichedSNV(`chromosome`: String = "1",
                        `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                        `exomiser`: Option[EXOMISER] = Some(EXOMISER()),
                        `exomiser_other_moi`: Option[EXOMISER_OTHER_MOI] = Some(EXOMISER_OTHER_MOI()),
-                       `franklin_score`: Option[Double] = Some(0.0036969461275872164))
+                       `franklin_combined_score`: Option[Double] = Some(0.0036969461275872164))
 
 case class HC_COMPLEMENT(`symbol`: Option[String] = None,
                          `locus`: Option[Seq[String]] = None)

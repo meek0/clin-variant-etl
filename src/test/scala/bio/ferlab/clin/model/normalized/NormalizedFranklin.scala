@@ -5,8 +5,6 @@
 package bio.ferlab.clin.model.normalized
 
 
-
-
 case class NormalizedFranklin(`chromosome`: String = "1",
                               `start`: Long = 100960420,
                               `end`: Long = 100960420,
@@ -16,8 +14,8 @@ case class NormalizedFranklin(`chromosome`: String = "1",
                               `family_id`: Option[String] = Some("1"),
                               `aliquot_id`: Option[String] = Some("1"),
                               `analysis_id`: String = "1",
-                              `franklin_score`: Double = 0.0036969461275872164,
-                              `franklin_acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
-                              `franklin_link`: String = "https://franklin.genoox.com/clinical-db/variant/snp/chr7-100960420-C-A-HG38",
-                              `franklin_acmg_evidence`: Set[String] = Set("PS1", "PS3"))
+                              `score`: Double = 0.0036969461275872164,
+                              `acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
+                              `link`: String = "https://franklin.genoox.com/clinical-db/variant/snp/chr7-100960420-C-A-HG38",
+                              `acmg_evidence`: Set[String] = Set("PS1", "PS3"))
 

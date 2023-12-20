@@ -345,13 +345,13 @@ object Variants {
         .groupByLocus()
         .agg(
           // Always the same link, ACMG classification and evidence for all occurrences of a variant
-          firstAs("franklin_acmg_classification", ignoreNulls = true),
-          firstAs("franklin_acmg_evidence", ignoreNulls = true),
-          firstAs("franklin_link", ignoreNulls = true),
-          max("franklin_score") as "franklin_max_score"
+          firstAs("acmg_classification", ignoreNulls = true),
+          firstAs("acmg_evidence", ignoreNulls = true),
+          firstAs("link", ignoreNulls = true),
+          max("score") as "combined_score"
         )
 
-      df.joinAndMerge(franklinPrepared, "franklin", "left")
+      df.joinAndMerge(franklinPrepared, "franklin_max", "left")
     }
 
     def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
@@ -363,7 +363,7 @@ object Variants {
         $"pubmed".isNotNull -> "PubMed",
         $"clinvar".isNotNull -> "Clinvar",
         $"cmc".isNotNull -> "Cosmic",
-        $"franklin".isNotNull -> "Franklin"
+        $"franklin_max".isNotNull -> "Franklin"
       )
 
       conditionValueMap

@@ -86,21 +86,21 @@ class SNVSpec extends SparkSpec with WithTestConfig {
     ).toDF()
 
     val franklinDf = Seq(
-      NormalizedFranklin(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = Some("aliquot1"), `franklin_score` = 0.9),
-      NormalizedFranklin(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = Some("aliquot2"), `franklin_score` = 0.5),
+      NormalizedFranklin(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = Some("aliquot1"), `score` = 0.9),
+      NormalizedFranklin(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = Some("aliquot2"), `score` = 0.5),
     ).toDF()
 
     val result = snvDf.withFranklin(franklinDf)
 
     val expected = Seq(
-      EnrichedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", franklin_score = Some(0.9)),
-      EnrichedSNV(chromosome = "1", start = 2, reference = "T", alternate = "A", aliquot_id = "aliquot1", franklin_score = None),
-      EnrichedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot2", franklin_score = Some(0.5)),
-      EnrichedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot3", franklin_score = None),
-    ).toDF().selectLocus($"aliquot_id", $"franklin_score").collect()
+      EnrichedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", franklin_combined_score = Some(0.9)),
+      EnrichedSNV(chromosome = "1", start = 2, reference = "T", alternate = "A", aliquot_id = "aliquot1", franklin_combined_score = None),
+      EnrichedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot2", franklin_combined_score = Some(0.5)),
+      EnrichedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot3", franklin_combined_score = None),
+    ).toDF().selectLocus($"aliquot_id", $"franklin_combined_score").collect()
 
     result
-      .selectLocus($"aliquot_id", $"franklin_score")
+      .selectLocus($"aliquot_id", $"franklin_combined_score")
       .collect() should contain theSameElementsAs expected
   }
 }
