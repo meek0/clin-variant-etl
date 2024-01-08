@@ -9,11 +9,11 @@ object RQDMTotal extends TestingApp {
     import spark.implicits._
 
     val NbPatients = normalized_snv
-    .groupBy($"aliquot_id").count
+    .groupBy($"patient_id").count
     .count
 
     val df_expected_Freq = normalized_snv
-    .select($"chromosome", $"start", $"reference", $"alternate", $"aliquot_id", $"ad_alt", $"gq", $"filters", $"calls", $"analysis_code", $"affected_status_code", $"aliquot_id")
+    .select($"chromosome", $"start", $"reference", $"alternate", $"patient_id", $"ad_alt", $"gq", $"filters", $"calls", $"analysis_code", $"affected_status_code")
     .dropDuplicates
     .groupBy($"chromosome", $"start", $"reference", $"alternate")
     .agg(ac, pc)
