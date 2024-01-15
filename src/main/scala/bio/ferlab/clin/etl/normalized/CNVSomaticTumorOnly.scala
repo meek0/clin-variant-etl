@@ -68,7 +68,7 @@ object CNVSomaticTumorOnly {
           lit(batchId) as "batch_id")
         .withColumn("type", split(col("name"), ":")(1))
         .withColumn("sort_chromosome", sortChromosome)
-        .withColumn("variant_type", lit("somatic_tumor_only"))
+        .withColumn("variant_type", lit("somatic"))
     df
   }
 
