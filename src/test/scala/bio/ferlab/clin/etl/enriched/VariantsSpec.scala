@@ -948,7 +948,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       Frequency(1, 16, 0.0625,               1, 8,  0.125,               1),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
     // is both germline and somatic_tumor_only
-    result219.`variant_type` should contain allElementsOf List("germline", "somatic_tumor_only")
+    result219.`variant_type` should contain allElementsOf List("germline", "somatic")
 
     // should have empty frequencies
     val result301 = result.find(_.`start` == 301).head
@@ -957,7 +957,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
       Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
       Frequency(0, 0, 0.0, 0, 0, 0.0, 0))
-    result301.`variant_type` should contain allElementsOf List("somatic_tumor_only")
+    result301.`variant_type` should contain allElementsOf List("somatic")
 
     // should have empty frequencies
     val result302 = result.find(_.`start` == 302).head
@@ -966,7 +966,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
       Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
       Frequency(0, 0, 0.0, 0, 0, 0.0, 0))
-    result302.`variant_type` should contain allElementsOf List("somatic_tumor_only")
+    result302.`variant_type` should contain allElementsOf List("somatic")
   }
 
   "variants job" should "run" in {

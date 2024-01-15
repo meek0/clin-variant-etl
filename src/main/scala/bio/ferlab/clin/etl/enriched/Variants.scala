@@ -245,7 +245,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   def cleanupSomaticTumorOnlyFreqs(variants: DataFrame) = {
-    val isSomaticTumorOnlyCondition = array_contains(col("variant_type"), "somatic_tumor_only") && size(col("variant_type")) === 1
+    val isSomaticTumorOnlyCondition = array_contains(col("variant_type"), "somatic") && size(col("variant_type")) === 1
 
     variants
       .withColumn("frequencies_by_analysis", when(isSomaticTumorOnlyCondition, lit(array())).otherwise(coalesce(col("frequencies_by_analysis"), lit(array()))))
