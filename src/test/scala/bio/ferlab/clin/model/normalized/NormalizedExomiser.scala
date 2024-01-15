@@ -22,6 +22,6 @@ case class NormalizedExomiser(`chromosome`: String = "X",
                               `contributing_variant`: Boolean = true,
                               `moi`: String = "XR",
                               `acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
-                              `acmg_evidence`: String = "PP4,BP6",
+                              `acmg_evidence`: Seq[String] = Seq("PP4","BP6"),
                               `batch_id`: String = "BAT1")
 

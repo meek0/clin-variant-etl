@@ -67,7 +67,6 @@ case class EnrichedSNV(`chromosome`: String = "1",
                        `hc_complement`: Seq[HC_COMPLEMENT] = Seq(HC_COMPLEMENT()),
                        `possibly_hc_complement`: Seq[POSSIBLY_HC_COMPLEMENT] = Seq(POSSIBLY_HC_COMPLEMENT()),
                        `is_possibly_hc`: Boolean = false,
-                       `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                        `exomiser`: Option[EXOMISER] = Some(EXOMISER()),
                        `exomiser_other_moi`: Option[EXOMISER_OTHER_MOI] = Some(EXOMISER_OTHER_MOI()),
                        `franklin_combined_score`: Option[Double] = Some(0.0036969461275872164))
@@ -79,15 +78,16 @@ case class POSSIBLY_HC_COMPLEMENT(`symbol`: Option[String] = None,
                                   `count`: Option[Long] = None)
 
 case class EXOMISER(`rank`: Int = 3,
+                    `variant_score`: Float = 0.6581f,
                     `gene_symbol`: String = "ALG13",
                     `gene_combined_score`: Float = 1.0f,
                     `moi`: String = "XR",
                     `acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
-                    `acmg_evidence`: String = "PP4,BP6")
+                    `acmg_evidence`: Seq[String] = Seq("PP4","BP6"))
 
 case class EXOMISER_OTHER_MOI(`rank`: Int = 3,
                               `gene_symbol`: String = "ALG13",
                               `gene_combined_score`: Float = 0.99f,
                               `moi`: String = "AD",
                               `acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
-                              `acmg_evidence`: String = "PP4,BP6")
+                              `acmg_evidence`: Seq[String] = Seq("PP4","BP6"))

@@ -467,6 +467,9 @@
                 "rank": {
                   "type": "integer"
                 },
+                "variant_score": {
+                  "type": "float"
+                },
                 "gene_symbol": {
                   "type": "keyword"
                 },
@@ -957,11 +960,27 @@
         "variant_type": {
           "type": "keyword"
         },
-        "exomiser_variant_score": {
-          "type": "float"
-        },
-        "exomiser_max_acmg": {
-          "type": "keyword"
+        "exomiser_max": {
+          "properties": {
+            "variant_score": {
+              "type": "float"
+            },
+            "gene_symbol": {
+              "type": "keyword"
+            },
+            "gene_combined_score": {
+              "type": "float"
+            },
+            "moi": {
+              "type": "keyword"
+            },
+            "acmg_classification": {
+              "type": "keyword"
+            },
+            "acmg_evidence": {
+              "type": "keyword"
+            }
+          }
         },
         "cmc": {
           "properties": {

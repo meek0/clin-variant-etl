@@ -8,12 +8,13 @@ import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castFloat, castInt, castLong}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{input_file_name, lit}
+import org.apache.spark.sql.functions.{input_file_name, lit, split}
 import org.apache.spark.sql.types.BooleanType
 
 import java.time.LocalDateTime
 
 case class Exomiser(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
+
   import spark.implicits._
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_exomiser")
@@ -60,7 +61,7 @@ case class Exomiser(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
         $"CONTRIBUTING_VARIANT".cast(BooleanType) as "contributing_variant",
         $"MOI" as "moi",
         $"EXOMISER_ACMG_CLASSIFICATION" as "acmg_classification",
-        $"EXOMISER_ACMG_EVIDENCE" as "acmg_evidence",
+        split($"EXOMISER_ACMG_EVIDENCE", ",") as "acmg_evidence",
         lit(batchId) as "batch_id"
       )
   }

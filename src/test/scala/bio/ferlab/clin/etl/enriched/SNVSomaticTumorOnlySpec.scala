@@ -51,9 +51,9 @@ class SNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
       .as[EnrichedSNVSomaticTumorOnly]
       .collect() should contain theSameElementsAs Seq(
       EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", exomiser = Some(EXOMISER(moi = "XR", gene_combined_score = 1)), exomiser_other_moi = Some(EXOMISER_OTHER_MOI(moi = "AD", gene_combined_score = 0.99f))),
-      EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 2, reference = "A", alternate = "C", aliquot_id = "aliquot1", exomiser_variant_score = Some(1), exomiser = None, exomiser_other_moi = None),
+      EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 2, reference = "A", alternate = "C", aliquot_id = "aliquot1", exomiser = None, exomiser_other_moi = None),
       EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 3, reference = "C", alternate = "G", aliquot_id = "aliquot1", exomiser = Some(EXOMISER(moi = "XR", gene_combined_score = 0.99f)), exomiser_other_moi = None),
-      EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot2", exomiser_variant_score = None, exomiser = None, exomiser_other_moi = None),
+      EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot2", exomiser = None, exomiser_other_moi = None),
       EnrichedSNVSomaticTumorOnly(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot3", exomiser = Some(EXOMISER(moi = "XR", gene_combined_score = 0.5f)), exomiser_other_moi = None),
     )
   }

@@ -46,27 +46,25 @@ object SNV {
 
       val exomiserPrepared = exomiser.selectLocus(
         $"aliquot_id",
-        $"exomiser_variant_score",
         $"contributing_variant",
         struct(
-          "gene_combined_score", // put first since sort_array uses first numeric field to sort an array of struct
-          "rank",
-          "gene_symbol",
-          "moi",
-          "acmg_classification",
-          "acmg_evidence"
+          $"gene_combined_score", // put first since sort_array uses first numeric field to sort an array of struct
+          $"rank",
+          $"exomiser_variant_score" as "variant_score",
+          $"gene_symbol",
+          $"moi",
+          $"acmg_classification",
+          $"acmg_evidence"
         ) as "exomiser_struct"
       )
         .groupBy(locus :+ $"aliquot_id": _*)
         .agg(
-          max($"exomiser_variant_score") as "exomiser_variant_score",
           sort_array(collect_list(when($"contributing_variant", $"exomiser_struct")), asc = false) as "exomiser_struct_list", // sort by gene_combined_score in desc order
         )
         .withColumn("exomiser", $"exomiser_struct_list".getItem(0))
-        .withColumn("exomiser_other_moi", $"exomiser_struct_list".getItem(1))
+        .withColumn("exomiser_other_moi", $"exomiser_struct_list".getItem(1).dropFields("variant_score")) // variant_score should only be in exomiser struct
         .selectLocus(
           $"aliquot_id",
-          $"exomiser_variant_score",
           $"exomiser",
           $"exomiser_other_moi",
         )

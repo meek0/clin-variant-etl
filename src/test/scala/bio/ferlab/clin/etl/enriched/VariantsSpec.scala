@@ -1046,43 +1046,41 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     )
   }
 
-  "variantsWithDonors" should "enrich variants with donor info and exomiser scores" in {
+  "variantsWithDonors" should "enrich variants with donor info" in {
     val variants = Seq(
       EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C"),
       EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A"),
       EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T"),
     ).toDF()
 
-    // Remove donor and exomiser fields from variants df
-    val variantsWithoutDonors = variants.drop("donors", "exomiser_variant_score", "exomiser_max_acmg")
+    // Remove donor from variants df
+    val variantsWithoutDonors = variants.drop("donors", "variant_type")
 
     val occurrences = Seq(
-      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "11111", exomiser_variant_score = Some(0.65f), exomiser = Some(EXOMISER(`acmg_classification` = "LIKELY_PATHOGENIC")), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())),
-      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "22222", exomiser_variant_score = Some(0.99f), exomiser = Some(EXOMISER(`acmg_classification` = "LIKELY_BENIGN")), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())), // should be max exomiser_variant_score
-      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "33333", exomiser_variant_score = None, exomiser = None, exomiser_other_moi = None),
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "11111", variant_type = "germline"),
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "22222", variant_type = "germline"),
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "33333", variant_type = "somatic"),
 
-      // No exomiser data
-      EnrichedSNV(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", aliquot_id = "11111", exomiser_variant_score = None, exomiser = None, exomiser_other_moi = None),
+      EnrichedSNV(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", aliquot_id = "11111", variant_type = "germline"),
 
       // Only exomiser struct
-      EnrichedSNV(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", aliquot_id = "11111", exomiser_variant_score = Some(0.4f), exomiser = Some(EXOMISER(`acmg_classification` = null)), exomiser_other_moi = None),
+      EnrichedSNV(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", aliquot_id = "11111", variant_type = "somatic"),
     ).toDF()
 
     val result = job.variantsWithDonors(variantsWithoutDonors, occurrences)
 
     val expected = Seq(
-      EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", exomiser_variant_score = Some(0.99f), exomiser_max_acmg = Some("LIKELY_PATHOGENIC"), donors = List(
-        DONORS(aliquot_id = "11111", exomiser = Some(EXOMISER(`acmg_classification` = "LIKELY_PATHOGENIC")), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())),
-        DONORS(aliquot_id = "22222", exomiser = Some(EXOMISER(`acmg_classification` = "LIKELY_BENIGN")), exomiser_other_moi = Some(EXOMISER_OTHER_MOI())),
-        DONORS(aliquot_id = "33333", exomiser = None, exomiser_other_moi = None),
-      )),
-      EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", exomiser_variant_score = None, exomiser_max_acmg = None, donors = List(DONORS(aliquot_id = "11111", exomiser = None, exomiser_other_moi = None))),
-      EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", exomiser_variant_score = Some(0.4f), exomiser_max_acmg = None, donors = List(DONORS(aliquot_id = "11111", exomiser = Some(EXOMISER(`acmg_classification` = null)), exomiser_other_moi = None))),
-    ).toDF().selectLocus($"exomiser_variant_score", $"exomiser_max_acmg", $"donors.aliquot_id", $"donors.exomiser", $"donors.exomiser_other_moi").collect()
+      EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", variant_type = Set("germline", "somatic"),
+        donors = List(DONORS(aliquot_id = "11111", variant_type = "germline"), DONORS(aliquot_id = "22222", variant_type = "germline"), DONORS(aliquot_id = "33333", variant_type = "somatic"))),
+      EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", variant_type = Set("germline"),
+        donors = List(DONORS(aliquot_id = "11111", variant_type = "germline"))),
+      EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", variant_type = Set("somatic"),
+        donors = List(DONORS(aliquot_id = "11111", variant_type = "somatic"))),
+    ).toDF().selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type").collect()
 
     result
-      .selectLocus($"exomiser_variant_score", $"exomiser_max_acmg", $"donors.aliquot_id", $"donors.exomiser", $"donors.exomiser_other_moi")
-      .collect() should contain allElementsOf expected
+      .selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type")
+      .collect() should contain theSameElementsAs expected
   }
 
   "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
@@ -1171,6 +1169,36 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     result
       .as[EnrichedVariant]
+      .collect() should contain theSameElementsAs expected
+  }
+
+  "withExomiser" should "enrich variants with max_exomiser field" in {
+    val variants = Seq(
+      EnrichedVariant(chromosome = "1"),
+      EnrichedVariant(chromosome = "2"),
+      EnrichedVariant(chromosome = "3")
+    ).toDF().drop("exomiser_max")
+
+    val donors = Seq(
+      EnrichedSNV(chromosome = "1", aliquot_id = "11111", `exomiser` = Some(EXOMISER(`gene_combined_score` = 0.5f, `variant_score` = 0.75f))),
+      EnrichedSNV(chromosome = "1", aliquot_id = "22222", `exomiser` = Some(EXOMISER(`gene_combined_score` = 0.99f, `variant_score` = 0.75f))),
+
+      EnrichedSNV(chromosome = "2", aliquot_id = "11111", `exomiser` = Some(EXOMISER(`gene_combined_score` = 0.856f, `variant_score` = 1f))),
+      EnrichedSNV(chromosome = "2", aliquot_id = "33333", `exomiser` = None),
+
+      EnrichedSNV(chromosome = "3", aliquot_id = "33333", `exomiser` = None)
+    ).toDF()
+
+    val result = variants.withExomiser(donors)
+
+    val expected = Seq(
+      EnrichedVariant(chromosome = "1", exomiser_max = Some(EXOMISER_MAX(`gene_combined_score` = 0.99f, `variant_score` = 0.75f))),
+      EnrichedVariant(chromosome = "2", exomiser_max = Some(EXOMISER_MAX(`gene_combined_score` = 0.856f, `variant_score` = 1f))),
+      EnrichedVariant(chromosome = "3", `exomiser_max` = None)
+    ).toDF().selectLocus($"exomiser_max").collect()
+
+    result
+      .selectLocus($"exomiser_max")
       .collect() should contain theSameElementsAs expected
   }
 }

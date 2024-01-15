@@ -62,7 +62,6 @@ case class EnrichedSNVSomaticTumorOnly(`chromosome`: String = "1",
                        `hc_complement`: Seq[HC_COMPLEMENT_SOMATIC_TUMOR_ONLY] = Seq(HC_COMPLEMENT_SOMATIC_TUMOR_ONLY()),
                        `possibly_hc_complement`: Seq[POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY] = Seq(POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY()),
                        `is_possibly_hc`: Boolean = false,
-                       `exomiser_variant_score`: Option[Float] = Some(0.6581f),
                        `exomiser`: Option[EXOMISER] = Some(EXOMISER()),
                        `exomiser_other_moi`: Option[EXOMISER_OTHER_MOI] = Some(EXOMISER_OTHER_MOI()))
 

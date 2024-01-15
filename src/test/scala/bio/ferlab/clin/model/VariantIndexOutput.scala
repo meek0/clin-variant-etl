@@ -6,7 +6,7 @@ package bio.ferlab.clin.model
 
 import bio.ferlab.clin.etl.model.normalized.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.varsome._
-import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, FRANKLIN_MAX, FREQUENCIES, GENES, PREDICTIONS}
+import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, EXOMISER_MAX, FRANKLIN_MAX, FREQUENCIES, GENES, PREDICTIONS}
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 
 import java.sql.Date
@@ -42,8 +42,7 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `omim`: List[String] = List("618285"),
                               `variant_external_reference`: Set[String] = Set("DBSNP", "Clinvar", "Cosmic", "PubMed", "Franklin"),
                               `gene_external_reference`: Set[String] = Set("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
-                              `exomiser_variant_score`: Option[Float] = Some(0.6581f),
-                              `exomiser_max_acmg`: Option[String] = Some("UNCERTAIN_SIGNIFICANCE"),
+                              `exomiser_max`: Option[EXOMISER_MAX] = Some(EXOMISER_MAX()),
                               `cmc`: CMC = CMC(),
                               `franklin_max`: Option[FRANKLIN_MAX] = Some(FRANKLIN_MAX()))
 

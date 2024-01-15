@@ -100,6 +100,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
     val joinSpliceAi = joinWithSpliceAi(joinPanels, data(spliceai.id))
 
     joinSpliceAi
+      .withExomiser(occurrences)
       .withCosmic(data(cosmic.id))
       .withFranklin(data(franklin.id))
       .withGeneExternalReference
@@ -215,29 +216,12 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .withColumn("dna_change", concat_ws(">", $"reference", $"alternate"))
   }
 
-  private def getExomiserMaxAcmg: Column = {
-    val mapAcmgToPriority: Column => Column = col => when(col === "BENIGN", lit(1))
-        .when(col === "LIKELY_BENIGN", lit(2))
-        .when(col === "UNCERTAIN_SIGNIFICANCE", lit(3))
-        .when(col === "LIKELY_PATHOGENIC", lit(4))
-        .when(col === "PATHOGENIC", lit(5))
-        .otherwise(lit(0))
-
-    val allAcmg = collect_set($"exomiser.acmg_classification") as "all_acmg"
-    val allAcmgMapped = functions.transform(allAcmg, acmg => struct(acmg as "acmg", mapAcmgToPriority(acmg) as "priority"))
-
-    val baseStruct = struct(lit(null).cast(StringType) as "acmg", lit(0) as "priority")
-    aggregate(allAcmgMapped, baseStruct, (s1, s2) => when(s1("priority") > s2("priority"), s1).otherwise(s2), _.getField("acmg"))
-  }
-
   def variantsWithDonors(variants: DataFrame, occurrences: DataFrame): DataFrame = {
-    val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate", "exomiser_variant_score").columns.map(col)
+    val donorColumns = occurrences.drop("chromosome", "start", "end", "reference", "alternate").columns.map(col)
     val donors = occurrences
       .groupByLocus()
       .agg(
         collect_set($"variant_type") as "variant_type",
-        max("exomiser_variant_score") as "exomiser_variant_score",
-        getExomiserMaxAcmg as "exomiser_max_acmg",
         filter(collect_list(struct(donorColumns: _*)), c => c("has_alt")) as "donors"
       )
     variants
@@ -373,6 +357,20 @@ object Variants {
         ) { case (currDf, (cond, value)) =>
           currDf.withColumn(outputColumn, when(cond, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
         }
+    }
+
+    def withExomiser(donors: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      val maxExomiser = donors
+        .where($"exomiser".isNotNull)
+        .selectLocus($"exomiser".dropFields("rank") as "exomiser") // rank is not needed in exomiser_max struct
+        .groupByLocus()
+        .agg(
+          max_by($"exomiser", $"exomiser.gene_combined_score") as "exomiser_max"
+        )
+
+      df.joinByLocus(maxExomiser, "left")
     }
   }
 
