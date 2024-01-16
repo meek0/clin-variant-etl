@@ -282,6 +282,37 @@ package object dictionary {
     "null",
   )
 
+  val DicOMIM = Seq(
+    "AD",
+    "AR",
+    "DD",
+    "DR",
+    "IC",
+    "Mi",
+    "Mu",
+    "NRT",
+    "SMo",
+    "Smu",
+    "XL",
+    "XLD",
+    "XLR",
+    "YL",
+    "?AD",
+    "?AR",
+    "?DD",
+    "?DR",
+    "?IC",
+    "?Mi",
+    "?Mu",
+    "?SMo",
+    "?Smu",
+    "?XL",
+    "?XLD",
+    "?XLR",
+    "?YL",
+    "null"
+  )
+
   val DicPanels = Seq(
     "HYPM",
     "MYOC",
