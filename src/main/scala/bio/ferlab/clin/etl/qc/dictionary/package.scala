@@ -359,6 +359,7 @@ package object dictionary {
     "Clinvar",
     "PubMed",
     "Cosmic",
+    "Franklin",
     "null",
   )
 
