@@ -16,7 +16,8 @@ object DictionariesSNV extends TestingApp {
       shouldValuesContainedInDictionary(variant_centric.select($"variant_class"), DicVariantClass: _*)("variant_class"),
       shouldValuesContainedInDictionary(variant_centric.select(explode($"variant_external_reference")), DicVariantExternalReference: _*)("variant_external_reference"),
       shouldValuesContainedInDictionary(variant_centric.select($"cmc.tier"), DicCmcTier: _*)("cmc.tier"),
-      shouldValuesContainedInDictionary(variant_centric.select($"hotspot"), DicHotspot: _*)("hotspot")
+      shouldValuesContainedInDictionary(variant_centric.select($"hotspot"), DicHotspot: _*)("hotspot"),
+      shouldValuesContainedInDictionary(variant_centric.select(explode($"genes")).select(explode($"col.omim.inheritance_code")).select(explode($"col")), DicOMIM: _*)("genes.omim.inheritance_code")
     )
   }
 }
