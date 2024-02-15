@@ -1083,6 +1083,32 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       .collect() should contain theSameElementsAs expected
   }
 
+  "variantsWithDonors" should "not group donors by family id" in {
+    val variants = Seq(
+      EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C"),
+    ).toDF()
+
+    val variantsWithoutDonors = variants.drop("donors", "variant_type")
+
+    val occurrences = Seq(
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "11111", variant_type = "germline", `family_id` = "FAM_0000"),
+      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "11112", variant_type = "germline", `family_id` = "FAM_0000"),
+    ).toDF()
+
+    val result = job.variantsWithDonors(variantsWithoutDonors, occurrences)
+
+    val expected = Seq(
+      EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", variant_type = Set("germline"),
+        donors = List(
+          DONORS(aliquot_id = "11111", variant_type = "germline", `family_id` = "FAM_0000"),
+          DONORS(aliquot_id = "11112", variant_type = "germline", `family_id` = "FAM_0000"))),
+    ).toDF().selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type").collect()
+
+    result
+      .selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type")
+      .collect() should contain theSameElementsAs expected
+  }
+
   "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
     val variants = Seq(
       EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
@@ -1202,6 +1228,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       .collect() should contain theSameElementsAs expected
   }
 }
+
 
 object VariantsSpec {
   def removeNestedField(df: DataFrame, field: String, parent: String): DataFrame = {
