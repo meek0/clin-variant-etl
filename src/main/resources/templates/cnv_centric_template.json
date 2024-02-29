@@ -139,6 +139,12 @@
         "father_id": {
           "type": "keyword"
         },
+        "mother_aliquot_id": {
+          "type": "keyword"
+        },
+        "father_aliquot_id": {
+          "type": "keyword"
+        },
         "specimen_id": {
           "type": "keyword"
         },

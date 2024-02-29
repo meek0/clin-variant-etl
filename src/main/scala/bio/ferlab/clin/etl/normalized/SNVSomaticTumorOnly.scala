@@ -72,8 +72,10 @@ case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext, batchId: String)
       .filter(col("has_alt"))
       .persist()
 
+    val occurrencesWithParentAliquotIds = joinWithParentAliquotIds(occurrences, joinedRelation)
+
     val hcFilter = col("is_rare")
-    addRareVariantColumn(occurrences, data(rare_variants.id))
+    addRareVariantColumn(occurrencesWithParentAliquotIds, data(rare_variants.id))
       .withCompoundHeterozygous(additionalFilter = Some(hcFilter))
       .drop("symbols", "is_rare")
 

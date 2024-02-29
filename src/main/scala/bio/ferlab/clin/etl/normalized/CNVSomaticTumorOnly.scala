@@ -28,7 +28,8 @@ case class CNVSomaticTumorOnly(rc : DeprecatedRuntimeETLContext, batchId: String
 
     val occurrences = getCNV(inputVCF, batchId)
       .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
-    occurrences
+
+    joinWithParentAliquotIds(occurrences, joinedRelation)
   }
 
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(Seq("patient_id"), Some(10))

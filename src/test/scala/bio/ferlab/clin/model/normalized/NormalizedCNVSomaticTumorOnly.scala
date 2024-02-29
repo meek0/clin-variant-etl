@@ -44,6 +44,8 @@ case class NormalizedCNVSomaticTumorOnly(`aliquot_id`: String = "11111",
                                          `organization_id`: String = "OR00201",
                                          `mother_id`: String = "PA0003",
                                          `father_id`: String = "PA0002",
+                                         `mother_aliquot_id`: String = "33333",
+                                         `father_aliquot_id`: String = "22222",
                                          `specimen_id`: String = "SP_001",
                                          `sample_id`: String = "SA_001")
 

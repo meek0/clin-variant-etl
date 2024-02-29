@@ -5,7 +5,7 @@ import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLCont
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.vcf
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{col, _}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.slf4j.Logger
 
@@ -37,6 +37,17 @@ abstract class Occurrences(rc: DeprecatedRuntimeETLContext, batchId: String) ext
       observation.id -> observation.read,
       specimen.id -> specimen.read
     )
+  }
+
+  def joinWithParentAliquotIds(occurrences: DataFrame, clinicalData: DataFrame): DataFrame = {
+
+    // transform clinical data from parents point of view patient_id => parent Id and aliquot_id => parent aliquot id
+    val clinicalDataAsMother = clinicalData.select("analysis_service_request_id", "patient_id", "aliquot_id").withColumnRenamed("aliquot_id","mother_aliquot_id").withColumnRenamed("patient_id","mother_id")
+    val clinicalDataAsFather = clinicalData.select("analysis_service_request_id", "patient_id", "aliquot_id").withColumnRenamed("aliquot_id","father_aliquot_id").withColumnRenamed("patient_id","father_id")
+
+    occurrences
+      .join(broadcast(clinicalDataAsMother), Seq("analysis_service_request_id", "mother_id"), "left")
+      .join(broadcast(clinicalDataAsFather), Seq("analysis_service_request_id", "father_id"), "left")
   }
 
   def getClinicalRelation(data: Map[String, DataFrame]): DataFrame = {
