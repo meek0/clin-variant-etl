@@ -140,10 +140,12 @@
           "type": "keyword"
         },
         "mother_aliquot_id": {
-          "type": "keyword"
+          "type": "keyword",
+          "index": false
         },
         "father_aliquot_id": {
-          "type": "keyword"
+          "type": "keyword",
+          "index": false
         },
         "specimen_id": {
           "type": "keyword"
