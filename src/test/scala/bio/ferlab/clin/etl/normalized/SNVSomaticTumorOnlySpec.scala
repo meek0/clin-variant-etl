@@ -172,6 +172,8 @@ class SNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
       is_proband = false,
       mother_id = null,
       father_id = null,
+      mother_aliquot_id = None,
+      father_aliquot_id = None,
       mother_calls = None,
       father_calls = None,
       mother_affected_status = None,

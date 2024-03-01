@@ -326,6 +326,10 @@
             "father_id": {
               "type": "keyword"
             },
+            "father_aliquot_id": {
+              "type": "keyword",
+              "index": false
+            },
             "father_zygosity": {
               "type": "keyword"
             },
@@ -397,6 +401,10 @@
             },
             "mother_id": {
               "type": "keyword"
+            },
+            "mother_aliquot_id": {
+              "type": "keyword",
+              "index": false
             },
             "mother_zygosity": {
               "type": "keyword"
