@@ -59,8 +59,6 @@ object CNVSomaticTumorOnly {
           $"genotype.pe" as "pe",
           is_multi_allelic,
           old_multi_allelic,
-          $"INFO_CIEND" as "ciend",
-          $"INFO_CIPOS" as "cipos",
           $"INFO_SVLEN"(0) as "svlen",
           $"INFO_REFLEN" as "reflen",
           $"start" + $"INFO_REFLEN" as "end",
