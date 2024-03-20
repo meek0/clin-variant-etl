@@ -54,7 +54,7 @@ case class CnvEnrichedOutput(`aliquot_id`: String = "11111",
                              `sample_id`: String = "SA_001",
                              `genes`: List[ENRICHED_CNV_GENES] = List(ENRICHED_CNV_GENES()),
                              `number_genes`: Int = 1,
-                             `hash`: String = "e9458a88f3281d40be3d71cad7ac44d90b15b2cb")
+                             `hash`: String = "38310f81a3bda596a7bb61664a076a5229ac4dc1")
 
 case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
                  `refseq_id`: Option[String] = Some("NC_000001.11"),

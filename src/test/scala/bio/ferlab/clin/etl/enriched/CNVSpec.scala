@@ -62,7 +62,7 @@ class CNVSpec extends SparkSpec with WithTestConfig {
 
     results.collect() should contain theSameElementsAs Seq(
       CnvEnrichedOutput(),
-      CnvEnrichedOutput(`aliquot_id` = "11112", `variant_type` = "somatic", `cn` = None, `hash` = "3802349cec5a9cac34daf58dd5a63ee05d7b2f1e"),
+      CnvEnrichedOutput(`aliquot_id` = "11112", `variant_type` = "somatic", `cn` = None, `hash` = "c4a0c4f805e71dc9b51dbd00ae1dcb9931538dd5"),
     )
   }
 
