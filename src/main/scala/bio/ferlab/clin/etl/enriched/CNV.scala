@@ -52,7 +52,7 @@ case class CNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .agg(first($"cnv") as "cnv", collect_list($"gene") as "genes")
       .select($"cnv.*", $"genes")
       .withColumn("number_genes", size($"genes"))
-      .withColumn("hash", sha1(concat_ws("-", col("name"), col("aliquot_id"))))
+      .withColumn("hash", sha1(concat_ws("-", col("name"), col("aliquot_id"), col("alternate"))))
 
     groupedCnv
   }
