@@ -1,7 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.clin.etl.normalized.Occurrences.getDiseaseStatus
 import bio.ferlab.clin.etl.normalized.Variants.hotspot
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
@@ -12,7 +11,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.BooleanType
+import org.apache.spark.sql.types.{ArrayType, BooleanType, StructType}
 import org.apache.spark.sql.{Column, DataFrame, functions}
 import org.slf4j.Logger
 
@@ -26,35 +25,36 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
-  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
-  val clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
-  val observation: DatasetConf = conf.getDataset("normalized_observation")
-  val task: DatasetConf = conf.getDataset("normalized_task")
-  val service_request: DatasetConf = conf.getDataset("normalized_service_request")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
-      raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
-      clinical_impression.id -> clinical_impression.read,
-      observation.id -> observation.read,
-      task.id -> task.read,
-      service_request.id -> service_request.read
+      enriched_clinical.id -> enriched_clinical.read,
     )
   }
 
   private def getVCF(data: Map[String, DataFrame]): (DataFrame, String, String, Boolean) = {
 
-    val vcfGermline = data(raw_variant_calling.id)
-    val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
+    val vcf = data(raw_variant_calling.id)
 
-    if (!vcfGermline.isEmpty) {
-      (vcfGermline.where(col("contigName").isin(validContigNames: _*)), "genotype.conditionalQuality", "gq", true)
-    } else if (!vcfSomaticTumorOnly.isEmpty) {
-      (vcfSomaticTumorOnly.where(col("contigName").isin(validContigNames: _*)), "genotype.SQ", "sq", false)
+    if (!vcf.isEmpty) {
+      val filteredVcf = vcf.where(col("contigName").isin(validContigNames: _*))
+      val genotypesIndex = vcf.schema.fieldIndex("genotypes")
+      val genotypesFields = vcf.schema(genotypesIndex).dataType.asInstanceOf[ArrayType].elementType.asInstanceOf[StructType].fieldNames
+
+      if (genotypesFields.contains("conditionalQuality")) {
+        // Germline VCF
+        (filteredVcf, "genotype.conditionalQuality", "gq", true)
+      } else if (genotypesFields.contains("SQ")) {
+        // Somatic VCF
+        (filteredVcf, "genotype.SQ", "sq", false)
+      } else {
+        throw new Exception("No valid raw VCF available")
+      }
     } else {
-      throw new Exception("Not valid raw VCF available")
+      throw new Exception("No valid raw VCF available")
     }
   }
 
@@ -65,7 +65,17 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
     val (inputVCF, srcScoreColumn, dstScoreColumn, computeFrequencies) = getVCF(data)
 
     val variants = getVariants(inputVCF)
-    val clinicalInfos = getClinicalInfo(data)
+    val clinicalInfos = data(enriched_clinical.id)
+      .where($"batch_id" === batchId)
+      .select(
+        "analysis_code",
+        "analysis_display_name",
+        "affected_status",
+        "aliquot_id"
+      )
+      .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
+
+
     val variantsWithClinicalInfo = getVariantsWithClinicalInfo(inputVCF, clinicalInfos, srcScoreColumn, dstScoreColumn)
 
     val res = getVariantsWithFrequencies(variantsWithClinicalInfo, computeFrequencies)
@@ -232,43 +242,11 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
         frequency("") as "total"
       ))
       .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM": _*)
-
   }
 
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(10), sortColumns = Seq("start"))
 
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
-
-  def getClinicalInfo(data: Map[String, DataFrame]): DataFrame = {
-    val serviceRequestDf = data(service_request.id)
-      .filter(col("service_request_type") === "sequencing")
-      .select(
-        col("id") as "service_request_id",
-        col("service_request_code") as "analysis_code",
-        col("service_request_description") as "analysis_display_name",
-        col("analysis_service_request_id")
-      )
-
-    val analysisServiceRequestDf = data(service_request.id)
-      .filter(col("service_request_type") === "analysis")
-
-    val analysisServiceRequestWithDiseaseStatus = getDiseaseStatus(analysisServiceRequestDf, data(clinical_impression.id), data(observation.id))
-      .select("analysis_service_request_id", "patient_id", "affected_status")
-      .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
-
-
-    val taskDf = data(task.id)
-      .where(col("batch_id") === batchId)
-      .select(
-        col("experiment.aliquot_id") as "aliquot_id",
-        col("patient_id"),
-        col("service_request_id")
-      ).dropDuplicates("aliquot_id", "patient_id")
-
-    taskDf
-      .join(serviceRequestDf, Seq("service_request_id"), "left")
-      .join(analysisServiceRequestWithDiseaseStatus, Seq("analysis_service_request_id", "patient_id"))
-  }
 }
 
 object Variants {

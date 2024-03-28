@@ -15,7 +15,7 @@ object RunNormalized {
   def snv(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = SNV.run(rc, batch)
 
   @main
-  def snv_somatic_tumor_only(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = SNVSomaticTumorOnly.run(rc, batch)
+  def snv_somatic(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = SNVSomatic.run(rc, batch)
 
   @main
   def cnv(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = CNV.run(rc, batch)
@@ -38,7 +38,7 @@ object RunNormalized {
   @main
   def all(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
     snv(rc, batch)
-    snv_somatic_tumor_only(rc, batch)
+    snv_somatic(rc, batch)
     cnv(rc, batch)
     cnv_somatic_tumor_only(rc, batch)
     variants(rc, batch)

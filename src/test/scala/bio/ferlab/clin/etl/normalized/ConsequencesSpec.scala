@@ -19,13 +19,12 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeA
   import spark.implicits._
 
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
-  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
+
 
   override val dsToClean: List[DatasetConf] = List(job1.mainDestination)
 
   val data = Map(
     raw_variant_calling.id -> Seq(VCF_SNV_Input()).toDF(),
-    raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame,
   )
 
   val data_with_duplicates = data ++ Map(
@@ -39,8 +38,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeA
   )
 
   val dataSomaticTumorOnly= data ++ Map(
-    raw_variant_calling.id -> spark.emptyDataFrame,
-    raw_variant_calling_somatic_tumor_only.id -> Seq(VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input()).toDF(),
+    raw_variant_calling.id -> Seq(VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input(), VCF_SNV_Somatic_Input()).toDF(),
   )
 
   "consequences job" should "transform data in expected format" in {
@@ -123,8 +121,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeA
 
   "consequences job" should "throw exception if no valid VCF" in {
     val exception = intercept[Exception] {
-      job1.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame,
-        raw_variant_calling_somatic_tumor_only.id -> spark.emptyDataFrame))
+      job1.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
     }
     exception.getMessage shouldBe "Not valid raw VCF available"
 
@@ -149,8 +146,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeA
 
   "consequences job" should "ignore invalid contigName in VCF Somatic tumor only" in {
     val results = job1.transform(data ++ Map(
-      raw_variant_calling.id -> spark.emptyDataFrame,
-      raw_variant_calling_somatic_tumor_only.id -> Seq(
+      raw_variant_calling.id -> Seq(
         VCF_SNV_Somatic_Input(`contigName` = "chr2"),
         VCF_SNV_Somatic_Input(`contigName` = "chrY"),
         VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))

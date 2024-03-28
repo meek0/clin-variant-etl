@@ -1,8 +1,9 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.fhir.GenomicFile.EXOMISER
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.RawExomiser
-import bio.ferlab.clin.etl.utils.FileUtils
+import bio.ferlab.clin.etl.utils.{FileInfo, FileUtils}
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castFloat, castInt, castLong}
@@ -19,10 +20,11 @@ case class Exomiser(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_exomiser")
   val raw_exomiser: DatasetConf = conf.getDataset("raw_exomiser")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   override def extract(lastRunDateTime: LocalDateTime,
                        currentRunDateTime: LocalDateTime): Map[String, DataFrame] = {
-    val exomiserFiles = FileUtils.filesUrl(batchId, "EXOMISER", "TSV")
+    val exomiserFiles: Set[FileInfo] = FileUtils.fileUrls(batchId, EXOMISER)
 
     Map(
       raw_exomiser.id -> {

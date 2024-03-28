@@ -1,15 +1,15 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.etl.mainutils.Release
-import bio.ferlab.datalake.commons.config.{Configuration, DatasetConf, DeprecatedRuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, functions}
 
 import java.time.LocalDateTime
 
-case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
+case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_suggestions")
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
@@ -24,10 +24,7 @@ case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext, releaseId:
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
-      es_index_variant_centric.id ->
-        es_index_variant_centric
-          .copy(table = es_index_variant_centric.table.map(t => t.copy(name = s"${t.name}_$releaseId")))
-          .read
+      es_index_variant_centric.id -> es_index_variant_centric.read
     )
   }
 
@@ -79,8 +76,8 @@ case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext, releaseId:
 
 object PrepareVariantSuggestions {
   @main
-  def run(rc: DeprecatedRuntimeETLContext, release: Release): Unit = {
-    PrepareVariantSuggestions(rc, release.id).run()
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+    PrepareVariantSuggestions(rc).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

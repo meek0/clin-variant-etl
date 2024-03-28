@@ -21,7 +21,7 @@ case class NormalizedConsequences(`chromosome`: String = "1",
                                   `ensembl_transcript_id`: String = "ENST00000335137",
                                   `ensembl_regulatory_id`: Option[String] = None,
                                   `feature_type`: String = "Transcript",
-                                  `strand`: Int = 1,
+                                  `strand`: String = "1",
                                   `biotype`: String = "protein_coding",
                                   `variant_class`: String = "SNV",
                                   `exon`: EXON = EXON(),
@@ -29,9 +29,9 @@ case class NormalizedConsequences(`chromosome`: String = "1",
                                   `hgvsc`: String = "ENST00000335137.4:c.807T>C",
                                   `hgvsp`: String = "ENSP00000334393.3:p.Ser269=",
                                   `hgvsg`: String = "chr1:g.69897T>C",
-                                  `cds_position`: Int = 807,
-                                  `cdna_position`: Int = 843,
-                                  `protein_position`: Int = 269,
+                                  `cds_position`: String = "807",
+                                  `cdna_position`: String = "843",
+                                  `protein_position`: String = "269",
                                   `amino_acids`: AMINO_ACIDS = AMINO_ACIDS(),
                                   `codons`: CODONS = CODONS(),
                                   `original_canonical`: Boolean = true,
@@ -44,11 +44,11 @@ case class NormalizedConsequences(`chromosome`: String = "1",
                                   `updated_on`: Timestamp = java.sql.Timestamp.valueOf("2022-04-06 13:41:31.039545"),
                                   `normalized_consequences_oid`: Timestamp = java.sql.Timestamp.valueOf("2022-04-06 13:41:31.039545"))
 
-case class EXON(`rank`: Int = 1,
-                `total`: Int = 1)
+case class EXON(`rank`: String = "1",
+                `total`: String = "1")
 
-case class INTRON(`rank`: Option[Int] = None,
-                  `total`: Option[Int] = None)
+case class INTRON(`rank`: Option[String] = None,
+                  `total`: Option[String] = None)
 
 case class AMINO_ACIDS(`reference`: String = "S",
                        `variant`: Option[String] = None)

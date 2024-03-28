@@ -26,7 +26,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val snv: DatasetConf = conf.getDataset("enriched_snv")
-  val snv_somatic_tumor_only: DatasetConf = conf.getDataset("enriched_snv_somatic_tumor_only")
+  val snv_somatic: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
@@ -51,10 +51,10 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     EnrichedSNV(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
     EnrichedSNV(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
   ).toDF
-  val occurrencesSomaticTumorOnlyDf: DataFrame = Seq(
-    EnrichedSNVSomaticTumorOnly(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
-    EnrichedSNVSomaticTumorOnly(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
-    EnrichedSNVSomaticTumorOnly(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
+  val occurrencesSomaticDf: DataFrame = Seq(
+    EnrichedSNVSomatic(`patient_id` = "PA0001", `transmission` = Some("AD"), `organization_id` = "OR00201", `parental_origin` = Some("mother")),
+    EnrichedSNVSomatic(`patient_id` = "PA0002", `transmission` = Some("AR"), `organization_id` = "OR00202", `parental_origin` = Some("father")),
+    EnrichedSNVSomatic(`patient_id` = "PA0003", `has_alt` = false, `zygosity` = "UNK", `calls` = List(0, 0))
   ).toDF
   val normalized_variantsDf: DataFrame = Seq(NormalizedVariants()).toDF()
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
@@ -75,7 +75,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val data = Map(
     normalized_variants.id -> normalized_variantsDf,
     snv.id -> occurrencesDf,
-    snv_somatic_tumor_only.id -> occurrencesSomaticTumorOnlyDf,
+    snv_somatic.id -> occurrencesSomaticDf,
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
     gnomad_constraint.id -> gnomad_constraintDf,
@@ -198,10 +198,10 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       EnrichedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt`=30, `batch_id` = "BAT2", `start` = 219),
     ).toDF
 
-    val occurrencesDfSomaticTumorOnly = Seq(
-      EnrichedSNVSomaticTumorOnly(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 219),
-      EnrichedSNVSomaticTumorOnly(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 301),
-      EnrichedSNVSomaticTumorOnly(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 302)
+    val occurrencesDfSomatic = Seq(
+      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 219),
+      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 301),
+      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 302)
     ).toDF
 
     val variantDf = Seq(
@@ -578,7 +578,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           ))),
     ).toDF()
 
-    val resultDf = job.transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic_tumor_only.id -> occurrencesDfSomaticTumorOnly))
+    val resultDf = job.transformSingle(data ++ Map(normalized_variants.id -> variantDf, snv.id -> occurrencesDf, snv_somatic.id -> occurrencesDfSomatic))
     val result = resultDf.as[EnrichedVariant].collect()
 
     // Use case #1: A variant is present in batch #1 and absent from batch #2
@@ -975,8 +975,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val resultDf = spark.table("clin.variants")
     val result = resultDf.as[EnrichedVariant].collect().head
 
-    //resultDf.select(explode($"donors").as[DONORS]).show(false)
-    //expectedDonors.toDF().show(false)
+//    resultDf.select(explode($"donors").as[DONORS]).show(false)
+//    expectedDonors.toDF().show(false)
 
     result.`donors` should contain allElementsOf expectedDonors
     result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies(
@@ -1019,24 +1019,22 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       EnrichedSNV(`batch_id` = "BAT1", `start` = 104),
     ).toDF()
 
-    val SNVSomaticTumorOnlyDf = Seq(
-      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT1", `start` = 101),
-      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT1", `start` = 102),
-      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT2", `start` = 102),
-      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT1", `start` = 103),
-      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT3", `start` = 103),
-      EnrichedSNVSomaticTumorOnly(`batch_id` = "BAT2", `start` = 104),
+    val SNVSomaticDf = Seq(
+      EnrichedSNVSomatic(`batch_id` = "BAT1", `start` = 101),
+      EnrichedSNVSomatic(`batch_id` = "BAT1", `start` = 102),
+      EnrichedSNVSomatic(`batch_id` = "BAT2", `start` = 102),
+      EnrichedSNVSomatic(`batch_id` = "BAT1", `start` = 103),
+      EnrichedSNVSomatic(`batch_id` = "BAT3", `start` = 103),
+      EnrichedSNVSomatic(`batch_id` = "BAT2", `start` = 104),
     ).toDF()
 
     val testData = data ++ Map(
       normalized_variants.id -> normalizedVariantsDf,
       snv.id -> snvDf,
-      snv_somatic_tumor_only.id -> SNVSomaticTumorOnlyDf,
+      snv_somatic.id -> SNVSomaticDf,
     )
     val resultDf = job.transformSingle(testData).select("start", "hotspot")
     val result = resultDf.as[(Long, Boolean)].collect()
-
-    resultDf.show(false)
 
     result should contain theSameElementsAs Seq(
       (101, true),
@@ -1056,30 +1054,50 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     // Remove donor from variants df
     val variantsWithoutDonors = variants.drop("donors", "variant_type")
 
-    val occurrences = Seq(
+    val germlineOccurrences = Seq(
       EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "11111", variant_type = "germline"),
       EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "22222", variant_type = "germline"),
-      EnrichedSNV(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "33333", variant_type = "somatic"),
 
       EnrichedSNV(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", aliquot_id = "11111", variant_type = "germline"),
-
-      // Only exomiser struct
-      EnrichedSNV(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", aliquot_id = "11111", variant_type = "somatic"),
     ).toDF()
 
-    val result = job.variantsWithDonors(variantsWithoutDonors, occurrences)
+    val somaticOccurrences = Seq(
+      EnrichedSNVSomatic(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "33333", variant_type = "somatic", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", aliquot_id = "33333", variant_type = "somatic", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
+
+      EnrichedSNVSomatic(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", aliquot_id = "11111", variant_type = "somatic", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO"))
+    ).toDF()
+
+    // Mimic what is done in transformSingle method before calling variantsWithDonors()
+    val allOccurrences = germlineOccurrences
+      .unionByName(somaticOccurrences, allowMissingColumns = true)
+      .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
+
+
+    val result = job.variantsWithDonors(variantsWithoutDonors, allOccurrences)
 
     val expected = Seq(
       EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", variant_type = Set("germline", "somatic"),
-        donors = List(DONORS(aliquot_id = "11111", variant_type = "germline"), DONORS(aliquot_id = "22222", variant_type = "germline"), DONORS(aliquot_id = "33333", variant_type = "somatic"))),
+        donors = List(
+          DONORS(aliquot_id = "11111", variant_type = "germline", bioinfo_analysis_code = "GEAN", all_analyses = None),
+          DONORS(aliquot_id = "22222", variant_type = "germline", bioinfo_analysis_code = "GEAN", all_analyses = None),
+          DONORS(aliquot_id = "33333", variant_type = "somatic", bioinfo_analysis_code = "TEBA", all_analyses = Some(Set("TO", "TN"))),
+          DONORS(aliquot_id = "33333", variant_type = "somatic", bioinfo_analysis_code = "TNEBA", all_analyses = Some(Set("TO", "TN")))
+        )),
       EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", variant_type = Set("germline"),
-        donors = List(DONORS(aliquot_id = "11111", variant_type = "germline"))),
+        donors = List(
+          DONORS(aliquot_id = "11111", variant_type = "germline", bioinfo_analysis_code = "GEAN", all_analyses = None)
+        )),
       EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", variant_type = Set("somatic"),
-        donors = List(DONORS(aliquot_id = "11111", variant_type = "somatic"))),
-    ).toDF().selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type").collect()
+        donors = List(
+          DONORS(aliquot_id = "11111", variant_type = "somatic", bioinfo_analysis_code = "TEBA", all_analyses = Some(Set("TO")))
+        )),
+    ).toDF()
+      .selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type", $"donors.bioinfo_analysis_code", $"donors.all_analyses")
+      .collect()
 
     result
-      .selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type")
+      .selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type", $"donors.bioinfo_analysis_code", $"donors.all_analyses")
       .collect() should contain theSameElementsAs expected
   }
 

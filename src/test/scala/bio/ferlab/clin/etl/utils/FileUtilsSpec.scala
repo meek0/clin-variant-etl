@@ -1,73 +1,43 @@
 package bio.ferlab.clin.etl.utils
 
-import bio.ferlab.clin.etl.utils.FileUtils.filesUrlFromDF
-import bio.ferlab.clin.model._
-import bio.ferlab.datalake.testutils.SparkSpec
+import bio.ferlab.clin.etl.fhir.GenomicFile.EXOMISER
+import bio.ferlab.clin.etl.utils.FileUtils.fileUrls
+import bio.ferlab.clin.model.enriched.EnrichedClinical
+import bio.ferlab.clin.testutils.WithTestConfig
+import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.spark3.loader.LoadResolver
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec}
 
-class FileUtilsSpec extends SparkSpec {
+class FileUtilsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll {
 
   import spark.implicits._
 
-  "filesUrlFromDF" should "return list of expectd urls for a given batch id" in {
-    val tasks = Seq(
-      TaskOutput(
-        batch_id = "B1",
-        experiment = EXPERIMENT(name = "B1"),
-        documents = List(
-          DOCUMENTS(id = "exo1", document_type = "EXOMISER"), //Should be included
-          DOCUMENTS(id = "exo2", document_type = "EXOMISER"), //Should be included
-          DOCUMENTS(id = "snv3", document_type = "SNV") //Should be excluded because wrong data type
-        )
-      ),
-      TaskOutput(
-        batch_id = "B1",
-        experiment = EXPERIMENT(name = "B1"),
-        documents = List(
-          DOCUMENTS(id = "exo3", document_type = "EXOMISER"), //Should be included
-          DOCUMENTS(id = "exo4", document_type = "EXOMISER") //Should be excluded because of missing format in associated document
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
-        )
-      ),
-      TaskOutput(
-        batch_id = "B2",
-        experiment = EXPERIMENT(name = "B2"),
-        documents = List(
-          DOCUMENTS(id = "exo5", document_type = "EXOMISER") //Should be excluded because wrong batch
-        )
-      ),
+  val clinicalDf = Seq(
+    EnrichedClinical(`batch_id` = "B1", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `aliquot_id` = "1", `specimen_id` = "1", `exomiser_urls` = Some(Set("s3a://file1.tsv", "s3a://file2.tsv", "s3a://file2b.tsv")), `covgene_urls` = Some(Set("s3a://file3covgene.csv"))),
+    EnrichedClinical(`batch_id` = "B1", `patient_id` = "PA0001", `service_request_id` = "SRS0002", `aliquot_id` = "2", `specimen_id` = "2", `exomiser_urls` = Some(Set("s3a://file3.tsv")), `covgene_urls` = Some(Set("s3a://file4covgene.csv"))),
+    EnrichedClinical(`batch_id` = "B2", `patient_id` = "PA0002", `service_request_id` = "SRS0003", `aliquot_id` = "3", `specimen_id` = "3", `exomiser_urls` = Some(Set("s3a://file5.tsv")), `covgene_urls` = None),
+  ).toDF()
 
-    ).toDF
+  override val dbToCreate: List[String] = List(enriched_clinical.table.get.database)
+  override val dsToClean: List[DatasetConf] = List(enriched_clinical)
 
-    val documents = Seq(
-      DocumentReferenceOutput(id = "exo1", contents = List(
-        Content(s3_url = "s3a://file1.tsv", format = "TSV"), //Should be included
-        Content(s3_url = "s3a://file1.json", format = "JSON")
-      )),
-      DocumentReferenceOutput(id = "exo2", contents = List(
-        Content(s3_url = "s3a://file2.tsv", format = "TSV"), //Should be included
-        Content(s3_url = "s3a://file2b.tsv", format = "TSV") //Should be included
-      ))
-      ,
-      DocumentReferenceOutput(id = "snv3", `type` = "SNV", contents = List(
-        Content(s3_url = "s3a://file3snv.tsv", format = "TSV") //Should be excluded, wrong data type (SNV)
-      )),
-      DocumentReferenceOutput(id = "exo3", contents = List(
-        Content(s3_url = "s3a://file3.tsv", format = "TSV") //Should be included
-      )),
-      DocumentReferenceOutput(id = "exo4", `type` = "SNV", contents = List(
-        Content(s3_url = "s3a://file4.json", format = "JSON") //Should be excluded, wrong format
-      )),
-      DocumentReferenceOutput(id = "exo5", `type` = "SNV", contents = List(
-        Content(s3_url = "s3a://file5.tsv", format = "TSV") //Should be excluded, wrong batch
-      )),
-    ).toDF()
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    LoadResolver
+      .write(spark, conf)(enriched_clinical.format -> enriched_clinical.loadtype)
+      .apply(enriched_clinical, clinicalDf)
+  }
 
-    val results = filesUrlFromDF(tasks = tasks, documentReferences = documents, batchId = "B1", dataType = "EXOMISER", format = "TSV")
+
+  "fileUrls" should "return list of expected urls for a given batch id and file type" in {
+    val results = fileUrls(batchId = "B1", file = EXOMISER)
     results should contain theSameElementsAs Seq(
-      FileInfo("s3a://file1.tsv", "16868", "438787", "440171", "SR0095"),
-      FileInfo("s3a://file2.tsv", "16868", "438787", "440171", "SR0095"),
-      FileInfo("s3a://file2b.tsv", "16868", "438787", "440171", "SR0095"),
-      FileInfo("s3a://file3.tsv", "16868", "438787", "440171", "SR0095")
+      FileInfo(url = "s3a://file1.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", service_request_id = "SRS0001"),
+      FileInfo(url = "s3a://file2.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", service_request_id = "SRS0001"),
+      FileInfo(url = "s3a://file2b.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", service_request_id = "SRS0001"),
+      FileInfo(url = "s3a://file3.tsv", aliquot_id = "2", patient_id = "PA0001", specimen_id = "2", service_request_id = "SRS0002"),
     )
 
   }

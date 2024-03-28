@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_SNV_Somatic_Input
-import bio.ferlab.clin.etl.normalized.SNVSomaticTumorOnly.{addRareVariantColumn, getSNV}
+import bio.ferlab.clin.etl.normalized.SNVSomatic.{addRareVariantColumn, getSNV}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -13,10 +13,11 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
+case class SNVSomatic(rc: DeprecatedRuntimeETLContext, batchId: String) extends Occurrences(rc, batchId) {
 
-  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic_tumor_only")
-  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
+  override val mainDestination: DatasetConf = conf.getDataset("normalized_snv_somatic")
+  override val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv") // default source
+
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
@@ -32,10 +33,12 @@ case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext, batchId: String)
 
     val inputVCF = if (data(raw_variant_calling.id).isEmpty) Seq.empty[VCF_SNV_Somatic_Input].toDF else data(raw_variant_calling.id).where(col("contigName").isin(validContigNames: _*))
 
-    val joinedRelation: DataFrame = getClinicalRelation(data)
+    val clinicalDf: DataFrame = data(enriched_clinical.id)
+      .where($"batch_id" === batchId)
+      .drop("batch_id")
 
     val occurrences = getSNV(inputVCF, batchId)
-      .join(broadcast(joinedRelation), Seq("aliquot_id"), "inner")
+      .join(broadcast(clinicalDf), Seq("aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(
         Seq(
@@ -72,10 +75,8 @@ case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext, batchId: String)
       .filter(col("has_alt"))
       .persist()
 
-    val occurrencesWithParentAliquotIds = joinWithParentAliquotIds(occurrences, joinedRelation)
-
     val hcFilter = col("is_rare")
-    addRareVariantColumn(occurrencesWithParentAliquotIds, data(rare_variants.id))
+    addRareVariantColumn(occurrences, data(rare_variants.id))
       .withCompoundHeterozygous(additionalFilter = Some(hcFilter))
       .drop("symbols", "is_rare")
 
@@ -86,7 +87,7 @@ case class SNVSomaticTumorOnly(rc: DeprecatedRuntimeETLContext, batchId: String)
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
-object SNVSomaticTumorOnly {
+object SNVSomatic {
   /**
    * This column is used to adjust the genotype of a variant. It considers the following rules:
    * - If the variant is HOM or HET and the AD_ALT is less than 3, then the genotype is set to -1/-1
@@ -152,7 +153,7 @@ object SNVSomaticTumorOnly {
 
   @main
   def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
-    SNVSomaticTumorOnly(rc, batch.id).run()
+    SNVSomatic(rc, batch.id).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

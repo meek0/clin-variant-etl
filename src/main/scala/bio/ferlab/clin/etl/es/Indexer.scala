@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.es
 
 import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, DatasetConf, SimpleConfiguration}
 import bio.ferlab.datalake.spark3.elasticsearch.{ElasticSearchClient, Indexer}
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import pureconfig.generic.auto._
@@ -57,7 +58,7 @@ object Indexer extends App {
     case "coverage_by_gene_centric" => conf.getDataset("es_index_coverage_by_gene_centric")
   }
 
-  val df: DataFrame = spark.table(s"${ds.table.get.database}.${ds.table.get.name}_${release_id}")
+  val df: DataFrame = ds.read
 
   new Indexer("index", s"templates/$templateFileName", s"${alias}_$release_id")
     .run(df)

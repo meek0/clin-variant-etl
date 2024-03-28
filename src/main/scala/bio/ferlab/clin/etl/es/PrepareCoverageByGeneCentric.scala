@@ -1,14 +1,14 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.etl.mainutils.Release
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
 
 import java.time.LocalDateTime
 
-case class PrepareCoverageByGeneCentric(rc: DeprecatedRuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId) {
+case class PrepareCoverageByGeneCentric(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_coverage_by_gene_centric")
   val enriched_coverage_by_gene: DatasetConf = conf.getDataset("enriched_coverage_by_gene")
@@ -31,8 +31,8 @@ case class PrepareCoverageByGeneCentric(rc: DeprecatedRuntimeETLContext, release
 
 object PrepareCoverageByGeneCentric {
   @main
-  def run(rc: DeprecatedRuntimeETLContext, release: Release): Unit = {
-    PrepareCoverageByGeneCentric(rc, release.id).run()
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+    PrepareCoverageByGeneCentric(rc).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

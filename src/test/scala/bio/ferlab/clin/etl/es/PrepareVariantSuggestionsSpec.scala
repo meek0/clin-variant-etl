@@ -20,7 +20,7 @@ class PrepareVariantSuggestionsSpec extends SparkSpec with WithTestConfig {
 
   "transform PrepareVariantSuggestions" should "produce suggestions for variants" in {
 
-    val result = PrepareVariantSuggestions(DeprecatedTestETLContext(), "re_000").transformSingle(data)
+    val result = PrepareVariantSuggestions(DeprecatedTestETLContext()).transformSingle(data)
 
     result.as[VariantSuggestionsOutput].collect().head shouldBe VariantSuggestionsOutput()
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VariantSuggestionsOutput", result, "src/test/scala/")

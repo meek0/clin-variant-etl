@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.clin.etl.mainutils.Release
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, functions}
 
 import java.time.LocalDateTime
 
-case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext, releaseId: String) extends PrepareCentric(rc, releaseId){
+case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_gene_suggestions")
   val es_index_gene_centric: DatasetConf = conf.getDataset("es_index_gene_centric")
@@ -21,10 +21,7 @@ case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext, releaseId: St
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
-      es_index_gene_centric.id ->
-        es_index_gene_centric
-          .copy(table = es_index_gene_centric.table.map(t => t.copy(name = s"${t.name}_$releaseId")))
-          .read
+      es_index_gene_centric.id -> es_index_gene_centric.read
     )
   }
 
@@ -66,8 +63,8 @@ case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext, releaseId: St
 
 object PrepareGeneSuggestions {
   @main
-  def run(rc: DeprecatedRuntimeETLContext, release: Release): Unit = {
-    PrepareGeneSuggestions(rc, release.id).run()
+  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+    PrepareGeneSuggestions(rc).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

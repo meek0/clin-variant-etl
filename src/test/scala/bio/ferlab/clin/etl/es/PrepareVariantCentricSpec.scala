@@ -47,7 +47,7 @@ class PrepareVariantCentricSpec extends SparkSpec with WithTestConfig with Creat
   }
 
   "run" should "produce parquet files in the right format" in {
-    val job = PrepareVariantCentric(DeprecatedTestETLContext(), "re_000")
+    val job = PrepareVariantCentric(DeprecatedTestETLContext())
 
     val result = job.transformSingle(data)
     result.count() shouldBe 2

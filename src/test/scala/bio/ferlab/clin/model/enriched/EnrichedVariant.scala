@@ -99,7 +99,8 @@ case class DONORS(`dp`: Int = 1,
                   `is_possibly_hc`: Boolean = false,
                   `exomiser`: Option[EXOMISER] = Some(EXOMISER()),
                   `exomiser_other_moi`: Option[EXOMISER_OTHER_MOI] = Some(EXOMISER_OTHER_MOI()),
-                  `franklin_combined_score`: Option[Double] = Some(0.0036969461275872164))
+                  `franklin_combined_score`: Option[Double] = Some(0.0036969461275872164),
+                  `all_analyses`: Option[Set[String]] = None)
 
 case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFreq(3446, 5008, 0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),

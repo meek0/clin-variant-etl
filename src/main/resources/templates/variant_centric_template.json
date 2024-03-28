@@ -525,6 +525,9 @@
             },
             "franklin_combined_score": {
               "type": "double"
+            },
+            "all_analyses": {
+              "type": "keyword"
             }
           }
         },

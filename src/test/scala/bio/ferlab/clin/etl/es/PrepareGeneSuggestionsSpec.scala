@@ -23,7 +23,7 @@ class PrepareGeneSuggestionsSpec extends SparkSpec with WithTestConfig {
 
   "transform PrepareGeneSuggestions" should "produce suggestions for genes" in {
 
-    val result = PrepareGeneSuggestions(DeprecatedTestETLContext(), "re_000").transformSingle(data)
+    val result = PrepareGeneSuggestions(DeprecatedTestETLContext()).transformSingle(data)
 
     result.as[GeneSuggestionsOutput].collect() should contain allElementsOf Seq(
       GeneSuggestionsOutput(symbol = "OR4F4", `chromosome` = null, `ensembl_gene_id` = null, suggestion_id = "63592aea532cb1c022cbc13ea463513df18baf57", `suggest` = List(SUGGEST(4, List("OR4F4")), SUGGEST(2, List()))),

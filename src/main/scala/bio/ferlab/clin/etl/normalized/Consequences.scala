@@ -20,28 +20,12 @@ case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extend
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
-  val raw_variant_calling_somatic_tumor_only: DatasetConf = conf.getDataset("raw_snv_somatic_tumor_only")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
-      raw_variant_calling_somatic_tumor_only.id -> vcf(raw_variant_calling_somatic_tumor_only.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
     )
-  }
-
-  private def getVCF(data: Map[String, DataFrame]) = {
-
-    val vcfGermline = data(raw_variant_calling.id)
-    val vcfSomaticTumorOnly = data(raw_variant_calling_somatic_tumor_only.id)
-
-    if (!vcfGermline.isEmpty) {
-      vcfGermline.where(col("contigName").isin(validContigNames: _*))
-    } else if (!vcfSomaticTumorOnly.isEmpty) {
-      vcfSomaticTumorOnly.where(col("contigName").isin(validContigNames: _*))
-    } else {
-      throw new Exception("Not valid raw VCF available")
-    }
   }
 
   override def transformSingle(data: Map[String, DataFrame],
@@ -49,7 +33,9 @@ case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extend
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
 
-    val inputVCF = getVCF(data)
+    if(data(raw_variant_calling.id).isEmpty) throw new Exception("Not valid raw VCF available")
+
+    val inputVCF = data(raw_variant_calling.id).where(col("contigName").isin(validContigNames: _*))
 
     val df = inputVCF
       .select(

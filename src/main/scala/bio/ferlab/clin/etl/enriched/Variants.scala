@@ -24,7 +24,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   override val mainDestination: DatasetConf = conf.getDataset("enriched_variants")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val snv: DatasetConf = conf.getDataset("enriched_snv")
-  val snv_somatic_tumor_only: DatasetConf = conf.getDataset("enriched_snv_somatic_tumor_only")
+  val snv_somatic: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
@@ -45,7 +45,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
     Map(
       normalized_variants.id -> normalized_variants.read,
       snv.id -> snv.read,
-      snv_somatic_tumor_only.id -> snv_somatic_tumor_only.read,
+      snv_somatic.id -> snv_somatic.read,
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_constraint.id -> gnomad_constraint.read,
@@ -66,7 +66,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minDateTime,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
-    val occurrences = data(snv.id).unionByName(data(snv_somatic_tumor_only.id), allowMissingColumns = true)
+    val occurrences = data(snv.id).unionByName(data(snv_somatic.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
 
     val pnOccurrences = data(snv.id)

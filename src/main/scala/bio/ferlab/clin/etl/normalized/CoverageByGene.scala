@@ -1,8 +1,9 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.fhir.GenomicFile.COVGENE
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.RawCoverageByGene
-import bio.ferlab.clin.etl.utils.FileUtils
+import bio.ferlab.clin.etl.utils.{FileInfo, FileUtils}
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castDouble, castFloat, castInt}
@@ -20,7 +21,7 @@ case class CoverageByGene(rc: DeprecatedRuntimeETLContext, batchId: String) exte
 
   override def extract(lastRunDateTime: LocalDateTime,
                        currentRunDateTime: LocalDateTime): Map[String, DataFrame] = {
-    val coverageByGeneFiles = FileUtils.filesUrl(batchId, "COVGENE", "CSV")
+    val coverageByGeneFiles: Set[FileInfo] = FileUtils.fileUrls(batchId, COVGENE)
 
     Map(
       raw_coverage_by_gene.id -> {

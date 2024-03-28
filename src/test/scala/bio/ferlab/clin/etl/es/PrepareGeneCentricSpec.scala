@@ -40,7 +40,7 @@ class PrepareGeneCentricSpec extends SparkSpec with WithTestConfig {
   )
 
   "Gene_centric transform" should "return data as GeneCentricOutput" in {
-    val result = PrepareGeneCentric(DeprecatedTestETLContext(), "re_000").transformSingle(data)
+    val result = PrepareGeneCentric(DeprecatedTestETLContext()).transformSingle(data)
     result.columns should contain allElementsOf Seq("hash")
     result.as[GeneCentricOutput].collect() should contain allElementsOf Seq(
       GeneCentricOutput(symbol = "OR4F4", `entrez_gene_id` = 0, `omim_gene_id` = null, `hgnc` = null, `ensembl_gene_id` = null, `location` = null, name= null, `alias` = List(), `biotype` = null, `orphanet` = null,hpo=null,`omim` = null, chromosome=null, ddd=null, cosmic=null, `number_of_patients_snvs` = 2, `number_of_patients_cnvs` = 1, `number_of_snvs_per_patient` = List(VARIANT_PER_PATIENT("PA0002", 1), VARIANT_PER_PATIENT("PA0001", 1)), `number_of_cnvs_per_patient` = List(VARIANT_PER_PATIENT("PA0001", 1)), hash="63592aea532cb1c022cbc13ea463513df18baf57"),

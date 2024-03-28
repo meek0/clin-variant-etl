@@ -2,8 +2,9 @@ package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.etl.fhir.FhirToNormalizedETL.getSchema
 import bio.ferlab.clin.model._
+import bio.ferlab.clin.model.normalized.fhir.{NormalizedClinicalImpression, NormalizedDocumentReference, NormalizedFamily, NormalizedObservation, NormalizedOrganization, NormalizedPatient, NormalizedPractitioner, NormalizedPractitionerRole, NormalizedServiceRequest, NormalizedSpecimen, NormalizedTask}
 import bio.ferlab.clin.testutils.WithTestConfig
-import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
+import bio.ferlab.datalake.testutils.{DeprecatedTestETLContext, SparkSpec}
 import org.apache.spark.sql.functions._
 
 class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
@@ -18,8 +19,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 7
-    val head = output.where(col("id") === "CI0005").as[ClinicalImpressionOutput].head()
-    head shouldBe ClinicalImpressionOutput()
+    val head = output.where(col("id") === "CI0005").as[NormalizedClinicalImpression].head()
+    head shouldBe NormalizedClinicalImpression()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
@@ -35,8 +36,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 4
-    val head = output.where("id='OB00001'").as[ObservationOutput].head()
-    head shouldBe ObservationOutput()
+    val head = output.where("id='OB00001'").as[NormalizedObservation].head()
+    head shouldBe NormalizedObservation()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
@@ -52,8 +53,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 8
-    val head = output.where("id='CHUSJ'").as[OrganizationOutput].head()
-    head shouldBe OrganizationOutput()
+    val head = output.where("id='CHUSJ'").as[NormalizedOrganization].head()
+    head shouldBe NormalizedOrganization()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
@@ -68,8 +69,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 3
-    val head = output.where("id='PA00004'").as[PatientOutput].head()
-    head shouldBe PatientOutput()
+    val head = output.where("id='PA00004'").as[NormalizedPatient].head()
+    head shouldBe NormalizedPatient()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
@@ -84,8 +85,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 2
-    val head = output.where("id='PR00101'").as[PractitionerOutput].head()
-    head shouldBe PractitionerOutput()
+    val head = output.where("id='PR00101'").as[NormalizedPractitioner].head()
+    head shouldBe NormalizedPractitioner()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
@@ -100,8 +101,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val output = job.transformSingle(Map(inputDs.id -> inputDf))
 
     output.count() shouldBe 2
-    val head = output.where("id='PRR00101'").as[PractitionerRoleOutput].head()
-    head shouldBe PractitionerRoleOutput()
+    val head = output.where("id='PRR00101'").as[NormalizedPractitionerRole].head()
+    head shouldBe NormalizedPractitionerRole()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
@@ -116,12 +117,12 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
 
     result.count() shouldBe 2
-    val analysisServiceRequest = result.where("id='2908'").as[ServiceRequestOutput].head()
-    analysisServiceRequest shouldBe ServiceRequestOutput()
+    val analysisServiceRequest = result.where("id='2908'").as[NormalizedServiceRequest].head()
+    analysisServiceRequest shouldBe NormalizedServiceRequest()
       .copy(`ingestion_file_name` = analysisServiceRequest.`ingestion_file_name`, `ingested_on` = analysisServiceRequest.`ingested_on`,
         `updated_on` = analysisServiceRequest.`updated_on`, `created_on` = analysisServiceRequest.`created_on`, `note` = analysisServiceRequest.`note`)
-    val sequencingServiceRequest = result.where("id='2916'").as[ServiceRequestOutput].head()
-    sequencingServiceRequest shouldBe ServiceRequestOutput(id = "2916",
+    val sequencingServiceRequest = result.where("id='2916'").as[NormalizedServiceRequest].head()
+    sequencingServiceRequest shouldBe NormalizedServiceRequest(id = "2916",
       `ingestion_file_name` = analysisServiceRequest.`ingestion_file_name`, `ingested_on` = analysisServiceRequest.`ingested_on`,
       `updated_on` = analysisServiceRequest.`updated_on`, `created_on` = analysisServiceRequest.`created_on`, `note` = analysisServiceRequest.`note`,
       `specimens` = Some(List("2923", "2924")), patient_id = "2919", family = None, `clinical_impressions` = None,
@@ -139,26 +140,26 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
 
     result.count() shouldBe 7
 
-    val proband = result.where("patient_id='2909'").as[FamilyOutput].head()
-    proband shouldBe FamilyOutput()
+    val proband = result.where("patient_id='2909'").as[NormalizedFamily].head()
+    proband shouldBe NormalizedFamily()
 
-    val brother = result.where("patient_id='2923'").as[FamilyOutput].head()
-    brother shouldBe FamilyOutput(patient_id = "2923")
+    val brother = result.where("patient_id='2923'").as[NormalizedFamily].head()
+    brother shouldBe NormalizedFamily(patient_id = "2923")
 
-    val sister1 = result.where("patient_id='2921'").as[FamilyOutput].head()
-    sister1 shouldBe FamilyOutput(patient_id = "2921")
+    val sister1 = result.where("patient_id='2921'").as[NormalizedFamily].head()
+    sister1 shouldBe NormalizedFamily(patient_id = "2921")
 
-    val sister2 = result.where("patient_id='2922'").as[FamilyOutput].head()
-    sister2 shouldBe FamilyOutput(patient_id = "2922")
+    val sister2 = result.where("patient_id='2922'").as[NormalizedFamily].head()
+    sister2 shouldBe NormalizedFamily(patient_id = "2922")
 
-    val mother = result.where("patient_id='2919'").as[FamilyOutput].head()
-    mother shouldBe FamilyOutput(patient_id = "2919", family = None)
+    val mother = result.where("patient_id='2919'").as[NormalizedFamily].head()
+    mother shouldBe NormalizedFamily(patient_id = "2919", family = None)
 
-    val father = result.where("patient_id='2920'").as[FamilyOutput].head()
-    father shouldBe FamilyOutput(patient_id = "2920", family = None)
+    val father = result.where("patient_id='2920'").as[NormalizedFamily].head()
+    father shouldBe NormalizedFamily(patient_id = "2920", family = None)
 
-    val probandOnly = result.where("patient_id='3000'").as[FamilyOutput].head()
-    probandOnly shouldBe FamilyOutput(patient_id = "3000", family_id = None, family = None, analysis_service_request_id = "2916")
+    val probandOnly = result.where("patient_id='3000'").as[NormalizedFamily].head()
+    probandOnly shouldBe NormalizedFamily(patient_id = "3000", family_id = None, family = None, analysis_service_request_id = "2916")
 
   }
 
@@ -172,8 +173,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
 
     result.count() shouldBe 7
-    val head = result.where("id='134658'").as[SpecimenOutput].collect().head
-    head shouldBe SpecimenOutput()
+    val head = result.where("id='134658'").as[NormalizedSpecimen].collect().head
+    head shouldBe NormalizedSpecimen()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `received_time` = head.`received_time`)
 
@@ -189,8 +190,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val result = job.transformSingle(Map(inputDs.id -> inputDf)).where("id='109351'")
 
     result.count() shouldBe 1
-    val head = result.as[TaskOutput].collect().head
-    head shouldBe TaskOutput()
+    val head = result.as[NormalizedTask].collect().head
+    head shouldBe NormalizedTask()
       .copy(`ingestion_file_name` = s"file://$inputPath", `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `authored_on` = head.`authored_on`)
   }
@@ -203,8 +204,8 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val job = FhirToNormalizedETL(DeprecatedTestETLContext(), src, dst, mapping)
     val result = job.transformSingle(Map(inputDs.id -> inputDf))
     result.count() shouldBe 1
-    val head = result.as[DocumentReferenceOutput].collect().head
-    head shouldBe DocumentReferenceOutput()
+    val head = result.as[NormalizedDocumentReference].collect().head
+    head shouldBe NormalizedDocumentReference()
       .copy(ingestion_file_name = s"file://$inputPath", `ingested_on` = head.`ingested_on`, `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 

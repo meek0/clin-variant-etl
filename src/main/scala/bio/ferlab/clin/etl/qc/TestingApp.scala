@@ -7,8 +7,6 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 trait TestingApp extends App {
   lazy val database = args(0)
 
-  lazy val release_id = if (args.length == 2) args(1) else ""
-
   lazy val spark: SparkSession =
     SparkSession
       .builder
@@ -17,11 +15,11 @@ trait TestingApp extends App {
       .appName("TestingApp")
       .getOrCreate()
 
-  lazy val cnv_centric = spark.table(s"cnv_centric_$release_id")
-  lazy val gene_centric = spark.table(s"gene_centric_$release_id")
+  lazy val cnv_centric = spark.table(s"cnv_centric")
+  lazy val gene_centric = spark.table(s"gene_centric")
   lazy val normalized_snv: DataFrame = spark.table("normalized_snv")
   lazy val normalized_variants: DataFrame = spark.table("normalized_variants")
-  lazy val variant_centric = spark.table(s"variant_centric_$release_id")
+  lazy val variant_centric = spark.table(s"variant_centric")
   lazy val variants: DataFrame = spark.table("variants")
 
   lazy val gnomad_genomes_v2_1_1: DataFrame = spark.table("gnomad_genomes_v2_1_1")
@@ -43,17 +41,17 @@ trait TestingApp extends App {
   lazy val normalized_consequences: DataFrame = spark.table("normalized_consequences")
   lazy val normalized_panels: DataFrame = spark.table("normalized_panels")
   lazy val normalized_exomiser: DataFrame = spark.table("normalized_exomiser")
-  lazy val normalized_snv_somatic_tumor_only: DataFrame = spark.table("normalized_snv_somatic_tumor_only")
+  lazy val normalized_snv_somatic: DataFrame = spark.table("normalized_snv_somatic")
   lazy val normalized_cnv_somatic_tumor_only: DataFrame = spark.table("normalized_cnv_somatic_tumor_only")
   lazy val normalized_coverage_by_gene: DataFrame = spark.table("normalized_coverage_by_gene")
-  lazy val snv_somatic_tumor_only: DataFrame = spark.table("snv_somatic_tumor_only")
+  lazy val snv_somatic: DataFrame = spark.table("snv_somatic")
   lazy val snv: DataFrame = spark.table("snv")
   lazy val cnv: DataFrame = spark.table("cnv")
   lazy val consequences: DataFrame = spark.table("consequences")
   lazy val coverage_by_gene: DataFrame = spark.table("coverage_by_gene")
-  lazy val gene_suggestions: DataFrame = spark.table(s"gene_suggestions_$release_id")
-  lazy val variant_suggestions: DataFrame = spark.table(s"variant_suggestions_$release_id")
-  lazy val coverage_by_gene_centric: DataFrame = spark.table(s"coverage_by_gene_centric_$release_id")
+  lazy val gene_suggestions: DataFrame = spark.table(s"gene_suggestions")
+  lazy val variant_suggestions: DataFrame = spark.table(s"variant_suggestions")
+  lazy val coverage_by_gene_centric: DataFrame = spark.table(s"coverage_by_gene_centric")
   lazy val thousand_genomes: DataFrame = spark.table("1000_genomes")
   lazy val clinvar: DataFrame = spark.table("clinvar")
   lazy val cosmic_gene_set: DataFrame = spark.table("cosmic_gene_set")

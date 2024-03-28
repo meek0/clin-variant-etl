@@ -17,7 +17,7 @@ class PrepareCnvCentricSpec extends SparkSpec with WithTestConfig {
 
   "Cnv_centric transform" should "return data as CnvCentricOutput" in {
 
-    val result = PrepareCnvCentric(DeprecatedTestETLContext(), "re_000").transformSingle(data);
+    val result = PrepareCnvCentric(DeprecatedTestETLContext()).transformSingle(data);
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "CnvCentricOutput", result, "src/test/scala/")
 
     result.count() shouldBe 2

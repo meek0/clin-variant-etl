@@ -18,7 +18,7 @@ class PrepareCoverageByGeneCentricSpec extends SparkSpec with WithTestConfig {
 
   "coverage_by_gene_centric transform" should "return data as CoverageByGeneCentricOutput" in {
 
-    val result = PrepareCoverageByGeneCentric(DeprecatedTestETLContext(), "re_000").transformSingle(data);
+    val result = PrepareCoverageByGeneCentric(DeprecatedTestETLContext()).transformSingle(data);
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "CnvCentricOutput", result, "src/test/scala/")
 
     result.count() shouldBe 2
