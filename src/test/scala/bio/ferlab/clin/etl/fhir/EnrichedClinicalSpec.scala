@@ -274,94 +274,95 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
   val specimenDf: DataFrame = Seq(
     // 1. Trio
-    NormalizedSpecimen(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_0001"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = None, `specimen_id` = Some("SP_0001")),
-    NormalizedSpecimen(`patient_id` = "PA0002", `service_request_id` = "SRS0002", `sample_id` = Some("SA_0002"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0002", `service_request_id` = "SRS0002", `sample_id` = None, `specimen_id` = Some("SP_0002")),
-    NormalizedSpecimen(`patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = Some("SA_0003"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = None, `specimen_id` = Some("SP_0003")),
+    NormalizedSpecimen(`id` = "1-1", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = Some("SA_0001"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "1-2", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `sample_id` = None, `specimen_id` = Some("SP_0001")),
+    NormalizedSpecimen(`id` = "2-1", `patient_id` = "PA0002", `service_request_id` = "SRS0002", `sample_id` = Some("SA_0002"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "2-2", `patient_id` = "PA0002", `service_request_id` = "SRS0002", `sample_id` = None, `specimen_id` = Some("SP_0002")),
+    NormalizedSpecimen(`id` = "3-1", `patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = Some("SA_0003"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "3-2", `patient_id` = "PA0003", `service_request_id` = "SRS0003", `sample_id` = None, `specimen_id` = Some("SP_0003")),
 
     // 2. Trio+
-    NormalizedSpecimen(`patient_id` = "PA0004", `service_request_id` = "SRS0004", `sample_id` = Some("SA_0004"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0004", `service_request_id` = "SRS0004", `sample_id` = None, `specimen_id` = Some("SP_0004")),
-    NormalizedSpecimen(`patient_id` = "PA0005", `service_request_id` = "SRS0005", `sample_id` = Some("SA_0005"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0005", `service_request_id` = "SRS0005", `sample_id` = None, `specimen_id` = Some("SP_0005")),
-    NormalizedSpecimen(`patient_id` = "PA0006", `service_request_id` = "SRS0006", `sample_id` = Some("SA_0006"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0006", `service_request_id` = "SRS0006", `sample_id` = None, `specimen_id` = Some("SP_0006")),
-    NormalizedSpecimen(`patient_id` = "PA0007", `service_request_id` = "SRS0007", `sample_id` = Some("SA_0007"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0007", `service_request_id` = "SRS0007", `sample_id` = None, `specimen_id` = Some("SP_0007")),
+    NormalizedSpecimen(`id` = "4-1", `patient_id` = "PA0004", `service_request_id` = "SRS0004", `sample_id` = Some("SA_0004"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "4-2", `patient_id` = "PA0004", `service_request_id` = "SRS0004", `sample_id` = None, `specimen_id` = Some("SP_0004")),
+    NormalizedSpecimen(`id` = "5-1", `patient_id` = "PA0005", `service_request_id` = "SRS0005", `sample_id` = Some("SA_0005"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "5-2", `patient_id` = "PA0005", `service_request_id` = "SRS0005", `sample_id` = None, `specimen_id` = Some("SP_0005")),
+    NormalizedSpecimen(`id` = "6-1", `patient_id` = "PA0006", `service_request_id` = "SRS0006", `sample_id` = Some("SA_0006"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "6-2", `patient_id` = "PA0006", `service_request_id` = "SRS0006", `sample_id` = None, `specimen_id` = Some("SP_0006")),
+    NormalizedSpecimen(`id` = "7-1", `patient_id` = "PA0007", `service_request_id` = "SRS0007", `sample_id` = Some("SA_0007"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "7-2", `patient_id` = "PA0007", `service_request_id` = "SRS0007", `sample_id` = None, `specimen_id` = Some("SP_0007")),
 
     // 3. Incomplete trio
-    NormalizedSpecimen(`patient_id` = "PA0011", `service_request_id` = "SRS0011", `sample_id` = Some("SA_0011"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0011", `service_request_id` = "SRS0011", `sample_id` = None, `specimen_id` = Some("SP_0011")),
-    NormalizedSpecimen(`patient_id` = "PA0022", `service_request_id` = "SRS0022", `sample_id` = Some("SA_0022"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0022", `service_request_id` = "SRS0022", `sample_id` = None, `specimen_id` = Some("SP_0022")),
-    NormalizedSpecimen(`patient_id` = "PA0033", `service_request_id` = "SRS0033", `sample_id` = Some("SA_0033"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0033", `service_request_id` = "SRS0033", `sample_id` = None, `specimen_id` = Some("SP_0033")),
+    NormalizedSpecimen(`id` = "11-1", `patient_id` = "PA0011", `service_request_id` = "SRS0011", `sample_id` = Some("SA_0011"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "11-2", `patient_id` = "PA0011", `service_request_id` = "SRS0011", `sample_id` = None, `specimen_id` = Some("SP_0011")),
+    NormalizedSpecimen(`id` = "22-1", `patient_id` = "PA0022", `service_request_id` = "SRS0022", `sample_id` = Some("SA_0022"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "22-2", `patient_id` = "PA0022", `service_request_id` = "SRS0022", `sample_id` = None, `specimen_id` = Some("SP_0022")),
+    NormalizedSpecimen(`id` = "33-1", `patient_id` = "PA0033", `service_request_id` = "SRS0033", `sample_id` = Some("SA_0033"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "33-2", `patient_id` = "PA0033", `service_request_id` = "SRS0033", `sample_id` = None, `specimen_id` = Some("SP_0033")),
 
     // 4. Same family, two prescriptions
     // 4.1 First prescription: Duo
-    NormalizedSpecimen(`patient_id` = "PA0111", `service_request_id` = "SRS0111", `sample_id` = Some("SA_0111"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0111", `service_request_id` = "SRS0111", `sample_id` = None, `specimen_id` = Some("SP_0111")),
-    NormalizedSpecimen(`patient_id` = "PA0222", `service_request_id` = "SRS0222", `sample_id` = Some("SA_0222"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0222", `service_request_id` = "SRS0222", `sample_id` = None, `specimen_id` = Some("SP_0222")),
+    NormalizedSpecimen(`id` = "111-1", `patient_id` = "PA0111", `service_request_id` = "SRS0111", `sample_id` = Some("SA_0111"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "111-2", `patient_id` = "PA0111", `service_request_id` = "SRS0111", `sample_id` = None, `specimen_id` = Some("SP_0111")),
+    NormalizedSpecimen(`id` = "222-1", `patient_id` = "PA0222", `service_request_id` = "SRS0222", `sample_id` = Some("SA_0222"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "222-2", `patient_id` = "PA0222", `service_request_id` = "SRS0222", `sample_id` = None, `specimen_id` = Some("SP_0222")),
 
     // 4.2 Second prescription: Trio
-    NormalizedSpecimen(`patient_id` = "PA0333", `service_request_id` = "SRS0333", `sample_id` = Some("SA_0333"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0333", `service_request_id` = "SRS0333", `sample_id` = None, `specimen_id` = Some("SP_0333")),
-    NormalizedSpecimen(`patient_id` = "PA0111", `service_request_id` = "SRS0444", `sample_id` = Some("SA_0111"), `specimen_id` = None), // Same sample_id and specimen_id as past sequencing
-    NormalizedSpecimen(`patient_id` = "PA0111", `service_request_id` = "SRS0444", `sample_id` = None, `specimen_id` = Some("SP_0111")),
-    NormalizedSpecimen(`patient_id` = "PA0222", `service_request_id` = "SRS0555", `sample_id` = Some("SA_0555"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA0222", `service_request_id` = "SRS0555", `sample_id` = None, `specimen_id` = Some("SP_0555")),
+    NormalizedSpecimen(`id` = "333-1", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `sample_id` = Some("SA_0333"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "333-2", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `sample_id` = None, `specimen_id` = Some("SP_0333")),
+    NormalizedSpecimen(`id` = "444-1", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `sample_id` = Some("SA_0111"), `specimen_id` = None), // Same sample_id and specimen_id as past sequencing
+    NormalizedSpecimen(`id` = "444-2", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `sample_id` = None, `specimen_id` = Some("SP_0111")),
+    NormalizedSpecimen(`id` = "555-1", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `sample_id` = Some("SA_0555"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "555-2", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `sample_id` = None, `specimen_id` = Some("SP_0555")),
 
     // 5. Solo
     // Tumor only analysis
-    NormalizedSpecimen(`patient_id` = "PA1111", `service_request_id` = "SRS1111", `sample_id` = Some("SA_1111"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA1111", `service_request_id` = "SRS1111", `sample_id` = None, `specimen_id` = Some("SP_1111")),
+    NormalizedSpecimen(`id` = "1111-1", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `sample_id` = Some("SA_1111"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "1111-2", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `sample_id` = None, `specimen_id` = Some("SP_1111")),
     // Germline analysis
-    NormalizedSpecimen(`patient_id` = "PA1111", `service_request_id` = "SRS2222", `sample_id` = Some("SA_2222"), `specimen_id` = None),
-    NormalizedSpecimen(`patient_id` = "PA1111", `service_request_id` = "SRS2222", `sample_id` = None, `specimen_id` = Some("SP_2222")),
+    NormalizedSpecimen(`id` = "2222-1", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `sample_id` = Some("SA_2222"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "2222-2", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `sample_id` = None, `specimen_id` = Some("SP_2222")),
   ).toDF
 
   val documentDf: DataFrame = Seq(
+    // Use any of the 2 fhir specimen ids (one associated with specimen and the other associated with the sample)
     // 1. Trio: Everyone with Covgene and Exomiser
-    NormalizedDocumentReference(patient_id = "PA0001", specimen_id = "SP_0001",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://1.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0001", specimen_id = "SP_0001",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://1.tsv"), Content(format = "JSON", s3_url = "s3a://1.json"))),
-    NormalizedDocumentReference(patient_id = "PA0002", specimen_id = "SP_0002",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://2.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0002", specimen_id = "SP_0002",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://2.tsv"), Content(format = "JSON", s3_url = "s3a://2.json"))),
-    NormalizedDocumentReference(patient_id = "PA0003", specimen_id = "SP_0003",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://3.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0003", specimen_id = "SP_0003",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://3.tsv"), Content(format = "JSON", s3_url = "s3a://3.json"))),
+    NormalizedDocumentReference(patient_id = "PA0001", specimen_id = "1-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://1.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0001", specimen_id = "1-2",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://1.tsv"), Content(format = "JSON", s3_url = "s3a://1.json"))),
+    NormalizedDocumentReference(patient_id = "PA0002", specimen_id = "2-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://2.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0002", specimen_id = "2-2",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://2.tsv"), Content(format = "JSON", s3_url = "s3a://2.json"))),
+    NormalizedDocumentReference(patient_id = "PA0003", specimen_id = "3-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://3.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0003", specimen_id = "3-2",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://3.tsv"), Content(format = "JSON", s3_url = "s3a://3.json"))),
 
     // 2. Trio+: Everyone with Exomiser
-    NormalizedDocumentReference(patient_id = "PA0004", specimen_id = "SP_0004", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://4.tsv"), Content(format = "JSON", s3_url = "s3a://4.json"))),
-    NormalizedDocumentReference(patient_id = "PA0005", specimen_id = "SP_0005", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://5.tsv"), Content(format = "JSON", s3_url = "s3a://5.json"))),
-    NormalizedDocumentReference(patient_id = "PA0006", specimen_id = "SP_0006", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://6.tsv"), Content(format = "JSON", s3_url = "s3a://6.json"))),
-    NormalizedDocumentReference(patient_id = "PA0007", specimen_id = "SP_0007", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://7.tsv"), Content(format = "JSON", s3_url = "s3a://7.json"))),
+    NormalizedDocumentReference(patient_id = "PA0004", specimen_id = "4-1", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://4.tsv"), Content(format = "JSON", s3_url = "s3a://4.json"))),
+    NormalizedDocumentReference(patient_id = "PA0005", specimen_id = "5-2", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://5.tsv"), Content(format = "JSON", s3_url = "s3a://5.json"))),
+    NormalizedDocumentReference(patient_id = "PA0006", specimen_id = "6-1", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://6.tsv"), Content(format = "JSON", s3_url = "s3a://6.json"))),
+    NormalizedDocumentReference(patient_id = "PA0007", specimen_id = "7-2", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://7.tsv"), Content(format = "JSON", s3_url = "s3a://7.json"))),
 
     // 3. Incomplete trio: Multiple Covgene files per specimen
-    NormalizedDocumentReference(patient_id = "PA0011", specimen_id = "SP_0011",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://11-1.csv"), Content(format = "CSV", s3_url = "s3a://11-2.csv"), Content(format = "CSV", s3_url = "s3a://11-3.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0022", specimen_id = "SP_0022",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://22-1.csv"), Content(format = "CSV", s3_url = "s3a://22-2.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0033", specimen_id = "SP_0033",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://33.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0011", specimen_id = "11-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://11-1.csv"), Content(format = "CSV", s3_url = "s3a://11-2.csv"), Content(format = "CSV", s3_url = "s3a://11-3.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0022", specimen_id = "22-2",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://22-1.csv"), Content(format = "CSV", s3_url = "s3a://22-2.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0033", specimen_id = "33-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://33.csv"))),
 
     // 4. Same family, two prescriptions
     // 4.1 First prescription: Duo -- Only SNV files that should not appear in table
-    NormalizedDocumentReference(patient_id = "PA0111", specimen_id = "SP_0111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-1.vcf"))),
-    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "SP_0222", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://222.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA0111", specimen_id = "111-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-1.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "222-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://222.vcf"))),
     // 4.2 Second prescription: Trio -- Mix of files
-    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "SP_0333", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://333.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "SP_0333", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://333.tsv"), Content(format = "JSON", s3_url = "s3a://333.json"))),
-    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "SP_0333", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://333.vcf"))),
-    NormalizedDocumentReference(patient_id = "PA0111", specimen_id = "SP_0111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-2.vcf"))), // Same file as before but in different path
-    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "SP_0555", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://555.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "SP_0555", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://555.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "333-1", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://333.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "333-1", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://333.tsv"), Content(format = "JSON", s3_url = "s3a://333.json"))),
+    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "333-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://333.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA0111", specimen_id = "444-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-2.vcf"))), // Same file as before but in different path
+    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "555-1", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://555.csv"))),
+    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "555-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://555.vcf"))),
 
     // 5. Solo -- Only SNV files that should not appear in table
     // Tumor only analysis
-    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "SP_1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "1111-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111.vcf"))),
     // Germline analysis
-    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "SP_2222", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://2222.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "2222-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://2222.vcf"))),
     // Tumor normal analysis
-    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "SP_1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf"))),
+    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "1111-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf"))),
   ).toDF()
 
   val data: Map[String, DataFrame] = Map(
