@@ -71,12 +71,16 @@ package object dictionary {
     "cnvQual",
     "cnvCopyRatio",
     "LoDFail",
+    "binCount",
+    "segmentMean",
     "null",
   )
 
   val DicCNVType = Seq(
     "GAIN",
     "LOSS",
+    "GAINLOH",
+    "CNLOH",
     "null",
   )
 
@@ -157,6 +161,7 @@ package object dictionary {
     "read_position",
     "multiallelic",
     "long_indel",
+    "low_tlen",
     "null",
   )
 
