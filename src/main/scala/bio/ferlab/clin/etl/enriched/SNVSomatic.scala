@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
+import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
@@ -32,7 +33,10 @@ case class SNVSomatic(rc: DeprecatedRuntimeETLContext, batchId: Option[String]) 
           .as[String]
           .collect()
 
-        val enrichedSnvSomaticDf = if (mainDestination.tableExist) {
+        val fs = FileSystemResolver.resolve(conf.getStorage(mainDestination.storageid).filesystem)
+        val destinationExists = fs.exists(mainDestination.location) && mainDestination.tableExist
+
+        val enrichedSnvSomaticDf = if (destinationExists) {
           mainDestination.read.where($"analysis_service_request_id".isin(analysisServiceRequestIds: _*))
         } else spark.emptyDataFrame
 
