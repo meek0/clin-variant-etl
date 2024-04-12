@@ -127,6 +127,32 @@ package object dictionary {
     "null",
   )
 
+  val DicExoACMGClass = Seq(
+    "BENIGN",
+    "LIKELY_BENIGN",
+    "LIKELY_PATHOGENIC",
+    "PATHOGENIC",
+    "UNCERTAIN_SIGNIFICANCE",
+    "null"
+  )
+
+  val DicExoACMGEviMax = Seq(
+    "PVS1",
+    "PS2",
+    "PM2",
+    "PM3",
+    "PM4",
+    "PP3",
+    "PP4",
+    "PP5",
+    "BA1",
+    "BS4",
+    "BP2",
+    "BP4",
+    "BP6",
+    "null"
+  )
+
   val DicFatherZygosity = Seq(
     "HOM",
     "HEM",
@@ -163,6 +189,38 @@ package object dictionary {
     "long_indel",
     "low_tlen",
     "null",
+  )
+
+  val DicFraACMGClassMax = Seq(
+    "BENIGN",
+    "LIKELY_BENIGN",
+    "LIKELY_PATHOGENIC",
+    "PATHOGENIC",
+    "UNCERTAIN_SIGNIFICANCE",
+    "POSSIBLY_PATHOGENIC_MODERATE",
+    "POSSIBLY_PATHOGENIC_BENIGN",
+    "POSSIBLY_PATHOGENIC_LOW",
+    "POSSIBLY_BENIGN",
+    "null"
+  )
+
+  val DicFraACMGEviMax = Seq(
+    "PVS1",
+    "PS1",
+    "PM1",
+    "PM2",
+    "PM4",
+    "PM5",
+    "PP2",
+    "PP3",
+    "PP5",
+    "BA1",
+    "BS1",
+    "BS2",
+    "BP1",
+    "BP4",
+    "BP6",
+    "null"
   )
 
   val DicGender = Seq(
@@ -390,7 +448,6 @@ package object dictionary {
   )
 
   val DicVariantExternalReference = Seq(
-    "insertion",
     "DBSNP",
     "Clinvar",
     "PubMed",

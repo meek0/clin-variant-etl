@@ -19,7 +19,8 @@ object DictionariesDonors extends TestingApp {
       shouldValuesContainedInDictionary(variant_centric.select(explode($"donors")).select($"col.analysis_code"), DicPanels: _*)("analysis_code"),
       shouldValuesContainedInDictionary(variant_centric.select(explode($"donors")).select($"col.parental_origin"), DicParentalOrigin: _*)("parental_origin"),
       shouldValuesContainedInDictionary(variant_centric.select(explode($"donors")).select($"col.transmission"), DicTransmission: _*)("transmission"),
-      shouldValuesContainedInDictionary(variant_centric.select(explode($"donors")).select($"col.zygosity"), DicZygosity: _*)("zygosity")
+      shouldValuesContainedInDictionary(variant_centric.select(explode($"donors")).select($"col.zygosity"), DicZygosity: _*)("zygosity"),
+      shouldValuesContainedInDictionary(variant_centric.select(explode($"donors")).select($"col.exomiser.acmg_classification"), DicExoACMGClass: _*)("donors.exomiser.acmg_classification")
     )
   }
 }
