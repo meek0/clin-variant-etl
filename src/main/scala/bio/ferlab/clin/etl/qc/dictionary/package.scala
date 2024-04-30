@@ -150,6 +150,9 @@ package object dictionary {
     "BP2",
     "BP4",
     "BP6",
+    "BP4_Moderate",
+    "BP6_Strong",
+    "PP3_Strong",
     "null"
   )
 
@@ -188,6 +191,10 @@ package object dictionary {
     "multiallelic",
     "long_indel",
     "low_tlen",
+    "non_homref_normal",
+    "low_normal_depth",
+    "alt_allele_in_normal",
+    "noisy_normal",
     "null",
   )
 
