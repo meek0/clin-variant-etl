@@ -151,8 +151,11 @@ package object dictionary {
     "BP4",
     "BP6",
     "BP4_Moderate",
+    "BP4_Strong",
     "BP6_Strong",
+    "PP3_Moderate",
     "PP3_Strong",
+    "PP5_Strong",
     "null"
   )
 
