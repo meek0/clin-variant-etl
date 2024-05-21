@@ -4,14 +4,14 @@ import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.TestingApp._
 import org.apache.spark.sql.functions._
 
-object ColumnsContainSameValueVariantCentric extends TestingApp {
+object ColumnsContainNoNullVariantCentric_Donors extends TestingApp {
   run { spark =>
     import spark.implicits._
 
     handleErrors(
-      shouldNotContainSameValue(
-        variant_centric,
-        variant_centric.columns.filterNot(List("variant_type", "assembly_version", "last_annotation_update").contains(_)): _*
+      shouldNotContainNull(
+        variant_centric.select(explode($"donors")).select("col.*"),
+        "patient_id", "aliquot_id", "batch_id", "service_request_id", "organization_id"
       ),
     )
   }
