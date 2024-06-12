@@ -4,8 +4,8 @@
  */
 package bio.ferlab.clin.model.enriched
 
-import bio.ferlab.clin.etl.varsome.{Classification, Publication}
-import bio.ferlab.clin.model.VarsomeOutput.{defaultClassifications, defaultPublications}
+import bio.ferlab.clin.etl.varsome.Classification
+import bio.ferlab.clin.model.VarsomeOutput.defaultClassifications
 import bio.ferlab.clin.model._
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 import bio.ferlab.datalake.testutils.models.enriched._
@@ -35,6 +35,8 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                            `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                            `external_frequencies`: FREQUENCIES = FREQUENCIES(),
+                           `freq_rqdm_tumor_only`: SOMATIC_FREQUENCY = SOMATIC_FREQUENCY(),
+                           `freq_rqdm_tumor_normal`: SOMATIC_FREQUENCY = SOMATIC_FREQUENCY(),
                            `clinvar`: CLINVAR = CLINVAR(),
                            `rsnumber`: String = "rs200676709",
                            `dna_change`: String = "T>C",
@@ -177,4 +179,9 @@ case class EXOMISER_MAX(`variant_score`: Float = 0.6581f,
                         `gene_combined_score`: Float = 1.0f,
                         `moi`: String = "XR",
                         `acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
-                        `acmg_evidence`: Seq[String] = Seq("PP4","BP6"))
+                        `acmg_evidence`: Seq[String] = Seq("PP4", "BP6"))
+
+case class SOMATIC_FREQUENCY(pc: Long = 0,
+                             pn: Long = 0,
+                             pf: Double = 0.0
+                            )

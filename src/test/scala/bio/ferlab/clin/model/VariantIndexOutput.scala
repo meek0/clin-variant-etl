@@ -6,7 +6,7 @@ package bio.ferlab.clin.model
 
 import bio.ferlab.clin.etl.model.normalized.{AMINO_ACIDS, CODONS, EXON, INTRON}
 import bio.ferlab.clin.etl.varsome._
-import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, EXOMISER_MAX, FRANKLIN_MAX, FREQUENCIES, GENES, PREDICTIONS}
+import bio.ferlab.clin.model.enriched.{CLINVAR, CONSERVATIONS, DONORS, EXOMISER_MAX, FRANKLIN_MAX, FREQUENCIES, GENES, PREDICTIONS, SOMATIC_FREQUENCY}
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 
 import java.sql.Date
@@ -35,6 +35,8 @@ case class VariantIndexOutput(`chromosome`: String = "1",
                               `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                               `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                               `external_frequencies`: FREQUENCIES = FREQUENCIES(),
+                              `freq_rqdm_tumor_only`: SOMATIC_FREQUENCY = SOMATIC_FREQUENCY(),
+                              `freq_rqdm_tumor_normal`: SOMATIC_FREQUENCY = SOMATIC_FREQUENCY(),
                               `dna_change`: String = "T>C",
                               `clinvar`: CLINVAR = CLINVAR(),
                               `rsnumber`: String = "rs200676709",

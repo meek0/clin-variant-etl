@@ -799,6 +799,32 @@
             }
           }
         },
+        "freq_rqdm_tumor_only": {
+          "properties": {
+            "pc": {
+              "type": "long"
+            },
+            "pn": {
+              "type": "long"
+            },
+            "pf": {
+              "type": "float"
+            }
+          }
+        },
+        "freq_rqdm_tumor_normal": {
+          "properties": {
+            "pc": {
+              "type": "long"
+            },
+            "pn": {
+              "type": "long"
+            },
+            "pf": {
+              "type": "float"
+            }
+          }
+        },
         "gene_external_reference": {
           "type": "keyword"
         },

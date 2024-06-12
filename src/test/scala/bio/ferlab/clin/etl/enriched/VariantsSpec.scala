@@ -993,6 +993,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       `frequency_RQDM` = AnalysisFrequencies(
         `affected` = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2),
         `total` = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2)),
+      `freq_rqdm_tumor_only` = SOMATIC_FREQUENCY(1, 1, 1.0),
+      `freq_rqdm_tumor_normal` = SOMATIC_FREQUENCY(0, 0, 0.0),
       `created_on` = result.`created_on`,
       `updated_on` = result.`updated_on`
     )
@@ -1243,6 +1245,43 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     result
       .selectLocus($"exomiser_max")
+      .collect() should contain theSameElementsAs expected
+  }
+
+  "withSomaticFrequencies" should "enrich variants with TEBA and TNEBA frequencies" in {
+    val variants = Seq(
+      EnrichedVariant(`chromosome` = "1", `donors` = List(
+        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TEBA"),
+        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TNEBA"),
+        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+        DONORS(`patient_id` = "2", `sample_id` = "2", `bioinfo_analysis_code` = "TEBA", `filters` = List("null")), // Excluded because filters
+      )),
+      EnrichedVariant(`chromosome` = "2", `donors` = List(
+        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TEBA"),
+        DONORS(`patient_id` = "2", `sample_id` = "22", `bioinfo_analysis_code` = "TEBA"), // Patient 2 with two sample ids
+        DONORS(`patient_id` = "3", `sample_id` = "3", `bioinfo_analysis_code` = "TNEBA"),
+      )),
+      EnrichedVariant(`chromosome` = "3", `donors` = List(
+        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+      ))
+    ).toDF().drop("freq_rqdm_tumor_only", "freq_rqdm_tumor_normal")
+
+    val result = variants.withSomaticFrequencies
+
+    val expected = Seq(
+      EnrichedVariant(`chromosome` = "1",
+        `freq_rqdm_tumor_only` = SOMATIC_FREQUENCY(pc = 1, pn = 3, pf = 0.3333333333333333),
+        `freq_rqdm_tumor_normal` = SOMATIC_FREQUENCY(pc = 1, pn = 2, pf = 0.5)),
+      EnrichedVariant(`chromosome` = "2",
+        `freq_rqdm_tumor_only` = SOMATIC_FREQUENCY(pc = 2, pn = 3, pf = 0.6666666666666666),
+        `freq_rqdm_tumor_normal` = SOMATIC_FREQUENCY(pc = 1, pn = 2, pf = 0.5)),
+      EnrichedVariant(`chromosome` = "3",
+        `freq_rqdm_tumor_only` = SOMATIC_FREQUENCY(pc = 0, pn = 3, pf = 0.0),
+        `freq_rqdm_tumor_normal` = SOMATIC_FREQUENCY(pc = 0, pn = 2, pf = 0.0))
+    ).toDF().selectLocus($"freq_rqdm_tumor_only", $"freq_rqdm_tumor_normal").collect()
+
+    result
+      .selectLocus($"freq_rqdm_tumor_only", $"freq_rqdm_tumor_normal")
       .collect() should contain theSameElementsAs expected
   }
 }
