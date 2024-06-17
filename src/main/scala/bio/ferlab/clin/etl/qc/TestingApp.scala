@@ -148,8 +148,10 @@ object TestingApp {
   def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
   val includeFilter: Column = col("ad_alt") >= 3 && col("alternate") =!= "*"
   val frequencyFilter: Column = array_contains(col("filters"), "PASS") && includeFilter && col("gq") >= 20
+  val frequencyFilter_somatic: Column = array_contains(col("filters"), "PASS") && includeFilter && col("sq") >= 30
   val ac: Column = sum(when(frequencyFilter, array_sum(filter(col("calls"), c => c === 1))).otherwise(0)) as "expected_ac"
   val pc: Column = sum(when(array_contains(col("calls"), 1) and frequencyFilter, 1).otherwise(0)) as "expected_pc"
+  val pc_somatic: Column = sum(when(array_contains(col("calls"), 1) and frequencyFilter_somatic, 1).otherwise(0)) as "expected_pc"
 
   def combineErrors(errors: Option[String]*): Option[String] = {
     val filteredErrors = errors.flatten
