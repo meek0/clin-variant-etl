@@ -997,6 +997,10 @@
         "variant_type": {
           "type": "keyword"
         },
+        "flags": {
+          "type": "keyword",
+          "index": false
+        },
         "exomiser_max": {
           "properties": {
             "variant_score": {
