@@ -47,6 +47,10 @@
         "variant_type": {
           "type": "keyword"
         },
+        "flags": {
+          "type": "keyword",
+          "index": false
+        },
         "batch_id": {
           "type": "keyword"
         },
