@@ -378,21 +378,20 @@ object Variants {
 
     def withSomaticFrequencies(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
-      val donors = df
+      val donorsSomatic = df
         .selectLocus(explode($"donors") as "donors")
         .selectLocus($"donors.*")
+        .filter($"bioinfo_analysis_code".isin("TEBA", "TNEBA"))
 
-      val pnPerAnalysisCode = donors
+      val pnPerAnalysisCode = donorsSomatic
         .groupBy("bioinfo_analysis_code")
         .agg(
           pnSomatic
-        ).persist()
+        )
       val pnSomaticTumorOnly: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorOnlyFilter)
       val pnSomaticTumorNormal: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorNormalFilter)
-      pnPerAnalysisCode.unpersist()
 
-      val pcPerLocus = donors
-        .filter($"bioinfo_analysis_code".isin("TEBA", "TNEBA"))
+      val pcPerLocus = donorsSomatic
         .groupByLocus($"bioinfo_analysis_code")
         .agg(
           when(somaticTumorOnlyFilter, pcSomaticTumorOnly)
