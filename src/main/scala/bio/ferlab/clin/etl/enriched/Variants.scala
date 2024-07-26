@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.enriched.Variants.{DataFrameOps => ClinDataFrameOps}
+import bio.ferlab.clin.etl.enriched.Variants.{somaticTumorNormalFilter, somaticTumorOnlyFilter, DataFrameOps => ClinDataFrameOps}
 import bio.ferlab.clin.etl.utils.FrequencyUtils._
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, FixedRepartition}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
@@ -91,7 +91,8 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
     val joinWithDonors = variantsWithDonors(variants, occurrences)
     val joinWithCleanFreqs = cleanupSomaticTumorOnlyFreqs(joinWithDonors)
-    val joinWithPop = joinWithPopulations(joinWithCleanFreqs, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)
+    val joinWithSomaticFreqs = joinWithSomaticFrequencies(joinWithCleanFreqs, occurrences)
+    val joinWithPop = joinWithPopulations(joinWithSomaticFreqs, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
@@ -104,7 +105,6 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .withFranklin(data(franklin.id))
       .withGeneExternalReference
       .withClinVariantExternalReference
-      .withSomaticFrequencies
       .withColumn("locus", concat_ws("-", locus: _*))
       .withColumn("hash", sha1(col("locus")))
       .withColumn(mainDestination.oid, col("updated_on"))
@@ -234,6 +234,45 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
     variants
       .withColumn("frequencies_by_analysis", when(isSomaticTumorOnlyCondition, lit(array())).otherwise(coalesce(col("frequencies_by_analysis"), lit(array()))))
       .withColumn("frequency_RQDM", when(isSomaticTumorOnlyCondition, lit(emptyFrequencyRQDM)).otherwise(coalesce(col("frequency_RQDM"), emptyFrequencyRQDM)))
+  }
+
+  def joinWithSomaticFrequencies(variants: DataFrame, occurrences: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
+    val occurrencesSomatic = occurrences
+      .filter($"bioinfo_analysis_code".isin("TEBA", "TNEBA"))
+      .selectLocus($"bioinfo_analysis_code", $"sample_id", $"filters", $"ad_alt", $"sq")
+      .persist()
+
+    val pnPerAnalysisCode = occurrencesSomatic
+      .groupBy("bioinfo_analysis_code")
+      .agg(
+        pnSomatic
+      )
+    val pnSomaticTumorOnly: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorOnlyFilter)
+    val pnSomaticTumorNormal: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorNormalFilter)
+
+    val pcPerLocus = occurrencesSomatic
+      .groupByLocus($"bioinfo_analysis_code")
+      .agg(
+        when(somaticTumorOnlyFilter, pcSomaticTumorOnly)
+          .when(somaticTumorNormalFilter, pcSomaticTumorNormal) as "pc"
+      )
+
+    val variantsWithSomaticFrequencies = pcPerLocus
+      .withSomaticFreqColumn("freq_rqdm_tumor_only", somaticTumorOnlyFilter, pnSomaticTumorOnly)
+      .withSomaticFreqColumn("freq_rqdm_tumor_normal", somaticTumorNormalFilter, pnSomaticTumorNormal)
+      .groupByLocus()
+      .agg(
+        first("freq_rqdm_tumor_only", ignoreNulls = true) as "freq_rqdm_tumor_only",
+        first("freq_rqdm_tumor_normal", ignoreNulls = true) as "freq_rqdm_tumor_normal",
+      )
+
+    variants
+      .joinByLocus(variantsWithSomaticFrequencies, "left")
+      // Replace nulls with empty frequency
+      .withColumn("freq_rqdm_tumor_only", coalesce($"freq_rqdm_tumor_only", emptySomaticFrequency(pn = pnSomaticTumorOnly)))
+      .withColumn("freq_rqdm_tumor_normal", coalesce($"freq_rqdm_tumor_normal", emptySomaticFrequency(pn = pnSomaticTumorNormal)))
   }
 
   def joinWithPopulations(variants: DataFrame,
@@ -376,43 +415,6 @@ object Variants {
       df.joinByLocus(maxExomiser, "left")
     }
 
-    def withSomaticFrequencies(implicit spark: SparkSession): DataFrame = {
-      import spark.implicits._
-      val donorsSomatic = df
-        .selectLocus(explode($"donors") as "donors")
-        .selectLocus($"donors.*")
-        .filter($"bioinfo_analysis_code".isin("TEBA", "TNEBA"))
-
-      val pnPerAnalysisCode = donorsSomatic
-        .groupBy("bioinfo_analysis_code")
-        .agg(
-          pnSomatic
-        )
-      val pnSomaticTumorOnly: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorOnlyFilter)
-      val pnSomaticTumorNormal: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorNormalFilter)
-
-      val pcPerLocus = donorsSomatic
-        .groupByLocus($"bioinfo_analysis_code")
-        .agg(
-          when(somaticTumorOnlyFilter, pcSomaticTumorOnly)
-            .when(somaticTumorNormalFilter, pcSomaticTumorNormal) as "pc"
-        )
-
-      val variantsWithSomaticFrequencies = pcPerLocus
-        .withSomaticFreqColumn("freq_rqdm_tumor_only", somaticTumorOnlyFilter, pnSomaticTumorOnly)
-        .withSomaticFreqColumn("freq_rqdm_tumor_normal", somaticTumorNormalFilter, pnSomaticTumorNormal)
-        .groupByLocus()
-        .agg(
-          first("freq_rqdm_tumor_only", ignoreNulls = true) as "freq_rqdm_tumor_only",
-          first("freq_rqdm_tumor_normal", ignoreNulls = true) as "freq_rqdm_tumor_normal",
-        )
-
-      df
-        .joinByLocus(variantsWithSomaticFrequencies, "left")
-        // Replace nulls with empty frequency
-        .withColumn("freq_rqdm_tumor_only", coalesce($"freq_rqdm_tumor_only", emptySomaticFrequency(pn = pnSomaticTumorOnly)))
-        .withColumn("freq_rqdm_tumor_normal", coalesce($"freq_rqdm_tumor_normal", emptySomaticFrequency(pn = pnSomaticTumorNormal)))
-    }
   }
 
   @main

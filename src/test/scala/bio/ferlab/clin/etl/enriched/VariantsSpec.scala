@@ -1249,24 +1249,29 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   }
 
   "withSomaticFrequencies" should "enrich variants with TEBA and TNEBA frequencies" in {
+    val occurrencesSnv = Seq(
+      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "3", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+    ).toDF()
+
+    val occurrencesSnvSomatic = Seq(
+      EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "TEBA"),
+      EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "TNEBA"),
+      EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "2", chromosome = "1", `bioinfo_analysis_code` = "TEBA", `filters` = List("null")), // Excluded because filters
+      EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "2", `bioinfo_analysis_code` = "TEBA"),
+      EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "22", chromosome = "2", `bioinfo_analysis_code` = "TEBA"), // Patient 2 with two sample ids
+      EnrichedSNVSomatic(`patient_id` = "3", `sample_id` = "3", chromosome = "2", `bioinfo_analysis_code` = "TNEBA"),
+    ).toDF()
+
+    val occurrencesAll = occurrencesSnv.unionByName(occurrencesSnvSomatic, allowMissingColumns = true)
+
     val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `donors` = List(
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TEBA"),
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TNEBA"),
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
-        DONORS(`patient_id` = "2", `sample_id` = "2", `bioinfo_analysis_code` = "TEBA", `filters` = List("null")), // Excluded because filters
-      )),
-      EnrichedVariant(`chromosome` = "2", `donors` = List(
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TEBA"),
-        DONORS(`patient_id` = "2", `sample_id` = "22", `bioinfo_analysis_code` = "TEBA"), // Patient 2 with two sample ids
-        DONORS(`patient_id` = "3", `sample_id` = "3", `bioinfo_analysis_code` = "TNEBA"),
-      )),
-      EnrichedVariant(`chromosome` = "3", `donors` = List(
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
-      ))
+      EnrichedVariant(`chromosome` = "1"),
+      EnrichedVariant(`chromosome` = "2"),
+      EnrichedVariant(`chromosome` = "3")
     ).toDF().drop("freq_rqdm_tumor_only", "freq_rqdm_tumor_normal")
 
-    val result = variants.withSomaticFrequencies
+    val result = job.joinWithSomaticFrequencies(variants, occurrencesAll)
 
     val expected = Seq(
       EnrichedVariant(`chromosome` = "1",
