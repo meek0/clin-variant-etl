@@ -2,14 +2,14 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants.{somaticTumorNormalFilter, somaticTumorOnlyFilter, DataFrameOps => ClinDataFrameOps}
 import bio.ferlab.clin.etl.utils.FrequencyUtils._
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, FixedRepartition}
+import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, FixedRepartition, RepartitionByColumns}
 import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.datalake.spark3.genomics.enriched.Variants.{DataFrameOps => LibDataFrameOps}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.implicits.SparkUtils.firstAs
-import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
+import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -110,11 +110,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .withColumn(mainDestination.oid, col("updated_on"))
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = FixedRepartition(56)
-
-  override def publish(): Unit = {
-    vacuum(mainDestination, 2)
-  }
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
 
   private def getPnAnPerAnalysis(occurrences: DataFrame): DataFrame = {
     val byAnalysis = occurrences
