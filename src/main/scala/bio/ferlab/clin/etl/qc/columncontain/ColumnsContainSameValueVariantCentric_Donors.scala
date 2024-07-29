@@ -2,6 +2,7 @@ package bio.ferlab.clin.etl.qc.columncontain
 
 import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.TestingApp._
+import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainOnlyNullVariantCentric_Donors.variant_centric
 import org.apache.spark.sql.functions._
 
 object ColumnsContainSameValueVariantCentric_Donors extends TestingApp {
@@ -10,20 +11,20 @@ object ColumnsContainSameValueVariantCentric_Donors extends TestingApp {
 
     handleErrors(
       shouldNotContainSameValue(
-        variant_centric.select(explode($"donors")).select("col.*"),
-        variant_centric.select(explode($"donors")).select("col.*").columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
+        donors.select("col.*"),
+        donors.select("col.*").columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
       ),
       shouldNotContainSameValue(
-        variant_centric.select(explode($"donors")).select(explode($"col.hc_complement")).select("col.*")
+        donors.select(explode($"col.hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
-        variant_centric.select(explode($"donors")).select(explode($"col.possibly_hc_complement")).select("col.*")
+        donors.select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
-        variant_centric.select(explode($"donors")).select($"col.exomiser.*")
+        donors.select($"col.exomiser.*")
       ),
       shouldNotContainSameValue(
-        variant_centric.select(explode($"donors")).select($"col.exomiser_other_moi.*")
+        donors.select($"col.exomiser_other_moi.*")
       ),
     )
   }

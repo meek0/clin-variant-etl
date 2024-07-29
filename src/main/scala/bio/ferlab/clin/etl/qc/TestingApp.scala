@@ -1,10 +1,12 @@
 package bio.ferlab.clin.etl.qc
 
+import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainSameValueVariantCentric_Donors.variant_centric
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 trait TestingApp extends App {
+
   lazy val database = args(0)
 
   lazy val spark: SparkSession =
@@ -21,6 +23,10 @@ trait TestingApp extends App {
   lazy val normalized_variants: DataFrame = spark.table("normalized_variants")
   lazy val variant_centric = spark.table(s"variant_centric")
   lazy val variants: DataFrame = spark.table("variants")
+
+  import spark.implicits._
+
+  lazy val donors = variant_centric.select(explode($"donors")).select("col.*").persist()
 
   lazy val gnomad_genomes_v2_1_1: DataFrame = spark.table("gnomad_genomes_v2_1_1")
   lazy val gnomad_exomes_v2_1_1: DataFrame = spark.table("gnomad_exomes_v2_1_1")
