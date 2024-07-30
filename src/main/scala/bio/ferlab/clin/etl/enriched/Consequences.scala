@@ -72,7 +72,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   override def publish(): Unit = {
-    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(1), Seq("start")))
+    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(100), Seq("start")))
     vacuum(mainDestination, 2)
   }
 

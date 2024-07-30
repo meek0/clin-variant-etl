@@ -41,7 +41,7 @@ case class CoverageByGene(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc)
     )
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(1), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
 }
 
 object CoverageByGene {
