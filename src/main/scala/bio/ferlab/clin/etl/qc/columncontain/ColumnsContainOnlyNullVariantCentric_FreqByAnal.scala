@@ -8,19 +8,22 @@ object ColumnsContainOnlyNullVariantCentric_FreqByAnal extends TestingApp {
   run { spark =>
     import spark.implicits._
 
+    val freqs = variant_centric.select(explode($"frequencies_by_analysis"))
+    val freqsCols = freqs.select("col.*")
+
     handleErrors(
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"frequencies_by_analysis")).select("col.*"),
-        variant_centric.select(explode($"frequencies_by_analysis")).select("col.*").columns.filterNot(List("analysis_display_name"/*CLIN-1358*/).contains(_)): _*
+        freqsCols,
+        freqsCols.columns.filterNot(List("analysis_display_name"/*CLIN-1358*/).contains(_)): _*
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"frequencies_by_analysis")).select("col.affected.*")
+        freqs.select("col.affected.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"frequencies_by_analysis")).select("col.non_affected.*")
+        freqs.select("col.non_affected.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"frequencies_by_analysis")).select("col.total.*")
+        freqs.select("col.total.*")
       ),
     )
   }

@@ -9,10 +9,12 @@ object ColumnsContainSameValueVariantCentric_Donors extends TestingApp {
   run { spark =>
     import spark.implicits._
 
+    val donorsCols = variants_donors.select("col.*")
+
     handleErrors(
       shouldNotContainSameValue(
-        variants_donors.select("col.*"),
-        variants_donors.select("col.*").columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
+        donorsCols,
+        donorsCols.columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
       ),
       shouldNotContainSameValue(
         variants_donors.select(explode($"col.hc_complement")).select("col.*")

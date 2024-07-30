@@ -1,18 +1,23 @@
 package bio.ferlab.clin.etl.qc
 
+import bio.ferlab.clin.etl.fail.Fail.getClass
 import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainSameValueVariantCentric_Consequences.variant_centric
-import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainSameValueVariantCentric_Donors.variant_centric
+import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainSameValueVariantCentric_Donors.{variant_centric, variants}
 import bio.ferlab.clin.etl.qc.dictionary.DictionariesConsequences.variant_centric
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.commons.config.RepartitionByColumns
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{log, _}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.slf4j
 
 trait TestingApp extends App {
 
+  val log: slf4j.Logger = slf4j.LoggerFactory.getLogger(getClass.getCanonicalName)
+
   lazy val database = args(0)
 
-  lazy val spark: SparkSession =
+  lazy implicit val spark: SparkSession =
     SparkSession
       .builder
       .config(new SparkConf())
@@ -24,14 +29,16 @@ trait TestingApp extends App {
   lazy val gene_centric = spark.table(s"gene_centric")
   lazy val normalized_snv: DataFrame = spark.table("normalized_snv")
   lazy val normalized_variants: DataFrame = spark.table("normalized_variants")
-  lazy val variant_centric = spark.table(s"variant_centric")
-  lazy val variants: DataFrame = spark.table("variants")
+  lazy val variant_centric = loadWithChromosomeRepartition("variant_centric", Seq("start"))
+  lazy val variants = loadWithChromosomeRepartition("variants", Seq("start"))
 
   import spark.implicits._
 
-  // persist re-used dataframe, also fix the issue when trying to compare columns
-  lazy val variants_donors = variant_centric.select(explode($"donors")).persist()
-  lazy val variants_consequences = variant_centric.select(explode($"consequences")).persist()
+  // globally persist re-used dataframe for better perfs
+  lazy val variants_donors = variant_centric.select(explode($"donors"))
+    .persist()
+  lazy val variants_consequences = variant_centric.select(explode($"consequences"))
+    .persist()
 
   lazy val gnomad_genomes_v2_1_1: DataFrame = spark.table("gnomad_genomes_v2_1_1")
   lazy val gnomad_exomes_v2_1_1: DataFrame = spark.table("gnomad_exomes_v2_1_1")
@@ -87,6 +94,16 @@ trait TestingApp extends App {
   def run(f: SparkSession => Unit): Unit = {
     spark.sql(s"use $database")
     f(spark)
+  }
+  
+  private def loadWithChromosomeRepartition(name: String, sort: Seq[String] = Nil)(implicit spark: SparkSession) = {
+    val table = spark.table(name)
+    val coresPerExecutor = spark.conf.get("spark.executor.cores", "1").toInt
+    val executorsCount = spark.conf.get("spark.executor.instances", "1").toInt
+    val totalCores = Math.max(coresPerExecutor * executorsCount, 1)
+    log.info(s"Runtime repartition of cores: $totalCores for table: $name")
+    RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(totalCores), sort).repartition(table)
+    table
   }
 }
 
