@@ -10,11 +10,11 @@ object ColumnsContainSameValueVariantCentric_Consequences extends TestingApp {
 
     handleErrors(
       shouldNotContainSameValue(
-        variant_centric.select(explode($"consequences")).select("col.*"),
-        variant_centric.select(explode($"consequences")).select("col.*").columns.filterNot(List("feature_type", "picked").contains(_)): _*
+        variants_consequences.select("col.*"),
+        variants_consequences.select("col.*").columns.filterNot(List("feature_type", "picked").contains(_)): _*
       ),
       shouldNotContainSameValue(
-        variant_centric.select(explode($"consequences")).select("col.predictions.*")
+        variants_consequences.select("col.predictions.*")
       ),
     )
   }

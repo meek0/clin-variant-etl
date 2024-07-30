@@ -1,6 +1,9 @@
 package bio.ferlab.clin.etl.qc
 
+import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainSameValueVariantCentric_Consequences.variant_centric
 import bio.ferlab.clin.etl.qc.columncontain.ColumnsContainSameValueVariantCentric_Donors.variant_centric
+import bio.ferlab.clin.etl.qc.dictionary.DictionariesConsequences.variant_centric
+import bio.ferlab.datalake.commons.config.RepartitionByColumns
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -26,7 +29,9 @@ trait TestingApp extends App {
 
   import spark.implicits._
 
-  lazy val donors = variant_centric.select(explode($"donors")).select("col.*").persist()
+  // persist re-used dataframe, also fix the issue when trying to compare columns
+  lazy val variants_donors = variant_centric.select(explode($"donors")).persist()
+  lazy val variants_consequences = variant_centric.select(explode($"consequences")).persist()
 
   lazy val gnomad_genomes_v2_1_1: DataFrame = spark.table("gnomad_genomes_v2_1_1")
   lazy val gnomad_exomes_v2_1_1: DataFrame = spark.table("gnomad_exomes_v2_1_1")

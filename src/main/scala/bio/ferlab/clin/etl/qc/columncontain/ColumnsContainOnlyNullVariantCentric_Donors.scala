@@ -10,20 +10,20 @@ object ColumnsContainOnlyNullVariantCentric_Donors extends TestingApp {
 
     handleErrors(
       shouldNotContainOnlyNull(
-        donors.select("col.*"),
-        donors.select("col.*").columns.filterNot(List("analysis_display_name"/*CLIN-1358*/, "practitioner_role_id").contains(_)): _*
+        variants_donors.select("col.*"),
+        variants_donors.select("col.*").columns.filterNot(List("analysis_display_name"/*CLIN-1358*/, "practitioner_role_id").contains(_)): _*
       ),
       shouldNotContainOnlyNull(
-        donors.select(explode($"col.hc_complement")).select("col.*")
+        variants_donors.select(explode($"col.hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        donors.select(explode($"col.possibly_hc_complement")).select("col.*")
+        variants_donors.select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        donors.select($"col.exomiser.*")
+        variants_donors.select($"col.exomiser.*")
       ),
       shouldNotContainOnlyNull(
-        donors.select($"col.exomiser_other_moi.*")
+        variants_donors.select($"col.exomiser_other_moi.*")
       ),
     )
   }

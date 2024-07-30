@@ -11,20 +11,20 @@ object ColumnsContainSameValueVariantCentric_Donors extends TestingApp {
 
     handleErrors(
       shouldNotContainSameValue(
-        donors.select("col.*"),
-        donors.select("col.*").columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
+        variants_donors.select("col.*"),
+        variants_donors.select("col.*").columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
       ),
       shouldNotContainSameValue(
-        donors.select(explode($"col.hc_complement")).select("col.*")
+        variants_donors.select(explode($"col.hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
-        donors.select(explode($"col.possibly_hc_complement")).select("col.*")
+        variants_donors.select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
-        donors.select($"col.exomiser.*")
+        variants_donors.select($"col.exomiser.*")
       ),
       shouldNotContainSameValue(
-        donors.select($"col.exomiser_other_moi.*")
+        variants_donors.select($"col.exomiser_other_moi.*")
       ),
     )
   }

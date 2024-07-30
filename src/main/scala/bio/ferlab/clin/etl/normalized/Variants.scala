@@ -244,7 +244,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
       .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM": _*)
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(10), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
 
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
