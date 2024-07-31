@@ -38,7 +38,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
   val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
@@ -68,7 +67,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(EnrichedGenes()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
-  val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
   val cosmicDf: DataFrame = Seq(NormalizedCosmicMutationSet(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
   val franklinDf: DataFrame = Seq(NormalizedFranklin(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
 
@@ -87,7 +85,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
-    spliceai.id -> spliceaiDf,
     cosmic.id -> cosmicDf,
     franklin.id -> franklinDf
   )
@@ -1126,44 +1123,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     result
       .selectLocus($"variant_type", $"donors.aliquot_id", $"donors.variant_type")
-      .collect() should contain theSameElementsAs expected
-  }
-
-  "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
-    val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes_symbol` = List(null), genes = List(null)),
-    ).toDF()
-
-    // Remove spliceai nested field from variants df
-    val variantsWithoutSpliceAi = removeNestedField(variants, "spliceai", "genes")
-
-    val spliceai = Seq(
-      // snv
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene1", `max_score` = MAX_SCORE(`ds` = 2.0, `type` = Seq("AL"))),
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene2", `max_score` = MAX_SCORE(`ds` = 0.0, `type` = Seq("AG", "AL", "DG", "DL"))),
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene3", `max_score` = MAX_SCORE(`ds` = 0.0, `type` = Seq("AG", "AL", "DG", "DL"))),
-
-      // indel
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `symbol` = "OR4F5", `max_score` = MAX_SCORE(`ds` = 1.0, `type` = Seq("AG", "AL")))
-    ).toDF()
-
-    val result = job.joinWithSpliceAi(variantsWithoutSpliceAi, spliceai)
-
-    val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
-        GENES(`symbol` = Some("gene1"), `spliceai` = Some(SPLICEAI(`ds` = 2.0, `type` = List("AL")))),
-        GENES(`symbol` = Some("gene2"), `spliceai` = Some(SPLICEAI(`ds` = 0.0, `type` = null))),
-      )),
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `genes` = List(GENES(`spliceai` = Some(SPLICEAI(`ds` = 1.0, `type` = List("AG", "AL")))))),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `genes` = List(GENES(`spliceai` = None))),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
-    ).toDF().selectLocus($"genes.spliceai").collect()
-
-    result
-      .selectLocus($"genes.spliceai")
       .collect() should contain theSameElementsAs expected
   }
 

@@ -163,8 +163,8 @@ case class VERDICT(
                     `benign_subscore`: Option[String] = Some("Benign")
                   )
 
-case class SPLICEAI(`ds`: Double = 0.01,
-                    `type`: Seq[String] = Seq("AG"))
+case class SPLICEAI(`ds`: Double = 0.1,
+                    `type`: Option[Seq[String]] = Some(Seq("AG", "AL", "DG", "DL")))
 
 case class GNOMAD(`pli`: Float = 1.0f,
                   `loeuf`: Float = 0.054f)

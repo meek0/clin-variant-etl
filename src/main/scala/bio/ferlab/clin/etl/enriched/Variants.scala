@@ -11,6 +11,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, loc
 import bio.ferlab.datalake.spark3.implicits.SparkUtils.firstAs
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
@@ -35,7 +36,6 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
   val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
@@ -56,7 +56,6 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       clinvar.id -> clinvar.read,
       genes.id -> genes.read,
       normalized_panels.id -> normalized_panels.read,
-      spliceai.id -> spliceai.read,
       cosmic.id -> cosmic.read,
       franklin.id -> franklin.read
     )
@@ -97,9 +96,8 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
     val joinPanels = joinWithPanels(joinGenes, data(normalized_panels.id))
-    val joinSpliceAi = joinWithSpliceAi(joinPanels, data(spliceai.id))
 
-    joinSpliceAi
+    joinPanels
       .withExomiser(occurrences)
       .withCosmic(data(cosmic.id))
       .withFranklin(data(franklin.id))
@@ -331,25 +329,6 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
       .groupByLocus()
       .agg(array_distinct(flatten(collect_list(col("panels")))) as "panels", variantColumns: _*)
       .drop("symbol", "version")
-  }
-
-  def joinWithSpliceAi(variants: DataFrame, spliceai: DataFrame): DataFrame = {
-    val scores = spliceai.selectLocus($"symbol", $"max_score" as "spliceai")
-      .withColumn("type", when($"spliceai.ds" === 0, null).otherwise($"spliceai.type"))
-      .withColumn("spliceai", struct($"spliceai.ds" as "ds", $"type"))
-      .drop("type")
-
-    variants
-      .select($"*", explode_outer($"genes") as "gene", $"gene.symbol" as "symbol") // explode_outer since genes can be null
-      .join(scores, locusColumnNames :+ "symbol", "left")
-      .drop("symbol") // only used for joining
-      .withColumn("gene", struct($"gene.*", $"spliceai")) // add spliceai struct as nested field of gene struct
-      .groupByLocus()
-      .agg(
-        first(struct(variants.drop("genes")("*"))) as "variant",
-        collect_list("gene") as "genes" // re-create genes list for each locus, now containing spliceai struct
-      )
-      .select("variant.*", "genes")
   }
 }
 
