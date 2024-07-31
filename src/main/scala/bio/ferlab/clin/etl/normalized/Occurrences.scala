@@ -22,7 +22,7 @@ abstract class Occurrences(rc: DeprecatedRuntimeETLContext, batchId: String) ext
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true, split = true),
       enriched_clinical.id -> enriched_clinical.read.filter($"batch_id" === batchId)
     )
   }
