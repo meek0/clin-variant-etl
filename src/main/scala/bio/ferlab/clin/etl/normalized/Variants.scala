@@ -30,7 +30,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true),
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true, split = true),
       enriched_clinical.id -> enriched_clinical.read,
     )
   }
@@ -244,7 +244,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
       .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM": _*)
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(10), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
 
   override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }

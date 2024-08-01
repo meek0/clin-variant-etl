@@ -38,7 +38,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  val spliceai: DatasetConf = conf.getDataset("enriched_spliceai")
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
   val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
@@ -68,7 +67,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(EnrichedGenes()).toDF()
   val normalized_panelsDf: DataFrame = Seq(NormalizedPanels()).toDF()
-  val spliceaiDf: DataFrame = Seq(SpliceAiOutput()).toDF()
   val cosmicDf: DataFrame = Seq(NormalizedCosmicMutationSet(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
   val franklinDf: DataFrame = Seq(NormalizedFranklin(chromosome = "1", start = 69897, reference = "T", alternate = "C")).toDF()
 
@@ -87,7 +85,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
     normalized_panels.id -> normalized_panelsDf,
-    spliceai.id -> spliceaiDf,
     cosmic.id -> cosmicDf,
     franklin.id -> franklinDf
   )
@@ -1129,44 +1126,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       .collect() should contain theSameElementsAs expected
   }
 
-  "joinWithSpliceAi" should "enrich variants with SpliceAi scores" in {
-    val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes_symbol` = List("gene1", "gene2"), `genes` = List(GENES(`symbol` = Some("gene1")), GENES(`symbol` = Some("gene2")))),
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT"),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T"),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes_symbol` = List(null), genes = List(null)),
-    ).toDF()
-
-    // Remove spliceai nested field from variants df
-    val variantsWithoutSpliceAi = removeNestedField(variants, "spliceai", "genes")
-
-    val spliceai = Seq(
-      // snv
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene1", `max_score` = MAX_SCORE(`ds` = 2.0, `type` = Seq("AL"))),
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene2", `max_score` = MAX_SCORE(`ds` = 0.0, `type` = Seq("AG", "AL", "DG", "DL"))),
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `symbol` = "gene3", `max_score` = MAX_SCORE(`ds` = 0.0, `type` = Seq("AG", "AL", "DG", "DL"))),
-
-      // indel
-      SpliceAiOutput(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `symbol` = "OR4F5", `max_score` = MAX_SCORE(`ds` = 1.0, `type` = Seq("AG", "AL")))
-    ).toDF()
-
-    val result = job.joinWithSpliceAi(variantsWithoutSpliceAi, spliceai)
-
-    val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", `genes` = List(
-        GENES(`symbol` = Some("gene1"), `spliceai` = Some(SPLICEAI(`ds` = 2.0, `type` = List("AL")))),
-        GENES(`symbol` = Some("gene2"), `spliceai` = Some(SPLICEAI(`ds` = 0.0, `type` = null))),
-      )),
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", `genes` = List(GENES(`spliceai` = Some(SPLICEAI(`ds` = 1.0, `type` = List("AG", "AL")))))),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `genes` = List(GENES(`spliceai` = None))),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "C", `alternate` = "A", `genes` = List(null))
-    ).toDF().selectLocus($"genes.spliceai").collect()
-
-    result
-      .selectLocus($"genes.spliceai")
-      .collect() should contain theSameElementsAs expected
-  }
-
   "withFranklin" should "enrich variants with Franklin scores" in {
     val variants = Seq(
       EnrichedVariant(`chromosome` = "1", `donors` = List(
@@ -1249,24 +1208,29 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   }
 
   "withSomaticFrequencies" should "enrich variants with TEBA and TNEBA frequencies" in {
+    val occurrencesSnv = Seq(
+      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "3", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+    ).toDF()
+
+    val occurrencesSnvSomatic = Seq(
+      EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "TEBA"),
+      EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "TNEBA"),
+      EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "2", chromosome = "1", `bioinfo_analysis_code` = "TEBA", `filters` = List("null")), // Excluded because filters
+      EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "2", `bioinfo_analysis_code` = "TEBA"),
+      EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "22", chromosome = "2", `bioinfo_analysis_code` = "TEBA"), // Patient 2 with two sample ids
+      EnrichedSNVSomatic(`patient_id` = "3", `sample_id` = "3", chromosome = "2", `bioinfo_analysis_code` = "TNEBA"),
+    ).toDF()
+
+    val occurrencesAll = occurrencesSnv.unionByName(occurrencesSnvSomatic, allowMissingColumns = true)
+
     val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `donors` = List(
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TEBA"),
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TNEBA"),
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
-        DONORS(`patient_id` = "2", `sample_id` = "2", `bioinfo_analysis_code` = "TEBA", `filters` = List("null")), // Excluded because filters
-      )),
-      EnrichedVariant(`chromosome` = "2", `donors` = List(
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "TEBA"),
-        DONORS(`patient_id` = "2", `sample_id` = "22", `bioinfo_analysis_code` = "TEBA"), // Patient 2 with two sample ids
-        DONORS(`patient_id` = "3", `sample_id` = "3", `bioinfo_analysis_code` = "TNEBA"),
-      )),
-      EnrichedVariant(`chromosome` = "3", `donors` = List(
-        DONORS(`patient_id` = "1", `sample_id` = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
-      ))
+      EnrichedVariant(`chromosome` = "1"),
+      EnrichedVariant(`chromosome` = "2"),
+      EnrichedVariant(`chromosome` = "3")
     ).toDF().drop("freq_rqdm_tumor_only", "freq_rqdm_tumor_normal")
 
-    val result = variants.withSomaticFrequencies
+    val result = job.joinWithSomaticFrequencies(variants, occurrencesAll)
 
     val expected = Seq(
       EnrichedVariant(`chromosome` = "1",

@@ -24,7 +24,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extend
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
-      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true)
+      raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true, split = true)
     )
   }
 
@@ -133,7 +133,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extend
 
 
   override def publish(): Unit = {
-    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(10), Seq("start")))
+    compact(mainDestination, RepartitionByColumns(Seq("chromosome"), Some(100), Seq("start")))
     vacuum(mainDestination, 2)
   }
 

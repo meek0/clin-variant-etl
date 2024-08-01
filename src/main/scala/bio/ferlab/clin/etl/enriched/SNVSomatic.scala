@@ -78,7 +78,7 @@ case class SNVSomatic(rc: DeprecatedRuntimeETLContext, batchId: Option[String]) 
       .join(withAllAnalysesDf, locusColumnNames :+ "aliquot_id", "inner")
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("analysis_service_request_id", "chromosome"), n = Some(1))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("analysis_service_request_id", "chromosome"), n = Some(100), sortColumns = Seq("start"))
 }
 
 object SNVSomatic {

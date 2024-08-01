@@ -150,12 +150,14 @@ package object dictionary {
     "BP2",
     "BP4",
     "BP6",
+    "BP4_VeryStrong",
     "BP4_Moderate",
     "BP4_Strong",
     "BP6_Strong",
     "PP3_Moderate",
     "PP3_Strong",
     "PP5_Strong",
+    "PVS1_Strong",
     "null"
   )
 

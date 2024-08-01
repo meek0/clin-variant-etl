@@ -8,22 +8,24 @@ object ColumnsContainOnlyNullVariantCentric_Donors extends TestingApp {
   run { spark =>
     import spark.implicits._
 
+    val donorsCols = variants_donors.select("col.*")
+
     handleErrors(
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"donors")).select("col.*"),
-        variant_centric.select(explode($"donors")).select("col.*").columns.filterNot(List("analysis_display_name"/*CLIN-1358*/, "practitioner_role_id").contains(_)): _*
+        donorsCols,
+        donorsCols.columns.filterNot(List("analysis_display_name"/*CLIN-1358*/, "practitioner_role_id").contains(_)): _*
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"donors")).select(explode($"col.hc_complement")).select("col.*")
+        variants_donors.select(explode($"col.hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"donors")).select(explode($"col.possibly_hc_complement")).select("col.*")
+        variants_donors.select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"donors")).select($"col.exomiser.*")
+        variants_donors.select($"col.exomiser.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"donors")).select($"col.exomiser_other_moi.*")
+        variants_donors.select($"col.exomiser_other_moi.*")
       ),
     )
   }

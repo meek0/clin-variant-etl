@@ -10,10 +10,10 @@ object ColumnsContainOnlyNullVariantCentric_Consequences extends TestingApp {
 
     handleErrors(
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"consequences")).select("col.*")
+        variants_consequences.select("col.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select(explode($"consequences")).select("col.predictions.*")
+        variants_consequences.select("col.predictions.*")
       ),
     )
   }
