@@ -248,10 +248,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
     val pcPerLocus = occurrencesSomatic
       .groupByLocus($"bioinfo_analysis_code")
-      .agg(
-        when(somaticTumorOnlyFilter, pcSomaticTumorOnly)
-          .when(somaticTumorNormalFilter, pcSomaticTumorNormal) as "pc"
-      )
+      .agg(pcSomatic)
 
     val variantsWithSomaticFrequencies = pcPerLocus
       .withSomaticFreqColumn("freq_rqdm_tumor_only", somaticTumorOnlyFilter, pnSomaticTumorOnly)

@@ -1216,7 +1216,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val occurrencesSnvSomatic = Seq(
       EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "TEBA"),
       EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "TNEBA"),
-      EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "2", chromosome = "1", `bioinfo_analysis_code` = "TEBA", `filters` = List("null")), // Excluded because filters
+      EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "2", chromosome = "1", `bioinfo_analysis_code` = "TEBA", `ad_alt` = 1), // Excluded because ad_alt < 2
       EnrichedSNVSomatic(`patient_id` = "1", `sample_id` = "1", chromosome = "2", `bioinfo_analysis_code` = "TEBA"),
       EnrichedSNVSomatic(`patient_id` = "2", `sample_id` = "22", chromosome = "2", `bioinfo_analysis_code` = "TEBA"), // Patient 2 with two sample ids
       EnrichedSNVSomatic(`patient_id` = "3", `sample_id` = "3", chromosome = "2", `bioinfo_analysis_code` = "TNEBA"),

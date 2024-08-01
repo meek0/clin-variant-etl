@@ -8,8 +8,7 @@ object FrequencyUtils {
   def array_sum(c: Column): Column = aggregate(c, lit(0), (accumulator, item) => accumulator + item)
 
   val frequencyFilter: Column = array_contains(col("filters"), "PASS") && col("ad_alt") >= 3 && col("gq") >= 20
-  val somaticTumorOnlyFrequencyFilter: Column = array_contains(col("filters"), "PASS") && col("ad_alt") >= 2 && col("sq") >= 30
-  val somaticTumorNormalFrequencyFilter: Column = array_contains(col("filters"), "PASS") && col("ad_alt") >= 2 && col("sq") >= 30 // TODO confirm with geneticians
+  val somaticFrequencyFilter: Column = col("ad_alt") >= 2
 
   /**
    * allele count
@@ -25,8 +24,7 @@ object FrequencyUtils {
    * participant count
    */
   val pc: Column = sum(when(array_contains(col("calls"), 1) and frequencyFilter, 1).otherwise(0)) as "pc"
-  val pcSomaticTumorOnly: Column = count_distinct(when(somaticTumorOnlyFrequencyFilter, col("sample_id"))) as "pc"
-  val pcSomaticTumorNormal: Column = count_distinct(when(somaticTumorNormalFrequencyFilter, col("sample_id"))) as "pc"
+  val pcSomatic: Column = count_distinct(when(somaticFrequencyFilter, col("sample_id"))) as "pc"
 
   /**
    * participant total number
