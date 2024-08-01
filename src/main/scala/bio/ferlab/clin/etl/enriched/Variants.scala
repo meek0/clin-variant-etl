@@ -311,7 +311,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
   def joinWithGenes(variants: DataFrame, genes: DataFrame): DataFrame = {
     variants
-      .join(genes, variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
+      .join(broadcast(genes), variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
       .drop(genes("chromosome"))
       .groupByLocus()
       .agg(
@@ -325,7 +325,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   def joinWithPanels(variants: DataFrame, panels: DataFrame): DataFrame = {
     val variantColumns = variants.drop("chromosome", "start", "reference", "alternate").columns.map(c => first(c) as c)
     variants
-      .join(panels, array_contains(variants("genes_symbol"), panels("symbol")), "left")
+      .join(broadcast(panels), array_contains(variants("genes_symbol"), panels("symbol")), "left")
       .groupByLocus()
       .agg(array_distinct(flatten(collect_list(col("panels")))) as "panels", variantColumns: _*)
       .drop("symbol", "version")
