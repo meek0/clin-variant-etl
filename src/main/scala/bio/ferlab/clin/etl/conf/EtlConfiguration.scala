@@ -107,7 +107,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_exomiser"            , clin_datalake, "/normalized/exomiser"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
       DatasetConf("normalized_coverage_by_gene"    , clin_datalake, "/normalized/coverage_by_gene"       , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_coverage_by_gene"))),
       DatasetConf("normalized_franklin"            , clin_datalake, "/normalized/franklin"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_franklin"))),
-      DatasetConf("normalized_hpo_terms"           , clin_datalake, "/public/hpo_terms"                    , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "hpo_terms"))),
+      DatasetConf("normalized_hpo_terms"           , clin_datalake, "/public/hpo_terms"                  , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "hpo_terms"))),
 
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite         , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "snv"))              , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
