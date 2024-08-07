@@ -18,13 +18,14 @@ if [ -z "$VERSION" ]
     exit 1
 fi
 
-# download the JAR based on version tag, ex: v2.5.4
-echo "=== DOWNLOAD FROM GITHUB ==="
-wget -O clin-variant-etl-$VERSION.jar https://github.com/Ferlab-Ste-Justine/clin-variant-etl/releases/download/$VERSION/clin-variant-etl.jar
+# download or build jar
+echo "=== JAR ==="
+#wget -O clin-variant-etl-$VERSION.jar https://github.com/Ferlab-Ste-Justine/clin-variant-etl/releases/download/$VERSION/clin-variant-etl.jar
+sbt clean assembly
 
 # copy + list S3, update profile name if necessary
 echo "=== COPY TO S3 ($ENV) ==="
-aws --profile cqgc-$ENV --endpoint https://s3.cqgc.hsj.rtss.qc.ca s3 cp clin-variant-etl-$VERSION.jar s3://cqgc-$ENV-app-datalake/jars/clin-variant-etl-$VERSION.jar
+aws --profile cqgc-$ENV --endpoint https://s3.cqgc.hsj.rtss.qc.ca s3 cp target/scala-2.12/clin-variant-etl.jar s3://cqgc-$ENV-app-datalake/jars/clin-variant-etl-$VERSION.jar
 
 echo "=== JARS IN S3 ($ENV) ==="
 aws --profile cqgc-$ENV --endpoint https://s3.cqgc.hsj.rtss.qc.ca s3 ls s3://cqgc-$ENV-app-datalake/jars --recursive
