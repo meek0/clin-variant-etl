@@ -1,0 +1,81 @@
+{
+  "index_patterns": ["hpo*"],
+  "settings": {
+    "number_of_shards": 2,
+    "analysis" : {
+      "filter" : {
+        "edge_ngram" : {
+          "min_gram" : "1",
+          "side" : "front",
+          "type" : "edge_ngram",
+          "max_gram" : "20"
+        },
+        "hpo_ascii_folding" : {
+          "type" : "asciifolding",
+          "preserve_original" : "true"
+        }
+      },
+      "analyzer" : {
+        "autocomplete" : {
+          "filter" : [
+            "lowercase",
+            "edge_ngram",
+            "hpo_ascii_folding"
+          ],
+          "type" : "custom",
+          "tokenizer" : "standard"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties" : {
+      "compact_ancestors" : {
+        "properties" : {
+          "hpo_id" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
+          "name" : {
+            "type" : "text",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          }
+        }
+      },
+      "hpo_id" : {
+        "type" : "text",
+        "fields" : {
+          "keyword" : {
+            "type" : "keyword",
+            "ignore_above" : 256
+          }
+        }
+      },
+      "is_leaf" : {
+        "type" : "boolean"
+      },
+      "name" : {
+        "type" : "text",
+        "fields" : {
+          "raw" : {
+            "type" : "keyword"
+          }
+        },
+        "analyzer" : "autocomplete"
+      },
+      "parents" : {
+        "type" : "keyword"
+      }
+    }
+  }
+}
