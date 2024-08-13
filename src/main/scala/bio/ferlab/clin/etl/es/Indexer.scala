@@ -56,9 +56,15 @@ object Indexer extends App {
     case "cnv_centric" => conf.getDataset("es_index_cnv_centric")
     case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
     case "coverage_by_gene_centric" => conf.getDataset("es_index_coverage_by_gene_centric")
+    case "hpo_terms" => conf.getDataset( "normalized_hpo_terms")
   }
 
-  val df: DataFrame = ds.read
+  var df: DataFrame = ds.read
+
+  if(jobType.equals("hpo_terms")){
+    import spark.implicits._
+    df = PrepareHpo.transform(df.as[HPOEntry])
+  }
 
   new Indexer("index", s"templates/$templateFileName", s"${alias}_$release_id")
     .run(df)

@@ -1,0 +1,83 @@
+{
+  "index_patterns": [
+    "clin_qa_blue_hpo*",
+    "clin_qa_green_hpo*",
+    "clin_staging_hpo*",
+    "clin_prod_hpo*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 2,
+      "analysis" : {
+        "filter" : {
+          "edge_ngram" : {
+            "type" : "edge_ngram",
+            "min_gram" : "2",
+            "max_gram" : "20"
+          },
+          "hpo_ascii_folding" : {
+            "type" : "asciifolding",
+            "preserve_original" : "true"
+          }
+        },
+        "analyzer" : {
+          "autocomplete" : {
+            "filter" : [
+              "lowercase",
+              "edge_ngram",
+              "hpo_ascii_folding"
+            ],
+            "type" : "custom",
+            "tokenizer" : "standard"
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties" : {
+        "compact_ancestors" : {
+          "properties" : {
+            "hpo_id" : {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            },
+            "name" : {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            }
+          }
+        },
+        "hpo_id" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        },
+        "is_leaf" : {
+          "type" : "boolean"
+        },
+        "name" : {
+          "type" : "search_as_you_type",
+          "doc_values" : false,
+          "analyzer" : "autocomplete"
+        },
+        "parents" : {
+          "type" : "keyword"
+        }
+      }
+    }
+  }
+}
