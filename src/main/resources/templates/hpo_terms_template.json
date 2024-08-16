@@ -12,7 +12,7 @@
         "tokenizer" : {
           "autocompleteTokenizer": {
             "type": "edge_ngram",
-            "min_gram": 3,
+            "min_gram": 2,
             "max_gram": 20,
             "token_chars": [
               "letter",
@@ -20,12 +20,19 @@
               "punctuation"
             ]
           },
-          "autocompleteSearchTokenizer": {
-            "type": "lowercase",
-            "max_token_length": 20
+          "autocompleteIdTokenizer": {
+            "type": "ngram",
+            "min_gram": 2,
+            "max_gram": 2,
+            "custom_token_chars": [":"],
+            "token_chars": [
+              "letter",
+              "digit",
+              "custom"
+            ]
           }
         },
-        "filters": {
+        "filter": {
           "hpo_ascii_folding" : {
             "type" : "asciifolding",
             "preserve_original" : "true"
@@ -33,15 +40,17 @@
         },
         "analyzer" : {
           "autocomplete" : {
+            "tokenizer" : "autocompleteTokenizer",
             "filter" : [
               "lowercase",
               "hpo_ascii_folding"
-            ],
-            "type" : "custom",
-            "tokenizer" : "autocompleteTokenizer"
+            ]
           },
-          "autocomplete_search": {
-            "tokenizer": "autocompleteSearchTokenizer"
+          "autocompleteId" : {
+            "tokenizer": "autocompleteIdTokenizer",
+            "filter": [
+              "lowercase"
+            ]
           }
         }
       }
@@ -76,6 +85,10 @@
             "keyword" : {
               "type" : "keyword",
               "ignore_above" : 256
+            },
+            "autocomplete" : {
+              "type" : "text",
+              "analyzer" : "autocompleteId"
             }
           }
         },
@@ -84,9 +97,9 @@
         },
         "name" : {
           "type" : "search_as_you_type",
+          "index_options": "offsets",
           "doc_values" : false,
-          "analyzer" : "autocomplete",
-          "search_analyzer": "autocomplete_search"
+          "analyzer" : "autocomplete"
         },
         "parents" : {
           "type" : "keyword"
