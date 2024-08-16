@@ -9,12 +9,23 @@
     "settings": {
       "number_of_shards": 2,
       "analysis" : {
-        "filter" : {
-          "edge_ngram" : {
-            "type" : "edge_ngram",
-            "min_gram" : "2",
-            "max_gram" : "20"
+        "tokenizer" : {
+          "autocompleteTokenizer": {
+            "type": "edge_ngram",
+            "min_gram": 3,
+            "max_gram": 20,
+            "token_chars": [
+              "letter",
+              "digit",
+              "punctuation"
+            ]
           },
+          "autocompleteSearchTokenizer": {
+            "type": "lowercase",
+            "max_token_length": 20
+          }
+        },
+        "filters": {
           "hpo_ascii_folding" : {
             "type" : "asciifolding",
             "preserve_original" : "true"
@@ -24,11 +35,13 @@
           "autocomplete" : {
             "filter" : [
               "lowercase",
-              "edge_ngram",
               "hpo_ascii_folding"
             ],
             "type" : "custom",
-            "tokenizer" : "standard"
+            "tokenizer" : "autocompleteTokenizer"
+          },
+          "autocomplete_search": {
+            "tokenizer": "autocompleteSearchTokenizer"
           }
         }
       }
@@ -72,7 +85,8 @@
         "name" : {
           "type" : "search_as_you_type",
           "doc_values" : false,
-          "analyzer" : "autocomplete"
+          "analyzer" : "autocomplete",
+          "search_analyzer": "autocomplete_search"
         },
         "parents" : {
           "type" : "keyword"
