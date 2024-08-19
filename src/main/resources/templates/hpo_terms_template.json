@@ -9,12 +9,30 @@
     "settings": {
       "number_of_shards": 2,
       "analysis" : {
-        "filter" : {
-          "edge_ngram" : {
-            "type" : "edge_ngram",
-            "min_gram" : "2",
-            "max_gram" : "20"
+        "tokenizer" : {
+          "autocompleteTokenizer": {
+            "type": "edge_ngram",
+            "min_gram": 2,
+            "max_gram": 20,
+            "token_chars": [
+              "letter",
+              "digit",
+              "punctuation"
+            ]
           },
+          "autocompleteIdTokenizer": {
+            "type": "ngram",
+            "min_gram": 2,
+            "max_gram": 2,
+            "custom_token_chars": [":"],
+            "token_chars": [
+              "letter",
+              "digit",
+              "custom"
+            ]
+          }
+        },
+        "filter": {
           "hpo_ascii_folding" : {
             "type" : "asciifolding",
             "preserve_original" : "true"
@@ -22,13 +40,17 @@
         },
         "analyzer" : {
           "autocomplete" : {
+            "tokenizer" : "autocompleteTokenizer",
             "filter" : [
               "lowercase",
-              "edge_ngram",
               "hpo_ascii_folding"
-            ],
-            "type" : "custom",
-            "tokenizer" : "standard"
+            ]
+          },
+          "autocompleteId" : {
+            "tokenizer": "autocompleteIdTokenizer",
+            "filter": [
+              "lowercase"
+            ]
           }
         }
       }
@@ -63,6 +85,10 @@
             "keyword" : {
               "type" : "keyword",
               "ignore_above" : 256
+            },
+            "autocomplete" : {
+              "type" : "text",
+              "analyzer" : "autocompleteId"
             }
           }
         },
@@ -71,6 +97,7 @@
         },
         "name" : {
           "type" : "search_as_you_type",
+          "index_options": "offsets",
           "doc_values" : false,
           "analyzer" : "autocomplete"
         },
