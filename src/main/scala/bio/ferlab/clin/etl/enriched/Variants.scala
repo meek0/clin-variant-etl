@@ -160,7 +160,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
     val originalVariants = variants
       .select("chromosome", "start", "reference", "alternate", "end", "name", "genes_symbol", "hgvsg",
-        "variant_class", "pubmed", "created_on", "hotspot")
+        "variant_class", "pubmed", "created_on", "hotspot", "genes")
       .groupByLocus()
       .agg(
         first("end") as "end",
@@ -169,6 +169,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
         first($"hgvsg") as "hgvsg",
         first($"variant_class") as "variant_class",
         first($"pubmed") as "pubmed",
+        first($"genes") as "genes",
         max($"hotspot") as "hotspot",
         max($"created_on") as "updated_on",
         min($"created_on") as "created_on"
@@ -307,13 +308,15 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   def joinWithGenes(variants: DataFrame, genes: DataFrame): DataFrame = {
+    val variantsWithoutGenes = variants.drop("genes")
     variants
-      .join(broadcast(genes), variants("chromosome") === genes("chromosome") && array_contains(variants("genes_symbol"), genes("symbol")), "left")
-      .drop(genes("chromosome"))
+      .select(variantsWithoutGenes("*"), explode_outer($"genes") as "gene")
+      .select(variantsWithoutGenes.drop("gene")("*"), $"gene.*")
+      .join(broadcast(genes), Seq("chromosome", "symbol"), "left")
       .groupByLocus()
       .agg(
-        first(struct(variants("*"))) as "variant",
-        collect_list(struct(genes.drop("chromosome")("*"))) as "genes",
+        first(struct(variantsWithoutGenes("*"))) as "variant",
+        collect_list(struct(genes.drop("chromosome")("*"), $"spliceai")) as "genes",
         flatten(collect_set(genes("omim.omim_id"))) as "omim"
       )
       .select("variant.*", "genes", "omim")

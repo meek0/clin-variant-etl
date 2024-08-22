@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.clin.etl.normalized.Variants.hotspot
+import bio.ferlab.clin.etl.normalized.Variants._
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
 import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
@@ -12,7 +12,7 @@ import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations,
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, BooleanType, StructType}
-import org.apache.spark.sql.{Column, DataFrame, functions}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession, functions}
 import org.slf4j.Logger
 
 import java.time.LocalDateTime
@@ -26,12 +26,16 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
   override val mainDestination: DatasetConf = conf.getDataset("normalized_variants")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+  val enriched_spliceai_snv: DatasetConf = conf.getDataset("enriched_spliceai_snv")
+  val enriched_spliceai_indel: DatasetConf = conf.getDataset("enriched_spliceai_indel")
 
   override def extract(lastRunDateTime: LocalDateTime = minDateTime,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true, split = true),
       enriched_clinical.id -> enriched_clinical.read,
+      enriched_spliceai_snv.id -> enriched_spliceai_snv.read,
+      enriched_spliceai_indel.id -> enriched_spliceai_indel.read
     )
   }
 
@@ -80,6 +84,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
 
     val res = getVariantsWithFrequencies(variantsWithClinicalInfo, computeFrequencies)
       .joinByLocus(variants, "right")
+      .withSpliceAi(snv = data(enriched_spliceai_snv.id), indel = data(enriched_spliceai_indel.id))
       .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array(emptyFrequencies)))
       .withColumn("frequency_RQDM", coalesce(col("frequency_RQDM"), emptyFrequencyRQDM))
       .withColumn("batch_id", lit(batchId))
@@ -107,6 +112,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
         hotspot(vcf)
       )
       .drop("annotation")
+      .filter($"alternate" =!= "*")
       .dropDuplicates("chromosome", "start", "reference", "alternate")
   }
 
@@ -250,6 +256,55 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
 }
 
 object Variants {
+
+  implicit class DataFrameOps(df: DataFrame) {
+    def withSpliceAi(snv: DataFrame, indel: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      def joinAndMergeIntoGenes(variants: DataFrame, spliceai: DataFrame): DataFrame = {
+        val joinCondition: Column = locusColumnNames
+          .map(l => variants(l) === spliceai(l))
+          .reduce(_ and _) and array_contains(variants("genes_symbol"), spliceai("symbol"))
+
+        if (!variants.isEmpty) {
+          variants
+            .select($"*", explode_outer($"genes_symbol") as "symbol") // explode_outer since genes_symbol can be empty
+            .join(spliceai, locusColumnNames :+ "symbol", "left")
+            .select(
+              variants("*"),
+              struct(
+                $"symbol",
+                $"spliceai"
+              ) as "gene" // add spliceai struct as nested field of gene struct
+            )
+            .groupByLocus()
+            .agg(
+              first(struct(variants.drop("genes")("*"))) as "variant",
+              collect_list("gene") as "genes" // Create genes list for each locus
+            )
+            .select("variant.*", "genes")
+        } else variants
+      }
+
+      val spliceAiSnvPrepared = snv
+        .selectLocus($"symbol", $"max_score" as "spliceai")
+
+      val spliceAiIndelPrepared = indel
+        .selectLocus($"symbol", $"max_score" as "spliceai")
+
+      val snvVariants = df
+        .where($"variant_class" === "SNV")
+
+      val otherVariants = df
+        .where($"variant_class" =!= "SNV")
+
+      val snvVariantsWithSpliceAi = joinAndMergeIntoGenes(snvVariants, spliceAiSnvPrepared)
+      val otherVariantsWithSpliceAi = joinAndMergeIntoGenes(otherVariants, spliceAiIndelPrepared)
+
+      snvVariantsWithSpliceAi.unionByName(otherVariantsWithSpliceAi, allowMissingColumns = true)
+    }
+  }
+
   def hotspot(df: DataFrame): Column = {
     if (df.columns.contains("INFO_hotspot")) col("INFO_hotspot") as "hotspot"
     else lit(null).cast(BooleanType) as "hotspot"

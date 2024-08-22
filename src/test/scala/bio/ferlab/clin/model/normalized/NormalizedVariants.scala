@@ -23,4 +23,11 @@ case class NormalizedVariants(`chromosome`: String = "1",
                               `frequencies_by_analysis`: List[AnalysisCodeFrequencies] = List(AnalysisCodeFrequencies()),
                               `frequency_RQDM`: AnalysisFrequencies = AnalysisFrequencies(),
                               `batch_id`: String = "BAT1",
+                              `genes`: List[GENES] = List(GENES()),
                               `created_on`: Timestamp = java.sql.Timestamp.valueOf("2022-04-06 13:21:08.019096"))
+
+case class GENES(`symbol`: String = "OR4F5",
+                  `spliceai`: Option[SPLICEAI] = Some(SPLICEAI()))
+
+case class SPLICEAI(`ds`: Double = 0.1,
+                    `type`: Option[Seq[String]] = Some(Seq("AG", "AL", "DG", "DL")))

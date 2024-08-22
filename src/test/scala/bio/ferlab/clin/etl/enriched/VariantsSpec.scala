@@ -1,10 +1,9 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants._
-import bio.ferlab.clin.etl.enriched.VariantsSpec.removeNestedField
 import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.enriched._
-import bio.ferlab.clin.model.normalized.{NormalizedFranklin, NormalizedPanels, NormalizedVariants}
+import bio.ferlab.clin.model.normalized.{GENES, SPLICEAI, _}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -103,9 +102,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   val expectedDonors =
     List(
-      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","GEAN","PA0001","FM00001","PPR00101","OR00201","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some("33333"),Some("22222"),Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("mother"),Some("AD")),
-      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true,List("PASS"),0,30,30,1.0,"HET","chr1:g.69897T>C","SNV","BAT1","SR0095","14-696","SP_696",Date.valueOf("2022-04-06"),"germline","GEAN","PA0002","FM00001","PPR00101","OR00202","WXS","11111","MM_PG","Maladies musculaires (Panel global)","PA0003","PA0002",Some("33333"),Some("22222"),Some(List(0, 1)),Some(List(0, 0)),Some(true),Some(false),Some("HET"),Some("WT"),Some("father"),Some("AR"))
-  )
+      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEAN", "PA0001", "FM00001", "PPR00101", "OR00201", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("mother"), Some("AD")),
+      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEAN", "PA0002", "FM00001", "PPR00101", "OR00202", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("father"), Some("AR"))
+    )
 
   "variants job" should "union of all available enriched SNV" in {
     val resultDf = job.transformSingle(data)
@@ -115,90 +114,90 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   }
 
   "variants job" should "aggregate frequencies from normalized_variants" in {
-/*
-+---------------------------------------------------------------+
-|         Table of aggregation combinations (use cases)         |
-+--------+---------+---------+----------------+-------+---------+
-|Use case|#Variants|#Analysis|#Affected status|#Batchs|#Patients|
-+--------+---------+---------+----------------+-------+---------+
-|1 et 2  |1        |1        |1               |1      |1        |
-|3       |1        |1        |1               |1      |2        |
-|-       |1        |1        |1               |2      |1        |
-|4       |1        |1        |1               |2      |2        |
-|-       |1        |1        |2               |1      |1        |
-|5       |1        |1        |2               |1      |2        |
-|-       |1        |1        |2               |2      |1        |
-|6       |1        |1        |2               |2      |2        |
-|-       |1        |2        |1               |1      |1        |
-|7       |1        |2        |1               |1      |2        |
-|-       |1        |2        |1               |2      |1        |
-|8       |1        |2        |1               |2      |2        |
-|-       |1        |2        |2               |1      |1        |
-|9       |1        |2        |2               |1      |2        |
-|-       |1        |2        |2               |2      |1        |
-|10      |1        |2        |2               |2      |2        |
-|11      |2        |1        |1               |1      |1        |
-|12      |2        |1        |1               |1      |2        |
-|-       |2        |1        |1               |2      |1        |
-|13      |2        |1        |1               |2      |2        |
-|-       |2        |1        |2               |1      |1        |
-|14      |2        |1        |2               |1      |2        |
-|-       |2        |1        |2               |2      |1        |
-|15      |2        |1        |2               |2      |2        |
-|-       |2        |2        |1               |1      |1        |
-|16      |2        |2        |1               |1      |2        |
-|-       |2        |2        |1               |2      |1        |
-|17      |2        |2        |1               |2      |2        |
-|-       |2        |2        |2               |1      |1        |
-|18      |2        |2        |2               |1      |2        |
-|-       |2        |2        |2               |2      |1        |
-|19      |2        |2        |2               |2      |2        |
-+--------+---------+---------+----------------+-------+---------+
-*/
+    /*
+    +---------------------------------------------------------------+
+    |         Table of aggregation combinations (use cases)         |
+    +--------+---------+---------+----------------+-------+---------+
+    |Use case|#Variants|#Analysis|#Affected status|#Batchs|#Patients|
+    +--------+---------+---------+----------------+-------+---------+
+    |1 et 2  |1        |1        |1               |1      |1        |
+    |3       |1        |1        |1               |1      |2        |
+    |-       |1        |1        |1               |2      |1        |
+    |4       |1        |1        |1               |2      |2        |
+    |-       |1        |1        |2               |1      |1        |
+    |5       |1        |1        |2               |1      |2        |
+    |-       |1        |1        |2               |2      |1        |
+    |6       |1        |1        |2               |2      |2        |
+    |-       |1        |2        |1               |1      |1        |
+    |7       |1        |2        |1               |1      |2        |
+    |-       |1        |2        |1               |2      |1        |
+    |8       |1        |2        |1               |2      |2        |
+    |-       |1        |2        |2               |1      |1        |
+    |9       |1        |2        |2               |1      |2        |
+    |-       |1        |2        |2               |2      |1        |
+    |10      |1        |2        |2               |2      |2        |
+    |11      |2        |1        |1               |1      |1        |
+    |12      |2        |1        |1               |1      |2        |
+    |-       |2        |1        |1               |2      |1        |
+    |13      |2        |1        |1               |2      |2        |
+    |-       |2        |1        |2               |1      |1        |
+    |14      |2        |1        |2               |1      |2        |
+    |-       |2        |1        |2               |2      |1        |
+    |15      |2        |1        |2               |2      |2        |
+    |-       |2        |2        |1               |1      |1        |
+    |16      |2        |2        |1               |1      |2        |
+    |-       |2        |2        |1               |2      |1        |
+    |17      |2        |2        |1               |2      |2        |
+    |-       |2        |2        |2               |1      |1        |
+    |18      |2        |2        |2               |1      |2        |
+    |-       |2        |2        |2               |2      |1        |
+    |19      |2        |2        |2               |2      |2        |
+    +--------+---------+---------+----------------+-------+---------+
+    */
 
     val occurrencesDf: DataFrame = Seq(
-      EnrichedSNV(`analysis_code` = "UseCase01",  `affected_status` = true,  `patient_id` = "PA01", `ad_alt`=30, `batch_id` = "BAT1", `start` = 101),
-      EnrichedSNV(`analysis_code` = "UseCase02",  `affected_status` = true,  `patient_id` = "PA02", `ad_alt`=30, `batch_id` = "BAT2", `start` = 102),
-      EnrichedSNV(`analysis_code` = "UseCase03",  `affected_status` = true,  `patient_id` = "PA03", `ad_alt`=30, `batch_id` = "BAT2", `start` = 103),
-      EnrichedSNV(`analysis_code` = "UseCase03",  `affected_status` = true,  `patient_id` = "PA04", `ad_alt`=30, `batch_id` = "BAT2", `start` = 103),
-      EnrichedSNV(`analysis_code` = "UseCase04",  `affected_status` = true,  `patient_id` = "PA05", `ad_alt`=30, `batch_id` = "BAT1", `start` = 104),
-      EnrichedSNV(`analysis_code` = "UseCase04",  `affected_status` = true,  `patient_id` = "PA06", `ad_alt`=30, `batch_id` = "BAT2", `start` = 104),
-      EnrichedSNV(`analysis_code` = "UseCase05",  `affected_status` = true,  `patient_id` = "PA07", `ad_alt`=30, `batch_id` = "BAT2", `start` = 105),
-      EnrichedSNV(`analysis_code` = "UseCase05",  `affected_status` = false, `patient_id` = "PA08", `ad_alt`=30, `batch_id` = "BAT2", `start` = 105),
-      EnrichedSNV(`analysis_code` = "UseCase06",  `affected_status` = true,  `patient_id` = "PA09", `ad_alt`=30, `batch_id` = "BAT1", `start` = 106),
-      EnrichedSNV(`analysis_code` = "UseCase06",  `affected_status` = false, `patient_id` = "PA10", `ad_alt`=30, `batch_id` = "BAT2", `start` = 106),
-      EnrichedSNV(`analysis_code` = "UseCase07a", `affected_status` = true,  `patient_id` = "PA11", `ad_alt`=30, `batch_id` = "BAT2", `start` = 107),
-      EnrichedSNV(`analysis_code` = "UseCase07b", `affected_status` = true,  `patient_id` = "PA12", `ad_alt`=30, `batch_id` = "BAT2", `start` = 107),
-      EnrichedSNV(`analysis_code` = "UseCase08a", `affected_status` = true,  `patient_id` = "PA13", `ad_alt`=30, `batch_id` = "BAT1", `start` = 108),
-      EnrichedSNV(`analysis_code` = "UseCase08b", `affected_status` = true,  `patient_id` = "PA14", `ad_alt`=30, `batch_id` = "BAT2", `start` = 108),
-      EnrichedSNV(`analysis_code` = "UseCase09a", `affected_status` = true,  `patient_id` = "PA15", `ad_alt`=30, `batch_id` = "BAT2", `start` = 109),
-      EnrichedSNV(`analysis_code` = "UseCase09b", `affected_status` = false, `patient_id` = "PA16", `ad_alt`=30, `batch_id` = "BAT2", `start` = 109),
-      EnrichedSNV(`analysis_code` = "UseCase10a", `affected_status` = true,  `patient_id` = "PA17", `ad_alt`=30, `batch_id` = "BAT1", `start` = 110),
-      EnrichedSNV(`analysis_code` = "UseCase10b", `affected_status` = false, `patient_id` = "PA18", `ad_alt`=30, `batch_id` = "BAT2", `start` = 110),
-      EnrichedSNV(`analysis_code` = "UseCase11",  `affected_status` = true,  `patient_id` = "PA19", `ad_alt`=30, `batch_id` = "BAT2", `start` = 111),
-      EnrichedSNV(`analysis_code` = "UseCase11",  `affected_status` = true,  `patient_id` = "PA19", `ad_alt`=30, `batch_id` = "BAT2", `start` = 211),
-      EnrichedSNV(`analysis_code` = "UseCase12",  `affected_status` = true,  `patient_id` = "PA20", `ad_alt`=30, `batch_id` = "BAT2", `start` = 112),
-      EnrichedSNV(`analysis_code` = "UseCase12",  `affected_status` = true,  `patient_id` = "PA21", `ad_alt`=30, `batch_id` = "BAT2", `start` = 212),
-      EnrichedSNV(`analysis_code` = "UseCase13",  `affected_status` = true,  `patient_id` = "PA22", `ad_alt`=30, `batch_id` = "BAT1", `start` = 113),
-      EnrichedSNV(`analysis_code` = "UseCase13",  `affected_status` = true,  `patient_id` = "PA23", `ad_alt`=30, `batch_id` = "BAT2", `start` = 213),
-      EnrichedSNV(`analysis_code` = "UseCase14",  `affected_status` = true,  `patient_id` = "PA24", `ad_alt`=30, `batch_id` = "BAT2", `start` = 114),
-      EnrichedSNV(`analysis_code` = "UseCase14",  `affected_status` = false, `patient_id` = "PA25", `ad_alt`=30, `batch_id` = "BAT2", `start` = 214),
-      EnrichedSNV(`analysis_code` = "UseCase15",  `affected_status` = true,  `patient_id` = "PA26", `ad_alt`=30, `batch_id` = "BAT1", `start` = 115),
-      EnrichedSNV(`analysis_code` = "UseCase15",  `affected_status` = false, `patient_id` = "PA27", `ad_alt`=30, `batch_id` = "BAT2", `start` = 215),
-      EnrichedSNV(`analysis_code` = "UseCase16a", `affected_status` = true,  `patient_id` = "PA28", `ad_alt`=30, `batch_id` = "BAT2", `start` = 116),
-      EnrichedSNV(`analysis_code` = "UseCase16b", `affected_status` = true,  `patient_id` = "PA29", `ad_alt`=30, `batch_id` = "BAT2", `start` = 216),
-      EnrichedSNV(`analysis_code` = "UseCase17a", `affected_status` = true,  `patient_id` = "PA30", `ad_alt`=30, `batch_id` = "BAT1", `start` = 117),
-      EnrichedSNV(`analysis_code` = "UseCase17b", `affected_status` = true,  `patient_id` = "PA31", `ad_alt`=30, `batch_id` = "BAT2", `start` = 217),
-      EnrichedSNV(`analysis_code` = "UseCase18a", `affected_status` = true,  `patient_id` = "PA32", `ad_alt`=30, `batch_id` = "BAT2", `start` = 118),
-      EnrichedSNV(`analysis_code` = "UseCase18b", `affected_status` = false, `patient_id` = "PA33", `ad_alt`=30, `batch_id` = "BAT2", `start` = 218),
-      EnrichedSNV(`analysis_code` = "UseCase19a", `affected_status` = true,  `patient_id` = "PA34", `ad_alt`=30, `batch_id` = "BAT1", `start` = 119),
-      EnrichedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt`=30, `batch_id` = "BAT2", `start` = 219),
+      EnrichedSNV(`analysis_code` = "UseCase01", `affected_status` = true, `patient_id` = "PA01", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 101),
+      EnrichedSNV(`analysis_code` = "UseCase02", `affected_status` = true, `patient_id` = "PA02", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 102),
+      EnrichedSNV(`analysis_code` = "UseCase03", `affected_status` = true, `patient_id` = "PA03", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 103),
+      EnrichedSNV(`analysis_code` = "UseCase03", `affected_status` = true, `patient_id` = "PA04", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 103),
+      EnrichedSNV(`analysis_code` = "UseCase04", `affected_status` = true, `patient_id` = "PA05", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 104),
+      EnrichedSNV(`analysis_code` = "UseCase04", `affected_status` = true, `patient_id` = "PA06", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 104),
+      EnrichedSNV(`analysis_code` = "UseCase05", `affected_status` = true, `patient_id` = "PA07", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 105),
+      EnrichedSNV(`analysis_code` = "UseCase05", `affected_status` = false, `patient_id` = "PA08", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 105),
+      EnrichedSNV(`analysis_code` = "UseCase06", `affected_status` = true, `patient_id` = "PA09", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 106),
+      EnrichedSNV(`analysis_code` = "UseCase06", `affected_status` = false, `patient_id` = "PA10", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 106),
+      EnrichedSNV(`analysis_code` = "UseCase07a", `affected_status` = true, `patient_id` = "PA11", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 107),
+      EnrichedSNV(`analysis_code` = "UseCase07b", `affected_status` = true, `patient_id` = "PA12", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 107),
+      EnrichedSNV(`analysis_code` = "UseCase08a", `affected_status` = true, `patient_id` = "PA13", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 108),
+      EnrichedSNV(`analysis_code` = "UseCase08b", `affected_status` = true, `patient_id` = "PA14", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 108),
+      EnrichedSNV(`analysis_code` = "UseCase09a", `affected_status` = true, `patient_id` = "PA15", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 109),
+      EnrichedSNV(`analysis_code` = "UseCase09b", `affected_status` = false, `patient_id` = "PA16", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 109),
+      EnrichedSNV(`analysis_code` = "UseCase10a", `affected_status` = true, `patient_id` = "PA17", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 110),
+      EnrichedSNV(`analysis_code` = "UseCase10b", `affected_status` = false, `patient_id` = "PA18", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 110),
+      EnrichedSNV(`analysis_code` = "UseCase11", `affected_status` = true, `patient_id` = "PA19", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 111),
+      EnrichedSNV(`analysis_code` = "UseCase11", `affected_status` = true, `patient_id` = "PA19", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 211),
+      EnrichedSNV(`analysis_code` = "UseCase12", `affected_status` = true, `patient_id` = "PA20", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 112),
+      EnrichedSNV(`analysis_code` = "UseCase12", `affected_status` = true, `patient_id` = "PA21", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 212),
+      EnrichedSNV(`analysis_code` = "UseCase13", `affected_status` = true, `patient_id` = "PA22", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 113),
+      EnrichedSNV(`analysis_code` = "UseCase13", `affected_status` = true, `patient_id` = "PA23", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 213),
+      EnrichedSNV(`analysis_code` = "UseCase14", `affected_status` = true, `patient_id` = "PA24", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 114),
+      EnrichedSNV(`analysis_code` = "UseCase14", `affected_status` = false, `patient_id` = "PA25", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 214),
+      EnrichedSNV(`analysis_code` = "UseCase15", `affected_status` = true, `patient_id` = "PA26", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 115),
+      EnrichedSNV(`analysis_code` = "UseCase15", `affected_status` = false, `patient_id` = "PA27", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 215),
+      EnrichedSNV(`analysis_code` = "UseCase16a", `affected_status` = true, `patient_id` = "PA28", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 116),
+      EnrichedSNV(`analysis_code` = "UseCase16b", `affected_status` = true, `patient_id` = "PA29", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 216),
+      EnrichedSNV(`analysis_code` = "UseCase17a", `affected_status` = true, `patient_id` = "PA30", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 117),
+      EnrichedSNV(`analysis_code` = "UseCase17b", `affected_status` = true, `patient_id` = "PA31", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 217),
+      EnrichedSNV(`analysis_code` = "UseCase18a", `affected_status` = true, `patient_id` = "PA32", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 118),
+      EnrichedSNV(`analysis_code` = "UseCase18b", `affected_status` = false, `patient_id` = "PA33", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 218),
+      EnrichedSNV(`analysis_code` = "UseCase19a", `affected_status` = true, `patient_id` = "PA34", `ad_alt` = 30, `batch_id` = "BAT1", `start` = 119),
+      EnrichedSNV(`analysis_code` = "UseCase19b", `affected_status` = false, `patient_id` = "PA35", `ad_alt` = 30, `batch_id` = "BAT2", `start` = 219),
     ).toDF
 
     val occurrencesDfSomatic = Seq(
-      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 219),
-      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 301),
-      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt`=30, `batch_id` = "BAT3", `start` = 302)
+      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt` = 30, `batch_id` = "BAT3", `start` = 219),
+      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt` = 30, `batch_id` = "BAT3", `start` = 301),
+      EnrichedSNVSomatic(`analysis_code` = "UseCaseSomatic", `affected_status` = false, `patient_id` = "PA36", `ad_alt` = 30, `batch_id` = "BAT3", `start` = 302)
     ).toDF
 
     val variantDf = Seq(
@@ -209,9 +208,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase01",
             `analysis_display_name` = "Analysis for the use case 01",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 102,
@@ -219,9 +218,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase02",
             `analysis_display_name` = "Analysis for the use case 02",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 103,
@@ -229,9 +228,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase03",
             `analysis_display_name` = "Analysis for the use case 03",
-            `affected` =     Frequency(2, 4, 0.5, 2, 2, 1.0, 1),
+            `affected` = Frequency(2, 4, 0.5, 2, 2, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))),
+            `total` = Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 104,
@@ -239,9 +238,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase04",
             `analysis_display_name` = "Analysis for the use case 04",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 104,
@@ -249,9 +248,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase04",
             `analysis_display_name` = "Analysis for the use case 04",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 105,
@@ -259,9 +258,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase05",
             `analysis_display_name` = "Analysis for the use case 05",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))),
+            `total` = Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 106,
@@ -269,9 +268,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase06",
             `analysis_display_name` = "Analysis for the use case 06",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 106,
@@ -279,9 +278,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase06",
             `analysis_display_name` = "Analysis for the use case 06",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 107,
@@ -289,15 +288,15 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase07a",
             `analysis_display_name` = "Analysis A for the use case 07",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)),
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase07b",
             `analysis_display_name` = "Analysis B for the use case 07",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 108,
@@ -305,9 +304,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase08a",
             `analysis_display_name` = "Analysis A for the use case 08",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 108,
@@ -315,9 +314,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase08b",
             `analysis_display_name` = "Analysis B for the use case 08",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 109,
@@ -325,15 +324,15 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase09a",
             `analysis_display_name` = "Analysis A for the use case 09",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)),
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase09b",
             `analysis_display_name` = "Analysis B for the use case 09",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 110,
@@ -341,9 +340,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase10a",
             `analysis_display_name` = "Analysis A for the use case 10",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 110,
@@ -351,9 +350,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase10b",
             `analysis_display_name` = "Analysis B for the use case 10",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 111,
@@ -361,9 +360,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase11",
             `analysis_display_name` = "Analysis for the use case 11",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 211,
@@ -371,9 +370,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase11",
             `analysis_display_name` = "Analysis for the use case 11",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 112,
@@ -381,9 +380,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase12",
             `analysis_display_name` = "Analysis for the use case 12",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 212,
@@ -391,9 +390,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase12",
             `analysis_display_name` = "Analysis for the use case 12",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 113,
@@ -401,9 +400,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase13",
             `analysis_display_name` = "Analysis for the use case 13",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 213,
@@ -411,9 +410,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase13",
             `analysis_display_name` = "Analysis for the use case 13",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 114,
@@ -421,9 +420,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase14",
             `analysis_display_name` = "Analysis for the use case 14",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 214,
@@ -431,9 +430,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase14",
             `analysis_display_name` = "Analysis for the use case 14",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 115,
@@ -441,9 +440,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase15",
             `analysis_display_name` = "Analysis for the use case 15",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 215,
@@ -451,9 +450,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase15",
             `analysis_display_name` = "Analysis for the use case 15",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 116,
@@ -461,9 +460,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase16a",
             `analysis_display_name` = "Analysis A for the use case 16",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 216,
@@ -471,9 +470,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase16b",
             `analysis_display_name` = "Analysis B for the use case 16",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 117,
@@ -481,9 +480,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase17a",
             `analysis_display_name` = "Analysis A for the use case 17",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 217,
@@ -491,9 +490,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase17b",
             `analysis_display_name` = "Analysis B for the use case 17",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 118,
@@ -501,9 +500,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase18a",
             `analysis_display_name` = "Analysis A for the use case 18",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 218,
@@ -511,9 +510,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase18b",
             `analysis_display_name` = "Analysis B for the use case 18",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT1",
         `start` = 119,
@@ -521,9 +520,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase19a",
             `analysis_display_name` = "Analysis A for the use case 19",
-            `affected` =     Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+            `affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))),
       NormalizedVariants(
         `batch_id` = "BAT2",
         `start` = 219,
@@ -531,9 +530,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCase19b",
             `analysis_display_name` = "Analysis B for the use case 19",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
-            `total` =        Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
+            `total` = Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))),
       NormalizedVariants(
         `batch_id` = "BAT3",
         `start` = 219,
@@ -541,9 +540,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           AnalysisCodeFrequencies(
             `analysis_code` = "UseCaseSomatic",
             `analysis_display_name` = "Analysis Somatic with both germline and somatic",
-            `affected` =     Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
-            `total` =        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
+            `total` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
           ))),
       normalized.NormalizedVariants(
         `batch_id` = "BAT3",
@@ -557,7 +556,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
             `non_affected` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
             `total` = Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
           ))),
-        normalized.NormalizedVariants(
+      normalized.NormalizedVariants(
         `batch_id` = "BAT3",
         `start` = 302,
         `frequency_RQDM` = AnalysisFrequencies(
@@ -588,8 +587,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))
     result101.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
 
     // Use case #2: A variant is absent from batch #1 and present in batch #2
     val result102 = result.find(_.`start` == 102).head
@@ -601,8 +600,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result102.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #3: See table above for aggregation characteristics for this use case
     val result103 = result.find(_.`start` == 103).head
@@ -614,8 +613,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))
     result103.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(2, 54, 0.037037037037037035, 2, 27, 0.07407407407407407, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                 0),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714, 1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #4: See table above for aggregation characteristics for this use case
     val result104 = result.find(_.`start` == 104).head
@@ -627,8 +626,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))
     result104.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(2, 54, 0.037037037037037035, 2, 27, 0.07407407407407407, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                 0),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714, 1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #5: See table above for aggregation characteristics for this use case
     val result105 = result.find(_.`start` == 105).head
@@ -640,8 +639,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))
     result105.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,                1),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714,  1))
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #6: See table above for aggregation characteristics for this use case
     val result106 = result.find(_.`start` == 106).head
@@ -653,8 +652,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(2, 4, 0.5, 2, 2, 1.0, 1)))
     result106.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,                1),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714,  1))
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #7: See table above for aggregation characteristics for this use case
     val result107 = result.find(_.`start` == 107).head
@@ -671,8 +670,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result107.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(2, 54, 0.037037037037037035, 2, 27, 0.07407407407407407, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                 0),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714, 1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #8: See table above for aggregation characteristics for this use case
     val result108 = result.find(_.`start` == 108).head
@@ -689,8 +688,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result108.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(2, 54, 0.037037037037037035, 2, 27, 0.07407407407407407, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                 0),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714, 1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #9: See table above for aggregation characteristics for this use case
     val result109 = result.find(_.`start` == 109).head
@@ -707,8 +706,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result109.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,                1),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714,  1))
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #10: See table above for aggregation characteristics for this use case
     val result110 = result.find(_.`start` == 110).head
@@ -725,8 +724,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result110.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,                1),
-      Frequency(2, 70, 0.02857142857142857,  2, 35, 0.05714285714285714,  1))
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
+      Frequency(2, 70, 0.02857142857142857, 2, 35, 0.05714285714285714, 1))
 
     // Use case #11: See table above for aggregation characteristics for this use case
     val result111 = result.find(_.`start` == 111).head
@@ -738,8 +737,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))
     result111.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result211 = result.find(_.`start` == 211).head
     result211.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
@@ -749,8 +748,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result211.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #12: See table above for aggregation characteristics for this use case
     val result112 = result.find(_.`start` == 112).head
@@ -758,23 +757,23 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       AnalysisCodeFrequencies(
         "UseCase12", "Analysis for the use case 12",
         Frequency(1, 4, 0.25, 1, 2, 0.5, 0),
-        Frequency(0, 0, 0.0,  0, 0, 0.0, 0),
+        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 0)))
     result112.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result212 = result.find(_.`start` == 212).head
     result212.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
         "UseCase12", "Analysis for the use case 12",
         Frequency(1, 4, 0.25, 1, 2, 0.5, 1),
-        Frequency(0, 0, 0.0,  0, 0, 0.0, 0),
+        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 1)))
     result212.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #13: See table above for aggregation characteristics for this use case
     val result113 = result.find(_.`start` == 113).head
@@ -782,46 +781,46 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       AnalysisCodeFrequencies(
         "UseCase13", "Analysis for the use case 13",
         Frequency(1, 4, 0.25, 1, 2, 0.5, 0),
-        Frequency(0, 0, 0.0,  0, 0, 0.0, 0),
+        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 0)))
     result113.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result213 = result.find(_.`start` == 213).head
     result213.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
         "UseCase13", "Analysis for the use case 13",
         Frequency(1, 4, 0.25, 1, 2, 0.5, 1),
-        Frequency(0, 0, 0.0,  0, 0, 0.0, 0),
+        Frequency(0, 0, 0.0, 0, 0, 0.0, 0),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 1)))
     result213.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #14: See table above for aggregation characteristics for this use case
     val result114 = result.find(_.`start` == 114).head
     result114.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
         "UseCase14", "Analysis for the use case 14",
-        Frequency(1, 2, 0.5,  1, 1, 1.0, 0),
-        Frequency(0, 2, 0.0,  0, 1, 0.0, 0),
+        Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+        Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 0)))
     result114.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result214 = result.find(_.`start` == 214).head
     result214.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
         "UseCase14", "Analysis for the use case 14",
-        Frequency(0, 2, 0.0,  0, 1, 0.0, 0),
-        Frequency(1, 2, 0.5,  1, 1, 1.0, 1),
+        Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
+        Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 1)))
     result214.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(0, 54, 0.0,                  0, 27, 0.0,                 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,               1),
+      Frequency(0, 54, 0.0, 0, 27, 0.0, 0),
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #15: See table above for aggregation characteristics for this use case
@@ -829,23 +828,23 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     result115.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
         "UseCase15", "Analysis for the use case 15",
-        Frequency(1, 2, 0.5,  1, 1, 1.0, 0),
-        Frequency(0, 2, 0.0,  0, 1, 0.0, 0),
+        Frequency(1, 2, 0.5, 1, 1, 1.0, 0),
+        Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 0)))
     result115.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result215 = result.find(_.`start` == 215).head
     result215.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
         "UseCase15", "Analysis for the use case 15",
-        Frequency(0, 2, 0.0,  0, 1, 0.0, 0),
-        Frequency(1, 2, 0.5,  1, 1, 1.0, 1),
+        Frequency(0, 2, 0.0, 0, 1, 0.0, 0),
+        Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
         Frequency(1, 4, 0.25, 1, 2, 0.5, 1)))
     result215.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(0, 54, 0.0,                  0, 27, 0.0,                 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,               1),
+      Frequency(0, 54, 0.0, 0, 27, 0.0, 0),
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #16: See table above for aggregation characteristics for this use case
@@ -858,8 +857,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))
     result116.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result216 = result.find(_.`start` == 216).head
     result216.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
@@ -869,8 +868,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result216.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #17: See table above for aggregation characteristics for this use case
     val result117 = result.find(_.`start` == 117).head
@@ -882,8 +881,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))
     result117.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result217 = result.find(_.`start` == 217).head
     result217.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
@@ -893,8 +892,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result217.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 1),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  1))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #18: See table above for aggregation characteristics for this use case
     val result118 = result.find(_.`start` == 118).head
@@ -906,8 +905,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))
     result118.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
     val result218 = result.find(_.`start` == 218).head
     result218.`frequencies_by_analysis` should contain allElementsOf List(
       AnalysisCodeFrequencies(
@@ -916,8 +915,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result218.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(0, 54, 0.0,                  0, 27, 0.0,                 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,               1),
+      Frequency(0, 54, 0.0, 0, 27, 0.0, 0),
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
 
     // Use case #19: See table above for aggregation characteristics for this use case
@@ -930,8 +929,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 0)))
     result119.`frequency_RQDM` shouldBe AnalysisFrequencies(
       Frequency(1, 54, 0.018518518518518517, 1, 27, 0.037037037037037035, 0),
-      Frequency(0, 16, 0.0,                  0, 8,  0.0,                  0),
-      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857,  0))
+      Frequency(0, 16, 0.0, 0, 8, 0.0, 0),
+      Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 0))
 
     val result219 = result.find(_.`start` == 219).head
     result219.`frequencies_by_analysis` should contain allElementsOf List(
@@ -941,8 +940,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1),
         Frequency(1, 2, 0.5, 1, 1, 1.0, 1)))
     result219.`frequency_RQDM` shouldBe AnalysisFrequencies(
-      Frequency(0, 54, 0.0,                  0, 27, 0.0,                 0),
-      Frequency(1, 16, 0.0625,               1, 8,  0.125,               1),
+      Frequency(0, 54, 0.0, 0, 27, 0.0, 0),
+      Frequency(1, 16, 0.0625, 1, 8, 0.125, 1),
       Frequency(1, 70, 0.014285714285714285, 1, 35, 0.02857142857142857, 1))
     // is both germline and somatic_tumor_only
     result219.`variant_type` should contain allElementsOf List("germline", "somatic")
@@ -972,13 +971,13 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val resultDf = spark.table("clin.variants")
     val result = resultDf.as[EnrichedVariant].collect().head
 
-//    resultDf.select(explode($"donors").as[DONORS]).show(false)
-//    expectedDonors.toDF().show(false)
+    //    resultDf.select(explode($"donors").as[DONORS]).show(false)
+    //    expectedDonors.toDF().show(false)
 
     result.`donors` should contain allElementsOf expectedDonors
     result.`frequencies_by_analysis` should contain allElementsOf List(AnalysisCodeFrequencies(
-      `affected` = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2),
-      `total` = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2)))
+      `affected` = Frequency(4, 6, 0.6666666666666666, 2, 3, 0.6666666666666666, 2),
+      `total` = Frequency(4, 6, 0.6666666666666666, 2, 3, 0.6666666666666666, 2)))
 
     result.copy(
       `donors` = List(),
@@ -988,8 +987,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       `donors` = List(),
       `frequencies_by_analysis` = List(),
       `frequency_RQDM` = AnalysisFrequencies(
-        `affected` = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2),
-        `total` = Frequency(4,6,0.6666666666666666,2,3,0.6666666666666666,2)),
+        `affected` = Frequency(4, 6, 0.6666666666666666, 2, 3, 0.6666666666666666, 2),
+        `total` = Frequency(4, 6, 0.6666666666666666, 2, 3, 0.6666666666666666, 2)),
       `freq_rqdm_tumor_only` = SOMATIC_FREQUENCY(1, 1, 1.0),
       `freq_rqdm_tumor_normal` = SOMATIC_FREQUENCY(0, 0, 0.0),
       `created_on` = result.`created_on`,
@@ -1129,10 +1128,10 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   "withFranklin" should "enrich variants with Franklin scores" in {
     val variants = Seq(
       EnrichedVariant(`chromosome` = "1", `donors` = List(
-        DONORS(`aliquot_id` = "11111",`franklin_combined_score` = Some(0.5)),
-        DONORS(`aliquot_id` = "22222",`franklin_combined_score` = Some(0.99)),
-        DONORS(`aliquot_id` = "33333",`franklin_combined_score` = Some(0.15)),
-        DONORS(`aliquot_id` = "44444",`franklin_combined_score` = None))), // No Franklin data for this donor
+        DONORS(`aliquot_id` = "11111", `franklin_combined_score` = Some(0.5)),
+        DONORS(`aliquot_id` = "22222", `franklin_combined_score` = Some(0.99)),
+        DONORS(`aliquot_id` = "33333", `franklin_combined_score` = Some(0.15)),
+        DONORS(`aliquot_id` = "44444", `franklin_combined_score` = None))), // No Franklin data for this donor
       EnrichedVariant(`chromosome` = "2", `donors` = List(DONORS(`aliquot_id` = "11111", `franklin_combined_score` = Some(0.6)))),
       EnrichedVariant(`chromosome` = "3", `donors` = List(DONORS(`aliquot_id` = "22222", `franklin_combined_score` = None))), // No Franklin data for this variant
     ).toDF().drop("franklin_max")
@@ -1247,6 +1246,37 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     result
       .selectLocus($"freq_rqdm_tumor_only", $"freq_rqdm_tumor_normal")
       .collect() should contain theSameElementsAs expected
+  }
+
+  "joinWithGenes" should "merge normalized_variants genes with enriched_genes table" in {
+    val variants = Seq(
+      NormalizedVariants(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "C", variant_class = "SNV", `genes_symbol` = List("gene1", "gene2"), `genes` = List(
+        GENES(`symbol` = "gene1", `spliceai` = Some(SPLICEAI(`ds` = 2.0, `type` = Some(Seq("AL"))))),
+        GENES(`symbol` = "gene2", `spliceai` = Some(SPLICEAI(`ds` = 0.0, `type` = None))),
+      )),
+      NormalizedVariants(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "T", `alternate` = "AT", variant_class = "insertion", `genes_symbol` = List("gene1"), `genes` = List(GENES(`symbol` = "gene1", `spliceai` = Some(SPLICEAI(`ds` = 1.0, `type` = Some(Seq("AG", "AL"))))))),
+      NormalizedVariants(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", variant_class = "SNV", `genes_symbol` = List("gene3"), `genes` = List(GENES(`symbol` = "gene3", `spliceai` = None))),
+    ).toDF()
+
+    val genes = Seq(
+      EnrichedGenes(chromosome = "1", symbol = "gene1"),
+      EnrichedGenes(chromosome = "1", symbol = "gene2"),
+      EnrichedGenes(chromosome = "2", symbol = "gene3"),
+    ).toDF()
+
+    val result = job.joinWithGenes(variants, genes)
+
+    result
+      .selectLocus($"genes")
+      .as[(String, Long, String, String, List[enriched.GENES])]
+      .collect() should contain theSameElementsAs Seq(
+      ("1", 1, "T", "C", List(
+        enriched.GENES(`symbol` = Some("gene1"), `spliceai` = Some(enriched.SPLICEAI(`ds` = 2.0, `type` = Some(Seq("AL"))))),
+        enriched.GENES(`symbol` = Some("gene2"), `spliceai` = Some(enriched.SPLICEAI(`ds` = 0.0, `type` = None))),
+      )),
+      ("1", 1, "T", "AT", List(enriched.GENES(`symbol` = Some("gene1"), `spliceai` = Some(enriched.SPLICEAI(`ds` = 1.0, `type` = Some(Seq("AG", "AL"))))))),
+      ("2", 1, "A", "T", List(enriched.GENES(`symbol` = Some("gene3"), `spliceai` = None))),
+    )
   }
 }
 
