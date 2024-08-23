@@ -20,22 +20,21 @@
               "punctuation"
             ]
           },
-          "autocompleteIdTokenizer": {
-            "type": "ngram",
-            "min_gram": 2,
-            "max_gram": 2,
-            "custom_token_chars": [":"],
-            "token_chars": [
-              "letter",
-              "digit",
-              "custom"
-            ]
+          "hpoIdTokenizer" : {
+            "type": "pattern",
+            "pattern": "^HP:0*(.*)",
+            "group": 1
           }
         },
         "filter": {
           "hpo_ascii_folding" : {
             "type" : "asciifolding",
             "preserve_original" : "true"
+          },
+          "hpo_id_leading_zero_trim" : {
+            "type": "pattern_replace",
+            "pattern": "^HP:0+(.*)",
+            "replacement": "$1"
           }
         },
         "analyzer" : {
@@ -46,11 +45,8 @@
               "hpo_ascii_folding"
             ]
           },
-          "autocompleteId" : {
-            "tokenizer": "autocompleteIdTokenizer",
-            "filter": [
-              "lowercase"
-            ]
+          "hpoIdAnalyzer" : {
+            "tokenizer": "hpoIdTokenizer"
           }
         }
       }
@@ -88,7 +84,8 @@
             },
             "autocomplete" : {
               "type" : "text",
-              "analyzer" : "autocompleteId"
+              "index_options": "offsets",
+              "analyzer" : "hpoIdAnalyzer"
             }
           }
         },
