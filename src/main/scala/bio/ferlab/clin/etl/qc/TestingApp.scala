@@ -163,7 +163,7 @@ object TestingApp {
     .select($"chromosome", $"start", $"reference", $"alternate", $"sampleId" as "aliquot_id", $"alleleDepths"(1) as "ad_alt", $"calls")
     .filter($"alternate" =!= "*")
     .filter(array_contains(col("calls"), 1) && $"ad_alt" >= adAltFilter)
-    .where(!$"aliquot_id".isin("21375", "21388", "21389", "23276", "23277", "RetraitProb", "RetraitMth", "RetraitFth")) // Retrait de patients du metadata mais pas du VCF
+    .where(!$"aliquot_id".isin("21375", "21388", "21389", "23276", "23277", "RetraitProb", "RetraitMth", "RetraitFth", "21771", "21772")) // Retrait de patients du metadata mais pas du VCF
 
     val df_ToTest = df
     .filter($"batch_id" === s"$b")
