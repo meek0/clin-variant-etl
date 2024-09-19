@@ -51,6 +51,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         $"experiment.aliquot_id" as "aliquot_id",
         $"experiment.sequencing_strategy" as "sequencing_strategy",
         $"workflow.genome_build" as "genome_build",
+        $"documents"
       )
       // Group by bioinfo_analysis_code since TEBA and TNEBA share same service_request_id
       .groupBy("patient_id", "service_request_id", "bioinfo_analysis_code")
@@ -59,6 +60,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         firstAs("sequencing_strategy"),
         firstAs("aliquot_id"),
         firstAs("genome_build"),
+        firstAs("documents")
       )
 
     val patients = data(normalized_patient.id)
@@ -102,9 +104,8 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         observations = data(normalized_observation.id)
       )
 
-    val specimensWithDocuments = data(normalized_specimen.id)
+    val specimens = data(normalized_specimen.id)
       .select(
-        $"id" as "fhir_specimen_id",
         $"patient_id",
         $"service_request_id",
         $"specimen_id",
@@ -112,19 +113,18 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       )
       .groupBy("patient_id", "service_request_id")
       .agg(
-        collect_set($"fhir_specimen_id") as "fhir_specimen_ids",
         filter(collect_list($"specimen_id"), _.isNotNull)(0) as "specimen_id",
         filter(collect_list($"sample_id"), _.isNotNull)(0) as "sample_id"
       )
-      .withDocuments(data(normalized_document_reference.id))
 
     tasks
+      .withDocuments(data(normalized_document_reference.id)) // Needs tasks to find documents
       .join(sequencingServiceRequests, "service_request_id")
       .join(analysisServiceRequestsWithAffectedStatus, Seq("analysis_service_request_id", "patient_id"))
       .join(patients, "patient_id")
       .join(familyRelationships, Seq("analysis_service_request_id", "patient_id"), "left")
       .withParentAliquotIds // Needs to be done after tasks and familyRelationships join
-      .join(specimensWithDocuments, Seq("service_request_id", "patient_id"), "left")
+      .join(specimens, Seq("service_request_id", "patient_id"), "left")
   }
 }
 
@@ -185,7 +185,7 @@ object EnrichedClinical {
 
       withUrlColumns
         .filter(filterCondition)
-        .groupBy("patient_id", "fhir_specimen_id")
+        .groupBy("document_id", "type")
         .agg(
           columnsToAgg.head,
           columnsToAgg.tail: _*
@@ -195,8 +195,8 @@ object EnrichedClinical {
     def withDocuments(documents: DataFrame): DataFrame = {
       val documentsWithUrls = documents
         .select(
+          $"id" as "document_id",
           $"patient_id",
-          $"specimen_id" as "fhir_specimen_id",
           $"type",
           explode($"contents") as "content",
         )
@@ -205,13 +205,20 @@ object EnrichedClinical {
         .filterUrlColumns
 
       val columnsToAgg: List[Column] = GenomicFiles.map(file => firstAs(file.urlColumn, ignoreNulls = true))
+      val groupByColumms: List[Column] = df.drop("documents").columns.map(col).toList
 
       df
-        .join(documentsWithUrls, df("patient_id") === documentsWithUrls("patient_id") and array_contains($"fhir_specimen_ids", $"fhir_specimen_id"), "left")
-        .groupBy(df("patient_id"), $"service_request_id")
+        .select(
+          $"*",
+          explode_outer($"documents") as "document"
+        )
+        .withColumn("document_id", $"document.id")
+        .withColumn("type", $"document.document_type")
+        .join(documentsWithUrls, Seq("document_id", "type"), "left")
+        .groupBy(groupByColumms: _*)
         .agg(
-          firstAs("specimen_id"),
-          firstAs("sample_id") +: columnsToAgg: _*
+          columnsToAgg.head,
+          columnsToAgg.tail: _*
         )
     }
 

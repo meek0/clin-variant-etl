@@ -228,48 +228,67 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
   ).toDF()
 
   val taskDf: DataFrame = Seq(
+    // To help readability, id is composed of <patient_id>-<service_request_id>-<analysis_code>
     // BATCH 1
     // 1. Trio, germline
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "1")),
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0002", `service_request_id` = "SRS0002", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "2")),
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0003", `service_request_id` = "SRS0003", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "3")),
+    NormalizedTask(id = "1-1-G", batch_id = "BAT1", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "1"),
+      documents = List(DOCUMENTS(id = "1-1-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "1-1-G-EXOMISER", document_type = "EXOMISER"))),
+    NormalizedTask(id = "2-2-G", batch_id = "BAT1", `patient_id` = "PA0002", `service_request_id` = "SRS0002", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "2"),
+      documents = List(DOCUMENTS(id = "2-2-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "2-2-G-EXOMISER", document_type = "EXOMISER"))),
+    NormalizedTask(id = "3-3-G", batch_id = "BAT1", `patient_id` = "PA0003", `service_request_id` = "SRS0003", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "3"),
+      documents = List(DOCUMENTS(id = "3-3-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "3-3-G-EXOMISER", document_type = "EXOMISER"))),
 
     // 2. Trio+, tumor only
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0004", `service_request_id` = "SRS0004", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "4")),
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0005", `service_request_id` = "SRS0005", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "5")),
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0006", `service_request_id` = "SRS0006", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "6")),
-    NormalizedTask(batch_id = "BAT1", `patient_id` = "PA0007", `service_request_id` = "SRS0007", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "7")),
+    NormalizedTask(id = "4-4-TO", batch_id = "BAT1", `patient_id` = "PA0004", `service_request_id` = "SRS0004", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "4"),
+      documents = List(DOCUMENTS(id = "4-4-TO-EXOMISER", document_type = "EXOMISER"))),
+    NormalizedTask(id = "5-5-TO", batch_id = "BAT1", `patient_id` = "PA0005", `service_request_id` = "SRS0005", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "5"),
+      documents = List(DOCUMENTS(id = "5-5-TO-EXOMISER", document_type = "EXOMISER"))),
+    NormalizedTask(id = "6-6-TO", batch_id = "BAT1", `patient_id` = "PA0006", `service_request_id` = "SRS0006", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "6"),
+      documents = List(DOCUMENTS(id = "6-6-TO-EXOMISER", document_type = "EXOMISER"))),
+    NormalizedTask(id = "7-7-TO", batch_id = "BAT1", `patient_id` = "PA0007", `service_request_id` = "SRS0007", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "7"),
+      documents = List(DOCUMENTS(id = "7-7-TO-EXOMISER", document_type = "EXOMISER"))),
 
     // BATCH 2
     // 3. Incomplete trio
-    NormalizedTask(batch_id = "BAT2", `patient_id` = "PA0011", `service_request_id` = "SRS0011", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "11")), // proband
-    NormalizedTask(batch_id = "BAT2", `patient_id` = "PA0022", `service_request_id` = "SRS0022", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "22")), // mother
+    NormalizedTask(id = "11-11-G", batch_id = "BAT2", `patient_id` = "PA0011", `service_request_id` = "SRS0011", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "11"), // proband
+      documents = List(DOCUMENTS(id = "11-11-G-COVGENE", document_type = "COVGENE"))),
+    NormalizedTask(id = "22-22-G", batch_id = "BAT2", `patient_id` = "PA0022", `service_request_id` = "SRS0022", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "22"), // mother
+      documents = List(DOCUMENTS(id = "22-22-G-COVGENE", document_type = "COVGENE"))),
 
     // 4. Same family, two prescriptions
     // 4.1 First prescription: Duo
-    NormalizedTask(batch_id = "BAT2", `patient_id` = "PA0111", `service_request_id` = "SRS0111", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "111")),
-    NormalizedTask(batch_id = "BAT2", `patient_id` = "PA0222", `service_request_id` = "SRS0222", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "222")),
+    NormalizedTask(id = "111-111-G", batch_id = "BAT2", `patient_id` = "PA0111", `service_request_id` = "SRS0111", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "111"),
+      documents = List(DOCUMENTS(id = "111-111-G-COVGENE", document_type = "COVGENE"))),
+    NormalizedTask(id = "222-222-G", batch_id = "BAT2", `patient_id` = "PA0222", `service_request_id` = "SRS0222", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "222"),
+      documents = List(DOCUMENTS(id = "222-222-G-COVGENE", document_type = "COVGENE"))),
 
     // BATCH 3
     // 3. Incomplete trio, father's task
-    NormalizedTask(batch_id = "BAT3", `patient_id` = "PA0033", `service_request_id` = "SRS0033", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "33")), // father
+    NormalizedTask(id = "33-33-G", batch_id = "BAT3", `patient_id` = "PA0033", `service_request_id` = "SRS0033", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "33"),
+      documents = List(DOCUMENTS(id = "33-33-G-COVGENE", document_type = "COVGENE"))), // father
 
     // 4. Same family, two prescriptions
     // 4.2 Second prescription: Trio
-    NormalizedTask(batch_id = "BAT3", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "333")), // proband
-    NormalizedTask(batch_id = "BAT3", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "111")), // sister (same aliquot since she's not re-sequenced)
-    NormalizedTask(batch_id = "BAT3", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "555")), // mother
+    NormalizedTask(id = "333-333-G", batch_id = "BAT3", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "333"), // proband
+      documents = List(DOCUMENTS(id = "333-333-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "333-333-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "333-333-G-SNV", document_type = "SNV"))),
+    NormalizedTask(id = "111-444-G", batch_id = "BAT3", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "111"), // sister (same aliquot since she's not re-sequenced)
+      documents = List(DOCUMENTS(id = "111-444-G-SNV", document_type = "SNV"))),
+    NormalizedTask(id = "222-555-G", batch_id = "BAT3", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "555"), // mother
+      documents = List(DOCUMENTS(id = "222-555-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "222-555-G-SNV", document_type = "SNV"))),
 
     // 5. Solo, Tumor only analysis
-    NormalizedTask(batch_id = "BAT3", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111")),
+    NormalizedTask(id = "1111-1111-TO", batch_id = "BAT3", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111"),
+      documents = List(DOCUMENTS(id = "1111-1111-TO-SNV", document_type = "SNV"))),
 
     // BATCH 4
     // 5. Solo, Germline analysis
-    NormalizedTask(batch_id = "BAT4", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "2222")),
+    NormalizedTask(id = "1111-2222-G", batch_id = "BAT4", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "2222"),
+      documents = List(DOCUMENTS(id = "1111-2222-G-SNV", document_type = "SNV"))),
 
     // BATCH 5
     // 5. Solo, tumor normal (same servie_request_id and aliquot_id as tumor only)
-    NormalizedTask(batch_id = "BAT5", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TNEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111")),
+    NormalizedTask(id = "1111-1111-TN", batch_id = "BAT5", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TNEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111"),
+      documents = List(DOCUMENTS(id = "1111-1111-TN-SNV", document_type = "SNV"))),
   ).toDF()
 
   val specimenDf: DataFrame = Seq(
@@ -324,45 +343,45 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
   ).toDF
 
   val documentDf: DataFrame = Seq(
-    // Use any of the 2 fhir specimen ids (one associated with specimen and the other associated with the sample)
+    // To help readability, id is composed of <patient_id>-<service_request_id>-<analysis_code>-<type>
     // 1. Trio: Everyone with Covgene and Exomiser
-    NormalizedDocumentReference(patient_id = "PA0001", specimen_id = "1-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://1.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0001", specimen_id = "1-2",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://1.tsv"), Content(format = "JSON", s3_url = "s3a://1.json"))),
-    NormalizedDocumentReference(patient_id = "PA0002", specimen_id = "2-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://2.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0002", specimen_id = "2-2",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://2.tsv"), Content(format = "JSON", s3_url = "s3a://2.json"))),
-    NormalizedDocumentReference(patient_id = "PA0003", specimen_id = "3-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://3.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0003", specimen_id = "3-2",`type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://3.tsv"), Content(format = "JSON", s3_url = "s3a://3.json"))),
+    NormalizedDocumentReference(id = "1-1-G-COVGENE", patient_id = "PA0001", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://1.csv"))),
+    NormalizedDocumentReference(id = "1-1-G-EXOMISER", patient_id = "PA0001", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://1.tsv"), Content(format = "JSON", s3_url = "s3a://1.json"))),
+    NormalizedDocumentReference(id = "2-2-G-COVGENE", patient_id = "PA0002", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://2.csv"))),
+    NormalizedDocumentReference(id = "2-2-G-EXOMISER", patient_id = "PA0002", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://2.tsv"), Content(format = "JSON", s3_url = "s3a://2.json"))),
+    NormalizedDocumentReference(id = "3-3-G-COVGENE", patient_id = "PA0003", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://3.csv"))),
+    NormalizedDocumentReference(id = "3-3-G-EXOMISER", patient_id = "PA0003", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://3.tsv"), Content(format = "JSON", s3_url = "s3a://3.json"))),
 
     // 2. Trio+: Everyone with Exomiser
-    NormalizedDocumentReference(patient_id = "PA0004", specimen_id = "4-1", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://4.tsv"), Content(format = "JSON", s3_url = "s3a://4.json"))),
-    NormalizedDocumentReference(patient_id = "PA0005", specimen_id = "5-2", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://5.tsv"), Content(format = "JSON", s3_url = "s3a://5.json"))),
-    NormalizedDocumentReference(patient_id = "PA0006", specimen_id = "6-1", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://6.tsv"), Content(format = "JSON", s3_url = "s3a://6.json"))),
-    NormalizedDocumentReference(patient_id = "PA0007", specimen_id = "7-2", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://7.tsv"), Content(format = "JSON", s3_url = "s3a://7.json"))),
+    NormalizedDocumentReference(id = "4-4-TO-EXOMISER", patient_id = "PA0004", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://4.tsv"), Content(format = "JSON", s3_url = "s3a://4.json"))),
+    NormalizedDocumentReference(id = "5-5-TO-EXOMISER", patient_id = "PA0005", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://5.tsv"), Content(format = "JSON", s3_url = "s3a://5.json"))),
+    NormalizedDocumentReference(id = "6-6-TO-EXOMISER", patient_id = "PA0006", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://6.tsv"), Content(format = "JSON", s3_url = "s3a://6.json"))),
+    NormalizedDocumentReference(id = "7-7-TO-EXOMISER", patient_id = "PA0007", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://7.tsv"), Content(format = "JSON", s3_url = "s3a://7.json"))),
 
     // 3. Incomplete trio: Multiple Covgene files per specimen
-    NormalizedDocumentReference(patient_id = "PA0011", specimen_id = "11-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://11-1.csv"), Content(format = "CSV", s3_url = "s3a://11-2.csv"), Content(format = "CSV", s3_url = "s3a://11-3.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0022", specimen_id = "22-2",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://22-1.csv"), Content(format = "CSV", s3_url = "s3a://22-2.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0033", specimen_id = "33-1",`type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://33.csv"))),
+    NormalizedDocumentReference(id = "11-11-G-COVGENE", patient_id = "PA0011", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://11-1.csv"), Content(format = "CSV", s3_url = "s3a://11-2.csv"), Content(format = "CSV", s3_url = "s3a://11-3.csv"))),
+    NormalizedDocumentReference(id = "22-22-G-COVGENE", patient_id = "PA0022", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://22-1.csv"), Content(format = "CSV", s3_url = "s3a://22-2.csv"))),
+    NormalizedDocumentReference(id = "33-33-G-COVGENE", patient_id = "PA0033", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://33.csv"))),
 
     // 4. Same family, two prescriptions
     // 4.1 First prescription: Duo -- Only SNV files that should not appear in table
-    NormalizedDocumentReference(patient_id = "PA0111", specimen_id = "111-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-1.vcf"))),
-    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "222-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://222.vcf"))),
+    NormalizedDocumentReference(id = "111-111-G-SNV", patient_id = "PA0111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-1.vcf"))),
+    NormalizedDocumentReference(id = "222-222-G-SNV", patient_id = "PA0222", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://222.vcf"))),
     // 4.2 Second prescription: Trio -- Mix of files
-    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "333-1", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://333.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "333-1", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://333.tsv"), Content(format = "JSON", s3_url = "s3a://333.json"))),
-    NormalizedDocumentReference(patient_id = "PA0333", specimen_id = "333-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://333.vcf"))),
-    NormalizedDocumentReference(patient_id = "PA0111", specimen_id = "444-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-2.vcf"))), // Same file as before but in different path
-    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "555-1", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://555.csv"))),
-    NormalizedDocumentReference(patient_id = "PA0222", specimen_id = "555-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://555.vcf"))),
+    NormalizedDocumentReference(id = "333-333-G-COVGENE", patient_id = "PA0333", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://333.csv"))),
+    NormalizedDocumentReference(id = "333-333-G-EXOMISER", patient_id = "PA0333", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://333.tsv"), Content(format = "JSON", s3_url = "s3a://333.json"))),
+    NormalizedDocumentReference(id = "333-333-G-SNV", patient_id = "PA0333", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://333.vcf"))),
+    NormalizedDocumentReference(id = "111-444-G-SNV", patient_id = "PA0111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://111-2.vcf"))), // Same file as before but in different path
+    NormalizedDocumentReference(id = "222-555-G-COVGENE", patient_id = "PA0222", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://555.csv"))),
+    NormalizedDocumentReference(id = "222-555-G-SNV", patient_id = "PA0222", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://555.vcf"))),
 
     // 5. Solo -- Only SNV files that should not appear in table
     // Tumor only analysis
-    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "1111-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111.vcf"))),
+    NormalizedDocumentReference(id = "1111-1111-TO-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111.vcf"))),
     // Germline analysis
-    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "2222-1", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://2222.vcf"))),
+    NormalizedDocumentReference(id = "1111-2222-G-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://2222.vcf"))),
     // Tumor normal analysis
-    NormalizedDocumentReference(patient_id = "PA1111", specimen_id = "1111-2", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf"))),
+    NormalizedDocumentReference(id = "1111-1111-TN-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf"))),
   ).toDF()
 
   val data: Map[String, DataFrame] = Map(
