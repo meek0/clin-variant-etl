@@ -29,5 +29,6 @@ case class EnrichedClinical(`service_request_id`: String = "SRS0001",
                             `sample_id`: String = "SA_0001",
                             `covgene_urls`: Option[Set[String]] = None,
                             `exomiser_urls`: Option[Set[String]] = None,
+                            `cnv_vcf_urls`: Option[Set[String]] = None,
                            )
 

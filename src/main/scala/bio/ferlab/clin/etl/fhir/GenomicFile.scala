@@ -13,6 +13,12 @@ object GenomicFile {
     override val format: String = "TSV"
     override val urlColumn: String = "exomiser_urls"
   }
+
+  case object CNV extends GenomicFile {
+    override val dataType: String = "GCNV"
+    override val format: String = "VCF"
+    override val urlColumn: String = "cnv_vcf_urls"
+  }
 }
 
 sealed trait GenomicFile {

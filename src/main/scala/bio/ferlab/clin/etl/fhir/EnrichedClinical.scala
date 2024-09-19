@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.etl.fhir.EnrichedClinical._
-import bio.ferlab.clin.etl.fhir.GenomicFile.{COVGENE, EXOMISER}
+import bio.ferlab.clin.etl.fhir.GenomicFile.{CNV, COVGENE, EXOMISER}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
@@ -129,7 +129,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 }
 
 object EnrichedClinical {
-  final val GenomicFiles: List[GenomicFile] = List(COVGENE, EXOMISER)
+  final val GenomicFiles: List[GenomicFile] = List(COVGENE, EXOMISER, CNV)
 
   implicit class DataFrameOps(df: DataFrame)(implicit spark: SparkSession) {
 
