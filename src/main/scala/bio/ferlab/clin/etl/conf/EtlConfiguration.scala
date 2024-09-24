@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.conf
 
-import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, GFF, JSON, PARQUET, VCF}
-import bio.ferlab.datalake.commons.config.LoadType.{Insert, OverWrite, OverWritePartition, Scd1, Upsert}
+import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, JSON, PARQUET, VCF}
+import bio.ferlab.datalake.commons.config.LoadType.{OverWrite, OverWritePartition, Scd1, Upsert}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
 import bio.ferlab.datalake.spark3.publictables.PublicDatasets
@@ -95,6 +95,9 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_task"                , clin_datalake, "/normalized/fhir/task"              , DELTA  , OverWrite   , TableConf("clin", "fhir_task")),
       DatasetConf("normalized_document_reference"  , clin_datalake, "/normalized/fhir/DocumentReference" , DELTA  , OverWrite   , TableConf("clin", "fhir_document_reference")),
       DatasetConf("enriched_clinical"              , clin_datalake, "/enriched/clinical"                 , DELTA  , OverWrite   , TableConf("clin", "clinical")),
+
+      // nextflow
+      DatasetConf("svclustering_parental_origin_input", clin_datalake, "/nextflow/svclustering_parental_origin_input/{{BATCH_ID}}", CSV, OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
 
       //clinical normalized
       DatasetConf("normalized_snv"                            , clin_datalake, "/normalized/snv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv"))),
