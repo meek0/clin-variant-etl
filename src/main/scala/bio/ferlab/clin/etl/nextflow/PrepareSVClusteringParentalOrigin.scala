@@ -7,6 +7,7 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOper
 import bio.ferlab.datalake.spark3.utils.CsvUtils
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.regexp_replace
 
 import java.time.LocalDateTime
 
@@ -37,7 +38,7 @@ case class PrepareSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: Str
       .select(
         $"aliquot_id" as "sample",
         $"analysis_service_request_id" as "familyId",
-        $"cnv_vcf_urls"(0) as "vcf" // There's always only a single file
+        regexp_replace($"cnv_vcf_urls"(0), "s3a://", "s3://") as "vcf" // There's always only a single file
       )
       .distinct()
   }

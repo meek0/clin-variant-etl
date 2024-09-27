@@ -78,20 +78,20 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
       .as[SVClusteringParentalOriginInput]
       .collect() should contain theSameElementsAs Seq(
       // Trio
-      SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3a://1.vcf"),
-      SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3a://2.vcf"),
-      SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3a://3.vcf"),
+      SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
+      SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
+      SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
 
       // Trio+ (with siblings)
-      SVClusteringParentalOriginInput(sample = "11", familyId = "SRA2", vcf = "s3a://11.vcf"),
-      SVClusteringParentalOriginInput(sample = "22", familyId = "SRA2", vcf = "s3a://22.vcf"),
-      SVClusteringParentalOriginInput(sample = "33", familyId = "SRA2", vcf = "s3a://33.vcf"),
-      SVClusteringParentalOriginInput(sample = "44", familyId = "SRA2", vcf = "s3a://44.vcf"),
-      SVClusteringParentalOriginInput(sample = "55", familyId = "SRA2", vcf = "s3a://55.vcf"),
+      SVClusteringParentalOriginInput(sample = "11", familyId = "SRA2", vcf = "s3://11.vcf"),
+      SVClusteringParentalOriginInput(sample = "22", familyId = "SRA2", vcf = "s3://22.vcf"),
+      SVClusteringParentalOriginInput(sample = "33", familyId = "SRA2", vcf = "s3://33.vcf"),
+      SVClusteringParentalOriginInput(sample = "44", familyId = "SRA2", vcf = "s3://44.vcf"),
+      SVClusteringParentalOriginInput(sample = "55", familyId = "SRA2", vcf = "s3://55.vcf"),
 
       // Duo
-      SVClusteringParentalOriginInput(sample = "111", familyId = "SRA3", vcf = "s3a://111.vcf"),
-      SVClusteringParentalOriginInput(sample = "222", familyId = "SRA3", vcf = "s3a://222.vcf")
+      SVClusteringParentalOriginInput(sample = "111", familyId = "SRA3", vcf = "s3://111.vcf"),
+      SVClusteringParentalOriginInput(sample = "222", familyId = "SRA3", vcf = "s3://222.vcf")
     )
   }
 
