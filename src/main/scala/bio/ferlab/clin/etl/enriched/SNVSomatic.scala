@@ -1,9 +1,9 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.commons.file.FileSystemResolver
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locusColumnNames
@@ -13,13 +13,13 @@ import org.apache.spark.sql.functions._
 
 import java.time.LocalDateTime
 
-case class SNVSomatic(rc: DeprecatedRuntimeETLContext, batchId: Option[String]) extends SingleETL(rc) {
+case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val normalized_snv_somatic: DatasetConf = conf.getDataset("normalized_snv_somatic")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     import spark.implicits._
 
@@ -54,7 +54,7 @@ case class SNVSomatic(rc: DeprecatedRuntimeETLContext, batchId: Option[String]) 
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                               lastRunDateTime: LocalDateTime = minDateTime,
+                               lastRunDateTime: LocalDateTime = minValue,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
 
@@ -83,7 +83,7 @@ case class SNVSomatic(rc: DeprecatedRuntimeETLContext, batchId: Option[String]) 
 
 object SNVSomatic {
   @main
-  def run(rc: DeprecatedRuntimeETLContext, batch: OptionalBatch): Unit = {
+  def run(rc: RuntimeETLContext, batch: OptionalBatch): Unit = {
     SNVSomatic(rc, batch.id).run()
   }
 

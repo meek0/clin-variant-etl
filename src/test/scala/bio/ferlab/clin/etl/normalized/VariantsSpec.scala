@@ -8,7 +8,7 @@ import bio.ferlab.clin.model.normalized.{GENES, NormalizedVariants, SPLICEAI}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.testutils.models.enriched.{EnrichedSpliceAi, MAX_SCORE}
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll {
@@ -29,8 +29,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     EnrichedClinical(`patient_id` = "PA0004", `analysis_service_request_id` = "SRA0002", `service_request_id` = "SRS0004", `batch_id` = "BAT1", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5", `practitioner_role_id` = "PPR00101", `organization_id` = "OR00201", `is_proband` = true, `gender` = "Female", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "5", `specimen_id` = "5", `family_id` = Some("FM00002"), `mother_id` = None, `father_id` = None),
   ).toDF()
 
-  val job1 = Variants(DeprecatedTestETLContext(), "BAT1")
-  val job2 = Variants(DeprecatedTestETLContext(), "BAT2")
+  val job1 = Variants(TestETLContext(), "BAT1")
+  val job2 = Variants(TestETLContext(), "BAT2")
 
   override val dbToCreate: List[String] = List(raw_variant_calling.table.map(_.database).getOrElse("clin"))
   override val dsToClean: List[DatasetConf] = List(job1.mainDestination)

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import mainargs.{ParserForMethods, main}
@@ -11,13 +11,13 @@ import org.apache.spark.sql.functions._
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-case class PrepareVariantCentric(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_centric")
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val enriched_consequences: DatasetConf = conf.getDataset("enriched_consequences")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
@@ -29,7 +29,7 @@ case class PrepareVariantCentric(rc: DeprecatedRuntimeETLContext) extends Single
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
+                         lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val variants = data(enriched_variants.id)
       .drop("transmissions", "transmissions_by_lab", "parental_origins", "parental_origins_by_lab",
@@ -77,7 +77,7 @@ case class PrepareVariantCentric(rc: DeprecatedRuntimeETLContext) extends Single
 
 object PrepareVariantCentric {
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     PrepareVariantCentric(rc).run()
   }
 

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, functions}
 
 import java.time.LocalDateTime
 
-case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class PrepareVariantSuggestions(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_variant_suggestions")
   val es_index_variant_centric: DatasetConf = conf.getDataset("es_index_variant_centric")
@@ -20,7 +20,7 @@ case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext) extends Si
   final val indexColumns =
     List("type", "locus", "suggestion_id", "hgvsg", "suggest", "chromosome", "rsnumber", "symbol_aa_change")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
@@ -31,7 +31,7 @@ case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext) extends Si
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100))
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
+                         lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
     val variants = data(es_index_variant_centric.id)
@@ -78,7 +78,7 @@ case class PrepareVariantSuggestions(rc: DeprecatedRuntimeETLContext) extends Si
 
 object PrepareVariantSuggestions {
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     PrepareVariantSuggestions(rc).run()
   }
 

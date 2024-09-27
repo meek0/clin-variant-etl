@@ -1,11 +1,9 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.CoverageByGene.transformSingleCoverage
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.LongType
@@ -13,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class CoverageByGene(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class CoverageByGene(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_coverage_by_gene")
   val refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
@@ -21,7 +19,7 @@ case class CoverageByGene(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc)
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       refseq_annotation.id -> refseq_annotation.read,
@@ -32,7 +30,7 @@ case class CoverageByGene(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc)
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                               lastRunDateTime: LocalDateTime = minDateTime,
+                               lastRunDateTime: LocalDateTime = minValue,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     transformSingleCoverage(data(refseq_annotation.id),
       data(normalized_coverage_by_gene.id),
@@ -47,8 +45,6 @@ case class CoverageByGene(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc)
 object CoverageByGene {
 
   def transformSingleCoverage(refseq: DataFrame, coverage: DataFrame, genes: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
-
-    import spark.implicits._
 
     val refseqGenes = refseq.filter(col("type") === "gene")
 
@@ -77,7 +73,7 @@ object CoverageByGene {
   }
 
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     CoverageByGene(rc).run()
   }
 

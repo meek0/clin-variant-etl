@@ -1,13 +1,13 @@
 package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.etl.mainutils.Destination
-import bio.ferlab.datalake.commons.config.DeprecatedRuntimeETLContext
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
 import mainargs.{ParserForMethods, main}
 
 object FhirRawToNormalized {
 
   @main
-  def run(rc: DeprecatedRuntimeETLContext, destination: Destination): Unit = {
+  def run(rc: RuntimeETLContext, destination: Destination): Unit = {
     val jobs = FhirRawToNormalizedMappings
       .mappings(rc.config)
       .filter { case (_, dst, _) => (destination.id == "all") || destination.id == dst.id }

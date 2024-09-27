@@ -6,15 +6,15 @@ import bio.ferlab.clin.etl.model.raw.{INFO_CSQ, VCF_SNV_Input, VCF_SNV_Somatic_I
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, SparkSpec, DeprecatedTestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, SparkSpec, TestETLContext}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeAll {
 
-  val job1 = Consequences(DeprecatedTestETLContext(), "BAT1")
-  val job2 = Consequences(DeprecatedTestETLContext(), "BAT2")
+  val job1 = Consequences(TestETLContext(), "BAT1")
+  val job2 = Consequences(TestETLContext(), "BAT2")
 
   import spark.implicits._
 
@@ -94,7 +94,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeA
     val date2 = LocalDateTime.of(2021, 1, 2, 1, 1, 1)
 
 
-    val job1Results = job1.transform(data ++ Map(raw_variant_calling.id -> firstLoad), currentRunDateTime = date1)
+    val job1Results = job1.transform(data ++ Map(raw_variant_calling.id -> firstLoad), currentRunValue = date1)
     val job1Df = job1Results(job1.mainDestination.id)
     job1Df.as[NormalizedConsequences].collect() should contain allElementsOf Seq(
       NormalizedConsequences(
@@ -105,7 +105,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CleanUpBeforeA
 
     job1.load(job1Results)
 
-    val job2Results = job2.transform(data ++ Map(raw_variant_calling.id -> secondLoad), currentRunDateTime = date2)
+    val job2Results = job2.transform(data ++ Map(raw_variant_calling.id -> secondLoad), currentRunValue = date2)
     job2.load(job2Results)
     val resultDf = job2.mainDestination.read
 

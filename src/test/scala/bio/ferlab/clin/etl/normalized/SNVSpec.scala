@@ -6,7 +6,7 @@ import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.NormalizedSNV
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.testutils.{DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
 import java.sql.Date
@@ -20,7 +20,7 @@ class SNVSpec extends SparkSpec with WithTestConfig {
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
-  val job = SNV(DeprecatedTestETLContext(), "BAT1")
+  val job = SNV(TestETLContext(), "BAT1")
 
   val clinicalDf: DataFrame = Seq(
     EnrichedClinical(`patient_id` = "PA0001", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0001", `batch_id` = "BAT1", `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),

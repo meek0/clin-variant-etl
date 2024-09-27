@@ -4,8 +4,8 @@ import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.normalized.Variants._
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.{GenomicOperations, vcf}
@@ -17,7 +17,7 @@ import org.slf4j.Logger
 
 import java.time.LocalDateTime
 
-case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
+case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingleETL(rc) {
 
   import spark.implicits._
 
@@ -29,7 +29,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
   val enriched_spliceai_snv: DatasetConf = conf.getDataset("enriched_spliceai_snv")
   val enriched_spliceai_indel: DatasetConf = conf.getDataset("enriched_spliceai_indel")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true, split = true),
@@ -63,7 +63,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext, batchId: String) extends Si
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
+                         lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     val (inputVCF, srcScoreColumn, dstScoreColumn, computeFrequencies) = getVCF(data)
@@ -311,7 +311,7 @@ object Variants {
   }
 
   @main
-  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
     Variants(rc, batch.id).run()
   }
 

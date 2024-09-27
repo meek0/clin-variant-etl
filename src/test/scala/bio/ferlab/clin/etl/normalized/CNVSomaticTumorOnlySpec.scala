@@ -5,7 +5,7 @@ import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.NormalizedCNVSomaticTumorOnly
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
-import bio.ferlab.datalake.testutils.{DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
@@ -15,7 +15,7 @@ class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
   val raw_cnv: DatasetConf = conf.getDataset("raw_cnv_somatic_tumor_only")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
-  val job = CNVSomaticTumorOnly(DeprecatedTestETLContext(), "BAT1")
+  val job = CNVSomaticTumorOnly(TestETLContext(), "BAT1")
 
   val clinicalDf: DataFrame = Seq(
     EnrichedClinical(`patient_id` = "PA0001", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0001", `batch_id` = "BAT1", `aliquot_id` = "11111", `practitioner_role_id` = "PPR00101", `organization_id` = "OR00201", `is_proband` = true, `gender` = "Male", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),

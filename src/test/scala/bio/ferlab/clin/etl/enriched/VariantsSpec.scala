@@ -11,7 +11,7 @@ import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedVariant.CMC
 import bio.ferlab.datalake.testutils.models.normalized.NormalizedCosmicMutationSet
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.BeforeAndAfterAll
@@ -40,7 +40,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
   val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
-  val job = Variants(DeprecatedTestETLContext(RunStep.initial_load))
+  val job = Variants(TestETLContext(RunStep.initial_load))
   override val dbToCreate: List[String] = List("clin", "clin_normalized")
   override val dsToClean: List[DatasetConf] = List(snv, enriched_variants)
 

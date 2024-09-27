@@ -1,16 +1,16 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.utils.Region
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class CNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class CNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   import spark.implicits._
 
@@ -22,7 +22,7 @@ case class CNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   val cnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_cnv.id -> normalized_cnv.read,
@@ -34,8 +34,8 @@ case class CNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
+                               lastRunDateTime: LocalDateTime = minValue,
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val cnv = data(normalized_cnv.id).unionByName(data(normalized_cnv_somatic_tumor_only.id), allowMissingColumns = true)
     val refseq = data(refseq_annotation.id)
 
@@ -100,7 +100,7 @@ case class CNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
 
 object CNV {
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     CNV(rc).run()
   }
 

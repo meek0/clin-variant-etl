@@ -4,7 +4,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.enriched.CLINVAR
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
 class PrepareVariantSuggestionsSpec extends SparkSpec with WithTestConfig {
@@ -20,7 +20,7 @@ class PrepareVariantSuggestionsSpec extends SparkSpec with WithTestConfig {
 
   "transform PrepareVariantSuggestions" should "produce suggestions for variants" in {
 
-    val result = PrepareVariantSuggestions(DeprecatedTestETLContext()).transformSingle(data)
+    val result = PrepareVariantSuggestions(TestETLContext()).transformSingle(data)
 
     result.as[VariantSuggestionsOutput].collect().head shouldBe VariantSuggestionsOutput()
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VariantSuggestionsOutput", result, "src/test/scala/")

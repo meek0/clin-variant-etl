@@ -2,22 +2,20 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants.{somaticTumorNormalFilter, somaticTumorOnlyFilter, DataFrameOps => ClinDataFrameOps}
 import bio.ferlab.clin.etl.utils.FrequencyUtils._
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, FixedRepartition, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.genomics.enriched.Variants.{DataFrameOps => LibDataFrameOps}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import bio.ferlab.datalake.spark3.implicits.SparkUtils.firstAs
-import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import mainargs.{ParserForMethods, main}
-import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
 
-case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   import spark.implicits._
 
@@ -39,7 +37,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   val cosmic: DatasetConf = conf.getDataset("normalized_cosmic_mutation_set")
   val franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_variants.id -> normalized_variants.read,
@@ -62,7 +60,7 @@ case class Variants(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                               lastRunDateTime: LocalDateTime = minDateTime,
+                               lastRunDateTime: LocalDateTime = minValue,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val occurrences = data(snv.id).unionByName(data(snv_somatic.id), allowMissingColumns = true)
       .drop("is_multi_allelic", "old_multi_allelic", "name", "end")
@@ -393,7 +391,7 @@ object Variants {
   }
 
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     Variants(rc).run()
   }
 

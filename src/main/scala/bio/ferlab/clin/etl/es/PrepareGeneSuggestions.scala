@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, functions}
 
 import java.time.LocalDateTime
 
-case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class PrepareGeneSuggestions(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_gene_suggestions")
   val es_index_gene_centric: DatasetConf = conf.getDataset("es_index_gene_centric")
@@ -17,7 +17,7 @@ case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext) extends Singl
   final val high_priority_weight = 4
   final val low_priority_weight  = 2
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
 
     Map(
@@ -28,7 +28,7 @@ case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext) extends Singl
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100))
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
+                         lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
     val genes = data(es_index_gene_centric.id)
@@ -65,7 +65,7 @@ case class PrepareGeneSuggestions(rc: DeprecatedRuntimeETLContext) extends Singl
 
 object PrepareGeneSuggestions {
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     PrepareGeneSuggestions(rc).run()
   }
 

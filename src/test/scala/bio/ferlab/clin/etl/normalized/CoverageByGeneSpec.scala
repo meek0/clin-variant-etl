@@ -7,7 +7,7 @@ import bio.ferlab.clin.model.normalized.NormalizedCoverageByGene
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.input_file_name
 import org.scalatest.BeforeAndAfterAll
@@ -20,8 +20,8 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
   val raw_coverage_by_gene: DatasetConf = conf.getDataset("raw_coverage_by_gene")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
-  val job1 = CoverageByGene(DeprecatedTestETLContext(), "BAT1")
-  val job2 = CoverageByGene(DeprecatedTestETLContext(), "BAT2")
+  val job1 = CoverageByGene(TestETLContext(), "BAT1")
+  val job2 = CoverageByGene(TestETLContext(), "BAT2")
 
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
@@ -71,7 +71,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
   }
 
   it should "not fail when there is no coverage data in batch" in {
-    val job = CoverageByGene(DeprecatedTestETLContext(), "NODATA")
+    val job = CoverageByGene(TestETLContext(), "NODATA")
     noException should be thrownBy job.run()
   }
 }

@@ -5,7 +5,7 @@ import bio.ferlab.clin.model.normalized.NormalizedSNVSomatic
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, SparkSpec, TestETLContext}
 
 class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
 
@@ -15,7 +15,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
   val enriched_snv_somatic: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
-  val job: Option[String] => SNVSomatic = batch => SNVSomatic(DeprecatedTestETLContext(), batch)
+  val job: Option[String] => SNVSomatic = batch => SNVSomatic(TestETLContext(), batch)
 
   val existingClinicalData = Seq(
     EnrichedClinical(`batch_id` = "BATCH1", `analysis_service_request_id` = "SRA1", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),

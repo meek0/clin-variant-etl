@@ -6,7 +6,7 @@ import bio.ferlab.clin.model.normalized.{NormalizedExomiser, NormalizedFranklin,
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
-import bio.ferlab.datalake.testutils.{DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 
 class SNVSpec extends SparkSpec with WithTestConfig {
 
@@ -30,7 +30,7 @@ class SNVSpec extends SparkSpec with WithTestConfig {
       normalized_franklin.id -> franklinDf
     )
 
-    val job = SNV(DeprecatedTestETLContext())
+    val job = SNV(TestETLContext())
 
     val result = job.transformSingle(data).as[EnrichedSNV].collect()
     result.length shouldBe 1

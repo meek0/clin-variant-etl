@@ -7,7 +7,7 @@ import bio.ferlab.clin.model.normalized.NormalizedSNVSomatic
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.{DatasetConf, LoadType}
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CreateDatabasesBeforeAll, DeprecatedTestETLContext, SparkSpec}
+import bio.ferlab.datalake.testutils.{CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
 import java.sql.Date
@@ -26,8 +26,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
 
   override val dbToCreate: List[String] = List("clin")
 
-  val tumorOnlyJob = SNVSomatic(DeprecatedTestETLContext(), tumorOnlyBatchId)
-  val tumorNormalJob = SNVSomatic(DeprecatedTestETLContext(), tumorNormalBatchId)
+  val tumorOnlyJob = SNVSomatic(TestETLContext(), tumorOnlyBatchId)
+  val tumorNormalJob = SNVSomatic(TestETLContext(), tumorNormalBatchId)
 
   val clinicalDf: DataFrame = Seq(
     // TEBA (tumor only analysis)

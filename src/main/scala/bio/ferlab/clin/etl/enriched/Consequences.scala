@@ -1,20 +1,20 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.formatted_consequences
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
 import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-case class Consequences(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class Consequences(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   import spark.implicits._
 
@@ -24,7 +24,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   val normalized_ensembl_mapping: DatasetConf = conf.getDataset("normalized_ensembl_mapping")
   val enriched_genes: DatasetConf = conf.getDataset("enriched_genes")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_consequences.id -> normalized_consequences.read
@@ -36,7 +36,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                               lastRunDateTime: LocalDateTime = minDateTime,
+                               lastRunDateTime: LocalDateTime = minValue,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     val consequences = data(normalized_consequences.id)
 
@@ -118,7 +118,7 @@ object Consequences {
   }
 
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     Consequences(rc).run()
   }
 

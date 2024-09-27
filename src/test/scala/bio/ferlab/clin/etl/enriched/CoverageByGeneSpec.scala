@@ -5,7 +5,7 @@ import bio.ferlab.clin.model.normalized.{NormalizedCoverageByGene, NormalizedPan
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
-import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 
 class CoverageByGeneSpec extends SparkSpec with WithTestConfig {
 
@@ -16,7 +16,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig {
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
 
-  val job = CoverageByGene(DeprecatedTestETLContext())
+  val job = CoverageByGene(TestETLContext())
 
   it should "enrich data " in {
     val coverageByGeneDf = Seq(

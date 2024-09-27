@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.locus
 import mainargs.{ParserForMethods, main}
@@ -10,14 +10,14 @@ import org.apache.spark.sql.functions._
 
 import java.time.LocalDateTime
 
-case class PrepareGeneCentric(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class PrepareGeneCentric(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("es_index_gene_centric")
   val enriched_genes: DatasetConf = conf.getDataset("enriched_genes")
   val enriched_variants: DatasetConf = conf.getDataset("enriched_variants")
   val enriched_cnv: DatasetConf = conf.getDataset("enriched_cnv")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       enriched_genes.id -> spark.table(s"${enriched_genes.table.get.fullName}"),
@@ -29,7 +29,7 @@ case class PrepareGeneCentric(rc: DeprecatedRuntimeETLContext) extends SingleETL
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100))
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
+                         lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
 
@@ -81,7 +81,7 @@ case class PrepareGeneCentric(rc: DeprecatedRuntimeETLContext) extends SingleETL
 
 object PrepareGeneCentric {
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     PrepareGeneCentric(rc).run()
   }
 

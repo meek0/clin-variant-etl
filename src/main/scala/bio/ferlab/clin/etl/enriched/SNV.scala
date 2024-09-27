@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext, RepartitionByColumns}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
 import bio.ferlab.clin.etl.enriched.SNV._
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
@@ -12,14 +12,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class SNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
+case class SNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_snv")
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val normalized_exomiser: DatasetConf = conf.getDataset("normalized_exomiser")
   val normalized_franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_snv.id -> normalized_snv.read,
@@ -29,7 +29,7 @@ case class SNV(rc: DeprecatedRuntimeETLContext) extends SingleETL(rc) {
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                               lastRunDateTime: LocalDateTime = minDateTime,
+                               lastRunDateTime: LocalDateTime = minValue,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     data(normalized_snv.id)
       .withExomiser(data(normalized_exomiser.id))
@@ -88,7 +88,7 @@ object SNV {
   }
 
   @main
-  def run(rc: DeprecatedRuntimeETLContext): Unit = {
+  def run(rc: RuntimeETLContext): Unit = {
     SNV(rc).run()
   }
 

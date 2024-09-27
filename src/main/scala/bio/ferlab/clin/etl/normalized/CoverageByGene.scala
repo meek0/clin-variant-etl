@@ -4,8 +4,8 @@ import bio.ferlab.clin.etl.fhir.GenomicFile.COVGENE
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.RawCoverageByGene
 import bio.ferlab.clin.etl.utils.{FileInfo, FileUtils}
-import bio.ferlab.datalake.commons.config.{DatasetConf, DeprecatedRuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castDouble, castFloat, castInt}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
@@ -13,7 +13,7 @@ import org.apache.spark.sql.functions.{input_file_name, lit}
 
 import java.time.LocalDateTime
 
-case class CoverageByGene(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
+case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends SimpleSingleETL(rc) {
   import spark.implicits._
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_coverage_by_gene")
@@ -71,7 +71,7 @@ case class CoverageByGene(rc: DeprecatedRuntimeETLContext, batchId: String) exte
 
 object CoverageByGene {
   @main
-  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
     CoverageByGene(rc, batch.id).run()
   }
 

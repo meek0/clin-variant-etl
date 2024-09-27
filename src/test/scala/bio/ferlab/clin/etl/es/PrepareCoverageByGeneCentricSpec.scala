@@ -4,7 +4,7 @@ import bio.ferlab.clin.model._
 import bio.ferlab.clin.model.enriched.EnrichedCoverageByGene
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
-import bio.ferlab.datalake.testutils.{SparkSpec, DeprecatedTestETLContext}
+import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
 
 class PrepareCoverageByGeneCentricSpec extends SparkSpec with WithTestConfig {
 
@@ -18,7 +18,7 @@ class PrepareCoverageByGeneCentricSpec extends SparkSpec with WithTestConfig {
 
   "coverage_by_gene_centric transform" should "return data as CoverageByGeneCentricOutput" in {
 
-    val result = PrepareCoverageByGeneCentric(DeprecatedTestETLContext()).transformSingle(data);
+    val result = PrepareCoverageByGeneCentric(TestETLContext()).transformSingle(data);
     //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "CnvCentricOutput", result, "src/test/scala/")
 
     result.count() shouldBe 2

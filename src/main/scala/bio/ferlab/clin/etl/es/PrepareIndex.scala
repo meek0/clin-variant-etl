@@ -1,27 +1,27 @@
 package bio.ferlab.clin.etl.es
 
-import bio.ferlab.datalake.commons.config.DeprecatedRuntimeETLContext
+import bio.ferlab.datalake.commons.config.RuntimeETLContext
 import mainargs.{ParserForMethods, main}
 
 
 object PrepareIndex {
   @main
-  def gene_centric(rc: DeprecatedRuntimeETLContext): Unit = PrepareGeneCentric.run(rc)
+  def gene_centric(rc: RuntimeETLContext): Unit = PrepareGeneCentric.run(rc)
 
   @main
-  def gene_suggestions(rc: DeprecatedRuntimeETLContext): Unit = PrepareGeneSuggestions.run(rc)
+  def gene_suggestions(rc: RuntimeETLContext): Unit = PrepareGeneSuggestions.run(rc)
 
   @main
-  def variant_centric(rc: DeprecatedRuntimeETLContext): Unit = PrepareVariantCentric.run(rc)
+  def variant_centric(rc: RuntimeETLContext): Unit = PrepareVariantCentric.run(rc)
 
   @main
-  def variant_suggestions(rc: DeprecatedRuntimeETLContext): Unit = PrepareVariantSuggestions.run(rc)
+  def variant_suggestions(rc: RuntimeETLContext): Unit = PrepareVariantSuggestions.run(rc)
 
   @main
-  def cnv_centric(rc: DeprecatedRuntimeETLContext): Unit = PrepareCnvCentric.run(rc)
+  def cnv_centric(rc: RuntimeETLContext): Unit = PrepareCnvCentric.run(rc)
 
   @main
-  def coverage_by_gene_centric(rc: DeprecatedRuntimeETLContext): Unit = PrepareCoverageByGeneCentric.run(rc)
+  def coverage_by_gene_centric(rc: RuntimeETLContext): Unit = PrepareCoverageByGeneCentric.run(rc)
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args, allowPositional = true)
 }

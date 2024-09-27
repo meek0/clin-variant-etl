@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, DeprecatedRuntimeETLContext}
-import bio.ferlab.datalake.spark3.etl.v3.SingleETL
+import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import bio.ferlab.datalake.spark3.utils.DeltaUtils.{compact, vacuum}
@@ -14,14 +14,14 @@ import org.slf4j.Logger
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
-case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extends SingleETL(rc) {
+case class Consequences(rc: RuntimeETLContext, batchId: String) extends SimpleSingleETL(rc) {
 
   implicit val logger: Logger = log
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_consequences")
   val raw_variant_calling: DatasetConf = conf.getDataset("raw_snv")
 
-  override def extract(lastRunDateTime: LocalDateTime = minDateTime,
+  override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       raw_variant_calling.id -> vcf(raw_variant_calling.location.replace("{{BATCH_ID}}", batchId), None, optional = true, split = true)
@@ -29,7 +29,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extend
   }
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minDateTime,
+                         lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     import spark.implicits._
 
@@ -141,7 +141,7 @@ case class Consequences(rc: DeprecatedRuntimeETLContext, batchId: String) extend
 
 object Consequences {
   @main
-  def run(rc: DeprecatedRuntimeETLContext, batch: Batch): Unit = {
+  def run(rc: RuntimeETLContext, batch: Batch): Unit = {
     Consequences(rc, batch.id).run()
   }
 
