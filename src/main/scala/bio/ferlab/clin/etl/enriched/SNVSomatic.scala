@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
@@ -27,11 +28,8 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
       // If a batch id was submitted, only process the specified id
       case Some(id) =>
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"batch_id" === id)
-        val analysisServiceRequestIds: Seq[String] = enriched_clinical.read.where($"batch_id" === id)
-          .select("analysis_service_request_id")
-          .distinct()
-          .as[String]
-          .collect()
+        val clinicalDf = enriched_clinical.read
+        val analysisServiceRequestIds: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, id)
 
         val fs = FileSystemResolver.resolve(conf.getStorage(mainDestination.storageid).filesystem)
         val destinationExists = fs.exists(mainDestination.location) && mainDestination.tableExist

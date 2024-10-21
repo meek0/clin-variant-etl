@@ -16,7 +16,7 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
   import spark.implicits._
 
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
-  val destination: DatasetConf = conf.getDataset("svclustering_parental_origin_input")
+  val destination: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin_input")
 
   it should "not load dataset if no analyses in batch have cnv files" in {
     val inputData: Map[String, DataFrame] = Map(
@@ -95,6 +95,31 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
     )
   }
 
+  "transform" should "include all samples from analysis" in {
+    val inputData: Map[String, DataFrame] = Map(
+      enriched_clinical.id -> Seq(
+        // Batch 1: Incomplete trio
+        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = Some("3"), mother_aliquot_id = Some("2"), cnv_vcf_urls = Some(Set("s3a://1.vcf"))),
+        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://2.vcf"))),
+
+        // Batch 2: Father of the trio, received in a later batch
+        EnrichedClinical(aliquot_id = "3", is_proband = false, batch_id = "BAT2", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://3.vcf"))),
+      ).toDF()
+    )
+
+    val job = PrepareSVClusteringParentalOrigin(TestETLContext(), batchId = "BAT2")
+
+    val result = job.transformSingle(inputData)
+
+    result
+      .as[SVClusteringParentalOriginInput]
+      .collect() should contain theSameElementsAs Seq(
+      SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
+      SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
+      SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
+    )
+  }
+
   "loadSingle" should "not overwrite existing files and rename csv" in {
     withOutputFolder("root") { root =>
       val updatedConf = updateConfStorages(conf, root)
@@ -114,9 +139,9 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
       val newBatch = "BAT3"
       val job = PrepareSVClusteringParentalOrigin(TestETLContext()(updatedConf, spark), batchId = newBatch)
       val newFileContent = Seq(
-        SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3a://1.vcf"),
-        SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3a://2.vcf"),
-        SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3a://3.vcf"),
+        SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
+        SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
+        SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
       )
 
       val result = job.loadSingle(newFileContent.toDF())

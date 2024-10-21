@@ -13,7 +13,7 @@ object RunEnriched {
   def consequences(rc: RuntimeETLContext): Unit = Consequences.run(rc)
 
   @main
-  def cnv(rc: RuntimeETLContext): Unit = CNV.run(rc)
+  def cnv(rc: RuntimeETLContext, batch: OptionalBatch): Unit = CNV.run(rc, batch)
 
   @main
   def snv(rc: RuntimeETLContext): Unit = SNV.run(rc)
@@ -27,7 +27,7 @@ object RunEnriched {
   def all(rc: RuntimeETLContext, batch: OptionalBatch): Unit = {
     variants(rc)
     consequences(rc)
-    cnv(rc)
+    cnv(rc, batch)
     snv(rc)
     snv_somatic(rc, batch)
     coverage_by_gene(rc)

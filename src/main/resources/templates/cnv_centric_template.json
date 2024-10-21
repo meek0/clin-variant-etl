@@ -260,6 +260,12 @@
         },
         "hash": {
           "type": "keyword"
+        },
+        "transmission": {
+          "type": "keyword"
+        },
+        "parental_origin": {
+          "type": "keyword"
         }
       }
     }

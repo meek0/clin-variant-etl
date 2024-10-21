@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.model._
-import bio.ferlab.clin.model.enriched.{DONORS, EnrichedVariant}
+import bio.ferlab.clin.model.enriched.{DONORS, ENRICHED_CNV_GENES, EnrichedCNV, EnrichedVariant}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
@@ -24,8 +24,8 @@ class PrepareGeneCentricSpec extends SparkSpec with WithTestConfig {
       `donors` = List(DONORS(`patient_id` = "PA0003"), DONORS(`patient_id` = "PA0002")))
   ).toDF()
   val cnvDf: DataFrame = Seq(
-    CnvEnrichedOutput(`patient_id` = "PA0001", genes = List(ENRICHED_CNV_GENES(`symbol` = Some("OR4F4")), ENRICHED_CNV_GENES(`symbol` = Some("OR4F5")), ENRICHED_CNV_GENES(`symbol` = Some("OR4F7")))),
-    CnvEnrichedOutput(`patient_id` = "PA0002", `chromosome` = "2", genes = List(ENRICHED_CNV_GENES(`symbol` = Some("OR4F5"))))
+    EnrichedCNV(`patient_id` = "PA0001", genes = List(ENRICHED_CNV_GENES(`symbol` = Some("OR4F4")), ENRICHED_CNV_GENES(`symbol` = Some("OR4F5")), ENRICHED_CNV_GENES(`symbol` = Some("OR4F7")))),
+    EnrichedCNV(`patient_id` = "PA0002", `chromosome` = "2", genes = List(ENRICHED_CNV_GENES(`symbol` = Some("OR4F5"))))
   ).toDF()
 
   val destination: DatasetConf = conf.getDataset("es_index_gene_centric")

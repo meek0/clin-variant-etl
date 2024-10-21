@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.conf
 
 import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, JSON, PARQUET, VCF}
-import bio.ferlab.datalake.commons.config.LoadType.{OverWrite, OverWritePartition, Scd1, Upsert}
+import bio.ferlab.datalake.commons.config.LoadType.{OverWrite, OverWritePartition, Read, Scd1, Upsert}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
 import bio.ferlab.datalake.spark3.publictables.PublicDatasets
@@ -97,7 +97,9 @@ object EtlConfiguration extends App {
       DatasetConf("enriched_clinical"              , clin_datalake, "/enriched/clinical"                 , DELTA  , OverWrite   , TableConf("clin", "clinical")),
 
       // nextflow
-      DatasetConf("svclustering_parental_origin_input", clin_datalake, "/nextflow/svclustering_parental_origin_input/{{BATCH_ID}}", CSV, OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_parental_origin_input" , clin_datalake, "/nextflow/svclustering_parental_origin_input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_parental_origin_output", clin_datalake, "/nextflow/svclustering_parental_origin_output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),
+      DatasetConf("nextflow_svclustering_parental_origin"       , clin_datalake, "/nextflow/svclustering_parental_origin"                                           , DELTA, OverWritePartition, partitionby = List("analysis_service_request_id"), table = Some(TableConf("clin", "nextflow_svclustering_parental_origin")), keys = List("name", "service_request_id")),
 
       //clinical normalized
       DatasetConf("normalized_snv"                            , clin_datalake, "/normalized/snv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv"))),
@@ -115,7 +117,7 @@ object EtlConfiguration extends App {
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite         , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "snv"))              , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
       DatasetConf("enriched_snv_somatic"           , clin_datalake, "/enriched/snv_somatic"              , DELTA  , OverWritePartition, partitionby = List("analysis_service_request_id", "chromosome"), table = Some(TableConf("clin", "snv_somatic"))      , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id", "bioinfo_analysis_code")),
-      DatasetConf("enriched_cnv"                   , clin_datalake, "/enriched/cnv"                      , DELTA  , OverWrite         , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "cnv"))              , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
+      DatasetConf("enriched_cnv"                   , clin_datalake, "/enriched/cnv"                      , DELTA  , OverWritePartition, partitionby = List("service_request_id")                       , table = Some(TableConf("clin", "cnv"))              , keys = List("name", "service_request_id")),
       DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , OverWrite         , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "variants"))),
       DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1              , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "consequences"))     , keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
       DatasetConf("enriched_coverage_by_gene"      , clin_datalake, "/enriched/coverage_by_gene"         , DELTA  , OverWrite         , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "coverage_by_gene"))),

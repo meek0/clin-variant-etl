@@ -90,6 +90,7 @@ trait TestingApp extends App {
   lazy val spliceai_snv: DataFrame = spark.table("spliceai_snv")
   lazy val rare_variant_enriched: DataFrame = spark.table("rare_variant_enriched")
   lazy val spliceai_enriched: DataFrame = spark.table("spliceai_enriched")
+  lazy val nextflow_svclustering_parental_origin: DataFrame = spark.table("nextflow_svclustering_parental_origin")
 
   def run(f: SparkSession => Unit): Unit = {
     spark.sql(s"use $database")

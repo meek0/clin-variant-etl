@@ -4,7 +4,7 @@
  */
 package bio.ferlab.clin.model
 
-
+import bio.ferlab.datalake.testutils.models.enriched.{COSMIC, DDD, HPO, OMIM, ORPHANET}
 
 
 case class CnvCentricOutput(`aliquot_id`: String = "1",
@@ -52,13 +52,21 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `specimen_id`: String = "SP_001",
                             `sample_id`: String = "SA_001",
                             `genes`: Seq[CNV_CENTRIC_GENES] = Seq(CNV_CENTRIC_GENES()),
-                            `number_genes`: Int = 1)
+                            `transmission`: String = "autosomal_dominant",
+                            `parental_origin`: String = "mother",
+                            `number_genes`: Int = 1,
+                            `hash`: String = "92de24ae164e6da8659c4b0541ebf1a4cce2c916")
 
 case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
-                 `refseq_id`: String = "NC_000001.11",
-                 `gene_length`: String = "60.0",
-                 `overlap_bases`: String = "60.0",
-                 `overlap_cnv_ratio`: Double = 1.0,
-                 `overlap_gene_ratio`: Double = 1.0,
-                 `panels`: Seq[String] = Seq("DYSTM", "MITN"),
-                 `overlap_exons`: String = "1")
+                             `refseq_id`: String = "NC_000001.11",
+                             `gene_length`: String = "60.0",
+                             `overlap_bases`: String = "60.0",
+                             `overlap_cnv_ratio`: Double = 1.0,
+                             `overlap_gene_ratio`: Double = 1.0,
+                             `panels`: Seq[String] = Seq("DYSTM", "MITN"),
+                             `orphanet`: List[ORPHANET] = List(ORPHANET()),
+                             `hpo`: List[HPO] = List(HPO()),
+                             `omim`: List[OMIM] = List(OMIM()),
+                             `ddd`: List[DDD] = List(DDD()),
+                             `cosmic`: List[COSMIC] = List(COSMIC()),
+                             `overlap_exons`: String = "1")

@@ -29,7 +29,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabase
   )
 
   override val dbToCreate: List[String] = List("clin")
-  override val dsToClean: List[DatasetConf] = List(enriched_consequences)
+  override val dsToClean: List[DatasetConf] = List(enriched_consequences, enriched_genes)
 
   val etl = Consequences(TestETLContext(RunStep.default_load))
 

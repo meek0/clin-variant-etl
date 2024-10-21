@@ -1,16 +1,20 @@
 package bio.ferlab.clin.etl.enriched
 
+import bio.ferlab.clin.etl.enriched.CNV._
+import bio.ferlab.clin.etl.mainutils.OptionalBatch
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
 import bio.ferlab.clin.etl.utils.Region
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import mainargs.{ParserForMethods, main}
-import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
-case class CNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
+case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSingleETL(rc) {
 
   import spark.implicits._
 
@@ -19,89 +23,167 @@ case class CNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
   val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
   val refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
-  val cnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
   val genes: DatasetConf = conf.getDataset("enriched_genes")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+  val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
-    Map(
-      normalized_cnv.id -> normalized_cnv.read,
-      normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
+    val publicData = Map(
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read,
       genes.id -> genes.read
     )
+    val clinicalDf = enriched_clinical.read
+
+    batchId match {
+      case Some(id) =>
+        // If a batch id was submitted, only process the specified id
+        val normalizedCnvDf = normalized_cnv.read.where($"batch_id" === id)
+        val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only.read.where($"batch_id" === id)
+
+        val analysisServiceRequestIds: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, id)
+        val nextflowSVClusteringParentalOrigin = nextflow_svclustering_parental_origin
+          .read.where($"analysis_service_request_id".isin(analysisServiceRequestIds: _*))
+
+        Map(
+          normalized_cnv.id -> normalizedCnvDf,
+          normalized_cnv_somatic_tumor_only.id -> normalizedCnvSomaticTumorOnlyDf,
+          nextflow_svclustering_parental_origin.id -> nextflowSVClusteringParentalOrigin
+        ) ++ publicData
+
+      case None =>
+        // If no batch id was submitted, process all data
+        Map(
+          normalized_cnv.id -> normalized_cnv.read,
+          normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
+          nextflow_svclustering_parental_origin.id -> nextflow_svclustering_parental_origin.read
+        ) ++ publicData
+    }
   }
 
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime = minValue,
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
-    val cnv = data(normalized_cnv.id).unionByName(data(normalized_cnv_somatic_tumor_only.id), allowMissingColumns = true)
-    val refseq = data(refseq_annotation.id)
+    val cnvDf = data(normalized_cnv.id).unionByName(data(normalized_cnv_somatic_tumor_only.id), allowMissingColumns = true)
+    val refseqDf = data(refseq_annotation.id)
+    val panelsDf = data(normalized_panels.id)
+    val genesDf = data(genes.id)
+    val parentalOriginDf = data(nextflow_svclustering_parental_origin.id)
 
-    val joinedWithPanels = joinWithPanels(cnv, refseq, data(normalized_panels.id))
-    val joinedWithExons = joinWithExons(joinedWithPanels, refseq)
-    val joinedWithGenes = joinWithGenes(joinedWithExons, data(genes.id));
-
-    val groupedCnv = joinedWithGenes
-      .select(struct($"cnv.*") as "cnv", struct($"refseq_genes.gene" as "symbol", $"refseq_genes.refseq_id" as "refseq_id", $"gene_length", $"overlap_bases", $"overlap_cnv_ratio", $"overlap_gene_ratio", $"panels", $"hpo", $"omim", $"orphanet", $"ddd", $"cosmic") as "gene")
-      .groupBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"cnv.aliquot_id", $"gene.symbol")
-      .agg(first($"cnv") as "cnv", when($"gene.symbol".isNotNull, first($"gene")).otherwise(null) as "gene", count(lit(1) )as "overlap_exons")
-      .select($"cnv", when($"gene".isNotNull, struct($"gene.*", $"overlap_exons")).otherwise(null) as "gene")
-      .groupBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"cnv.aliquot_id")
-      .agg(first($"cnv") as "cnv", collect_list($"gene") as "genes")
-      .select($"cnv.*", $"genes")
+    cnvDf
+      .withPanels(refseqDf, panelsDf)
+      .withExons(refseqDf)
+      .withGenes(genesDf)
+      .withParentalOrigin(parentalOriginDf)
       .withColumn("number_genes", size($"genes"))
-      .withColumn("hash", sha1(concat_ws("-", col("name"), col("aliquot_id"), col("alternate"))))
-
-    groupedCnv
+      .withColumn("hash", sha1(concat_ws("-", col("name"), col("service_request_id"))))
   }
 
-  def joinWithGenes(cnv: DataFrame, genes: DataFrame): DataFrame = {
-    cnv
-      .join(genes, cnv("cnv.chromosome") === genes("chromosome") && cnv("refseq_genes.gene") === genes("symbol"), "left")
-  }
-
-  def joinWithPanels(cnv: DataFrame, refseq: DataFrame, panels: DataFrame): DataFrame = {
-    val refseqGenes = refseq.where($"type" === "gene")
-      .select($"seqId" as "refseq_id", $"chromosome", $"start", $"end", $"gene")
-    val joinedPanels = panels.select("symbol", "panels")
-    val refseqGenesWithPanels = refseqGenes
-      .join(joinedPanels, $"gene" === $"symbol", "left")
-      .drop(joinedPanels("symbol"))
-    val geneRegion = Region($"refseq_genes.chromosome", $"refseq_genes.start", $"refseq_genes.end")
-    val cnvOverlap = when($"refseq_genes.gene".isNull, null)
-      .otherwise(cnvRegion.overlap(geneRegion))
-    cnv.as("cnv")
-      .join(refseqGenesWithPanels.alias("refseq_genes"), cnvRegion.isOverlapping(geneRegion), "left")
-      .withColumn("overlap_bases", cnvOverlap)
-      .drop("refseq_genes.chromosome", "refseq_genes.start", "refseq_genes.end")
-      .withColumn("overlap_gene_ratio", $"overlap_bases" / geneRegion.nbBases)
-      .withColumn("overlap_cnv_ratio", $"overlap_bases" / cnvRegion.nbBases)
-      .withColumn("gene_length", geneRegion.nbBases)
-  }
-
-  def joinWithExons(cnv: DataFrame, refseq: DataFrame): DataFrame = {
-    val refseqExons = refseq.where($"type" === "exon" and $"tag" === "MANE Select")
-      .select($"seqId" as "refseq_id", $"chromosome", $"start", $"end", $"gene")
-
-    cnv
-      .join(refseqExons.alias("refseq_exons"),
-        $"refseq_genes.gene" === $"refseq_exons.gene" and
-          cnvRegion.isOverlapping(Region($"refseq_exons.chromosome", $"refseq_exons.start", $"refseq_exons.end"))
-        , "left")
-
-      .drop("refseq_exons.start", "refseq_exons.end", "refseq_exons.chromosome")
-  }
-
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n=Some(100), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
 
 }
 
 object CNV {
+  private final val CnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
+
+  implicit class DataFrameOps(df: DataFrame) {
+
+    def withPanels(refseq: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      val refseqGenes = refseq.where($"type" === "gene")
+        .select($"seqId" as "refseq_id", $"chromosome", $"start", $"end", $"gene" as "symbol")
+      val joinedPanels = panels.select("symbol", "panels")
+      val refseqGenesWithPanels = refseqGenes
+        .join(joinedPanels, Seq("symbol"), "left")
+      val geneRegion = Region($"refseq_genes.chromosome", $"refseq_genes.start", $"refseq_genes.end")
+      val cnvOverlap = when($"symbol".isNull, null)
+        .otherwise(CnvRegion.overlap(geneRegion))
+
+      df.alias("cnv")
+        .join(refseqGenesWithPanels.alias("refseq_genes"), CnvRegion.isOverlapping(geneRegion), "left")
+        .withColumn("overlap_bases", cnvOverlap)
+        .withColumn("overlap_gene_ratio", $"overlap_bases" / geneRegion.nbBases)
+        .withColumn("overlap_cnv_ratio", $"overlap_bases" / CnvRegion.nbBases)
+        .withColumn("gene_length", geneRegion.nbBases)
+        .select(
+          df("*"),
+          $"symbol",
+          $"refseq_id",
+          $"panels",
+          $"overlap_bases",
+          $"overlap_gene_ratio",
+          $"overlap_cnv_ratio",
+          $"gene_length"
+        )
+    }
+
+    def withExons(refseq: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      val refseqExons = refseq
+        .where($"type" === "exon" and $"tag" === "MANE Select")
+        .select("chromosome", "start", "end", "gene")
+
+      // Add exons to later group by occurrence+symbol and count overlap exons
+      df.alias("cnv")
+        .join(refseqExons,
+          df("symbol") === refseqExons("gene")
+            and CnvRegion.isOverlapping(Region(refseqExons("chromosome"), refseqExons("start"), refseqExons("end"))),
+          "left")
+        .select(df("*"))
+    }
+
+    def withGenes(genes: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      df
+        .join(genes, Seq("chromosome", "symbol"), "left")
+        .select(
+          df("*"),
+          struct("symbol",
+            "refseq_id",
+            "gene_length",
+            "overlap_bases",
+            "overlap_cnv_ratio",
+            "overlap_gene_ratio",
+            "panels",
+            "hpo",
+            "omim",
+            "orphanet",
+            "ddd",
+            "cosmic") as "gene"
+        )
+        .groupByLocus($"aliquot_id", $"gene.symbol")
+        .agg(
+          first(struct(df("*"))) as "cnv",
+          when($"gene.symbol".isNotNull, first($"gene")).otherwise(null) as "gene",
+          count(lit(1)) as "overlap_exons"
+        )
+        .withColumn("gene", when($"gene".isNotNull, struct($"gene.*", $"overlap_exons")).otherwise(null))
+        .groupByLocus($"aliquot_id")
+        .agg(
+          first($"cnv") as "cnv",
+          collect_list($"gene") as "genes"
+        )
+        .select($"cnv.*", $"genes")
+    }
+
+    def withParentalOrigin(parentalOrigin: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      df
+        .join(parentalOrigin,
+          df("service_request_id") === parentalOrigin("service_request_id") and array_contains(parentalOrigin("members"), df("name")),
+          "left")
+        .select(df("*"), $"transmission", $"parental_origin")
+    }
+  }
+
   @main
-  def run(rc: RuntimeETLContext): Unit = {
-    CNV(rc).run()
+  def run(rc: RuntimeETLContext, batch: OptionalBatch): Unit = {
+    CNV(rc, batch.id).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

@@ -6,6 +6,7 @@ import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.NormalizedExomiser
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.commons.config.RunStep.default_load
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
@@ -69,7 +70,7 @@ class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll 
   }
 
   it should "not fail when there is no exomiser data in batch" in {
-    val job = Exomiser(TestETLContext(), "NODATA")
+    val job = Exomiser(TestETLContext(default_load), "NODATA")
     noException should be thrownBy job.run()
   }
 }

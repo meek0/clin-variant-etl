@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.nextflow
 
 import bio.ferlab.clin.etl.mainutils.Batch
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
@@ -14,7 +15,7 @@ import java.time.LocalDateTime
 case class PrepareSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: String) extends SimpleSingleETL(rc) {
 
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
-  override val mainDestination: DatasetConf = conf.getDataset("svclustering_parental_origin_input")
+  override val mainDestination: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin_input")
     .replacePath("{{BATCH_ID}}", batchId)
 
   override def extract(lastRunValue: LocalDateTime,
@@ -27,18 +28,22 @@ case class PrepareSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: Str
                                currentRunValue: LocalDateTime): DataFrame = {
     import spark.implicits._
 
-    val analysesWithAtLeastOneParent = data(enriched_clinical.id)
+    val clinicalDf = data(enriched_clinical.id)
+    val analysesInCurrentBatch: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, batchId)
+
+    val analysesWithAtLeastOneParent = clinicalDf
       .where($"mother_aliquot_id".isNotNull or $"father_aliquot_id".isNotNull)
       .select("analysis_service_request_id")
       .distinct()
 
-    data(enriched_clinical.id)
-      .where($"batch_id" === batchId and $"cnv_vcf_urls".isNotNull)
+    clinicalDf
+      .where($"analysis_service_request_id".isin(analysesInCurrentBatch: _*))
+      .where($"cnv_vcf_urls".isNotNull)
       .join(analysesWithAtLeastOneParent, Seq("analysis_service_request_id"), "inner")
       .select(
         $"aliquot_id" as "sample",
         $"analysis_service_request_id" as "familyId",
-        regexp_replace($"cnv_vcf_urls"(0), "s3a://", "s3://") as "vcf" // There's always only a single file
+        regexp_replace($"cnv_vcf_urls"(0), "s3a://", "s3://") as "vcf" // There's always a single file
       )
       .distinct()
   }
