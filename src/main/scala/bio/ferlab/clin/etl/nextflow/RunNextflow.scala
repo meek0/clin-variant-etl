@@ -7,6 +7,9 @@ import mainargs.{ParserForMethods, main}
 object RunNextflow {
 
   @main
+  def prepare_svclustering(rc: RuntimeETLContext): Unit = PrepareSVClustering.run(rc)
+
+  @main
   def prepare_svclustering_parental_origin(rc: RuntimeETLContext, batch: Batch): Unit = PrepareSVClusteringParentalOrigin.run(rc, batch)
 
   @main

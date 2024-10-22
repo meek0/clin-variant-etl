@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.nextflow
 
 import bio.ferlab.clin.model.enriched.EnrichedClinical
-import bio.ferlab.clin.model.nextflow.SVClusteringParentalOriginInput
+import bio.ferlab.clin.model.nextflow.SVClusteringInput
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.commons.file.{File, FileSystemResolver}
@@ -75,23 +75,23 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
     val result = job.transformSingle(inputData)
 
     result
-      .as[SVClusteringParentalOriginInput]
+      .as[SVClusteringInput]
       .collect() should contain theSameElementsAs Seq(
       // Trio
-      SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
-      SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
-      SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
+      SVClusteringInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
+      SVClusteringInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
+      SVClusteringInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
 
       // Trio+ (with siblings)
-      SVClusteringParentalOriginInput(sample = "11", familyId = "SRA2", vcf = "s3://11.vcf"),
-      SVClusteringParentalOriginInput(sample = "22", familyId = "SRA2", vcf = "s3://22.vcf"),
-      SVClusteringParentalOriginInput(sample = "33", familyId = "SRA2", vcf = "s3://33.vcf"),
-      SVClusteringParentalOriginInput(sample = "44", familyId = "SRA2", vcf = "s3://44.vcf"),
-      SVClusteringParentalOriginInput(sample = "55", familyId = "SRA2", vcf = "s3://55.vcf"),
+      SVClusteringInput(sample = "11", familyId = "SRA2", vcf = "s3://11.vcf"),
+      SVClusteringInput(sample = "22", familyId = "SRA2", vcf = "s3://22.vcf"),
+      SVClusteringInput(sample = "33", familyId = "SRA2", vcf = "s3://33.vcf"),
+      SVClusteringInput(sample = "44", familyId = "SRA2", vcf = "s3://44.vcf"),
+      SVClusteringInput(sample = "55", familyId = "SRA2", vcf = "s3://55.vcf"),
 
       // Duo
-      SVClusteringParentalOriginInput(sample = "111", familyId = "SRA3", vcf = "s3://111.vcf"),
-      SVClusteringParentalOriginInput(sample = "222", familyId = "SRA3", vcf = "s3://222.vcf")
+      SVClusteringInput(sample = "111", familyId = "SRA3", vcf = "s3://111.vcf"),
+      SVClusteringInput(sample = "222", familyId = "SRA3", vcf = "s3://222.vcf")
     )
   }
 
@@ -112,11 +112,11 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
     val result = job.transformSingle(inputData)
 
     result
-      .as[SVClusteringParentalOriginInput]
+      .as[SVClusteringInput]
       .collect() should contain theSameElementsAs Seq(
-      SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
-      SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
-      SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
+      SVClusteringInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
+      SVClusteringInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
+      SVClusteringInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
     )
   }
 
@@ -139,15 +139,15 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
       val newBatch = "BAT3"
       val job = PrepareSVClusteringParentalOrigin(TestETLContext()(updatedConf, spark), batchId = newBatch)
       val newFileContent = Seq(
-        SVClusteringParentalOriginInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
-        SVClusteringParentalOriginInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
-        SVClusteringParentalOriginInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
+        SVClusteringInput(sample = "1", familyId = "SRA1", vcf = "s3://1.vcf"),
+        SVClusteringInput(sample = "2", familyId = "SRA1", vcf = "s3://2.vcf"),
+        SVClusteringInput(sample = "3", familyId = "SRA1", vcf = "s3://3.vcf"),
       )
 
       val result = job.loadSingle(newFileContent.toDF())
 
       result
-        .as[SVClusteringParentalOriginInput]
+        .as[SVClusteringInput]
         .collect() should contain theSameElementsAs newFileContent
 
       val fs = FileSystemResolver.resolve(updatedConf.getStorage(destination.storageid).filesystem)

@@ -16,6 +16,8 @@ class NormalizeSVClusteringParentalOriginSpec extends SparkSpec with WithTestCon
 
   val raw_variant_calling: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin_output")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+  val mainDestination: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
+
   val batchId = "BAT1"
   val analysis1Id = "SRA0001"
   val analysis2Id = "SRA0002"
@@ -57,7 +59,7 @@ class NormalizeSVClusteringParentalOriginSpec extends SparkSpec with WithTestCon
     analysis2Id -> analysisSRA0002Results
   )
 
-  override val dsToClean: List[DatasetConf] = List(enriched_clinical)
+  override val dsToClean: List[DatasetConf] = List(enriched_clinical, mainDestination)
 
   it should "normalize svclustering parental origin results" in {
     withOutputFolder("root") { root =>
