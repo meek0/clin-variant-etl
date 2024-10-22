@@ -99,7 +99,7 @@ object EtlConfiguration extends App {
       // nextflow
       DatasetConf("nextflow_svclustering_parental_origin_input" , clin_datalake, "/nextflow/svclustering_parental_origin_input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
       DatasetConf("nextflow_svclustering_parental_origin_output", clin_datalake, "/nextflow/svclustering_parental_origin_output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),
-      DatasetConf("nextflow_svclustering_parental_origin"       , clin_datalake, "/nextflow/svclustering_parental_origin"                                           , DELTA, OverWritePartition, partitionby = List("analysis_service_request_id"), table = Some(TableConf("clin", "nextflow_svclustering_parental_origin")), keys = List("name", "service_request_id")),
+      DatasetConf("nextflow_svclustering_parental_origin"       , clin_datalake, "/nextflow/svclustering_parental_origin"                                           , DELTA, OverWritePartition, partitionby = List("analysis_service_request_id"), table = Some(TableConf("clin", "nextflow_svclustering_parental_origin")), keys = List("name", "service_request_id"), repartition = Some(RepartitionByColumns(Seq("analysis_service_request_id"), Some(1)))),
 
       //clinical normalized
       DatasetConf("normalized_snv"                            , clin_datalake, "/normalized/snv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv"))),
