@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.enriched.CNV._
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
 import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
 import bio.ferlab.clin.etl.utils.Region
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -79,9 +79,6 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withColumn("number_genes", size($"genes"))
       .withColumn("hash", sha1(concat_ws("-", col("name"), col("service_request_id"))))
   }
-
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
-
 }
 
 object CNV {
