@@ -24,6 +24,7 @@ object FrequencyUtils {
    * participant count
    */
   val pc: Column = sum(when(array_contains(col("calls"), 1) and frequencyFilter, 1).otherwise(0)) as "pc"
+  val pcNoFilter: Column = sum(when(array_contains(col("calls"), 1), 1).otherwise(0)) as "pc"
   val pcSomatic: Column = count_distinct(when(somaticFrequencyFilter, col("sample_id"))) as "pc"
 
   /**

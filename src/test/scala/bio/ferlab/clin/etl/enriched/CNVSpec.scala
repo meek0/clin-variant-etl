@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model.enriched.{EnrichedCNV, EnrichedClinical}
-import bio.ferlab.clin.model.nextflow.SVClusteringParentalOrigin
+import bio.ferlab.clin.model.nextflow.{SVClustering, SVClusteringParentalOrigin}
 import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedPanels, NormalizedRefSeq}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
@@ -20,6 +20,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+  val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
 
   val job = CNV(TestETLContext(), None)
@@ -33,6 +34,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT1"),
       NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT2")
     ).toDF(),
+    nextflow_svclustering.id -> Seq(SVClustering()).toDF(),
     // This table is partitioned by analysis_service_request_id
     nextflow_svclustering_parental_origin.id -> Seq(
       SVClusteringParentalOrigin(`batch_id` = "BAT1", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0001"),
@@ -48,7 +50,8 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
   )
 
   override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only,
-    normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering_parental_origin)
+    normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering,
+    nextflow_svclustering_parental_origin)
 
   "transform" should "enrich CNV data" in {
     val data = testData ++ Map(

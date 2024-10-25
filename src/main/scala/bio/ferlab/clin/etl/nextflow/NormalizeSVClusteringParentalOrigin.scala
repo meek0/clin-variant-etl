@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.nextflow
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.clin.etl.model.raw.VCF_CNV_SVClustering_Parental_Origin
+import bio.ferlab.clin.etl.model.raw.VCF_CNV_SVClustering
 import bio.ferlab.clin.etl.nextflow.NormalizeSVClusteringParentalOrigin.AnalysisServiceRequestIdExtractionRegex
 import bio.ferlab.clin.etl.normalized.{Occurrences, validContigNames}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
@@ -24,7 +24,7 @@ case class NormalizeSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: S
     import spark.implicits._
 
     val inputVCF = if (data(raw_variant_calling.id).isEmpty) {
-      Seq.empty[VCF_CNV_SVClustering_Parental_Origin].toDF
+      Seq.empty[VCF_CNV_SVClustering].toDF
     } else data(raw_variant_calling.id).where(col("contigName").isin(validContigNames: _*))
 
     val clinicalDf: DataFrame = data(enriched_clinical.id)

@@ -98,7 +98,11 @@ object EtlConfiguration extends App {
       DatasetConf("enriched_clinical"              , clin_datalake, "/enriched/clinical"                 , DELTA  , OverWrite   , TableConf("clin", "clinical")),
 
       // nextflow
-      DatasetConf("nextflow_svclustering_input"                 , clin_datalake, "/nextflow/svclustering_input"                                                     , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
+      // svclustering
+      DatasetConf("nextflow_svclustering_input" , clin_datalake, "/nextflow/svclustering_input"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_output", clin_datalake, "/nextflow/svclustering_output/svclustering*/*.vcf.gz", VCF  , Read),
+      DatasetConf("nextflow_svclustering"       , clin_datalake, "/nextflow/svclustering"                              , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering")), keys = List("name"), repartition = Some(FixedRepartition(1))),
+      // svclustering-parental-origin
       DatasetConf("nextflow_svclustering_parental_origin_input" , clin_datalake, "/nextflow/svclustering_parental_origin_input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
       DatasetConf("nextflow_svclustering_parental_origin_output", clin_datalake, "/nextflow/svclustering_parental_origin_output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),
       DatasetConf("nextflow_svclustering_parental_origin"       , clin_datalake, "/nextflow/svclustering_parental_origin"                                           , DELTA, OverWritePartition, partitionby = List("analysis_service_request_id"), table = Some(TableConf("clin", "nextflow_svclustering_parental_origin")), keys = List("name", "service_request_id"), repartition = Some(RepartitionByColumns(Seq("analysis_service_request_id"), n = Some(1)))),

@@ -55,6 +55,7 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `genes`: List[ENRICHED_CNV_GENES] = List(ENRICHED_CNV_GENES()),
                        `transmission`: String = "autosomal_dominant",
                        `parental_origin`: String = "mother",
+                       `frequency_RQDM`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(),
                        `number_genes`: Int = 1,
                        `hash`: String = "92de24ae164e6da8659c4b0541ebf1a4cce2c916")
 
@@ -71,3 +72,7 @@ case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
                               `ddd`: List[DDD] = List(DDD()),
                               `cosmic`: List[COSMIC] = List(COSMIC()),
                               `overlap_exons`: Option[String] = Some("1"))
+
+case class ENRICHED_CNV_FREQUENCY_RQDM(`pn`: Long = 5,
+                                       `pc`: Long = 2,
+                                       `pf`: Double = 0.4)

@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.nextflow
 
-import bio.ferlab.clin.etl.model.raw.{GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN, VCF_CNV_SVClustering_Parental_Origin}
+import bio.ferlab.clin.etl.model.raw.{GENOTYPES_CNV_SVCLUSTERING, VCF_CNV_SVClustering}
 import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.nextflow.SVClusteringParentalOrigin
 import bio.ferlab.clin.testutils.WithTestConfig
@@ -35,21 +35,21 @@ class NormalizeSVClusteringParentalOriginSpec extends SparkSpec with WithTestCon
   ).toDF
 
   val analysisSRA0001Results: DataFrame = Seq(
-    VCF_CNV_SVClustering_Parental_Origin(
+    VCF_CNV_SVClustering(
       `genotypes` = List(
-        GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN(`sampleId` = "11111", `calls` = List(0, 1)), // proband
-        GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN(`sampleId` = "22222", `calls` = List(0, 0)), // father
-        GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN(`sampleId` = "33333", `calls` = List(0, 1)), // mother
+        GENOTYPES_CNV_SVCLUSTERING(`sampleId` = "11111", `calls` = List(0, 1)), // proband
+        GENOTYPES_CNV_SVCLUSTERING(`sampleId` = "22222", `calls` = List(0, 0)), // father
+        GENOTYPES_CNV_SVCLUSTERING(`sampleId` = "33333", `calls` = List(0, 1)), // mother
       )
     )
   ).toDF
 
   val analysisSRA0002Results: DataFrame = Seq(
-    VCF_CNV_SVClustering_Parental_Origin(
+    VCF_CNV_SVClustering(
       `genotypes` = List(
-        GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN(`sampleId` = "44444", `calls` = List(1, 1)), // proband
-        GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN(`sampleId` = "55555", `calls` = List(0, 1)), // father
-        GENOTYPES_CNV_SVCLUSTERING_PARENTAL_ORIGIN(`sampleId` = "66666", `calls` = List(1, 1)), // mother
+        GENOTYPES_CNV_SVCLUSTERING(`sampleId` = "44444", `calls` = List(1, 1)), // proband
+        GENOTYPES_CNV_SVCLUSTERING(`sampleId` = "55555", `calls` = List(0, 1)), // father
+        GENOTYPES_CNV_SVCLUSTERING(`sampleId` = "66666", `calls` = List(1, 1)), // mother
       )
     )
   ).toDF

@@ -64,6 +64,7 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(spliceai_snv, "spliceai_snv"),
       shouldNotBeEmpty(rare_variant_enriched, "rare_variant_enriched"),
       shouldNotBeEmpty(spliceai_enriched, "spliceai_enriched"),
+      shouldNotBeEmpty(nextflow_svclustering, "nextflow_svclustering"),
       shouldNotBeEmpty(nextflow_svclustering_parental_origin, "nextflow_svclustering_parental_origin")
     )
   }

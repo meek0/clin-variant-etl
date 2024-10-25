@@ -25,14 +25,16 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+  val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
-    val publicData = Map(
+    val extractedData = Map(
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read,
-      genes.id -> genes.read
+      genes.id -> genes.read,
+      nextflow_svclustering.id -> nextflow_svclustering.read
     )
     val clinicalDf = enriched_clinical.read
 
@@ -50,7 +52,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
           normalized_cnv.id -> normalizedCnvDf,
           normalized_cnv_somatic_tumor_only.id -> normalizedCnvSomaticTumorOnlyDf,
           nextflow_svclustering_parental_origin.id -> nextflowSVClusteringParentalOrigin
-        ) ++ publicData
+        ) ++ extractedData
 
       case None =>
         // If no batch id was submitted, process all data
@@ -58,7 +60,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
           normalized_cnv.id -> normalized_cnv.read,
           normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
           nextflow_svclustering_parental_origin.id -> nextflow_svclustering_parental_origin.read
-        ) ++ publicData
+        ) ++ extractedData
     }
   }
 
@@ -69,6 +71,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
     val refseqDf = data(refseq_annotation.id)
     val panelsDf = data(normalized_panels.id)
     val genesDf = data(genes.id)
+    val svclusteringDf = data(nextflow_svclustering.id)
     val parentalOriginDf = data(nextflow_svclustering_parental_origin.id)
 
     cnvDf
@@ -76,6 +79,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withExons(refseqDf)
       .withGenes(genesDf)
       .withParentalOrigin(parentalOriginDf)
+      .withFrequencies(svclusteringDf)
       .withColumn("number_genes", size($"genes"))
       .withColumn("hash", sha1(concat_ws("-", col("name"), col("service_request_id"))))
   }
@@ -175,6 +179,14 @@ object CNV {
           df("service_request_id") === parentalOrigin("service_request_id") and array_contains(parentalOrigin("members"), df("name")),
           "left")
         .select(df("*"), $"transmission", $"parental_origin")
+    }
+
+    def withFrequencies(svclustering: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      df
+        .join(svclustering, array_contains(svclustering("members"), df("name")))
+        .select(df("*"), $"frequency_RQDM")
     }
   }
 

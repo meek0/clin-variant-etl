@@ -4,7 +4,7 @@
  */
 package bio.ferlab.clin.model
 
-import bio.ferlab.datalake.testutils.models.enriched.{COSMIC, DDD, HPO, OMIM, ORPHANET}
+import bio.ferlab.datalake.testutils.models.enriched._
 
 
 case class CnvCentricOutput(`aliquot_id`: String = "1",
@@ -54,6 +54,7 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `genes`: Seq[CNV_CENTRIC_GENES] = Seq(CNV_CENTRIC_GENES()),
                             `transmission`: String = "autosomal_dominant",
                             `parental_origin`: String = "mother",
+                            `frequency_RQDM`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(),
                             `number_genes`: Int = 1,
                             `hash`: String = "92de24ae164e6da8659c4b0541ebf1a4cce2c916")
 
@@ -70,3 +71,7 @@ case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
                              `ddd`: List[DDD] = List(DDD()),
                              `cosmic`: List[COSMIC] = List(COSMIC()),
                              `overlap_exons`: String = "1")
+
+case class CNV_CENTRIC_FREQUENCY_RQDM(`pn`: Long = 5,
+                                      `pc`: Long = 2,
+                                      `pf`: Double = 0.4)
