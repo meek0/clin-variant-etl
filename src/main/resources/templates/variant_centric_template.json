@@ -7,7 +7,14 @@
   ],
   "template": {
     "settings": {
-      "number_of_shards": 3
+      "index": {
+        "number_of_shards": "3",
+        "mapping": {
+          "nested_objects": {
+            "limit": "15000"
+          }
+        }
+      }
     },
     "mappings": {
       "properties": {
