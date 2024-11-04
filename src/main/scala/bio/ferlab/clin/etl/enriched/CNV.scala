@@ -81,7 +81,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withParentalOrigin(parentalOriginDf)
       .withFrequencies(svclusteringDf)
       .withColumn("number_genes", size($"genes"))
-      .withColumn("hash", sha1(concat_ws("-", col("name"), col("service_request_id"))))
+      .withColumn("hash", sha1(concat_ws("-", col("name"), col("service_request_id")))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
   }
 }
 
