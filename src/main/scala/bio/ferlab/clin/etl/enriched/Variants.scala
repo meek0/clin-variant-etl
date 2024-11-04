@@ -102,7 +102,7 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .withGeneExternalReference
       .withClinVariantExternalReference
       .withColumn("locus", concat_ws("-", locus: _*))
-      .withColumn("hash", sha1(col("locus")))
+      .withColumn("hash", sha1(col("locus"))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
       .withColumn(mainDestination.oid, col("updated_on"))
   }
 
