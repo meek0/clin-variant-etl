@@ -56,7 +56,7 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `parental_origin`: String = "mother",
                             `frequency_RQDM`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(),
                             `number_genes`: Int = 1,
-                            `hash`: String = "92de24ae164e6da8659c4b0541ebf1a4cce2c916")
+                            `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
 case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
                              `refseq_id`: String = "NC_000001.11",
