@@ -57,7 +57,8 @@ package object dictionary {
     "Uncertain_risk_allele",
     "Uncertain_significance",
     "no_classification_for_the_single_variant",
-    "Conflicting_classifications_of_pathogenicity"
+    "Conflicting_classifications_of_pathogenicity",
+    "no_classifications_from_unflagged_records",
   )
 
   val DicCmcTier = Seq(
