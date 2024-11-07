@@ -64,8 +64,8 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
     result
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedCNV(`service_request_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "92de24ae164e6da8659c4b0541ebf1a4cce2c916"),
-      EnrichedCNV(`service_request_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "810a8236a97d77231f72b1a532f8bc2d788d6eee"),
+      EnrichedCNV(`service_request_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5"),
+      EnrichedCNV(`service_request_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "05c1575c45d71352d7f88c8a688956b139653661"),
     )
   }
 

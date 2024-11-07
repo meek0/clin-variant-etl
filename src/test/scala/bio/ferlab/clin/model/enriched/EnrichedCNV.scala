@@ -57,7 +57,7 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `parental_origin`: String = "mother",
                        `frequency_RQDM`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(),
                        `number_genes`: Int = 1,
-                       `hash`: String = "92de24ae164e6da8659c4b0541ebf1a4cce2c916")
+                       `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
 case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
                               `refseq_id`: Option[String] = Some("NC_000001.11"),
