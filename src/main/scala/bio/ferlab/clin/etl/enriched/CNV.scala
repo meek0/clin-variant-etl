@@ -185,7 +185,7 @@ object CNV {
       import spark.implicits._
 
       df
-        .join(svclustering, array_contains(svclustering("members"), df("name")))
+        .join(svclustering, array_contains(svclustering("members"), df("name")), "left")
         .select(df("*"), $"frequency_RQDM")
     }
   }
