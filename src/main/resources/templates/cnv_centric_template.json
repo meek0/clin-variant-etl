@@ -58,6 +58,10 @@
           "type": "keyword",
           "index": false
         },
+        "note": {
+          "type": "keyword",
+          "index": false
+        },
         "batch_id": {
           "type": "keyword"
         },

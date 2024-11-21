@@ -1008,6 +1008,10 @@
           "type": "keyword",
           "index": false
         },
+        "note": {
+          "type": "keyword",
+          "index": false
+        },
         "exomiser_max": {
           "properties": {
             "variant_score": {
