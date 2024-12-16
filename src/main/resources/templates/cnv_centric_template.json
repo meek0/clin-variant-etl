@@ -11,7 +11,7 @@
         "number_of_shards": "3",
         "mapping": {
           "nested_objects": {
-            "limit": "15000"
+            "limit": "30000"
           }
         }
       }
