@@ -26,6 +26,7 @@ jobs:
         run: |
           git config user.email "no-mail"
           git config user.name "ig-deploy-bot"
+      - uses: sbt/setup-sbt@v1
       - name: Build Assembly
         run: sbt assembly
         env:
