@@ -6,6 +6,7 @@ import bio.ferlab.clin.etl.model.raw.RawCoverageByGene
 import bio.ferlab.clin.etl.utils.{FileInfo, FileUtils}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.transformation.Cast.{castDouble, castFloat, castInt}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
@@ -38,7 +39,7 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Simple
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime,
                                currentRunDateTime: LocalDateTime): DataFrame = {
-    val fileInfo = data("file_info").select("url", "aliquot_id", "service_request_id", "patient_id")
+    val fileInfo = data("file_info").select("url", "aliquot_id", "service_request_id", "patient_id", "is_proband")
     val withFileInfo = data(raw_coverage_by_gene.id)
       .withColumn("url", input_file_name())
       .join(fileInfo, Seq("url"))
@@ -62,6 +63,7 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Simple
         $"aliquot_id",
         $"patient_id",
         $"service_request_id",
+        $"is_proband",
         lit(batchId) as "batch_id"
       )
   }
