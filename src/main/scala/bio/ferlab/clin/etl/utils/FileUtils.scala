@@ -30,6 +30,7 @@ object FileUtils {
         $"patient_id",
         $"specimen_id",
         $"service_request_id",
+        $"is_proband",
       )
       .as[FileInfo]
       .collect()
@@ -37,4 +38,4 @@ object FileUtils {
   }
 }
 
-case class FileInfo(url: String, aliquot_id: String, patient_id: String, specimen_id: String, service_request_id: String)
+case class FileInfo(url: String, aliquot_id: String, patient_id: String, specimen_id: String, service_request_id: String, is_proband: Boolean)

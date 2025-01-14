@@ -85,6 +85,9 @@
         },
         "hash": {
           "type": "keyword"
+        },
+        "is_proband": {
+          "type": "keyword"
         }
       }
     }

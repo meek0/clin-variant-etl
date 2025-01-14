@@ -20,5 +20,6 @@ case class NormalizedCoverageByGene(`gene`: String = "A1BG",
                                     `aliquot_id`: String = "aliquot1",
                                     `patient_id`: String = "438787",
                                     `service_request_id`: String = "SR0095",
+                                    `is_proband`: Boolean = true,
                                     `batch_id`: String = "BAT1")
 
