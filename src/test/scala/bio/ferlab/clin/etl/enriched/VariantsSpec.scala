@@ -33,6 +33,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
   val gnomad_genomes_v3: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
+  val gnomad_genomes_v4: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v4")
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -62,6 +63,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes211Output()).toDF
   val gnomad_genomes_3_0Df: DataFrame = Seq(GnomadGenomes30Output()).toDF
   val gnomad_genomes_3_1_1Df: DataFrame = Seq(GnomadGenomes311Output()).toDF
+  val gnomad_genomes_4Df: DataFrame = Seq(GnomadGenomes4Output()).toDF
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(EnrichedGenes()).toDF()
@@ -80,6 +82,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     gnomad_exomes_v2_1_1.id -> gnomad_exomes_2_1_1Df,
     gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
     gnomad_genomes_v3.id -> gnomad_genomes_3_1_1Df,
+    gnomad_genomes_v4.id -> gnomad_genomes_4Df,
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
@@ -1166,7 +1169,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val result = variants.withClinVariantExternalReference
 
     val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin"), `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin", "gnomADv4"), `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
       EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("Clinvar", "Cosmic", "Franklin"), `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
       EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set(), `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin_max` = None),
     )

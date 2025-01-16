@@ -42,7 +42,7 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `dna_change`: String = "T>C",
                            `genes`: List[GENES] = List(GENES()),
                            `omim`: List[String] = List("618285"),
-                           `variant_external_reference`: Set[String] = Set("DBSNP", "Clinvar", "Cosmic", "PubMed", "Franklin"),
+                           `variant_external_reference`: Set[String] = Set("DBSNP", "Clinvar", "Cosmic", "PubMed", "Franklin", "gnomADv4"),
                            `gene_external_reference`: Set[String] = Set("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
                            `exomiser_max`: Option[EXOMISER_MAX] = Some(EXOMISER_MAX()),
@@ -109,7 +109,8 @@ case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFr
                        gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
                        gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
                        gnomad_genomes_3_0: GnomadFreqOutput = GnomadFreqOutput(0, 53780, 0.0, 0),
-                       gnomad_genomes_3_1_1: GnomadFreqOutput = GnomadFreqOutput(10, 20, 0.5, 10))
+                       gnomad_genomes_3_1_1: GnomadFreqOutput = GnomadFreqOutput(10, 20, 0.5, 10),
+                       gnomad_genomes_4: GnomadFreqOutput = GnomadFreqOutput(2, 20, 2.0, 10))
 
 
 case class ThousandGenomesFreq(ac: Long = 10,
