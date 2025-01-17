@@ -93,14 +93,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-
-    data.foreach { case (id, df) =>
-      val ds = conf.getDataset(id)
-
-      LoadResolver
-        .write(spark, conf)(ds.format, LoadType.OverWrite)
-        .apply(ds, df)
-    }
   }
 
   val expectedDonors =
@@ -969,6 +961,15 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   }
 
   "variants job" should "run" in {
+    data.foreach { case (id, df) =>
+      val ds = conf.getDataset(id)
+      df.unpersist()
+
+      LoadResolver
+        .write(spark, conf)(ds.format, LoadType.OverWrite)
+        .apply(ds, df)
+    }
+
     job.run()
 
     val resultDf = spark.table("clin.variants")
