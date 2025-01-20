@@ -91,10 +91,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     franklin.id -> franklinDf
   )
 
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-  }
-
   val expectedDonors =
     List(
       DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEAN", "PA0001", "FM00001", "PPR00101", "OR00201", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("mother"), Some("AD")),
@@ -960,19 +956,9 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     result302.`variant_type` should contain allElementsOf List("somatic")
   }
 
-  "variants job" should "run" in {
-    data.foreach { case (id, df) =>
-      val ds = conf.getDataset(id)
-      df.unpersist()
-
-      LoadResolver
-        .write(spark, conf)(ds.format, LoadType.OverWrite)
-        .apply(ds, df)
-    }
-
-    val transformed = job.transform(data = data)
-    val resultDf = transformed.head._2
-    val result = resultDf.as[EnrichedVariant].limit(1).collect().head
+  "variants job" should "transform to EnrichedVariant" in {
+    val resultDf = job.transformSingle(data = data)
+    val result = resultDf.as[EnrichedVariant].collect().head
 
     //    resultDf.select(explode($"donors").as[DONORS]).show(false)
     //    expectedDonors.toDF().show(false)
