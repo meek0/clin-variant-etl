@@ -970,9 +970,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         .apply(ds, df)
     }
 
-    job.run()
-
-    val resultDf = spark.table("clin.variants")
+    val transformed = job.transform(data = data)
+    val resultDf = transformed.head._2
     val result = resultDf.as[EnrichedVariant].limit(1).collect().head
 
     //    resultDf.select(explode($"donors").as[DONORS]).show(false)
