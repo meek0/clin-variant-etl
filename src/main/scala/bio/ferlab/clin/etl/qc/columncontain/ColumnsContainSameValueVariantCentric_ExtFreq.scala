@@ -31,6 +31,9 @@ object ColumnsContainSameValueVariantCentric_ExtFreq extends TestingApp {
       shouldNotContainSameValue(
         variant_centric.select($"external_frequencies.gnomad_genomes_3_1_1.*")
       ),
+      shouldNotContainSameValue(
+        variant_centric.select($"external_frequencies.gnomad_genomes_4.*")
+      ),
     )
   }
 }
