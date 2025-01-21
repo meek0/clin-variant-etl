@@ -477,6 +477,7 @@ package object dictionary {
     "PubMed",
     "Cosmic",
     "Franklin",
+    "gnomAD",
     "null",
   )
 
