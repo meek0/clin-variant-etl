@@ -369,7 +369,7 @@ object Variants {
         $"clinvar".isNotNull -> "Clinvar",
         $"cmc".isNotNull -> "Cosmic",
         $"franklin_max".isNotNull -> "Franklin",
-        $"external_frequencies.gnomad_genomes_4".isNotNull -> "gnomADv4"
+        $"external_frequencies.gnomad_genomes_4".isNotNull -> "gnomAD"
       )
 
       conditionValueMap
