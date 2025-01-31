@@ -88,6 +88,12 @@
         },
         "is_proband": {
           "type": "keyword"
+        },
+        "mother_id": {
+          "type": "keyword"
+        },
+        "father_id": {
+          "type": "keyword"
         }
       }
     }

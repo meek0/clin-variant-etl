@@ -21,5 +21,7 @@ case class NormalizedCoverageByGene(`gene`: String = "A1BG",
                                     `patient_id`: String = "438787",
                                     `service_request_id`: String = "SR0095",
                                     `is_proband`: Boolean = true,
+                                    `mother_id`: Option[String] = Some("PA0003"),
+                                    `father_id`: Option[String] = Some("PA0002"),
                                     `batch_id`: String = "BAT1")
 
