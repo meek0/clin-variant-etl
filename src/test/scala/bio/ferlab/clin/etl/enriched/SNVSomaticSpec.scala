@@ -130,7 +130,6 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .apply(normalized_snv_somatic, existingNormalizedData.toDF())
 
     val result = job(None).extract()
-    result(normalized_snv_somatic.id).show(false)
 
     result(normalized_snv_somatic.id)
       .as[NormalizedSNVSomatic]
