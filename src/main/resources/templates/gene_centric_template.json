@@ -21,7 +21,8 @@
     "mappings": {
       "properties": {
         "alias": {
-          "type": "keyword"
+          "type": "keyword",
+          "normalizer" : "lowercase_normalizer"
         },
         "biotype": {
           "type": "keyword"
