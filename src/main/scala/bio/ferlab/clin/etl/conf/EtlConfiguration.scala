@@ -61,6 +61,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_exomiser"              , clin_import  , "/{{BATCH_ID}}/*.exomiser.variants.tsv"                        , CSV , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_coverage_by_gene"      , clin_import  , "/{{BATCH_ID}}/*.coverage_by_gene.GENCODE_CODING_CANONICAL.csv", CSV , OverWrite, readoptions = csv_with_headers),
       DatasetConf("raw_clinical_impression"   , clin_datalake, "/raw/landing/fhir/ClinicalImpression"                         , JSON, OverWrite),
+      DatasetConf("raw_code_system"           , clin_datalake, "/raw/landing/fhir/CodeSystem"                                 , JSON, OverWrite),
       DatasetConf("raw_observation"           , clin_datalake, "/raw/landing/fhir/Observation"                                , JSON, OverWrite),
       DatasetConf("raw_organization"          , clin_datalake, "/raw/landing/fhir/Organization"                               , JSON, OverWrite),
       DatasetConf("raw_patient"               , clin_datalake, "/raw/landing/fhir/Patient"                                    , JSON, OverWrite),
@@ -85,6 +86,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , Upsert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("chromosome", "start", "reference", "alternate")),
       //fhir
       DatasetConf("normalized_clinical_impression" , clin_datalake, "/normalized/fhir/ClinicalImpression", DELTA  , OverWrite   , TableConf("clin", "fhir_clinical_impression")),
+      DatasetConf("normalized_code_system"         , clin_datalake, "/normalized/fhir/CodeSystem"        , DELTA  , OverWrite   , Some(TableConf("clin", "fhir_code_system")), keys = List("id", "concept_code")),
       DatasetConf("normalized_observation"         , clin_datalake, "/normalized/fhir/Observation"       , DELTA  , OverWrite   , TableConf("clin", "fhir_observation")),
       DatasetConf("normalized_organization"        , clin_datalake, "/normalized/fhir/Organization"      , DELTA  , OverWrite   , TableConf("clin", "fhir_organization")),
       DatasetConf("normalized_patient"             , clin_datalake, "/normalized/fhir/Patient"           , DELTA  , OverWrite   , TableConf("clin", "fhir_patient")),

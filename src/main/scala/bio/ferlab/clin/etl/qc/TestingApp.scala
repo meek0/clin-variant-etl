@@ -45,6 +45,7 @@ trait TestingApp extends App {
   lazy val gnomad_genomes_3_0: DataFrame = spark.table("gnomad_genomes_3_0")
   lazy val gnomad_genomes_v3: DataFrame = spark.table("gnomad_genomes_v3")
   lazy val fhir_clinical_impression: DataFrame = spark.table("fhir_clinical_impression")
+  lazy val fhir_code_system: DataFrame = spark.table("fhir_code_system")
   lazy val fhir_observation: DataFrame = spark.table("fhir_observation")
   lazy val fhir_organization: DataFrame = spark.table("fhir_organization")
   lazy val fhir_patient: DataFrame = spark.table("fhir_patient")

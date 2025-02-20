@@ -35,6 +35,18 @@ object FhirRawToNormalizedMappings {
     Drop("assessor", "subject", "extension")
   )
 
+  val codeSystemMappings: List[Transformation] = List(
+    Custom(
+      _
+        .withColumn("concept", explode(col("concept")))
+        .withColumn("concept_code", col("concept.code"))
+        .withColumn("concept_description", col("concept.display"))
+        .withColumn("concept_fr_description", col("concept.designation")(0)("value"))
+        .withColumn("concept_definition", col("concept.definition"))
+    ),
+    Drop("concept", "count")
+  )
+
   val interpretationCodeMap: Column = typedLit(Map(
     "POS" -> "affected",
     "NEG" -> "not_affected",
@@ -243,6 +255,7 @@ object FhirRawToNormalizedMappings {
 
     List(
       (c.getDataset("raw_clinical_impression"), c.getDataset("normalized_clinical_impression"), defaultTransformations ++ clinicalImpressionMappings),
+      (c.getDataset("raw_code_system"), c.getDataset("normalized_code_system"), defaultTransformations ++ codeSystemMappings),
       (c.getDataset("raw_observation"), c.getDataset("normalized_observation"), defaultTransformations ++ observationMappings),
       (c.getDataset("raw_organization"), c.getDataset("normalized_organization"), defaultTransformations ++ organizationMappings),
       (c.getDataset("raw_patient"), c.getDataset("normalized_patient"), defaultTransformations ++ patientMappings),

@@ -129,10 +129,11 @@ object FhirCustomOperations {
 
 
     def withFhirMetadata: DataFrame = {
+      val metaColumns = df.select("meta.*").columns
       df.withColumn("version_id", col("meta.versionId"))
         .withColumn("updated_on", to_timestamp(col("meta.lastUpdated"), "yyyy-MM-dd\'T\'HH:mm:ss.SSSz"))
         .withColumn("created_on", col("updated_on"))
-        .withColumn("profile", col("meta.profile"))
+        .withColumn("profile", if (metaColumns.contains("profile")) col("meta.profile") else lit(null).cast(StringType))
     }
   }
 

@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.fhir
 import bio.ferlab.clin.etl.fhir.FhirToNormalizedETL.getSchema
 import bio.ferlab.clin.model.normalized.fhir._
 import bio.ferlab.clin.testutils.WithTestConfig
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{ClassGenerator, SparkSpec, TestETLContext}
 import org.apache.spark.sql.functions._
 
 class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
@@ -23,6 +23,20 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
 
+  }
+
+  "codeSystem raw job" should "return data in the expected format" in {
+    val inputDs = conf.getDataset("raw_code_system")
+    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
+    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_code_system")).json("src/test/resources/raw/landing/fhir/CodeSystem/CodeSystem_0_19000101_000000.json")
+    val output = job.transformSingle(Map(inputDs.id -> inputDf))
+
+    output.count() shouldBe 8
+    val head = output.where(col("id") === "variant-type" && col("concept_code") === "S").as[NormalizedCodeSystem].head()
+    head shouldBe NormalizedCodeSystem()
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 
   "observation raw job" should "return data in the expected format" in {
