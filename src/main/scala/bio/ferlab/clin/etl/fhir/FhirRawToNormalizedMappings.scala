@@ -56,19 +56,30 @@ object FhirRawToNormalizedMappings {
   val observationMappings: List[Transformation] = List(
     Custom(
       _
-        //.withColumnRenamed("id", "observation_id")
-        //.withObservationExtension
-        .withColumn("observation_code", col("code.coding.code")(0))
         .withColumn("patient_id", patient_id)
-        //.withColumn("concept_code", col("valueCodeableConcept.coding.code")(0))
-        //.withColumn("concept_description", col("valueCodeableConcept.coding.display")(0))
+        .withColumn("category_code", col("category")(0)("coding")(0)("code"))
+        .withColumn("category_description", col("category")(0)("coding")(0)("display"))
+        .withColumn("category_system", col("category")(0)("coding")(0)("system"))
+        .withColumn("observation_code", col("code.coding.code")(0))
+        .withColumn("observation_code_description", col("code.coding.display")(0))
+        .withColumn("observation_code_system", col("code.coding.system")(0))
+        .withColumn("concept_values", transform(col("valueCodeableConcept.coding"), c =>
+          struct(
+            c("code").as("concept_code"),
+            c("system").as("concept_system"),
+          )))
         .withColumn("interpretation", col("interpretation")(0))
         .withColumn("interpretation_code", interpretationCodeMap(col("interpretation.coding.code")(0)))
         .withColumn("interpretation_description", col("interpretation.coding.display")(0))
+        .withColumn("interpretation_system", col("interpretation.coding.system")(0))
         .withColumn("note", transform(col("note"), c => c("text")))
-      //.withColumn("category_description", col("category")(0)("coding")(0)("display"))
     ),
-    Drop("extension", "code", "interpretation", "valueCodeableConcept", "subject", "category", "valueBoolean", "valueString")
+    Rename(Map(
+      "valueBoolean" -> "boolean_value",
+      "valueString" -> "string_value",
+      "valueDateTime" -> "datetime_value"
+    )),
+    Drop("extension", "code", "interpretation", "valueCodeableConcept", "subject", "category")
   )
 
   val organizationMappings: List[Transformation] = List(

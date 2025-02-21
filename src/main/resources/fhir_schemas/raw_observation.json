@@ -141,7 +141,12 @@
                 "type" : "string",
                 "nullable" : true,
                 "metadata" : { }
-              } ]
+              }, {
+                  "name" : "system",
+                  "type" : "string",
+                  "nullable" : true,
+                  "metadata" : { }
+              }]
             },
             "containsNull" : true
           },
@@ -259,11 +264,6 @@
             "type" : "struct",
             "fields" : [ {
               "name" : "code",
-              "type" : "string",
-              "nullable" : true,
-              "metadata" : { }
-            }, {
-              "name" : "display",
               "type" : "string",
               "nullable" : true,
               "metadata" : { }

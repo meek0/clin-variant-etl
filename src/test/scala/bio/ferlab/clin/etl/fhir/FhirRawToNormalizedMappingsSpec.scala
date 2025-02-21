@@ -52,8 +52,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val head = output.where("id='OB00001'").as[NormalizedObservation].head()
     head shouldBe NormalizedObservation()
       .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
-        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
-
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`, `concept_values` = None)
   }
 
   "organization raw job" should "return data in the expected format" in {
