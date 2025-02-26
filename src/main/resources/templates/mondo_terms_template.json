@@ -1,0 +1,107 @@
+{
+  "index_patterns": [
+    "clin_qa_blue_mondo*",
+    "clin_qa_green_mondo*",
+    "clin_staging_mondo*",
+    "clin_prod_mondo*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 2,
+      "analysis" : {
+        "tokenizer" : {
+          "autocompleteTokenizer": {
+            "type": "edge_ngram",
+            "min_gram": 2,
+            "max_gram": 20,
+            "token_chars": [
+              "letter",
+              "digit",
+              "punctuation"
+            ]
+          },
+          "mondoIdTokenizer" : {
+            "type": "pattern",
+            "pattern": "^MONDO:0*(.*)",
+            "group": 1
+          }
+        },
+        "filter": {
+          "mondo_ascii_folding" : {
+            "type" : "asciifolding",
+            "preserve_original" : "true"
+          },
+          "mondo_id_leading_zero_trim" : {
+            "type": "pattern_replace",
+            "pattern": "^MONDO:0+(.*)",
+            "replacement": "$1"
+          }
+        },
+        "analyzer" : {
+          "autocomplete" : {
+            "tokenizer" : "autocompleteTokenizer",
+            "filter" : [
+              "lowercase",
+              "mondo_ascii_folding"
+            ]
+          },
+          "mondoIdAnalyzer" : {
+            "tokenizer": "mondoIdTokenizer"
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties" : {
+        "compact_ancestors" : {
+          "properties" : {
+            "mondo_id" : {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            },
+            "name" : {
+              "type" : "text",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            }
+          }
+        },
+        "mondo_id" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            },
+            "autocomplete" : {
+              "type" : "text",
+              "index_options": "offsets",
+              "analyzer" : "mondoIdAnalyzer"
+            }
+          }
+        },
+        "is_leaf" : {
+          "type" : "boolean"
+        },
+        "name" : {
+          "type" : "search_as_you_type",
+          "index_options": "offsets",
+          "doc_values" : false,
+          "analyzer" : "autocomplete"
+        },
+        "parents" : {
+          "type" : "keyword"
+        }
+      }
+    }
+  }
+}
