@@ -57,6 +57,7 @@ object Indexer extends App {
     case "variant_suggestions" => conf.getDataset("es_index_variant_suggestions")
     case "coverage_by_gene_centric" => conf.getDataset("es_index_coverage_by_gene_centric")
     case "hpo_terms" => conf.getDataset( "normalized_hpo_terms")
+    case "mondo_terms" => conf.getDataset( "normalized_mondo_terms")
   }
 
   var df: DataFrame = ds.read
@@ -64,6 +65,9 @@ object Indexer extends App {
   if(jobType.equals("hpo_terms")){
     import spark.implicits._
     df = PrepareHpo.transform(df.as[HPOEntry])
+  } else if(jobType.equals("mondo_terms")){
+    import spark.implicits._
+    df = PrepareMondo.transform(df.as[MondoEntry])
   }
 
   new Indexer("index", s"templates/$templateFileName", s"${alias}_$release_id")
