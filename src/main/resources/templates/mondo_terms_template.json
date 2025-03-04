@@ -1,5 +1,6 @@
 {
   "index_patterns": [
+    "mondo*",
     "clin_qa_blue_mondo*",
     "clin_qa_green_mondo*",
     "clin_staging_mondo*",
