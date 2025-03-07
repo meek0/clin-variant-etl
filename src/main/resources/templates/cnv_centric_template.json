@@ -62,6 +62,10 @@
           "type": "keyword",
           "index": false
         },
+        "interpretation": {
+          "type": "keyword",
+          "index": false
+        },
         "batch_id": {
           "type": "keyword"
         },

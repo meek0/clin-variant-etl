@@ -1028,6 +1028,10 @@
           "type": "keyword",
           "index": false
         },
+        "interpretation": {
+          "type": "keyword",
+          "index": false
+        },
         "exomiser_max": {
           "properties": {
             "variant_score": {
