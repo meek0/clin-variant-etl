@@ -24,6 +24,7 @@ object NonEmptyTables extends TestingApp {
       shouldNotBeEmpty(fhir_task, "fhir_task"),
       shouldNotBeEmpty(fhir_family, "fhir_family"),
       shouldNotBeEmpty(fhir_document_reference, "fhir_document_reference"),
+      shouldNotBeEmpty(clinical, "clinical"),
       shouldNotBeEmpty(normalized_snv, "normalized_snv"),
       shouldNotBeEmpty(normalized_cnv, "normalized_cnv"),
       shouldNotBeEmpty(normalized_variants, "normalized_variants"),

@@ -27,9 +27,16 @@ case class EnrichedClinical(`service_request_id`: String = "SRS0001",
                             `father_aliquot_id`: Option[String] = Some("2"),
                             `specimen_id`: String = "SP_0001",
                             `sample_id`: String = "SA_0001",
+                            `clinical_signs`: Option[Set[ClinicalSign]] = Some(Set(ClinicalSign())),
                             `covgene_urls`: Option[Set[String]] = None,
                             `exomiser_urls`: Option[Set[String]] = None,
                             `cnv_vcf_urls`: Option[Set[String]] = None,
                             `snv_vcf_urls`: Option[Set[String]] = None
                            )
+
+case class ClinicalSign(`id`: String = "HP:0001347",
+                        `name`: String = "Hyperreflexia",
+                        `affected_status_code`: String = "affected",
+                        `affected_status`: Boolean = true,
+                       )
 

@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.fhir
 
 import bio.ferlab.clin.model.normalized.fhir._
-import bio.ferlab.clin.model.enriched.{EnrichedClinical => EnrichedClinicalOutput}
+import bio.ferlab.clin.model.enriched.{ClinicalSign, EnrichedClinical => EnrichedClinicalOutput}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.testutils.{ClassGenerator, SparkSpec, TestETLContext}
@@ -12,6 +12,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
   import spark.implicits._
 
   val normalized_clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
+  val normalized_code_system: DatasetConf = conf.getDataset("normalized_code_system")
   val normalized_document_reference: DatasetConf = conf.getDataset("normalized_document_reference")
   val normalized_family: DatasetConf = conf.getDataset("normalized_family")
   val normalized_observation: DatasetConf = conf.getDataset("normalized_observation")
@@ -125,72 +126,102 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
   val clinicalImpressionsDf: DataFrame = Seq(
     // 1. Trio
-    NormalizedClinicalImpression(id = "CI0001", `patient_id` = "PA0001", observations = List("OB0001", "OB000X")),
+    NormalizedClinicalImpression(id = "CI0001", `patient_id` = "PA0001", observations = List("OB0001", "OB000X", "OB0001-A")),
     NormalizedClinicalImpression(id = "CI0002", `patient_id` = "PA0002", observations = List("OB0002")),
-    NormalizedClinicalImpression(id = "CI0003", `patient_id` = "PA0003", observations = List("OB0003")),
+    NormalizedClinicalImpression(id = "CI0003", `patient_id` = "PA0003", observations = List("OB0003", "OB0003-A")),
 
     // 2. Trio+
-    NormalizedClinicalImpression(id = "CI0004", `patient_id` = "PA0004", observations = List("OB0004")),
-    NormalizedClinicalImpression(id = "CI0005", `patient_id` = "PA0005", observations = List("OB0005")),
+    NormalizedClinicalImpression(id = "CI0004", `patient_id` = "PA0004", observations = List("OB0004", "OB0004-A", "OB0004-B")),
+    NormalizedClinicalImpression(id = "CI0005", `patient_id` = "PA0005", observations = List("OB0005", "OB0005-A", "OB0005-B")),
     NormalizedClinicalImpression(id = "CI0006", `patient_id` = "PA0006", observations = List("OB0006")),
     NormalizedClinicalImpression(id = "CI0007", `patient_id` = "PA0007", observations = List("OB0007")),
 
     // 3. Incomplete trio
-    NormalizedClinicalImpression(id = "CI0011", `patient_id` = "PA0011", observations = List("OB0011")),
-    NormalizedClinicalImpression(id = "CI0022", `patient_id` = "PA0022", observations = List("OB0022")),
-    NormalizedClinicalImpression(id = "CI0033", `patient_id` = "PA0033", observations = List("OB0033")),
+    NormalizedClinicalImpression(id = "CI0011", `patient_id` = "PA0011", observations = List("OB0011", "OB0011-A", "OB0011-B")),
+    NormalizedClinicalImpression(id = "CI0022", `patient_id` = "PA0022", observations = List("OB0022", "OB0022-A", "OB0022-B", "OB0022-C")),
+    NormalizedClinicalImpression(id = "CI0033", `patient_id` = "PA0033", observations = List("OB0033", "OB0033-A", "OB0033-B", "OB0033-C")),
 
     // 4. Same family, two prescriptions
     // 4.1 First prescription: Duo
-    NormalizedClinicalImpression(id = "CI0111", `patient_id` = "PA0111", observations = List("OB0111", "OB0XXX")),
+    NormalizedClinicalImpression(id = "CI0111", `patient_id` = "PA0111", observations = List("OB0111", "OB0XXX", "OB0111-A")),
     NormalizedClinicalImpression(id = "CI0222", `patient_id` = "PA0222", observations = List("OB0222", "OB0YYY", "OB0ZZZ")),
     // 4.2 Second prescription: Trio
-    NormalizedClinicalImpression(id = "CI0333", `patient_id` = "PA0333", observations = List("OB0333")),
+    NormalizedClinicalImpression(id = "CI0333", `patient_id` = "PA0333", observations = List("OB0333", "OB0333-A")),
     NormalizedClinicalImpression(id = "CI0444", `patient_id` = "PA0111", observations = List("OB0444")),
-    NormalizedClinicalImpression(id = "CI0555", `patient_id` = "PA0222", observations = List("OB0555")),
+    NormalizedClinicalImpression(id = "CI0555", `patient_id` = "PA0222", observations = List("OB0555", "OB0555-A")),
 
     // 5. Solo
     // Clinical impression for tumor only analysis
-    NormalizedClinicalImpression(id = "CI1111", `patient_id` = "PA1111", observations = List("OB1111")),
+    NormalizedClinicalImpression(id = "CI1111", `patient_id` = "PA1111", observations = List("OB1111", "OB1111-A", "OB1111-B", "OB1111-C")),
     // Clinical impression for germline analysis
-    NormalizedClinicalImpression(id = "CI2222", `patient_id` = "PA1111", observations = List("OB2222")),
+    NormalizedClinicalImpression(id = "CI2222", `patient_id` = "PA1111", observations = List("OB2222", "OB2222-A", "OB2222-B", "OB2222-C")),
   ).toDF()
 
   val observationsDf: DataFrame = Seq(
-    // 1. Trio
-    NormalizedObservation(id = "OB0001", patient_id = "PA0001", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB000X", patient_id = "PA0001", `observation_code` = "OTHER", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0002", patient_id = "PA0002", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
-    NormalizedObservation(id = "OB0003", patient_id = "PA0003", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    // All affected patients have at least one clinical signs
+    // 1. Trio, All affected patients have the same clinical signs
+    NormalizedObservation(id = "OB0001"  , patient_id = "PA0001", `observation_code` = "DSTA" , `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB000X"  , patient_id = "PA0001", `observation_code` = "OTHER", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0001-A", patient_id = "PA0001", `observation_code` = "PHEN" , `interpretation_code` = "affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0002"  , patient_id = "PA0002", `observation_code` = "DSTA" , `interpretation_code` = "not_affected"),
+    NormalizedObservation(id = "OB0003"  , patient_id = "PA0003", `observation_code` = "DSTA" , `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0003-A", patient_id = "PA0003", `observation_code` = "PHEN" , `interpretation_code` = "affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
 
-    // 2. Trio+
-    NormalizedObservation(id = "OB0004", patient_id = "PA0004", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0005", patient_id = "PA0005", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0006", patient_id = "PA0006", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
-    NormalizedObservation(id = "OB0007", patient_id = "PA0007", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
+    // 2. Trio+, Proband has one extra clinical sign, brother is unaffected
+    NormalizedObservation(id = "OB0004"  , patient_id = "PA0004", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0004-A", patient_id = "PA0004", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0004-B", patient_id = "PA0004", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB0005"  , patient_id = "PA0005", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0005-A", patient_id = "PA0005", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0005-B", patient_id = "PA0004", `observation_code` = "PHEN", `interpretation_code` = "not_affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB0006"  , patient_id = "PA0006", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
+    NormalizedObservation(id = "OB0007"  , patient_id = "PA0007", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
 
-    // 3. Incomplete trio
-    NormalizedObservation(id = "OB0011", patient_id = "PA0011", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0022", patient_id = "PA0022", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0033", patient_id = "PA0033", `observation_code` = "DSTA", `interpretation_code` = "affected"), // Received later
+    // 3. Incomplete trio, Everyone has at least one common clinical sign with some unknown
+    NormalizedObservation(id = "OB0011"  , patient_id = "PA0011", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0011-A", patient_id = "PA0011", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0011-B", patient_id = "PA0011", `observation_code` = "PHEN", `interpretation_code` = "not_affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB0022"  , patient_id = "PA0022", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0022-A", patient_id = "PA0022", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0022-B", patient_id = "PA0022", `observation_code` = "PHEN", `interpretation_code` = "not_affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB0022-C", patient_id = "PA0022", `observation_code` = "PHEN", `interpretation_code` = "unknown"     , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000003"))))),
+    NormalizedObservation(id = "OB0033"  , patient_id = "PA0033", `observation_code` = "DSTA", `interpretation_code` = "affected"), // Received later
+    NormalizedObservation(id = "OB0033-A", patient_id = "PA0033", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0033-B", patient_id = "PA0033", `observation_code` = "PHEN", `interpretation_code` = "unknown"     , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB0033-C", patient_id = "PA0033", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000003"))))),
 
-    // 4. Same family, two prescriptions
+    // 4. Same family, two prescriptions, Affected patients have the same clinical signs
     // 4.1 First prescription: Duo
-    NormalizedObservation(id = "OB0111", patient_id = "PA0111", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0222", patient_id = "PA0222", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
-    NormalizedObservation(id = "OB0XXX", patient_id = "PA0111", `observation_code` = "OTHER", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0YYY", patient_id = "PA0222", `observation_code` = "OTHER", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0ZZZ", patient_id = "PA0222", `observation_code` = "OTHER", `interpretation_code` = "affected"),
-    // 4.2 Second prescription: Trio
-    NormalizedObservation(id = "OB0333", patient_id = "PA0333", `observation_code` = "DSTA", `interpretation_code` = "affected"),
-    NormalizedObservation(id = "OB0444", patient_id = "PA0111", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
-    NormalizedObservation(id = "OB0555", patient_id = "PA0222", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0111"  , patient_id = "PA0111", `observation_code` = "DSTA" , `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0111-A", patient_id = "PA0111", `observation_code` = "PHEN" , `interpretation_code` = "affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB0222"  , patient_id = "PA0222", `observation_code` = "DSTA" , `interpretation_code` = "not_affected"),
+    NormalizedObservation(id = "OB0XXX"  , patient_id = "PA0111", `observation_code` = "OTHER", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0YYY"  , patient_id = "PA0222", `observation_code` = "OTHER", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0ZZZ"  , patient_id = "PA0222", `observation_code` = "OTHER", `interpretation_code` = "affected"),
+    // 4.2 Second prescription: Trio, Testing for a different clinical sign
+    NormalizedObservation(id = "OB0333"  , patient_id = "PA0333", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0333-A", patient_id = "PA0333", `observation_code` = "PHEN", `interpretation_code` = "affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB0444"  , patient_id = "PA0111", `observation_code` = "DSTA", `interpretation_code` = "not_affected"),
+    NormalizedObservation(id = "OB0555"  , patient_id = "PA0222", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB0555-A", patient_id = "PA0222", `observation_code` = "PHEN", `interpretation_code` = "affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
 
-    // 5. Solo
+    // 5. Solo, Combination of affected, not affected and unknown clinical signs
     // Observation for tumor only analysis
-    NormalizedObservation(id = "OB1111", patient_id = "PA1111", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB1111"  , patient_id = "PA1111", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB1111-A", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB1111-B", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "not_affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB1111-C", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "unknown"     , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000003"))))),
     // Observation for germline analysis
-    NormalizedObservation(id = "OB2222", patient_id = "PA1111", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB2222"  , patient_id = "PA1111", `observation_code` = "DSTA", `interpretation_code` = "affected"),
+    NormalizedObservation(id = "OB2222-A", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
+    NormalizedObservation(id = "OB2222-B", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "not_affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
+    NormalizedObservation(id = "OB2222-C", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "unknown"     , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000003"))))),
+  ).toDF()
+
+  val codeSystemDf: DataFrame = Seq(
+    NormalizedCodeSystem(`id` = "hp", `concept_code` = "HP:0000001", `concept_description` = "Term 1"),
+    NormalizedCodeSystem(`id` = "hp", `concept_code` = "HP:0000002", `concept_description` = "Term 2"),
+    NormalizedCodeSystem(`id` = "hp", `concept_code` = "HP:0000003", `concept_description` = "Term 3"),
   ).toDF()
 
   val familyDf: DataFrame = Seq(
@@ -392,10 +423,11 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     normalized_service_request.id -> serviceRequestDf,
     normalized_clinical_impression.id -> clinicalImpressionsDf,
     normalized_observation.id -> observationsDf,
+    normalized_code_system.id -> codeSystemDf,
     normalized_family.id -> familyDf,
     normalized_task.id -> taskDf,
     normalized_specimen.id -> specimenDf,
-    normalized_document_reference.id -> documentDf
+    normalized_document_reference.id -> documentDf,
   )
 
   it should "transform normalized clinical data into a single clinical reference table" in {
@@ -412,37 +444,124 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
       .as[EnrichedClinicalOutput]
       .collect() should contain theSameElementsAs Seq(
       // 1. Trio
-      EnrichedClinicalOutput(patient_id = "PA0001", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0001", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "1", specimen_id = "SP_0001", sample_id = "SA_0001", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = Some("FM00001"), mother_id = Some("PA0003"), father_id = Some("PA0002"), mother_aliquot_id = Some("3"), father_aliquot_id = Some("2"), covgene_urls = Some(Set("s3a://1.csv")), exomiser_urls = Some(Set("s3a://1.tsv")), cnv_vcf_urls = Some(Set("s3a://1-1.vcf.gz", "s3a://1-2.vcf.gz")), snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0002", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0002", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "2", specimen_id = "SP_0002", sample_id = "SA_0002", is_proband = false, affected_status = false, affected_status_code = "not_affected", family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, covgene_urls = Some(Set("s3a://2.csv")), exomiser_urls = Some(Set("s3a://2.tsv")), cnv_vcf_urls = Some(Set("s3a://2-1.vcf.gz", "s3a://2-2.vcf.gz")), snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0003", gender = "Female", analysis_service_request_id = "SRA0001", service_request_id = "SRS0003", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "3", specimen_id = "SP_0003", sample_id = "SA_0003", is_proband = false, affected_status = true, affected_status_code = "affected", family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, covgene_urls = Some(Set("s3a://3.csv")), exomiser_urls = Some(Set("s3a://3.tsv")), cnv_vcf_urls = Some(Set("s3a://3-1.vcf.gz", "s3a://3-2.vcf.gz")), snv_vcf_urls = None),
+      // Proband
+      EnrichedClinicalOutput(patient_id = "PA0001", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0001", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "1", specimen_id = "SP_0001", sample_id = "SA_0001", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00001"), mother_id = Some("PA0003"), father_id = Some("PA0002"), mother_aliquot_id = Some("3"), father_aliquot_id = Some("2"),
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = Some(Set("s3a://1.csv")), exomiser_urls = Some(Set("s3a://1.tsv")), cnv_vcf_urls = Some(Set("s3a://1-1.vcf.gz", "s3a://1-2.vcf.gz")), snv_vcf_urls = None),
+      // Father
+      EnrichedClinicalOutput(patient_id = "PA0002", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0002", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "2", specimen_id = "SP_0002", sample_id = "SA_0002", is_proband = false, affected_status = false, affected_status_code = "not_affected",
+        family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = None,
+        covgene_urls = Some(Set("s3a://2.csv")), exomiser_urls = Some(Set("s3a://2.tsv")), cnv_vcf_urls = Some(Set("s3a://2-1.vcf.gz", "s3a://2-2.vcf.gz")), snv_vcf_urls = None),
+      // Mother
+      EnrichedClinicalOutput(patient_id = "PA0003", gender = "Female", analysis_service_request_id = "SRA0001", service_request_id = "SRS0003", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "3", specimen_id = "SP_0003", sample_id = "SA_0003", is_proband = false, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = Some(Set("s3a://3.csv")), exomiser_urls = Some(Set("s3a://3.tsv")), cnv_vcf_urls = Some(Set("s3a://3-1.vcf.gz", "s3a://3-2.vcf.gz")), snv_vcf_urls = None),
 
       // 2. Trio+
-      EnrichedClinicalOutput(patient_id = "PA0004", gender = "Male", analysis_service_request_id = "SRA0004", service_request_id = "SRS0004", bioinfo_analysis_code = "TEBA", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "4", specimen_id = "SP_0004", sample_id = "SA_0004", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = Some("FM00004"), mother_id = Some("PA0007"), father_id = Some("PA0006"), mother_aliquot_id = Some("7"), father_aliquot_id = Some("6"), exomiser_urls = Some(Set("s3a://4.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0005", gender = "Male", analysis_service_request_id = "SRA0004", service_request_id = "SRS0005", bioinfo_analysis_code = "TEBA", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "5", specimen_id = "SP_0005", sample_id = "SA_0005", is_proband = false, affected_status = true, affected_status_code = "affected", family_id = Some("FM00004"), mother_id = Some("PA0007"), father_id = Some("PA0006"), mother_aliquot_id = Some("7"), father_aliquot_id = Some("6"), exomiser_urls = Some(Set("s3a://5.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0006", gender = "Male", analysis_service_request_id = "SRA0004", service_request_id = "SRS0006", bioinfo_analysis_code = "TEBA", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "6", specimen_id = "SP_0006", sample_id = "SA_0006", is_proband = false, affected_status = false, affected_status_code = "not_affected", family_id = Some("FM00004"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, exomiser_urls = Some(Set("s3a://6.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0007", gender = "Female", analysis_service_request_id = "SRA0004", service_request_id = "SRS0007", bioinfo_analysis_code = "TEBA", practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "7", specimen_id = "SP_0007", sample_id = "SA_0007", is_proband = false, affected_status = false, affected_status_code = "not_affected", family_id = Some("FM00004"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, exomiser_urls = Some(Set("s3a://7.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Proband
+      EnrichedClinicalOutput(patient_id = "PA0004", gender = "Male", analysis_service_request_id = "SRA0004", service_request_id = "SRS0004", bioinfo_analysis_code = "TEBA",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "4", specimen_id = "SP_0004", sample_id = "SA_0004", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00004"), mother_id = Some("PA0007"), father_id = Some("PA0006"), mother_aliquot_id = Some("7"), father_aliquot_id = Some("6"),
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
+        exomiser_urls = Some(Set("s3a://4.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Brother
+      EnrichedClinicalOutput(patient_id = "PA0005", gender = "Male", analysis_service_request_id = "SRA0004", service_request_id = "SRS0005", bioinfo_analysis_code = "TEBA",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "5", specimen_id = "SP_0005", sample_id = "SA_0005", is_proband = false, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00004"), mother_id = Some("PA0007"), father_id = Some("PA0006"), mother_aliquot_id = Some("7"), father_aliquot_id = Some("6"),
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false))),
+        exomiser_urls = Some(Set("s3a://5.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Father
+      EnrichedClinicalOutput(patient_id = "PA0006", gender = "Male", analysis_service_request_id = "SRA0004", service_request_id = "SRS0006", bioinfo_analysis_code = "TEBA",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "6", specimen_id = "SP_0006", sample_id = "SA_0006", is_proband = false, affected_status = false, affected_status_code = "not_affected",
+        family_id = Some("FM00004"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = None,
+        exomiser_urls = Some(Set("s3a://6.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Mother
+      EnrichedClinicalOutput(patient_id = "PA0007", gender = "Female", analysis_service_request_id = "SRA0004", service_request_id = "SRS0007", bioinfo_analysis_code = "TEBA",
+        practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "7", specimen_id = "SP_0007", sample_id = "SA_0007", is_proband = false, affected_status = false, affected_status_code = "not_affected",
+        family_id = Some("FM00004"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = None,
+        exomiser_urls = Some(Set("s3a://7.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
 
       // 3. Incomplete trio
-      EnrichedClinicalOutput(patient_id = "PA0011", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0011", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "11", specimen_id = "SP_0011", sample_id = "SA_0011", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = Some("FM00011"), mother_id = Some("PA0022"), father_id = Some("PA0033"), mother_aliquot_id = Some("22"), father_aliquot_id = Some("33"), covgene_urls = Some(Set("s3a://11-1.csv", "s3a://11-2.csv", "s3a://11-3.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0022", gender = "Female", analysis_service_request_id = "SRA0011", service_request_id = "SRS0022", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "22", specimen_id = "SP_0022", sample_id = "SA_0022", is_proband = false, affected_status = true, affected_status_code = "affected", family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, covgene_urls = Some(Set("s3a://22-1.csv", "s3a://22-2.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0033", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0033", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "33", specimen_id = "SP_0033", sample_id = "SA_0033", is_proband = false, affected_status = true, affected_status_code = "affected", family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, covgene_urls = Some(Set("s3a://33.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Proband
+      EnrichedClinicalOutput(patient_id = "PA0011", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0011", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "11", specimen_id = "SP_0011", sample_id = "SA_0011", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00011"), mother_id = Some("PA0022"), father_id = Some("PA0033"), mother_aliquot_id = Some("22"), father_aliquot_id = Some("33"),
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false))),
+        covgene_urls = Some(Set("s3a://11-1.csv", "s3a://11-2.csv", "s3a://11-3.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Mother
+      EnrichedClinicalOutput(patient_id = "PA0022", gender = "Female", analysis_service_request_id = "SRA0011", service_request_id = "SRS0022", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "22", specimen_id = "SP_0022", sample_id = "SA_0022", is_proband = false, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
+        covgene_urls = Some(Set("s3a://22-1.csv", "s3a://22-2.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Father we receive later
+      EnrichedClinicalOutput(patient_id = "PA0033", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0033", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "33", specimen_id = "SP_0033", sample_id = "SA_0033", is_proband = false, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "unknown", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = Some(Set("s3a://33.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
 
       // 4. Same family, two prescriptions
       // 4.1 First prescription: Duo
-      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0111", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = Some("FM00111"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("222"), father_aliquot_id = None, cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0222", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "222", specimen_id = "SP_0222", sample_id = "SA_0222", is_proband = false, affected_status = false, affected_status_code = "not_affected", family_id = Some("FM00111"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Proband
+      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0111", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00111"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("222"), father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Mother
+      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0222", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "222", specimen_id = "SP_0222", sample_id = "SA_0222", is_proband = false, affected_status = false, affected_status_code = "not_affected",
+        family_id = Some("FM00111"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = None,
+        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
       // 4.2 Second prescription: Trio
-      EnrichedClinicalOutput(patient_id = "PA0333", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0333", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "333", specimen_id = "SP_0333", sample_id = "SA_0333", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None, covgene_urls = Some(Set("s3a://333.csv")), exomiser_urls = Some(Set("s3a://333.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0444", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = false, affected_status = false, affected_status_code = "not_affected", family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None, cnv_vcf_urls = None, snv_vcf_urls = None),
-      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0555", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "555", specimen_id = "SP_0555", sample_id = "SA_0555", is_proband = false, affected_status = true, affected_status_code = "affected", family_id = Some("FM00222"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, covgene_urls = Some(Set("s3a://555.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Proband
+      EnrichedClinicalOutput(patient_id = "PA0333", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0333", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "333", specimen_id = "SP_0333", sample_id = "SA_0333", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = Some(Set("s3a://333.csv")), exomiser_urls = Some(Set("s3a://333.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Sister
+      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0444", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = false, affected_status = false, affected_status_code = "not_affected",
+        family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
+        clinical_signs = None,
+        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
+      // Mother
+      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0555", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "555", specimen_id = "SP_0555", sample_id = "SA_0555", is_proband = false, affected_status = true, affected_status_code = "affected",
+        family_id = Some("FM00222"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = Some(Set("s3a://555.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
 
       // 5. Solo
       // Tumor only analysis
-      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA1111", service_request_id = "SRS1111", bioinfo_analysis_code = "TEBA", practitioner_role_id = "PPR00103", batch_id = "BAT3", aliquot_id = "1111", specimen_id = "SP_1111", sample_id = "SA_1111", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111.vcf.gz"))),
+      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA1111", service_request_id = "SRS1111", bioinfo_analysis_code = "TEBA",
+        practitioner_role_id = "PPR00103", batch_id = "BAT3", aliquot_id = "1111", specimen_id = "SP_1111", sample_id = "SA_1111", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
+        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111.vcf.gz"))),
       // Germline analysis
-      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA2222", service_request_id = "SRS2222", bioinfo_analysis_code = "GEAN", practitioner_role_id = "PPR00103", batch_id = "BAT4", aliquot_id = "2222", specimen_id = "SP_2222", sample_id = "SA_2222", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://2222.vcf.gz"))),
+      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA2222", service_request_id = "SRS2222", bioinfo_analysis_code = "GEAN",
+        practitioner_role_id = "PPR00103", batch_id = "BAT4", aliquot_id = "2222", specimen_id = "SP_2222", sample_id = "SA_2222", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
+        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://2222.vcf.gz"))),
       // Tumor normal analysis
-      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA1111", service_request_id = "SRS1111", bioinfo_analysis_code = "TNEBA", practitioner_role_id = "PPR00103", batch_id = "BAT5", aliquot_id = "1111", specimen_id = "SP_1111", sample_id = "SA_1111", is_proband = true, affected_status = true, affected_status_code = "affected", family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111-2222.vcf.gz"))),
+      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA1111", service_request_id = "SRS1111", bioinfo_analysis_code = "TNEBA",
+        practitioner_role_id = "PPR00103", batch_id = "BAT5", aliquot_id = "1111", specimen_id = "SP_1111", sample_id = "SA_1111", is_proband = true, affected_status = true, affected_status_code = "affected",
+        family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
+        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111-2222.vcf.gz"))),
     )
   }
 

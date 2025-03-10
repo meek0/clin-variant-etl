@@ -56,6 +56,7 @@ trait TestingApp extends App {
   lazy val fhir_task: DataFrame = spark.table("fhir_task")
   lazy val fhir_family: DataFrame = spark.table("fhir_family")
   lazy val fhir_document_reference: DataFrame = spark.table("fhir_document_reference")
+  lazy val clinical: DataFrame = spark.table("clinical")
   lazy val normalized_cnv: DataFrame = spark.table("normalized_cnv")
   lazy val normalized_consequences: DataFrame = spark.table("normalized_consequences")
   lazy val normalized_panels: DataFrame = spark.table("normalized_panels")

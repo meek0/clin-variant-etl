@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
   override val mainDestination: DatasetConf = conf.getDataset("enriched_clinical")
   val normalized_clinical_impression: DatasetConf = conf.getDataset("normalized_clinical_impression")
+  val normalized_code_system: DatasetConf = conf.getDataset("normalized_code_system")
   val normalized_document_reference: DatasetConf = conf.getDataset("normalized_document_reference")
   val normalized_family: DatasetConf = conf.getDataset("normalized_family")
   val normalized_observation: DatasetConf = conf.getDataset("normalized_observation")
@@ -27,6 +28,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
                        currentRunValue: LocalDateTime): Map[String, DataFrame] = {
     Map(
       normalized_clinical_impression.id -> normalized_clinical_impression.read,
+      normalized_code_system.id -> normalized_code_system.read,
       normalized_document_reference.id -> normalized_document_reference.read,
       normalized_family.id -> normalized_family.read,
       normalized_observation.id -> normalized_observation.read,
@@ -92,16 +94,32 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         $"analysis_service_request_id"
       )
 
-    val analysisServiceRequestsWithAffectedStatus = data(normalized_service_request.id)
+    val analysisServiceRequests = data(normalized_service_request.id)
       .where($"service_request_type" === "analysis")
       .select(
         $"id" as "analysis_service_request_id",
         $"patient_id",
         $"clinical_impressions"
       )
+
+    val clinicalImpressions: DataFrame = data(normalized_clinical_impression.id)
+      .select(
+        $"id" as "clinical_impression_id",
+        $"patient_id",
+        explode($"observations") as "observation_id"
+      )
+
+    val analysisServiceRequestsWithAffectedStatus = analysisServiceRequests
       .withAffectedStatus(
-        clinicalImpressions = data(normalized_clinical_impression.id),
+        clinicalImpressions = clinicalImpressions,
         observations = data(normalized_observation.id)
+      )
+
+    val analysisServiceRequestsWithClinicalSigns = analysisServiceRequests
+      .withClinicalSigns(
+        clinicalImpressions = clinicalImpressions,
+        observations = data(normalized_observation.id),
+        codeSystems = data(normalized_code_system.id)
       )
 
     val specimens = data(normalized_specimen.id)
@@ -121,6 +139,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .withDocuments(data(normalized_document_reference.id)) // Needs tasks to find documents
       .join(sequencingServiceRequests, "service_request_id")
       .join(analysisServiceRequestsWithAffectedStatus, Seq("analysis_service_request_id", "patient_id"))
+      .join(analysisServiceRequestsWithClinicalSigns, Seq("analysis_service_request_id", "patient_id"), "left") // Left to keep patients without clinical signs
       .join(patients, "patient_id")
       .join(familyRelationships, Seq("analysis_service_request_id", "patient_id"), "left")
       .withParentAliquotIds // Needs to be done after tasks and familyRelationships join
@@ -135,6 +154,48 @@ object EnrichedClinical {
 
     import spark.implicits._
 
+    def withClinicalSigns(clinicalImpressions: DataFrame, observations: DataFrame, codeSystems: DataFrame): DataFrame = {
+      val hpoTerms = codeSystems
+        .where($"id" === "hp")
+        .select(
+          $"concept_code" as "id",
+          $"concept_description" as "name"
+        )
+
+      val clinicalSigns = observations
+        .where($"observation_code" === "PHEN") // PHEN means PHENotype
+        .where($"status" === "final")
+        .select(
+          $"id" as "observation_id",
+          $"interpretation_code" as "affected_status_code",
+          $"concept_values"(0)("concept_code") as "id", // Only one concept value is expected
+        ).withColumn("affected_status",
+          when($"affected_status_code" === "affected", true).otherwise(false))
+        .join(hpoTerms, Seq("id"), "left") // Left to keep hpo ids without a match in CodeSystem
+
+
+      val clinicalSignsByClinicalImpression = clinicalImpressions
+        .join(clinicalSigns, "observation_id")
+        .groupBy($"clinical_impression_id", $"patient_id")
+        .agg(
+          collect_set(struct(
+            $"id",
+            $"name",
+            $"affected_status_code",
+            $"affected_status"
+          )) as "clinical_signs"
+        )
+
+      df
+        .withColumn("clinical_impression_id", explode($"clinical_impressions"))
+        .join(clinicalSignsByClinicalImpression, "clinical_impression_id")
+        .select(
+          clinicalSignsByClinicalImpression("patient_id"),
+          $"analysis_service_request_id",
+          $"clinical_signs"
+        )
+    }
+
     def withAffectedStatus(clinicalImpressions: DataFrame, observations: DataFrame): DataFrame = {
       val affectedStatus = observations
         .where($"observation_code" === "DSTA") // DSTA means Disease STAtus
@@ -146,11 +207,6 @@ object EnrichedClinical {
           when($"affected_status_code" === "affected", true).otherwise(false))
 
       val affectedStatusByClinicalImpression = clinicalImpressions
-        .select(
-          $"id" as "clinical_impression_id",
-          $"patient_id",
-          explode($"observations") as "observation_id"
-        )
         .join(affectedStatus, "observation_id")
         .groupBy($"clinical_impression_id", $"patient_id")
         .agg(
