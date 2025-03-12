@@ -110,9 +110,9 @@ case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFr
                        gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
                        gnomad_genomes_3_0: GnomadFreqOutput = GnomadFreqOutput(0, 53780, 0.0, 0),
                        gnomad_genomes_3_1_1: GnomadFreqOutput = GnomadFreqOutput(10, 20, 0.5, 10),
-                       gnomad_genomes_4: GnomadFreqOutput = GnomadFreqOutput(1, 10, 1.0, 20),
-                       gnomad_exomes_4: GnomadFreqOutput = GnomadFreqOutput(2, 20, 2.0, 10),
-                       gnomad_joint_4: GnomadFreqOutput = GnomadFreqOutput(3, 40, 4.0, 15))
+                       gnomad_genomes_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(1, 10, 1.0, 20)),
+                       gnomad_exomes_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(2, 20, 2.0, 10)),
+                       gnomad_joint_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(3, 40, 4.0, 15)))
 
 
 case class ThousandGenomesFreq(ac: Long = 10,
