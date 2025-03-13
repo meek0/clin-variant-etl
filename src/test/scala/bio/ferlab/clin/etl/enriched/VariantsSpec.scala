@@ -33,7 +33,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
   val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
   val gnomad_genomes_v3: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
-  val gnomad_genomes_v4: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v4")
+  val gnomad_joint_v4: DatasetConf = conf.getDataset("normalized_gnomad_joint_v4")
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -63,7 +63,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes211Output()).toDF
   val gnomad_genomes_3_0Df: DataFrame = Seq(GnomadGenomes30Output()).toDF
   val gnomad_genomes_3_1_1Df: DataFrame = Seq(GnomadGenomes311Output()).toDF
-  val gnomad_genomes_4Df: DataFrame = Seq(GnomadGenomes4Output()).toDF
+  val gnomad_joint_4Df: DataFrame = Seq(GnomadJoint4Output()).toDF
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
   val genesDf: DataFrame = Seq(EnrichedGenes()).toDF()
@@ -82,7 +82,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     gnomad_exomes_v2_1_1.id -> gnomad_exomes_2_1_1Df,
     gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
     gnomad_genomes_v3.id -> gnomad_genomes_3_1_1Df,
-    gnomad_genomes_v4.id -> gnomad_genomes_4Df,
+    gnomad_joint_v4.id -> gnomad_joint_4Df,
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
     genes.id -> genesDf,
@@ -1147,17 +1147,19 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   "withClinVariantExternalReference" should "add all external references to the variant" in {
     val variants = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T",  `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX()), `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = null)),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin_max` = None, `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = null)),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = Some("rs200676709"), `pubmed` = Some(List("29135816")), `clinvar` = Some(CLINVAR()), `cmc` = Some(CMC()), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T",  `rsnumber` = None, `pubmed` = None, `clinvar` = Some(CLINVAR()), `cmc` = Some(CMC()), `franklin_max` = Some(FRANKLIN_MAX()), `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = None, gnomad_exomes_4 = None, gnomad_joint_4 = None)),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = None, `pubmed` = None, `clinvar` = None, `cmc` = None, `franklin_max` = None, `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = None, gnomad_exomes_4 = None, gnomad_joint_4 = None)),
+      EnrichedVariant(`chromosome` = "4", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `rsnumber` = None, `pubmed` = None, `clinvar` = None, `cmc` = None, `franklin_max` = None, `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = None, gnomad_joint_4 = None)),
     ).toDF().drop("variant_external_reference")
 
     val result = variants.withClinVariantExternalReference
 
     val expected = Seq(
-      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin", "gnomAD"), `rsnumber` = "rs200676709", `pubmed` = Some(List("29135816")), `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX())),
-      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("Clinvar", "Cosmic", "Franklin"), `rsnumber` = null, `pubmed` = None, `clinvar` = CLINVAR(), `cmc` = CMC(), `franklin_max` = Some(FRANKLIN_MAX()), `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = null)),
-      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set(), `rsnumber` = null, `pubmed` = None, `clinvar` = null, `cmc` = null, `franklin_max` = None, `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = null)),
+      EnrichedVariant(`chromosome` = "1", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("DBSNP", "PubMed", "Clinvar", "Cosmic", "Franklin", "gnomAD"), `rsnumber` = Some("rs200676709"), `pubmed` = Some(List("29135816")), `clinvar` = Some(CLINVAR()), `cmc` = Some(CMC()), `franklin_max` = Some(FRANKLIN_MAX())),
+      EnrichedVariant(`chromosome` = "2", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("Clinvar", "Cosmic", "Franklin"), `rsnumber` = None, `pubmed` = None, `clinvar` = Some(CLINVAR()), `cmc` = Some(CMC()), `franklin_max` = Some(FRANKLIN_MAX()), `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = None, gnomad_exomes_4 = None, gnomad_joint_4 = None)),
+      EnrichedVariant(`chromosome` = "3", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set(), `rsnumber` = None, `pubmed` = None, `clinvar` = None, `cmc` = None, `franklin_max` = None, `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = None, gnomad_exomes_4 = None, gnomad_joint_4 = None)),
+      EnrichedVariant(`chromosome` = "4", `start` = 1, `end` = 2, `reference` = "A", `alternate` = "T", `variant_external_reference` = Set("gnomAD"), `rsnumber` = None, `pubmed` = None, `clinvar` = None, `cmc` = None, `franklin_max` = None, `external_frequencies` = FREQUENCIES(gnomad_genomes_4 = None, gnomad_joint_4 = None)),
     )
 
     result

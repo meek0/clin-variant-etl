@@ -37,8 +37,8 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `external_frequencies`: FREQUENCIES = FREQUENCIES(),
                            `freq_rqdm_tumor_only`: SOMATIC_FREQUENCY = SOMATIC_FREQUENCY(),
                            `freq_rqdm_tumor_normal`: SOMATIC_FREQUENCY = SOMATIC_FREQUENCY(),
-                           `clinvar`: CLINVAR = CLINVAR(),
-                           `rsnumber`: String = "rs200676709",
+                           `clinvar`: Option[CLINVAR] = Some(CLINVAR()),
+                           `rsnumber`: Option[String] = Some("rs200676709"),
                            `dna_change`: String = "T>C",
                            `genes`: List[GENES] = List(GENES()),
                            `omim`: List[String] = List("618285"),
@@ -46,7 +46,7 @@ case class EnrichedVariant(`chromosome`: String = "1",
                            `gene_external_reference`: Set[String] = Set("HPO", "Orphanet", "OMIM", "DDD", "Cosmic", "gnomAD", "SpliceAI"),
                            `panels`: List[String] = List("DYSTM", "MITN"),
                            `exomiser_max`: Option[EXOMISER_MAX] = Some(EXOMISER_MAX()),
-                           `cmc`: CMC = CMC(),
+                           `cmc`: Option[CMC] = Some(CMC()),
                            `franklin_max`: Option[FRANKLIN_MAX] = Some(FRANKLIN_MAX()))
 
 
@@ -110,7 +110,9 @@ case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFr
                        gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
                        gnomad_genomes_3_0: GnomadFreqOutput = GnomadFreqOutput(0, 53780, 0.0, 0),
                        gnomad_genomes_3_1_1: GnomadFreqOutput = GnomadFreqOutput(10, 20, 0.5, 10),
-                       gnomad_genomes_4: GnomadFreqOutput = GnomadFreqOutput(2, 20, 2.0, 10))
+                       gnomad_genomes_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(1, 10, 1.0, 20)),
+                       gnomad_exomes_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(2, 20, 2.0, 10)),
+                       gnomad_joint_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(3, 40, 4.0, 15)))
 
 
 case class ThousandGenomesFreq(ac: Long = 10,

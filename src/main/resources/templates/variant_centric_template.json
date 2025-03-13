@@ -623,6 +623,38 @@
                 }
               }
             },
+            "gnomad_exomes_4": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
+            "gnomad_joint_4": {
+              "properties": {
+                "ac": {
+                  "type": "long"
+                },
+                "af": {
+                  "type": "float"
+                },
+                "an": {
+                  "type": "long"
+                },
+                "hom": {
+                  "type": "long"
+                }
+              }
+            },
             "thousand_genomes": {
               "properties": {
                 "ac": {
