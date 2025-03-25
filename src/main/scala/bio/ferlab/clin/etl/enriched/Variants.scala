@@ -26,10 +26,6 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
-  val gnomad_genomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v2_1_1")
-  val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
-  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
-  val gnomad_genomes_v3: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
   val gnomad_joint_v4: DatasetConf = conf.getDataset("normalized_gnomad_joint_v4")
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
@@ -47,10 +43,6 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       thousand_genomes.id -> thousand_genomes.read,
       topmed_bravo.id -> topmed_bravo.read,
       gnomad_constraint.id -> gnomad_constraint.read,
-      gnomad_genomes_v2_1_1.id -> gnomad_genomes_v2_1_1.read,
-      gnomad_exomes_v2_1_1.id -> gnomad_exomes_v2_1_1.read,
-      gnomad_genomes_3_0.id -> gnomad_genomes_3_0.read,
-      gnomad_genomes_v3.id -> gnomad_genomes_v3.read,
       gnomad_joint_v4.id -> gnomad_joint_v4.read,
       dbsnp.id -> dbsnp.read,
       clinvar.id -> clinvar.read,
@@ -83,10 +75,6 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         $"homozygotes".cast("long") as "hom",
         $"heterozygotes".cast("long") as "het")
 
-    val gnomad_genomes_v2_1DF = data(gnomad_genomes_v2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
-    val gnomad_exomes_v2_1DF = data(gnomad_exomes_v2_1_1.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
-    val gnomad_genomes_3_0DF = data(gnomad_genomes_3_0.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"hom".cast("long"))
-    val gnomad_genomes_v3DF = data(gnomad_genomes_v3.id).selectLocus($"ac".cast("long"), $"af", $"an".cast("long"), $"nhomalt".cast("long") as "hom")
     val gnomad_genomes_v4DF = data(gnomad_joint_v4.id).selectLocus($"ac_genomes" as "ac", $"af_genomes" as "af", $"an_genomes" as "an", $"hom_genomes" as "hom")
     val gnomad_exomes_v4DF = data(gnomad_joint_v4.id).selectLocus($"ac_exomes" as "ac", $"af_exomes" as "af", $"an_exomes" as "an", $"hom_exomes" as "hom")
     val gnomad_joint_v4DF = data(gnomad_joint_v4.id).selectLocus($"ac_joint" as "ac", $"af_joint" as "af", $"an_joint" as "an", $"hom_joint" as "hom")
@@ -94,7 +82,7 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
     val joinWithDonors = variantsWithDonors(variants, occurrences)
     val joinWithCleanFreqs = cleanupSomaticTumorOnlyFreqs(joinWithDonors)
     val joinWithSomaticFreqs = joinWithSomaticFrequencies(joinWithCleanFreqs, occurrences)
-    val joinWithPop = joinWithPopulations(joinWithSomaticFreqs, genomesDf, topmed_bravoDf, gnomad_genomes_v2_1DF, gnomad_exomes_v2_1DF, gnomad_genomes_3_0DF, gnomad_genomes_v3DF, gnomad_genomes_v4DF, gnomad_exomes_v4DF, gnomad_joint_v4DF)
+    val joinWithPop = joinWithPopulations(joinWithSomaticFreqs, genomesDf, topmed_bravoDf, gnomad_genomes_v4DF, gnomad_exomes_v4DF, gnomad_joint_v4DF)
     val joinDbSNP = joinWithDbSNP(joinWithPop, data(dbsnp.id))
     val joinClinvar = joinWithClinvar(joinDbSNP, data(clinvar.id))
     val joinGenes = joinWithGenes(joinClinvar, data(genes.id))
@@ -273,10 +261,6 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
   def joinWithPopulations(variants: DataFrame,
                           genomesDf: DataFrame,
                           topmed_bravoDf: DataFrame,
-                          gnomad_genomes_2_1Df: DataFrame,
-                          gnomad_exomes_2_1Df: DataFrame,
-                          gnomad_genomes_3_0Df: DataFrame,
-                          gnomad_genomes_3_1_1Df: DataFrame,
                           gnomad_genomes_4Df: DataFrame,
                           gnomad_exomes_4Df: DataFrame,
                           gnomad_joint_4Df: DataFrame): DataFrame = {
@@ -284,10 +268,6 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
     broadcast(variants)
       .joinAndMerge(genomesDf, "thousand_genomes", "left")
       .joinAndMerge(topmed_bravoDf, "topmed_bravo", "left")
-      .joinAndMerge(gnomad_genomes_2_1Df, "gnomad_genomes_2_1_1", "left")
-      .joinAndMerge(gnomad_exomes_2_1Df, "gnomad_exomes_2_1_1", "left")
-      .joinAndMerge(gnomad_genomes_3_0Df, "gnomad_genomes_3_0", "left")
-      .joinAndMerge(gnomad_genomes_3_1_1Df, "gnomad_genomes_3_1_1", "left")
       .joinAndMerge(gnomad_genomes_4Df, "gnomad_genomes_4", "left")
       .joinAndMerge(gnomad_exomes_4Df, "gnomad_exomes_4", "left")
       .joinAndMerge(gnomad_joint_4Df, "gnomad_joint_4", "left")
@@ -295,10 +275,6 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         struct(
           col("thousand_genomes"),
           col("topmed_bravo"),
-          col("gnomad_genomes_2_1_1"),
-          col("gnomad_exomes_2_1_1"),
-          col("gnomad_genomes_3_0"),
-          col("gnomad_genomes_3_1_1"),
           col("gnomad_genomes_4"),
           col("gnomad_exomes_4"),
           col("gnomad_joint_4")) as "external_frequencies")
