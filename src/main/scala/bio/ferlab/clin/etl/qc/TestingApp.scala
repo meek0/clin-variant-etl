@@ -40,7 +40,7 @@ trait TestingApp extends App {
   lazy val variants_consequences = variant_centric.select(explode($"consequences"))
     .persist()
 
-    lazy val fhir_clinical_impression: DataFrame = spark.table("fhir_clinical_impression")
+  lazy val fhir_clinical_impression: DataFrame = spark.table("fhir_clinical_impression")
   lazy val fhir_code_system: DataFrame = spark.table("fhir_code_system")
   lazy val fhir_observation: DataFrame = spark.table("fhir_observation")
   lazy val fhir_organization: DataFrame = spark.table("fhir_organization")
