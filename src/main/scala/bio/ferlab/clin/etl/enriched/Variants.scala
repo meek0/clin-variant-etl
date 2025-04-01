@@ -43,7 +43,7 @@ case class Variants(rc: RuntimeETLContext, chromosome: Option[String]) extends S
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     chromosome match {
       case Some(chr) =>
-        val chromosome_condition = $"chromosome" === chr
+        val chromosome_condition = $"chromosome" === chr.replace("chr", "")
 
         Map(
           normalized_variants.id -> normalized_variants.read.where(chromosome_condition),
