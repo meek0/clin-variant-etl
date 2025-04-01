@@ -7,3 +7,9 @@ case class Chromosome(@arg(name = "chromosome", short = 'c', doc = "Chromosome")
 object Chromosome {
   implicit def configParser: ParserForClass[Chromosome] = ParserForClass[Chromosome]
 }
+
+case class OptionalChromosome(@arg(name = "chromosome", short = 'c', doc = "Chromosome") name: Option[String])
+
+object OptionalChromosome {
+  implicit def configParser: ParserForClass[OptionalChromosome] = ParserForClass[OptionalChromosome]
+}
