@@ -10,3 +10,4 @@ hive
 metastore_db
 
 clin-variant-etl*.jar
+.metals
