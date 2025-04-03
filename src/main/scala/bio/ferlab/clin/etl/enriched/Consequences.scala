@@ -63,7 +63,7 @@ case class Consequences(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .withColumn("aa_change",
         when(col("hgvsp").isNotNull && col("hgvsp").contains(":"),
         split(col("hgvsp"), ":").getItem(1))
-        .otherwise(lit(null)))
+        .otherwise(lit(null).cast("string")))
 
     joinWithDBNSFP(csq, dbnsfp)
       .join(ensembl_mapping, Seq("ensembl_transcript_id", "ensembl_gene_id"), "left")

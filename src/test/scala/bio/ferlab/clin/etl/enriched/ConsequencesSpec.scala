@@ -22,7 +22,7 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabase
   val enriched_genes: DatasetConf = conf.getDataset("enriched_genes")
 
   private val data = Map(
-    normalized_consequences.id -> Seq(NormalizedConsequences()).toDF(),
+    normalized_consequences.id -> Seq(NormalizedConsequences(),NormalizedConsequences(`hgvsp` = "ENSP00000334393.3:p.Ser270=")).toDF(),
     dbnsfp_original.id -> Seq(Dbnsfp_originalOutput()).toDF,
     normalized_ensembl_mapping.id -> Seq(EnsemblMappingOutput()).toDF,
     enriched_genes.id -> Seq(EnrichedGenes()).toDF,
@@ -47,11 +47,17 @@ class ConsequencesSpec extends SparkSpec with WithTestConfig with CreateDatabase
 
   "consequences job" should "transform data in expected format" in {
     val resultDf = etl.transformSingle(data)
-    val result = resultDf.as[EnrichedConsequences].collect().head
+    val result = resultDf.as[EnrichedConsequences].collect()
 
     //    ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "EnrichedConsequences", resultDf, "src/test/scala/")
 
-    result shouldBe EnrichedConsequences(
+    result(0) shouldBe EnrichedConsequences(
+      `predictions` = null,
+      `conservations` = null
+    )
+    result(1) shouldBe EnrichedConsequences(
+      `hgvsp` = "ENSP00000334393.3:p.Ser270=",
+      `aa_change` = "p.Ser270=",
       `predictions` = null,
       `conservations` = null
     )
