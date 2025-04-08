@@ -1,13 +1,13 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.mainutils.OptionalBatch
+import bio.ferlab.clin.etl.mainutils.{OptionalBatch, OptionalChromosome}
 import bio.ferlab.datalake.commons.config.RuntimeETLContext
 import mainargs.{ParserForMethods, main}
 
 object RunEnriched {
 
   @main
-  def variants(rc: RuntimeETLContext): Unit = Variants.run(rc)
+  def variants(rc: RuntimeETLContext, chromosome: OptionalChromosome): Unit = Variants.run(rc, chromosome)
 
   @main
   def consequences(rc: RuntimeETLContext): Unit = Consequences.run(rc)
@@ -24,8 +24,8 @@ object RunEnriched {
   @main
   def coverage_by_gene(rc: RuntimeETLContext): Unit = CoverageByGene.run(rc)
   @main
-  def all(rc: RuntimeETLContext, batch: OptionalBatch): Unit = {
-    variants(rc)
+  def all(rc: RuntimeETLContext, batch: OptionalBatch, chromosome: OptionalChromosome): Unit = {
+    variants(rc, chromosome)
     consequences(rc)
     cnv(rc, batch)
     snv(rc)

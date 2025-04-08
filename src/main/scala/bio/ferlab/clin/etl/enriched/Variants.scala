@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.Variants.{somaticTumorNormalFilter, somaticTumorOnlyFilter, DataFrameOps => ClinDataFrameOps}
+import bio.ferlab.clin.etl.mainutils.OptionalChromosome
 import bio.ferlab.clin.etl.utils.FrequencyUtils._
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
@@ -15,7 +16,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.{LocalDate, LocalDateTime}
 
-case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
+case class Variants(rc: RuntimeETLContext, chromosome: Option[String]) extends SimpleSingleETL(rc) {
 
   import spark.implicits._
 
@@ -36,21 +37,42 @@ case class Variants(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
-    Map(
-      normalized_variants.id -> normalized_variants.read,
-      snv.id -> snv.read,
-      snv_somatic.id -> snv_somatic.read,
-      thousand_genomes.id -> thousand_genomes.read,
-      topmed_bravo.id -> topmed_bravo.read,
-      gnomad_constraint.id -> gnomad_constraint.read,
-      gnomad_joint_v4.id -> gnomad_joint_v4.read,
-      dbsnp.id -> dbsnp.read,
-      clinvar.id -> clinvar.read,
-      genes.id -> genes.read,
-      normalized_panels.id -> normalized_panels.read,
-      cosmic.id -> cosmic.read,
-      franklin.id -> franklin.read
-    )
+    chromosome match {
+      case Some(chr) =>
+        val chromosome_condition = $"chromosome" === chr.replace("chr", "")
+
+        Map(
+          normalized_variants.id -> normalized_variants.read.where(chromosome_condition),
+          snv.id -> snv.read.where(chromosome_condition),
+          snv_somatic.id -> snv_somatic.read.where(chromosome_condition),
+          thousand_genomes.id -> thousand_genomes.read.where(chromosome_condition),
+          topmed_bravo.id -> topmed_bravo.read.where(chromosome_condition),
+          gnomad_constraint.id -> gnomad_constraint.read.where(chromosome_condition),
+          gnomad_joint_v4.id -> gnomad_joint_v4.read.where(chromosome_condition),
+          dbsnp.id -> dbsnp.read.where(chromosome_condition),
+          clinvar.id -> clinvar.read.where(chromosome_condition),
+          genes.id -> genes.read,
+          normalized_panels.id -> normalized_panels.read,
+          cosmic.id -> cosmic.read.where(chromosome_condition),
+          franklin.id -> franklin.read.where(chromosome_condition)
+        )
+      case None =>
+        Map(
+          normalized_variants.id -> normalized_variants.read,
+          snv.id -> snv.read,
+          snv_somatic.id -> snv_somatic.read,
+          thousand_genomes.id -> thousand_genomes.read,
+          topmed_bravo.id -> topmed_bravo.read,
+          gnomad_constraint.id -> gnomad_constraint.read,
+          gnomad_joint_v4.id -> gnomad_joint_v4.read,
+          dbsnp.id -> dbsnp.read,
+          clinvar.id -> clinvar.read,
+          genes.id -> genes.read,
+          normalized_panels.id -> normalized_panels.read,
+          cosmic.id -> cosmic.read,
+          franklin.id -> franklin.read
+        )
+    }
   }
 
   override def transformSingle(data: Map[String, DataFrame],
@@ -382,8 +404,8 @@ object Variants {
   }
 
   @main
-  def run(rc: RuntimeETLContext): Unit = {
-    Variants(rc).run()
+  def run(rc: RuntimeETLContext, chromosome: OptionalChromosome): Unit = {
+    Variants(rc, chromosome.name).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
