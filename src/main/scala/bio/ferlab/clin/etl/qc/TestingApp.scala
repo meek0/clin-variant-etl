@@ -40,10 +40,6 @@ trait TestingApp extends App {
   lazy val variants_consequences = variant_centric.select(explode($"consequences"))
     .persist()
 
-  lazy val gnomad_genomes_v2_1_1: DataFrame = spark.table("gnomad_genomes_v2_1_1")
-  lazy val gnomad_exomes_v2_1_1: DataFrame = spark.table("gnomad_exomes_v2_1_1")
-  lazy val gnomad_genomes_3_0: DataFrame = spark.table("gnomad_genomes_3_0")
-  lazy val gnomad_genomes_v3: DataFrame = spark.table("gnomad_genomes_v3")
   lazy val fhir_clinical_impression: DataFrame = spark.table("fhir_clinical_impression")
   lazy val fhir_code_system: DataFrame = spark.table("fhir_code_system")
   lazy val fhir_observation: DataFrame = spark.table("fhir_observation")
@@ -99,7 +95,7 @@ trait TestingApp extends App {
     spark.sql(s"use $database")
     f(spark)
   }
-  
+
   private def loadWithChromosomeRepartition(name: String, sort: Seq[String] = Nil)(implicit spark: SparkSession) = {
     val table = spark.table(name)
     val coresPerExecutor = spark.conf.get("spark.executor.cores", "1").toInt
@@ -145,13 +141,13 @@ object TestingApp {
       value
     }
     val result = values.filterNot(dictionary.contains)
-    
+
     if (!result.isEmpty) Some(s"Values ${result.mkString(", ")} should be in $dicName dictionary") else None
   }
 
   def TestDfContainsAllVarFromBatch(df: DataFrame, b:String, adAltFilter:Number, database: String)(implicit spark: SparkSession): Option[String] = {
     import spark.implicits._
-    
+
     val bucket = database match {
       case "clin_qa"      => "cqgc-qa-app-files-import"
       case "clin_staging" => "cqgc-staging-app-files-import"

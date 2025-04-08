@@ -74,11 +74,6 @@ object EtlConfiguration extends App {
       DatasetConf("raw_panels"                , clin_datalake, "/raw/landing/panels/panels.tsv"                               , CSV , OverWrite, readoptions = tsv_with_headers),
       DatasetConf("raw_franklin"              , clin_datalake, "/raw/landing/franklin/batch_id={{BATCH_ID}}"                  , JSON, OverWrite, partitionby = List("family_id","aliquot_id","analysis_id")),
 
-      //old version of gnomad, should be removed
-      //DatasetConf("normalized_gnomad_genomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_2_1_1")),
-      //DatasetConf("normalized_gnomad_exomes_2_1_1", clin_datalake, "/public/gnomad/gnomad_exomes_2.1.1_liftover_grch38", PARQUET, OverWrite, TableConf("clin", "gnomad_exomes_2_1_1")),
-      DatasetConf("normalized_gnomad_genomes_3_0", clin_datalake, "/public/gnomad/gnomad_genomes_3.0", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_0")),
-      //DatasetConf("normalized_gnomad_genomes_3_1_1", clin_datalake, "/public/gnomad/gnomad_genomes_3_1_1", PARQUET, OverWrite, TableConf("clin", "gnomad_genomes_3_1_1")),
       //old version of dbnsfp, should be removed after migration
       //DatasetConf("deprecated_normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite),
       DatasetConf("deprecated_normalized_dbnsfp_original"     , clin_datalake, "/public/dbnsfp/scores"                              , PARQUET, OverWrite),

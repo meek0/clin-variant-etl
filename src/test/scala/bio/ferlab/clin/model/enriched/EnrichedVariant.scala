@@ -106,10 +106,6 @@ case class DONORS(`dp`: Int = 1,
 
 case class FREQUENCIES(thousand_genomes: ThousandGenomesFreq = ThousandGenomesFreq(3446, 5008, 0.688099),
                        topmed_bravo: Freq = Freq(2, 125568, 0.0000159276, 0, 2),
-                       gnomad_genomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(1, 26342, 0.000037962189659099535, 0),
-                       gnomad_exomes_2_1_1: GnomadFreqOutput = GnomadFreqOutput(0, 2, 0.0, 0),
-                       gnomad_genomes_3_0: GnomadFreqOutput = GnomadFreqOutput(0, 53780, 0.0, 0),
-                       gnomad_genomes_3_1_1: GnomadFreqOutput = GnomadFreqOutput(10, 20, 0.5, 10),
                        gnomad_genomes_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(1, 10, 1.0, 20)),
                        gnomad_exomes_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(2, 20, 2.0, 10)),
                        gnomad_joint_4: Option[GnomadFreqOutput] = Some(GnomadFreqOutput(3, 40, 4.0, 15)))

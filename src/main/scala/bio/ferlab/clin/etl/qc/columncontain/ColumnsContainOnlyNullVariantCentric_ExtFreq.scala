@@ -19,18 +19,6 @@ object ColumnsContainOnlyNullVariantCentric_ExtFreq extends TestingApp {
         variant_centric.select($"external_frequencies.topmed_bravo.*")
       ),
       shouldNotContainOnlyNull(
-        variant_centric.select($"external_frequencies.gnomad_genomes_2_1_1.*")
-      ),
-      shouldNotContainOnlyNull(
-        variant_centric.select($"external_frequencies.gnomad_exomes_2_1_1.*")
-      ),
-      shouldNotContainOnlyNull(
-        variant_centric.select($"external_frequencies.gnomad_genomes_3_0.*")
-      ),
-      shouldNotContainOnlyNull(
-        variant_centric.select($"external_frequencies.gnomad_genomes_3_1_1.*")
-      ),
-      shouldNotContainOnlyNull(
         variant_centric.select($"external_frequencies.gnomad_genomes_4.*")
       ),
     )

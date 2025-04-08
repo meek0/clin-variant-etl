@@ -8,10 +8,6 @@ object NonEmptyTables extends TestingApp {
     import spark.implicits._
 
     handleErrors(
-      shouldNotBeEmpty(gnomad_genomes_v2_1_1, "gnomad_genomes_v2_1_1"),
-      shouldNotBeEmpty(gnomad_exomes_v2_1_1, "gnomad_exomes_v2_1_1"),
-      shouldNotBeEmpty(gnomad_genomes_3_0, "gnomad_genomes_3_0"),
-      shouldNotBeEmpty(gnomad_genomes_v3, "gnomad_genomes_v3"),
       shouldNotBeEmpty(fhir_clinical_impression, "fhir_clinical_impression"),
       shouldNotBeEmpty(fhir_code_system, "fhir_code_system"),
       shouldNotBeEmpty(fhir_observation, "fhir_observation"),

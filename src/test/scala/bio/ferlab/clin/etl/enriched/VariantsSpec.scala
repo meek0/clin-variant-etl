@@ -28,10 +28,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val thousand_genomes: DatasetConf = conf.getDataset("normalized_1000_genomes")
   val topmed_bravo: DatasetConf = conf.getDataset("normalized_topmed_bravo")
   val gnomad_constraint: DatasetConf = conf.getDataset("normalized_gnomad_constraint_v2_1_1")
-  val gnomad_genomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v2_1_1")
-  val gnomad_exomes_v2_1_1: DatasetConf = conf.getDataset("normalized_gnomad_exomes_v2_1_1")
-  val gnomad_genomes_3_0: DatasetConf = conf.getDataset("normalized_gnomad_genomes_3_0")
-  val gnomad_genomes_v3: DatasetConf = conf.getDataset("normalized_gnomad_genomes_v3")
   val gnomad_joint_v4: DatasetConf = conf.getDataset("normalized_gnomad_joint_v4")
   val dbsnp: DatasetConf = conf.getDataset("normalized_dbsnp")
   val clinvar: DatasetConf = conf.getDataset("normalized_clinvar")
@@ -58,10 +54,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val genomesDf: DataFrame = Seq(OneKGenomesOutput()).toDF
   val topmed_bravoDf: DataFrame = Seq(Topmed_bravoOutput()).toDF
   val gnomad_constraintDf: DataFrame = Seq(GnomadConstraintOutput()).toDF()
-  val gnomad_genomes_2_1_1Df: DataFrame = Seq(GnomadGenomes211Output()).toDF
-  val gnomad_exomes_2_1_1Df: DataFrame = Seq(GnomadExomes211Output()).toDF
-  val gnomad_genomes_3_0Df: DataFrame = Seq(GnomadGenomes30Output()).toDF
-  val gnomad_genomes_3_1_1Df: DataFrame = Seq(GnomadGenomes311Output()).toDF
   val gnomad_joint_4Df: DataFrame = Seq(GnomadJoint4Output()).toDF
   val dbsnpDf: DataFrame = Seq(DbsnpOutput()).toDF
   val clinvarDf: DataFrame = Seq(ClinvarOutput()).toDF
@@ -77,10 +69,6 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     thousand_genomes.id -> genomesDf,
     topmed_bravo.id -> topmed_bravoDf,
     gnomad_constraint.id -> gnomad_constraintDf,
-    gnomad_genomes_v2_1_1.id -> gnomad_genomes_2_1_1Df,
-    gnomad_exomes_v2_1_1.id -> gnomad_exomes_2_1_1Df,
-    gnomad_genomes_3_0.id -> gnomad_genomes_3_0Df,
-    gnomad_genomes_v3.id -> gnomad_genomes_3_1_1Df,
     gnomad_joint_v4.id -> gnomad_joint_4Df,
     dbsnp.id -> dbsnpDf,
     clinvar.id -> clinvarDf,
