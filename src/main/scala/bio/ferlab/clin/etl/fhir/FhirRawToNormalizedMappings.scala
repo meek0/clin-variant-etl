@@ -243,7 +243,7 @@ object FhirRawToNormalizedMappings {
       .withColumn("authored_on", to_timestamp(col("authoredOn"), "yyyy-MM-dd\'T\'HH:mm:sszzz"))
       .withTaskExtension
     ),
-    Drop("meta", "requester", "authoredOn", "extension", "input", "output", "focus", "for", "code", "groupIdentifier")
+    Drop("meta", "requester", "authoredOn", "extension", "input", "output", "focus", "for", "code", "groupIdentifier", "owner", "profile")
   )
   val documentMapping: String => List[Transformation] = clinDownloadPath => List(
     Custom(_

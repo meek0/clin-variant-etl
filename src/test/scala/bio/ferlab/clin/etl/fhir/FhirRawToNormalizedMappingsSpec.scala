@@ -199,7 +199,7 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
     val inputPath = getClass.getResource("/raw/landing/fhir/Task/Task_0_19000101_000000.json").getPath
     val inputDf = spark.read.schema(getSchema("raw_task")).json(inputPath)
     val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
-    val result = job.transformSingle(Map(inputDs.id -> inputDf)).where("id='109351'")
+    val result = job.transformSingle(Map(inputDs.id -> inputDf)).where("id='1'")
 
     result.count() shouldBe 1
     val head = result.as[NormalizedTask].collect().head

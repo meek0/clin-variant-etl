@@ -80,8 +80,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   val expectedDonors =
     List(
-      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEAN", "PA0001", "FM00001", "PPR00101", "OR00201", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("mother"), Some("AD")),
-      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEAN", "PA0002", "FM00001", "PPR00101", "OR00202", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("father"), Some("AR"))
+      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEBA", "PA0001", "FM00001", "PPR00101", "OR00201", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("mother"), Some("AD")),
+      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEBA", "PA0002", "FM00001", "PPR00101", "OR00202", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("father"), Some("AR"))
     )
 
   "variants job" should "union of all available enriched SNV" in {
@@ -1053,14 +1053,14 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val expected = Seq(
       EnrichedVariant(chromosome = "1", start = 1, end = 2, reference = "T", alternate = "C", variant_type = Set("germline", "somatic"),
         donors = List(
-          DONORS(aliquot_id = "11111", variant_type = "germline", bioinfo_analysis_code = "GEAN", all_analyses = None),
-          DONORS(aliquot_id = "22222", variant_type = "germline", bioinfo_analysis_code = "GEAN", all_analyses = None),
+          DONORS(aliquot_id = "11111", variant_type = "germline", bioinfo_analysis_code = "GEBA", all_analyses = None),
+          DONORS(aliquot_id = "22222", variant_type = "germline", bioinfo_analysis_code = "GEBA", all_analyses = None),
           DONORS(aliquot_id = "33333", variant_type = "somatic", bioinfo_analysis_code = "TEBA", all_analyses = Some(Set("TO", "TN"))),
           DONORS(aliquot_id = "33333", variant_type = "somatic", bioinfo_analysis_code = "TNEBA", all_analyses = Some(Set("TO", "TN")))
         )),
       EnrichedVariant(chromosome = "1", start = 2, end = 3, reference = "G", alternate = "A", variant_type = Set("germline"),
         donors = List(
-          DONORS(aliquot_id = "11111", variant_type = "germline", bioinfo_analysis_code = "GEAN", all_analyses = None)
+          DONORS(aliquot_id = "11111", variant_type = "germline", bioinfo_analysis_code = "GEBA", all_analyses = None)
         )),
       EnrichedVariant(chromosome = "1", start = 3, end = 4, reference = "C", alternate = "T", variant_type = Set("somatic"),
         donors = List(
@@ -1186,8 +1186,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   "withSomaticFrequencies" should "enrich variants with TEBA and TNEBA frequencies" in {
     val occurrencesSnv = Seq(
-      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
-      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "3", `bioinfo_analysis_code` = "GEAN"), // Excluded because germline
+      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "1", `bioinfo_analysis_code` = "GEBA"), // Excluded because germline
+      EnrichedSNV(`patient_id` = "1", `sample_id` = "1", chromosome = "3", `bioinfo_analysis_code` = "GEBA"), // Excluded because germline
     ).toDF()
 
     val occurrencesSnvSomatic = Seq(

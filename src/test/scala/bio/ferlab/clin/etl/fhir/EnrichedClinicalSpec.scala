@@ -262,11 +262,11 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // To help readability, id is composed of <patient_id>-<service_request_id>-<analysis_code>
     // BATCH 1
     // 1. Trio, germline
-    NormalizedTask(id = "1-1-G", batch_id = "BAT1", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "1"),
+    NormalizedTask(id = "1-1-G", batch_id = "BAT1", `patient_id` = "PA0001", `service_request_id` = "SRS0001", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1"),
       documents = List(DOCUMENTS(id = "1-1-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "1-1-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "1-1-G-GCNV", document_type = "GCNV"))),
-    NormalizedTask(id = "2-2-G", batch_id = "BAT1", `patient_id` = "PA0002", `service_request_id` = "SRS0002", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "2"),
+    NormalizedTask(id = "2-2-G", batch_id = "BAT1", `patient_id` = "PA0002", `service_request_id` = "SRS0002", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "2"),
       documents = List(DOCUMENTS(id = "2-2-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "2-2-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "2-2-G-GCNV", document_type = "GCNV"))),
-    NormalizedTask(id = "3-3-G", batch_id = "BAT1", `patient_id` = "PA0003", `service_request_id` = "SRS0003", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "3"),
+    NormalizedTask(id = "3-3-G", batch_id = "BAT1", `patient_id` = "PA0003", `service_request_id` = "SRS0003", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "3"),
       documents = List(DOCUMENTS(id = "3-3-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "3-3-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "3-3-G-GCNV", document_type = "GCNV"))),
 
     // 2. Trio+, tumor only
@@ -281,30 +281,30 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
     // BATCH 2
     // 3. Incomplete trio
-    NormalizedTask(id = "11-11-G", batch_id = "BAT2", `patient_id` = "PA0011", `service_request_id` = "SRS0011", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "11"), // proband
+    NormalizedTask(id = "11-11-G", batch_id = "BAT2", `patient_id` = "PA0011", `service_request_id` = "SRS0011", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "11"), // proband
       documents = List(DOCUMENTS(id = "11-11-G-COVGENE", document_type = "COVGENE"))),
-    NormalizedTask(id = "22-22-G", batch_id = "BAT2", `patient_id` = "PA0022", `service_request_id` = "SRS0022", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "22"), // mother
+    NormalizedTask(id = "22-22-G", batch_id = "BAT2", `patient_id` = "PA0022", `service_request_id` = "SRS0022", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "22"), // mother
       documents = List(DOCUMENTS(id = "22-22-G-COVGENE", document_type = "COVGENE"))),
 
     // 4. Same family, two prescriptions
     // 4.1 First prescription: Duo
-    NormalizedTask(id = "111-111-G", batch_id = "BAT2", `patient_id` = "PA0111", `service_request_id` = "SRS0111", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "111"),
+    NormalizedTask(id = "111-111-G", batch_id = "BAT2", `patient_id` = "PA0111", `service_request_id` = "SRS0111", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "111"),
       documents = List(DOCUMENTS(id = "111-111-G-COVGENE", document_type = "COVGENE"))),
-    NormalizedTask(id = "222-222-G", batch_id = "BAT2", `patient_id` = "PA0222", `service_request_id` = "SRS0222", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "222"),
+    NormalizedTask(id = "222-222-G", batch_id = "BAT2", `patient_id` = "PA0222", `service_request_id` = "SRS0222", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "222"),
       documents = List(DOCUMENTS(id = "222-222-G-COVGENE", document_type = "COVGENE"))),
 
     // BATCH 3
     // 3. Incomplete trio, father's task
-    NormalizedTask(id = "33-33-G", batch_id = "BAT3", `patient_id` = "PA0033", `service_request_id` = "SRS0033", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "33"),
+    NormalizedTask(id = "33-33-G", batch_id = "BAT3", `patient_id` = "PA0033", `service_request_id` = "SRS0033", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "33"),
       documents = List(DOCUMENTS(id = "33-33-G-COVGENE", document_type = "COVGENE"))), // father
 
     // 4. Same family, two prescriptions
     // 4.2 Second prescription: Trio
-    NormalizedTask(id = "333-333-G", batch_id = "BAT3", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "333"), // proband
+    NormalizedTask(id = "333-333-G", batch_id = "BAT3", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "333"), // proband
       documents = List(DOCUMENTS(id = "333-333-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "333-333-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "333-333-G-SNV", document_type = "SNV"))),
-    NormalizedTask(id = "111-444-G", batch_id = "BAT3", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "111"), // sister (same aliquot since she's not re-sequenced)
+    NormalizedTask(id = "111-444-G", batch_id = "BAT3", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "111"), // sister (same aliquot since she's not re-sequenced)
       documents = List(DOCUMENTS(id = "111-444-G-SNV", document_type = "SNV"))),
-    NormalizedTask(id = "222-555-G", batch_id = "BAT3", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "555"), // mother
+    NormalizedTask(id = "222-555-G", batch_id = "BAT3", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "555"), // mother
       documents = List(DOCUMENTS(id = "222-555-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "222-555-G-SNV", document_type = "SNV"))),
 
     // 5. Solo, Tumor only analysis
@@ -313,7 +313,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
     // BATCH 4
     // 5. Solo, Germline analysis
-    NormalizedTask(id = "1111-2222-G", batch_id = "BAT4", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `analysis_code` = "GEAN", `experiment` = EXPERIMENT(`aliquot_id` = "2222"),
+    NormalizedTask(id = "1111-2222-G", batch_id = "BAT4", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "2222"),
       documents = List(DOCUMENTS(id = "1111-2222-G-SNV", document_type = "SNV"))),
 
     // BATCH 5
@@ -445,19 +445,19 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
       .collect() should contain theSameElementsAs Seq(
       // 1. Trio
       // Proband
-      EnrichedClinicalOutput(patient_id = "PA0001", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0001", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0001", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0001", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "1", specimen_id = "SP_0001", sample_id = "SA_0001", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00001"), mother_id = Some("PA0003"), father_id = Some("PA0002"), mother_aliquot_id = Some("3"), father_aliquot_id = Some("2"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
         covgene_urls = Some(Set("s3a://1.csv")), exomiser_urls = Some(Set("s3a://1.tsv")), cnv_vcf_urls = Some(Set("s3a://1-1.vcf.gz", "s3a://1-2.vcf.gz")), snv_vcf_urls = None),
       // Father
-      EnrichedClinicalOutput(patient_id = "PA0002", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0002", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0002", gender = "Male", analysis_service_request_id = "SRA0001", service_request_id = "SRS0002", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "2", specimen_id = "SP_0002", sample_id = "SA_0002", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = None,
         covgene_urls = Some(Set("s3a://2.csv")), exomiser_urls = Some(Set("s3a://2.tsv")), cnv_vcf_urls = Some(Set("s3a://2-1.vcf.gz", "s3a://2-2.vcf.gz")), snv_vcf_urls = None),
       // Mother
-      EnrichedClinicalOutput(patient_id = "PA0003", gender = "Female", analysis_service_request_id = "SRA0001", service_request_id = "SRS0003", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0003", gender = "Female", analysis_service_request_id = "SRA0001", service_request_id = "SRS0003", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "3", specimen_id = "SP_0003", sample_id = "SA_0003", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
@@ -491,19 +491,19 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
       // 3. Incomplete trio
       // Proband
-      EnrichedClinicalOutput(patient_id = "PA0011", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0011", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0011", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0011", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "11", specimen_id = "SP_0011", sample_id = "SA_0011", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00011"), mother_id = Some("PA0022"), father_id = Some("PA0033"), mother_aliquot_id = Some("22"), father_aliquot_id = Some("33"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false))),
         covgene_urls = Some(Set("s3a://11-1.csv", "s3a://11-2.csv", "s3a://11-3.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
       // Mother
-      EnrichedClinicalOutput(patient_id = "PA0022", gender = "Female", analysis_service_request_id = "SRA0011", service_request_id = "SRS0022", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0022", gender = "Female", analysis_service_request_id = "SRA0011", service_request_id = "SRS0022", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "22", specimen_id = "SP_0022", sample_id = "SA_0022", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
         covgene_urls = Some(Set("s3a://22-1.csv", "s3a://22-2.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
       // Father we receive later
-      EnrichedClinicalOutput(patient_id = "PA0033", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0033", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0033", gender = "Male", analysis_service_request_id = "SRA0011", service_request_id = "SRS0033", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "33", specimen_id = "SP_0033", sample_id = "SA_0033", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "unknown", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "affected", affected_status = true))),
@@ -512,32 +512,32 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
       // 4. Same family, two prescriptions
       // 4.1 First prescription: Duo
       // Proband
-      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0111", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0111", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00111"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("222"), father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
         covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
       // Mother
-      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0222", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0111", service_request_id = "SRS0222", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "222", specimen_id = "SP_0222", sample_id = "SA_0222", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00111"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = None,
         covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
       // 4.2 Second prescription: Trio
       // Proband
-      EnrichedClinicalOutput(patient_id = "PA0333", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0333", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0333", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0333", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "333", specimen_id = "SP_0333", sample_id = "SA_0333", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
         covgene_urls = Some(Set("s3a://333.csv")), exomiser_urls = Some(Set("s3a://333.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
       // Sister
-      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0444", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0444", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
         clinical_signs = None,
         covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
       // Mother
-      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0555", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_service_request_id = "SRA0333", service_request_id = "SRS0555", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "555", specimen_id = "SP_0555", sample_id = "SA_0555", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00222"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
@@ -551,7 +551,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
         covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111.vcf.gz"))),
       // Germline analysis
-      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA2222", service_request_id = "SRS2222", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEAN",
+      EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_service_request_id = "SRA2222", service_request_id = "SRS2222", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00103", batch_id = "BAT4", aliquot_id = "2222", specimen_id = "SP_2222", sample_id = "SA_2222", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),

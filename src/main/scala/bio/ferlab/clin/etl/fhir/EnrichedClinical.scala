@@ -64,7 +64,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
         firstAs("genome_build"),
         firstAs("documents")
       )
-      .withColumn("bioinfo_analysis", when($"bioinfo_analysis_code" === "GEAN", "germline")
+      .withColumn("bioinfo_analysis", when($"bioinfo_analysis_code" === "GEBA", "germline")
         .when($"bioinfo_analysis_code".isin("TEBA", "TNEBA"), "somatic"))
 
     val patients = data(normalized_patient.id)

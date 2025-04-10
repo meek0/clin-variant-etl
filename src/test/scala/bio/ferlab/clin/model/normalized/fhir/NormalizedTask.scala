@@ -7,7 +7,7 @@ package bio.ferlab.clin.model.normalized.fhir
 import java.sql.{Date, Timestamp}
 
 
-case class NormalizedTask(id: String = "109351",
+case class NormalizedTask(id: String = "1",
                           batch_id: String = "bat1",
                           intent: String = "order",
                           priority: String = "routine",
@@ -16,15 +16,15 @@ case class NormalizedTask(id: String = "109351",
                           ingestion_file_name: String = "/raw/landing/fhir/Task/Task_0_19000101_000000.json",
                           ingested_on: Timestamp = Timestamp.valueOf("1900-01-01 00:00:00.0"),
                           version_id: String = "1",
-                          updated_on: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
-                          created_on: Timestamp = Timestamp.valueOf("2021-11-23 09:40:49.947"),
-                          analysis_code: String = "GEAN",
-                          service_request_id: String = "SR0095",
-                          patient_id: String = "PA00095",
+                          updated_on: Timestamp = Timestamp.valueOf("2025-01-16 10:37:38.853"),
+                          created_on: Timestamp = Timestamp.valueOf("2025-01-16 10:37:38.853"),
+                          analysis_code: String = "GEBA",
+                          service_request_id: String = "SR0001",
+                          patient_id: String = "PA0001",
                           organization_id: String = "LDM-CHUSJ",
-                          specimen_id: String = "109673",
-                          documents: List[DOCUMENTS] = List(DOCUMENTS(), DOCUMENTS("109349", "SNV"), DOCUMENTS("109350", "SSUP")),
-                          authored_on: Timestamp = Timestamp.valueOf("2021-11-23 09:33:05.0"),
+                          specimen_id: String = "SP_0001",
+                          documents: List[DOCUMENTS] = List(DOCUMENTS(), DOCUMENTS("1261839", "SNV"), DOCUMENTS("1261840", "GCNV"), DOCUMENTS("1261841", "SSUP")),
+                          authored_on: Timestamp = Timestamp.valueOf("2025-01-16 10:05:27"),
                           experiment: EXPERIMENT = EXPERIMENT(),
                           workflow: WORKFLOW = WORKFLOW())
 
@@ -33,13 +33,13 @@ case class WORKFLOW(`genome_build`: String = "GRCh38",
                     `version`: String = "3.8.4")
 
 case class EXPERIMENT(`sequencing_strategy`: String = "WXS",
-                      `name`: String = "201106_A00516_0169_AHFM3HDSXY",
+                      `name`: String = "1_data_to_import",
                       `alias`: String = "A00516_0169",
                       `platform`: String = "Illumina NovaSeq",
                       `capture_kit`: String = "RocheKapaHyperExome",
                       `sequencer_id`: String = "A00516",
-                      `aliquot_id`: String = "16868",
+                      `aliquot_id`: String = "1",
                       `run_date`: Date = Date.valueOf("2020-11-06"))
 
-case class DOCUMENTS(`id`: String = "109348",
+case class DOCUMENTS(`id`: String = "1261838",
                      `document_type`: String = "ALIR")

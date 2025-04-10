@@ -90,7 +90,7 @@ object FhirCustomOperations {
             filter(sequencingExperimentExtensions, c => c("url") === "captureKit")(0)("valueString") as "capture_kit",
             filter(sequencingExperimentExtensions, c => c("url") === "sequencerId")(0)("valueString") as "sequencer_id",
             filter(sequencingExperimentExtensions, c => c("url") === "labAliquotId")(0)("valueString") as "aliquot_id",
-            to_date(filter(sequencingExperimentExtensions, c => c("url") === "runDate")(0)("valueDateTime"), "yyyy-MM-dd") as "run_date"
+            to_date(filter(sequencingExperimentExtensions, c => c("url") === "runDate")(0)("valueDateTime")) as "run_date"
           ))
         .withColumn("workflow",
           struct(
