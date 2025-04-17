@@ -21,6 +21,12 @@ object ColumnsContainOnlyNullVariantCentric_ExtFreq extends TestingApp {
       shouldNotContainOnlyNull(
         variant_centric.select($"external_frequencies.gnomad_genomes_4.*")
       ),
+      shouldNotContainOnlyNull(
+        variant_centric.select($"external_frequencies.gnomad_exomes_4.*")
+      ),
+      shouldNotContainOnlyNull(
+        variant_centric.select($"external_frequencies.gnomad_joint_4.*")
+      ),
     )
   }
 }
