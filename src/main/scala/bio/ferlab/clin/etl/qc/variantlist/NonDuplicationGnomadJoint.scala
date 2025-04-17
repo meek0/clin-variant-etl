@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.qc.variantlist
 import bio.ferlab.clin.etl.qc.TestingApp
 import bio.ferlab.clin.etl.qc.TestingApp._
 
-object NonDuplicationGnomad extends TestingApp {
+object NonDuplicationGnomadJoint extends TestingApp {
   run { spark =>
     import spark.implicits._
 
