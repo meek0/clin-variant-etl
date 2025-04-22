@@ -151,6 +151,7 @@ object CNV {
             "overlap_gene_ratio",
             "panels",
             "hpo",
+            "location",
             "omim",
             "orphanet",
             "ddd",

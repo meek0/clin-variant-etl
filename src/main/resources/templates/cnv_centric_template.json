@@ -230,6 +230,9 @@
                 }
               }
             },
+            "location": {
+              "type": "keyword"
+            },
             "omim": {
               "type": "nested",
               "properties": {
