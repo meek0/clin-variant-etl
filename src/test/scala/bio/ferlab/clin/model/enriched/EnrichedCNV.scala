@@ -60,6 +60,7 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
 case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
+                              `omim_gene_id`: Option[String] = Some("601013"),
                               `refseq_id`: Option[String] = Some("NC_000001.11"),
                               `gene_length`: Option[String] = Some("60.0"),
                               `overlap_bases`: Option[String] = Some("60.0"),

@@ -145,6 +145,7 @@ object CNV {
           df("*"),
           struct("symbol",
             "refseq_id",
+            "omim_gene_id",
             "gene_length",
             "overlap_bases",
             "overlap_cnv_ratio",

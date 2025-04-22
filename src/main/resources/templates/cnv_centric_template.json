@@ -247,6 +247,9 @@
                 }
               }
             },
+            "omim_gene_id": {
+              "type": "keyword"
+            },
             "orphanet": {
               "type": "nested",
               "properties": {
