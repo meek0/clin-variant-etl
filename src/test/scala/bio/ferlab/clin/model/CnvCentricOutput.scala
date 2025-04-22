@@ -59,6 +59,7 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
 case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
+                             `omim_gene_id`: Option[String] = Some("601013"),
                              `refseq_id`: String = "NC_000001.11",
                              `gene_length`: String = "60.0",
                              `overlap_bases`: String = "60.0",
