@@ -7,6 +7,7 @@ import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
+import bio.ferlab.datalake.testutils.models.normalized.NormalizedGnomadV4CNV
 import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, SparkSpec, TestETLContext}
 
 class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
@@ -22,6 +23,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
   val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
+  val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
 
   val job = CNV(TestETLContext(), None)
 
@@ -46,12 +48,15 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
     enriched_clinical.id -> Seq(
       EnrichedClinical(`batch_id` = "BAT1", `analysis_service_request_id` = "SRA0001"),
       EnrichedClinical(`batch_id` = "BAT2", `analysis_service_request_id` = "SRA0002")
+    ).toDF(),
+    normalized_gnomad_cnv_v4.id -> Seq(
+      NormalizedGnomadV4CNV(),
     ).toDF()
   )
 
   override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only,
     normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering,
-    nextflow_svclustering_parental_origin)
+    nextflow_svclustering_parental_origin, normalized_gnomad_cnv_v4)
 
   "transform" should "enrich CNV data" in {
     val data = testData ++ Map(
@@ -66,6 +71,24 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`service_request_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5"),
       EnrichedCNV(`service_request_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "05c1575c45d71352d7f88c8a688956b139653661"),
+    )
+  }
+
+  "transform" should "enrich CNV data with overlapping gnomad v4 exomes" in {
+    val data = testData ++ Map(
+      normalized_cnv.id -> Seq(NormalizedCNV()).toDF(),
+      normalized_cnv_somatic_tumor_only.id -> Seq[NormalizedCNVSomaticTumorOnly]().toDF(),
+      normalized_gnomad_cnv_v4.id -> Seq(NormalizedGnomadV4CNV()).toDF(),
+    )
+
+    val result = job.transformSingle(data)
+
+    result.show(10000)
+
+    result
+      .as[EnrichedCNV]
+      .collect() should contain theSameElementsAs Seq(
+      EnrichedCNV(),
     )
   }
 

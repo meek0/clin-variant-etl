@@ -57,7 +57,20 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `parental_origin`: String = "mother",
                        `frequency_RQDM`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(),
                        `number_genes`: Int = 1,
+                       `variant_external_reference`: Set[String] = Set(),
+                       `cluster`: EnrichedCNVCluster = EnrichedCNVCluster(),
                        `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
+
+case class EnrichedCNVCluster(`id`: String = null,
+                              `external_frequencies`: EnrichedCNVClusterFrequencies = EnrichedCNVClusterFrequencies(),
+                             )
+
+case class EnrichedCNVClusterFrequencies(`gnomad_exomes_4`: EnrichedCNVClusterFrequenciesGnomadV4 = EnrichedCNVClusterFrequenciesGnomadV4(),
+                                        )
+
+case class EnrichedCNVClusterFrequenciesGnomadV4(`sc`: Double = 0.0,
+                                                 `sn`: Double = 0.0,
+                                                 `sf`: Double = 0.0)
 
 case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
                               `omim_gene_id`: Option[String] = Some("601013"),

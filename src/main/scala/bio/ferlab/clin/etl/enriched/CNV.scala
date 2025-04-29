@@ -10,7 +10,8 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
 
@@ -27,6 +28,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
   val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
+  val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
@@ -34,7 +36,8 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read,
       genes.id -> genes.read,
-      nextflow_svclustering.id -> nextflow_svclustering.read
+      nextflow_svclustering.id -> nextflow_svclustering.read,
+      normalized_gnomad_cnv_v4.id -> normalized_gnomad_cnv_v4.read
     )
     val clinicalDf = enriched_clinical.read
 
@@ -73,6 +76,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
     val genesDf = data(genes.id)
     val svclusteringDf = data(nextflow_svclustering.id)
     val parentalOriginDf = data(nextflow_svclustering_parental_origin.id)
+    val gnomadV4 = data(normalized_gnomad_cnv_v4.id)
 
     cnvDf
       .withPanels(refseqDf, panelsDf)
@@ -80,6 +84,8 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withGenes(genesDf)
       .withParentalOrigin(parentalOriginDf)
       .withFrequencies(svclusteringDf)
+      .withOverlappingGnomad(gnomadV4)
+      .withClinVariantExternalReference
       .withColumn("number_genes", size($"genes"))
       .withColumn("hash", sha1(concat_ws("-", col("name"), col("alternate"), col("service_request_id")))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
   }
@@ -89,6 +95,17 @@ object CNV {
   private final val CnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
 
   implicit class DataFrameOps(df: DataFrame) {
+
+    val emptyCluster = struct(
+      lit(null).cast(StringType) as "id",
+      struct(
+        struct(
+          lit(0.0).cast("double") as "sc",
+          lit(0.0).cast("double") as "sn",
+          lit(0.0).cast("double") as "sf"
+        ) as "gnomad_exomes_4"
+      ) as "external_frequencies"
+    )
 
     def withPanels(refseq: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
@@ -189,6 +206,67 @@ object CNV {
       df
         .join(svclustering, array_contains(svclustering("members"), df("name")), "left")
         .select(df("*"), $"frequency_RQDM")
+    }
+
+    def withOverlappingGnomad(gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+
+      val overlapDf = df.as("cnv")
+        .join(gnomadV4.as("gnomad"),
+          col("cnv.chromosome") === col("gnomad.chromosome") &&
+            col("cnv.start") <= col("gnomad.end") &&
+            col("gnomad.start") <= col("cnv.end") &&
+            col("cnv.reference") === col("gnomad.reference") &&
+            col("cnv.alternate") === col("gnomad.alternate")
+          , "inner")
+
+      val overlapWithMetricsDF = overlapDf.withColumn("overlap_length",
+          least(col("cnv.end"), col("gnomad.end")) - greatest(col("cnv.start"), col("gnomad.start")) + 1
+        ).withColumn("length_cnv", col("cnv.end") - col("cnv.start") + 1)
+        .withColumn("length_gnomad", col("gnomad.end") - col("gnomad.start") + 1)
+        .withColumn("overlap_fraction_cnv", col("overlap_length") / col("length_cnv"))
+        .withColumn("overlap_fraction_gnomad", col("overlap_length") / col("length_gnomad"))
+
+      val threshold = 0.8
+      val withThresholdDf = overlapWithMetricsDF.filter(
+        col("overlap_fraction_cnv") >= threshold &&
+        col("overlap_fraction_gnomad") >= threshold
+      ).select(
+        $"cnv.chromosome" as "chromosome",
+        $"cnv.start" as "start",
+        $"cnv.reference" as "reference",
+        $"cnv.alternate" as "alternate",
+        struct(
+          $"gnomad.name" as "id",
+          struct(
+            struct(
+              $"gnomad.sc" as "sc",
+              $"gnomad.sn" as "sn",
+              $"gnomad.sf" as "sf",
+            ) as "gnomad_exomes_4"
+          ) as "external_frequencies"
+        ) as "cluster"
+      )
+
+      df.joinByLocus(withThresholdDf, "left")
+        .withColumn("cluster", coalesce(emptyCluster, $"cluster"))
+    }
+
+    def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+      val outputColumn = "variant_external_reference"
+
+      val conditionValueMap: List[(Column, String)] = List(
+        ($"cluster.id".isNotNull) -> "gnomAD"
+      )
+
+      conditionValueMap
+        .tail
+        .foldLeft(
+          df.withColumn(outputColumn, when(conditionValueMap.head._1, array(lit(conditionValueMap.head._2))).otherwise(array()))
+        ) { case (currDf, (cond, value)) =>
+          currDf.withColumn(outputColumn, when(cond, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
+        }
     }
   }
 
