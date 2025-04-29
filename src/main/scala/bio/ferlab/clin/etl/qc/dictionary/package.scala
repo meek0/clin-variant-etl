@@ -421,7 +421,9 @@ package object dictionary {
     "THBP",
     "HLH",
     "IEI",
-    "VEOIBD"
+    "VEOIBD",
+    "RGDIEP",
+    "EPILEP"
   )
 
   val DicParentalOrigin = Seq(
