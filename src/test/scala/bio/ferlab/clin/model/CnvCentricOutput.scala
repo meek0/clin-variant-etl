@@ -56,7 +56,20 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `parental_origin`: String = "mother",
                             `frequency_RQDM`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(),
                             `number_genes`: Int = 1,
+                            `variant_external_reference`: Set[String] = Set(),
+                            `cluster`: CNV_CNETRIC_CLUSTER = CNV_CNETRIC_CLUSTER(),
                             `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
+
+case class CNV_CNETRIC_CLUSTER(`id`: String = null,
+                              `external_frequencies`: CNV_CNETRIC_CLUSTER_FREQUENCIES = CNV_CNETRIC_CLUSTER_FREQUENCIES(),
+                             )
+
+case class CNV_CNETRIC_CLUSTER_FREQUENCIES(`gnomad_exomes_4`: CNV_CNETRIC_CLUSTER_FREQUENCIES_GNOMAD_V4 = CNV_CNETRIC_CLUSTER_FREQUENCIES_GNOMAD_V4(),
+                                        )
+
+case class CNV_CNETRIC_CLUSTER_FREQUENCIES_GNOMAD_V4(`sc`: Double = 0.0,
+                                                 `sn`: Double = 0.0,
+                                                 `sf`: Double = 0.0)
 
 case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
                              `omim_gene_id`: Option[String] = Some("601013"),

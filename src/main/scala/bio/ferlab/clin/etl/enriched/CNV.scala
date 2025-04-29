@@ -249,7 +249,7 @@ object CNV {
       )
 
       df.joinByLocus(withThresholdDf, "left")
-        .withColumn("cluster", coalesce(emptyCluster, $"cluster"))
+        .withColumn("cluster", coalesce($"cluster", emptyCluster))
     }
 
     def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
