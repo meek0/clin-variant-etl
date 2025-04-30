@@ -6,6 +6,7 @@ import org.apache.spark.sql.functions.when
 case class Region(chromosome: Column, start: Column, end: Column) {
 
   val nbBases: Column = end - start + 1
+  
 
   def isOverlapping(other: Region): Column = {
     this.chromosome === other.chromosome and (
@@ -21,4 +22,8 @@ case class Region(chromosome: Column, start: Column, end: Column) {
       .when(this.start >= other.start and (this.start between(other.start, other.end)), other.end - this.start + 1)
       .otherwise(0)
   }
+}
+
+object Region {
+  final val GnomadV4CNVOverlapThreshold = 0.8
 }

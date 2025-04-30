@@ -3,14 +3,14 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.etl.enriched.CNV._
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
 import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
-import bio.ferlab.clin.etl.utils.Region
+import bio.ferlab.clin.etl.utils.{FrequencyUtils, Region}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
+import bio.ferlab.datalake.spark3.transformation.DropDuplicates
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
@@ -95,19 +95,6 @@ object CNV {
   private final val CnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
 
   implicit class DataFrameOps(df: DataFrame) {
-
-    private val emptyGnomadV4 = struct(
-        lit(0.0).cast("double") as "sc",
-        lit(0.0).cast("double") as "sn",
-        lit(0.0).cast("double") as "sf"
-      ) as "gnomad_exomes_4"
-
-    private val emptyCluster = struct(
-      lit(null).cast(StringType) as "id",
-      struct(
-        emptyGnomadV4
-      ) as "external_frequencies"
-    ) as "cluster"
 
     def withPanels(refseq: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
@@ -206,7 +193,7 @@ object CNV {
       import spark.implicits._
 
       df
-        .withColumn("cluster", emptyCluster)
+        .withColumn("cluster", FrequencyUtils.EmptyCluster)
         .join(svclustering, array_contains(svclustering("members"), df("name")), "left")
         .select(
           df("*"),
@@ -230,12 +217,14 @@ object CNV {
         )
         .withColumn("length_gnomad", col("gnomad.end") - col("gnomad.start") + 1)
         .withColumn("overlap_fraction_gnomad", col("overlap_length") / col("length_gnomad"))
-        .orderBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"overlap_fraction_gnomad".desc)
-        .dropDuplicates("chromosome", "start", "reference", "alternate")
 
-      val threshold = 0.8
-      val withThresholdDf = overlapWithMetricsDF.filter(
-        col("overlap_fraction_gnomad") >= threshold
+      val distinctPverlapWithMetricsDF = new DropDuplicates(
+        Seq("cnv.chromosome", "cnv.start", "cnv.reference", "cnv.alternate"),
+        $"overlap_fraction_gnomad".desc
+      ).transform(overlapWithMetricsDF)
+
+      val withThresholdDf = distinctPverlapWithMetricsDF.filter(
+        col("overlap_fraction_gnomad") >= Region.GnomadV4CNVOverlapThreshold
       ).select(
         $"cnv.chromosome" as "chromosome",
         $"cnv.start" as "start",
@@ -259,19 +248,12 @@ object CNV {
 
     def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
-      val outputColumn = "variant_external_reference"
 
       val conditionValueMap: List[(Column, String)] = List(
         ($"cluster.external_frequencies.gnomad_exomes_4".isNotNull) -> "gnomAD"
       )
 
-      conditionValueMap
-        .tail
-        .foldLeft(
-          df.withColumn(outputColumn, when(conditionValueMap.head._1, array(lit(conditionValueMap.head._2))).otherwise(array()))
-        ) { case (currDf, (cond, value)) =>
-          currDf.withColumn(outputColumn, when(cond, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
-        }
+      withExternalReference(df, conditionValueMap)
     }
   }
 

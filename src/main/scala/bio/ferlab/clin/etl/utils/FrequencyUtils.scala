@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.utils
 
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 object FrequencyUtils {
@@ -66,6 +67,19 @@ object FrequencyUtils {
     lit(pn) as "pn",
     lit(0.0) as "pf"
   )
+
+  final val EmptyGnomadV4 = struct(
+    lit(0.0).cast("double") as "sc",
+    lit(0.0).cast("double") as "sn",
+    lit(0.0).cast("double") as "sf"
+  ) as "gnomad_exomes_4"
+
+  final val EmptyCluster = struct(
+    lit(null).cast(StringType) as "id",
+    struct(
+      EmptyGnomadV4
+    ) as "external_frequencies"
+  ) as "cluster"
 
   implicit class FrequencyOps(df: DataFrame)(implicit spark: SparkSession) {
 

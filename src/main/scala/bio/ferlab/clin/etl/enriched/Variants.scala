@@ -367,7 +367,6 @@ object Variants {
 
     def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
-      val outputColumn = "variant_external_reference"
 
       val conditionValueMap: List[(Column, String)] = List(
         $"rsnumber".isNotNull -> "DBSNP",
@@ -377,14 +376,8 @@ object Variants {
         $"franklin_max".isNotNull -> "Franklin",
         ($"external_frequencies.gnomad_genomes_4".isNotNull or $"external_frequencies.gnomad_exomes_4".isNotNull or $"external_frequencies.gnomad_joint_4".isNotNull) -> "gnomAD"
       )
-
-      conditionValueMap
-        .tail
-        .foldLeft(
-          df.withColumn(outputColumn, when(conditionValueMap.head._1, array(lit(conditionValueMap.head._2))).otherwise(array()))
-        ) { case (currDf, (cond, value)) =>
-          currDf.withColumn(outputColumn, when(cond, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
-        }
+      
+      withExternalReference(df, conditionValueMap)
     }
 
     def withExomiser(donors: DataFrame)(implicit spark: SparkSession): DataFrame = {

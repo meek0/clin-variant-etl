@@ -121,10 +121,22 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001))
           )
         ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
-      EnrichedCNV(),
+      EnrichedCNV(`chromosome` = "1", `start` = 10000, `end` = 10059, `reference` = "A", `alternate` = "TAA",
+        `variant_external_reference` = Set(),
+        `cluster` = EnrichedCNVCluster(
+          `id` = Some("DRAGEN:DUP:chr1:9823628-9823687"),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(
+            `gnomad_exomes_4` = None
+          )
+        ), `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5"),
       EnrichedCNV(`chromosome` = "5", `start` = 103, `end` = 153, `reference` = "N", `alternate` = "DEL",
         `number_genes` = 0, `genes` = List(),
-        `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
+        `cluster` = EnrichedCNVCluster(
+          `id` = Some("DRAGEN:DUP:chr1:9823628-9823687"),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(
+            `gnomad_exomes_4` = None
+          )
+        ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
     )
   }
 
