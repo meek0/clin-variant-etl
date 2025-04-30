@@ -96,16 +96,18 @@ object CNV {
 
   implicit class DataFrameOps(df: DataFrame) {
 
-    val emptyCluster = struct(
+    private val emptyGnomadV4 = struct(
+        lit(0.0).cast("double") as "sc",
+        lit(0.0).cast("double") as "sn",
+        lit(0.0).cast("double") as "sf"
+      ) as "gnomad_exomes_4"
+
+    private val emptyCluster = struct(
       lit(null).cast(StringType) as "id",
       struct(
-        struct(
-          lit(0.0).cast("double") as "sc",
-          lit(0.0).cast("double") as "sn",
-          lit(0.0).cast("double") as "sf"
-        ) as "gnomad_exomes_4"
+        emptyGnomadV4
       ) as "external_frequencies"
-    )
+    ) as "cluster"
 
     def withPanels(refseq: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
@@ -204,32 +206,35 @@ object CNV {
       import spark.implicits._
 
       df
+        .withColumn("cluster", emptyCluster)
         .join(svclustering, array_contains(svclustering("members"), df("name")), "left")
-        .select(df("*"), $"frequency_RQDM")
+        .select(
+          df("*"),
+          $"frequency_RQDM",
+          struct(
+            svclustering("name") as "id",
+            $"cluster.external_frequencies",
+          ) as "cluster",
+        )
     }
 
     def withOverlappingGnomad(gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 
-      val overlapDf = df.as("cnv")
-        .join(gnomadV4.as("gnomad"),
-          col("cnv.chromosome") === col("gnomad.chromosome") &&
-            col("cnv.start") <= col("gnomad.end") &&
-            col("gnomad.start") <= col("cnv.end") &&
-            col("cnv.reference") === col("gnomad.reference") &&
-            col("cnv.alternate") === col("gnomad.alternate")
-          , "inner")
+      val gnomadRegion = Region($"gnomad.chromosome", $"gnomad.start", $"gnomad.end")
 
-      val overlapWithMetricsDF = overlapDf.withColumn("overlap_length",
+      val overlapWithMetricsDF = df.as("cnv")
+        .join(gnomadV4.as("gnomad"), CnvRegion.isOverlapping(gnomadRegion), "left")
+        .withColumn("overlap_length",
           least(col("cnv.end"), col("gnomad.end")) - greatest(col("cnv.start"), col("gnomad.start")) + 1
-        ).withColumn("length_cnv", col("cnv.end") - col("cnv.start") + 1)
+        )
         .withColumn("length_gnomad", col("gnomad.end") - col("gnomad.start") + 1)
-        .withColumn("overlap_fraction_cnv", col("overlap_length") / col("length_cnv"))
         .withColumn("overlap_fraction_gnomad", col("overlap_length") / col("length_gnomad"))
+        .orderBy($"cnv.chromosome", $"cnv.start", $"cnv.reference", $"cnv.alternate", $"overlap_fraction_gnomad".desc)
+        .dropDuplicates("chromosome", "start", "reference", "alternate")
 
       val threshold = 0.8
       val withThresholdDf = overlapWithMetricsDF.filter(
-        col("overlap_fraction_cnv") >= threshold &&
         col("overlap_fraction_gnomad") >= threshold
       ).select(
         $"cnv.chromosome" as "chromosome",
@@ -237,19 +242,19 @@ object CNV {
         $"cnv.reference" as "reference",
         $"cnv.alternate" as "alternate",
         struct(
-          $"gnomad.name" as "id",
-          struct(
-            struct(
-              $"gnomad.sc" as "sc",
-              $"gnomad.sn" as "sn",
-              $"gnomad.sf" as "sf",
-            ) as "gnomad_exomes_4"
-          ) as "external_frequencies"
-        ) as "cluster"
+          $"gnomad.sc" as "sc",
+          $"gnomad.sn" as "sn",
+          $"gnomad.sf" as "sf",
+        ) as "gnomad_exomes_4"
       )
 
       df.joinByLocus(withThresholdDf, "left")
-        .withColumn("cluster", coalesce($"cluster", emptyCluster))
+        .select(
+          df("*"),
+          $"gnomad_exomes_4"
+        )
+        .withColumn("cluster", $"cluster".withField("external_frequencies.gnomad_exomes_4", $"gnomad_exomes_4"))
+        .drop("gnomad_exomes_4")
     }
 
     def withClinVariantExternalReference(implicit spark: SparkSession): DataFrame = {
@@ -257,7 +262,7 @@ object CNV {
       val outputColumn = "variant_external_reference"
 
       val conditionValueMap: List[(Column, String)] = List(
-        ($"cluster.id".isNotNull) -> "gnomAD"
+        ($"cluster.external_frequencies.gnomad_exomes_4".isNotNull) -> "gnomAD"
       )
 
       conditionValueMap

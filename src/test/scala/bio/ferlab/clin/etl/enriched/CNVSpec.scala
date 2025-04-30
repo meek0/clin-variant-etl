@@ -85,8 +85,10 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       ).toDF(),
       normalized_cnv_somatic_tumor_only.id -> Seq[NormalizedCNVSomaticTumorOnly]().toDF(),
       normalized_gnomad_cnv_v4.id -> Seq(
-        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 200, `reference` = "N", `alternate` = "DEL", `name` = "variant_is_100_200_5__DEL", `sc` = 6.0, `sn` = 0.15, `sf` = 0.001),
-        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 230, `reference` = "N", `alternate` = "DEL", `name` = "variant_is_100_230_5__DEL", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002),
+        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 200, `reference` = "N", `alternate` = "DEL", `sc` = 6.0, `sn` = 0.15, `sf` = 0.001),
+        // following cluster is used to detect and avoid duplicates
+        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 200, `reference` = "N", `alternate` = "DEL", `sc` = 6.0, `sn` = 0.15, `sf` = 0.001),
+        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 230, `reference` = "N", `alternate` = "DEL", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002),
       ).toDF(),
     )
 
@@ -99,27 +101,24 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
         `number_genes` = 0, `genes` = List(),
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
-          `id` = "variant_is_100_230_5__DEL",
           `external_frequencies` = EnrichedCNVClusterFrequencies(
-            `gnomad_exomes_4` = EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002)
+            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
         ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
       EnrichedCNV(`chromosome` = "5", `start` = 102, `end` = 182, `reference` = "N", `alternate` = "DEL",
         `number_genes` = 0, `genes` = List(),
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
-          `id` = "variant_is_100_200_5__DEL",
           `external_frequencies` = EnrichedCNVClusterFrequencies(
-            `gnomad_exomes_4` = EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001)
+            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001))
           )
         ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
       EnrichedCNV(`chromosome` = "5", `start` = 101, `end` = 200, `reference` = "N", `alternate` = "DEL",
         `number_genes` = 0, `genes` = List(),
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
-          `id` = "variant_is_100_200_5__DEL",
           `external_frequencies` = EnrichedCNVClusterFrequencies(
-            `gnomad_exomes_4` = EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001)
+            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001))
           )
         ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
       EnrichedCNV(),

@@ -61,11 +61,11 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `cluster`: EnrichedCNVCluster = EnrichedCNVCluster(),
                        `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
-case class EnrichedCNVCluster(`id`: String = null,
+case class EnrichedCNVCluster(`id`: Option[String] = Some("DRAGEN:DUP:chr1:9823628-9823687"),
                               `external_frequencies`: EnrichedCNVClusterFrequencies = EnrichedCNVClusterFrequencies(),
                              )
 
-case class EnrichedCNVClusterFrequencies(`gnomad_exomes_4`: EnrichedCNVClusterFrequenciesGnomadV4 = EnrichedCNVClusterFrequenciesGnomadV4(),
+case class EnrichedCNVClusterFrequencies(`gnomad_exomes_4`: Option[EnrichedCNVClusterFrequenciesGnomadV4] = None,
                                         )
 
 case class EnrichedCNVClusterFrequenciesGnomadV4(`sc`: Double = 0.0,
