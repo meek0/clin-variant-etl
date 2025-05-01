@@ -76,67 +76,102 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
 
   "transform" should "enrich CNV data with overlapping gnomad v4 exomes" in {
     val data = testData ++ Map(
+      normalized_cnv_somatic_tumor_only.id -> Seq[NormalizedCNVSomaticTumorOnly]().toDF(), // empty somatics for test simplicity
       normalized_cnv.id -> Seq(
-        NormalizedCNV(),
-        NormalizedCNV(`chromosome` = "5", `start` = 100, `end` = 230, `reference` = "N", `alternate` = "DEL"), // overlap 70% with variant_is_100_200_5__DEL and 100% with variant_is_100_230_5__DEL
-        NormalizedCNV(`chromosome` = "5", `start` = 101, `end` = 200, `reference` = "N", `alternate` = "DEL"), // overlap 99%
-        NormalizedCNV(`chromosome` = "5", `start` = 102, `end` = 182, `reference` = "N", `alternate` = "DEL"), // overlap 80%
-        NormalizedCNV(`chromosome` = "5", `start` = 103, `end` = 153, `reference` = "N", `alternate` = "DEL"), // overlap 50%
+        // match CLUSTER_1_100_200
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01"),
+        // match CLUSTER_2_100_200
+        NormalizedCNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02"),
+        // match CLUSTER_3_100_200
+        NormalizedCNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03"),
+        // match no cluster
+        NormalizedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_04"),
+        // match CLUSTER_5_100_200
+        NormalizedCNV(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_05"),
+        // match CLUSTER_6_100_200
+        NormalizedCNV(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_06"),
       ).toDF(),
-      normalized_cnv_somatic_tumor_only.id -> Seq[NormalizedCNVSomaticTumorOnly]().toDF(),
+      nextflow_svclustering.id -> Seq(
+        // has 100% overlap with GNOMAD_01
+        SVClustering(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("CNV_01"), `name` = "CLUSTER_1_100_200"),
+        // has 80% overlap with GNOMAD_02
+        SVClustering(`chromosome` = "2", `start` = 100, `end` = 180, `alternate` = "A", reference = "REF", `members` = Seq("CNV_02"), `name` = "CLUSTER_2_100_200"),
+        // has 50% overlap with GNOMAD_03
+        SVClustering(`chromosome` = "3", `start` = 150, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("CNV_03"), `name` = "CLUSTER_3_100_200"),
+        // has 80% overlap with both GNOMAD_05_01 and GNOMAD_05_02
+        SVClustering(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("CNV_05"), `name` = "CLUSTER_5_100_200"),
+        // doesn't overlap with GNOMAD_06
+        SVClustering(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("CNV_06"), `name` = "CLUSTER_6_100_200"),
+      ).toDF,
       normalized_gnomad_cnv_v4.id -> Seq(
-        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 200, `reference` = "N", `alternate` = "DEL", `sc` = 6.0, `sn` = 0.15, `sf` = 0.001),
-        // following cluster is used to detect and avoid duplicates
-        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 200, `reference` = "N", `alternate` = "DEL", `sc` = 6.0, `sn` = 0.15, `sf` = 0.001),
-        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 230, `reference` = "N", `alternate` = "DEL", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002),
+        NormalizedGnomadV4CNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002, `name` = "GNOMAD_01"),
+        NormalizedGnomadV4CNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002, `name` = "GNOMAD_02"),
+        NormalizedGnomadV4CNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002, `name` = "GNOMAD_03"),
+        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 100, `end` = 180, `alternate` = "A", reference = "REF", `sc` = 7.0, `sn` = 0.16, `sf` = 0.002, `name` = "GNOMAD_05_01"),
+        NormalizedGnomadV4CNV(`chromosome` = "5", `start` = 120, `end` = 200, `alternate` = "A", reference = "REF", `sc` = 7.0, `sn` = 0.16, `sf` = 0.003, `name` = "GNOMAD_05_02"),
+        NormalizedGnomadV4CNV(`chromosome` = "6", `start` = 200, `end` = 300, `alternate` = "A", reference = "REF", `sc` = 7.0, `sn` = 0.16, `sf` = 0.003, `name` = "GNOMAD_06"),
       ).toDF(),
     )
 
-    val result = job.transformSingle(data)
-
-    result
+    job.transformSingle(data)
       .as[EnrichedCNV]
+      .sort($"name".asc) // help organizing assertions bellow
       .collect() should contain theSameElementsAs Seq(
-      EnrichedCNV(`chromosome` = "5", `start` = 100, `end` = 230, `reference` = "N", `alternate` = "DEL",
-        `number_genes` = 0, `genes` = List(),
+      EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
+          `id` = Some("CLUSTER_1_100_200"),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
-        ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
-      EnrichedCNV(`chromosome` = "5", `start` = 102, `end` = 182, `reference` = "N", `alternate` = "DEL",
-        `number_genes` = 0, `genes` = List(),
+        ), `hash` = "d770393e8488e9abd9380b5ff08e44e8689a82a5"),
+      EnrichedCNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_02",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
+          `id` = Some("CLUSTER_2_100_200"),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
-            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001))
+            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
-        ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
-      EnrichedCNV(`chromosome` = "5", `start` = 101, `end` = 200, `reference` = "N", `alternate` = "DEL",
-        `number_genes` = 0, `genes` = List(),
-        `variant_external_reference` = Set("gnomAD"),
-        `cluster` = EnrichedCNVCluster(
-          `external_frequencies` = EnrichedCNVClusterFrequencies(
-            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 6.0, `sn` = 0.15, `sf` = 0.001))
-          )
-        ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
-      EnrichedCNV(`chromosome` = "1", `start` = 10000, `end` = 10059, `reference` = "A", `alternate` = "TAA",
+        ), `hash` = "a099572eaa03cd35dcbfe01be45bd2e036b9d21e"),
+      EnrichedCNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_03",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
-          `id` = Some("DRAGEN:DUP:chr1:9823628-9823687"),
+          `id` = Some("CLUSTER_3_100_200"),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
-        ), `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5"),
-      EnrichedCNV(`chromosome` = "5", `start` = 103, `end` = 153, `reference` = "N", `alternate` = "DEL",
-        `number_genes` = 0, `genes` = List(),
+        ), `hash` = "f43e1ff5313885d668443e05791f03ec1c9231b8"),
+      EnrichedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_04",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `variant_external_reference` = Set(),
+        `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(
-          `id` = Some("DRAGEN:DUP:chr1:9823628-9823687"),
+          `id` = None,
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
-        ), `hash` = "06d5708f770eeb37bab6ddef28ad60dda7e0a908"),
+        ), `hash` = "87779ec18f24a04f353cc13d7c2930406817c735"),
+      EnrichedCNV(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_05",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `variant_external_reference` = Set("gnomAD"),
+        `cluster` = EnrichedCNVCluster(
+          `id` = Some("CLUSTER_5_100_200"),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(
+            `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.003))
+          )
+        ), `hash` = "cc6e13e9aad1772f5ab02aef08f1ffaeb0294272"),
+      EnrichedCNV(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_06",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `variant_external_reference` = Set(),
+        `cluster` = EnrichedCNVCluster(
+          `id` = Some("CLUSTER_6_100_200"),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(
+            `gnomad_exomes_4` = None
+          )
+        ), `hash` = "5f801a8352117ff5b6b204ba6ee78427ec5acdbd"),
     )
   }
 

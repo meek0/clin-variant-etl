@@ -43,6 +43,7 @@ case class NormalizeSVClustering(rc: RuntimeETLContext) extends SimpleSingleETL(
       .select(
         chromosome,
         start,
+        end,
         reference,
         alternate,
         name,
@@ -55,7 +56,7 @@ case class NormalizeSVClustering(rc: RuntimeETLContext) extends SimpleSingleETL(
     val pn: Long = normalizedDf.select($"aliquot_id").distinct().count()
 
     normalizedDf
-      .groupBy("name")
+      .groupBy($"chromosome", $"start", $"end", $"reference", $"alternate", $"name")
       .agg(
         first("members") as "members",
         struct(

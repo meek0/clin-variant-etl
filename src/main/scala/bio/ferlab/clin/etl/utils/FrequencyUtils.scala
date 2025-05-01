@@ -74,12 +74,9 @@ object FrequencyUtils {
     lit(0.0).cast("double") as "sf"
   ) as "gnomad_exomes_4"
 
-  final val EmptyCluster = struct(
-    lit(null).cast(StringType) as "id",
-    struct(
-      EmptyGnomadV4
-    ) as "external_frequencies"
-  ) as "cluster"
+  final val EmptyClusterFrequencies = struct(
+    EmptyGnomadV4
+  ) as "external_frequencies"
 
   implicit class FrequencyOps(df: DataFrame)(implicit spark: SparkSession) {
 

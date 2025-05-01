@@ -4,7 +4,12 @@
  */
 package bio.ferlab.clin.model.nextflow
 
-case class SVClustering(`name`: String = "DRAGEN:DUP:chr1:9823628-9823687",
+case class SVClustering(`chromosome`: String = "1",
+                        `start`: Long = 9823629,
+                        `end`: Long = 9823688,
+                        `reference`: String = "A",
+                        `alternate`: String = "<DEL>",
+                         `name`: String = "DRAGEN:DUP:chr1:9823628-9823687",
                         `members`: Seq[String] = Seq("DRAGEN:LOSS:chr1:9823628-9823687"),
                         `frequency_RQDM`: FREQUENCY_RQDM = FREQUENCY_RQDM())
 

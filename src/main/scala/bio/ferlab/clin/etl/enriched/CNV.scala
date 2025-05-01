@@ -10,7 +10,7 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.transformation.DropDuplicates
 import mainargs.{ParserForMethods, main}
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{struct, _}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
@@ -83,8 +83,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withExons(refseqDf)
       .withGenes(genesDf)
       .withParentalOrigin(parentalOriginDf)
-      .withFrequencies(svclusteringDf)
-      .withOverlappingGnomad(gnomadV4)
+      .withFrequencies(svclusteringDf, gnomadV4)
       .withClinVariantExternalReference
       .withColumn("number_genes", size($"genes"))
       .withColumn("hash", sha1(concat_ws("-", col("name"), col("alternate"), col("service_request_id")))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
@@ -93,6 +92,12 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
 
 object CNV {
   private final val CnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
+  private final val SvClusteringRegion: Region = Region(col("cnv.cluster_info.chromosome"), col("cnv.cluster_info.start"), col("cnv.cluster_info.end"))
+  private final val SvClusteringDropDuplicates = new DropDuplicates(
+    Seq("cnv.cluster_info.chromosome", "cnv.cluster_info.start", "cnv.cluster_info.end"),
+    col("overlap_fraction_gnomad").desc,
+    col("gnomad.sf").desc
+  )
 
   implicit class DataFrameOps(df: DataFrame) {
 
@@ -189,41 +194,45 @@ object CNV {
         .select(df("*"), $"transmission", $"parental_origin")
     }
 
-    def withFrequencies(svclustering: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    def withFrequencies(svclustering: DataFrame, gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 
-      df
-        .withColumn("cluster", FrequencyUtils.EmptyCluster)
+      val clusterDf = df
         .join(svclustering, array_contains(svclustering("members"), df("name")), "left")
         .select(
           df("*"),
           $"frequency_RQDM",
           struct(
             svclustering("name") as "id",
-            $"cluster.external_frequencies",
+            FrequencyUtils.EmptyClusterFrequencies
           ) as "cluster",
+          struct( // temporary struct to help frequencies jointures
+            svclustering("chromosome") as "chromosome",
+            svclustering("start") as "start",
+            svclustering("end") as "end",
+          ) as "cluster_info"
         )
+
+      joinSvClusteringOverlappingGnomad(clusterDf, gnomadV4)
+        .drop("cluster_info")
     }
 
-    def withOverlappingGnomad(gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    def joinSvClusteringOverlappingGnomad(clusterDf: DataFrame, gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 
       val gnomadRegion = Region($"gnomad.chromosome", $"gnomad.start", $"gnomad.end")
 
-      val overlapWithMetricsDF = df.as("cnv")
-        .join(gnomadV4.as("gnomad"), CnvRegion.isOverlapping(gnomadRegion), "left")
+      val overlapWithMetricsDF = clusterDf.as("cnv")
+        .join(gnomadV4.as("gnomad"), SvClusteringRegion.isOverlapping(gnomadRegion), "left")
         .withColumn("overlap_length",
-          least(col("cnv.end"), col("gnomad.end")) - greatest(col("cnv.start"), col("gnomad.start")) + 1
+          least(col("cnv.cluster_info.end"), col("gnomad.end")) - greatest(col("cnv.cluster_info.start"), col("gnomad.start")) + 1
         )
         .withColumn("length_gnomad", col("gnomad.end") - col("gnomad.start") + 1)
         .withColumn("overlap_fraction_gnomad", col("overlap_length") / col("length_gnomad"))
 
-      val distinctPverlapWithMetricsDF = new DropDuplicates(
-        Seq("cnv.chromosome", "cnv.start", "cnv.reference", "cnv.alternate"),
-        $"overlap_fraction_gnomad".desc
-      ).transform(overlapWithMetricsDF)
+      val distinctOverlapWithMetricsDF = SvClusteringDropDuplicates.transform(overlapWithMetricsDF)
 
-      val withThresholdDf = distinctPverlapWithMetricsDF.filter(
+      val withThresholdDf = distinctOverlapWithMetricsDF.filter(
         col("overlap_fraction_gnomad") >= Region.GnomadV4CNVOverlapThreshold
       ).select(
         $"cnv.chromosome" as "chromosome",
@@ -237,9 +246,9 @@ object CNV {
         ) as "gnomad_exomes_4"
       )
 
-      df.joinByLocus(withThresholdDf, "left")
+      clusterDf.joinByLocus(withThresholdDf, "left")
         .select(
-          df("*"),
+          clusterDf("*"),
           $"gnomad_exomes_4"
         )
         .withColumn("cluster", $"cluster".withField("external_frequencies.gnomad_exomes_4", $"gnomad_exomes_4"))

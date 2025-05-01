@@ -50,8 +50,8 @@ class NormalizeSVClusteringSpec extends SparkSpec with WithTestConfig {
     result
       .as[SVClustering]
       .collect() should contain theSameElementsAs Seq(
-      SVClustering(`name` = "DRAGEN:LOSS:chr1:9823628-9823687", `frequency_RQDM` = FREQUENCY_RQDM(pn = 5, pc = 4, pf = 0.8)),
       SVClustering(`name` = "DRAGEN:DUP:chr1:9823628-9823687", `frequency_RQDM` = FREQUENCY_RQDM(pn = 5, pc = 2, pf = 0.4)),
+      SVClustering(`name` = "DRAGEN:LOSS:chr1:9823628-9823687", `frequency_RQDM` = FREQUENCY_RQDM(pn = 5, pc = 4, pf = 0.8)),
     )
   }
 }
