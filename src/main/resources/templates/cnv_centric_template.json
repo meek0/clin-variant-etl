@@ -294,6 +294,36 @@
               "type": "long"
             }
           }
+        },
+        "variant_external_reference": {
+          "type": "keyword"
+        },
+        "cluster": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "external_frequencies": {
+              "properties": {
+                "gnomad_exomes_4": {
+                  "properties": {
+                    "sc": {
+                      "type": "double",
+                      "index": false
+                    },
+                    "sn": {
+                      "type": "double",
+                      "index": false
+                    },
+                    "sf": {
+                      "type": "float",
+                      "index": false
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
