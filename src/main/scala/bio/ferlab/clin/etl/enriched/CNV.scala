@@ -206,7 +206,7 @@ object CNV {
             svclustering("name") as "id",
             FrequencyUtils.EmptyClusterFrequencies
           ) as "cluster",
-          struct( // temporary struct to help frequencies jointures
+          struct( // temporary struct to help frequencies joins
             svclustering("chromosome") as "chromosome",
             svclustering("start") as "start",
             svclustering("end") as "end",
