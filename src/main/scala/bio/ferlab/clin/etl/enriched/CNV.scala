@@ -94,7 +94,7 @@ object CNV {
   private final val CnvRegion: Region = Region(col("cnv.chromosome"), col("cnv.start"), col("cnv.end"))
   private final val SvClusteringRegion: Region = Region(col("cnv.cluster_info.chromosome"), col("cnv.cluster_info.start"), col("cnv.cluster_info.end"))
   private final val SvClusteringDropDuplicates = new DropDuplicates(
-    Seq("cnv.chromosome", "cnv.start", "cnv.end"),
+    Seq("cnv.chromosome", "cnv.start", "cnv.reference", "cnv.alternate"),
     col("overlap_fraction_gnomad").desc,
     col("gnomad.sf").desc
   )
@@ -210,6 +210,8 @@ object CNV {
             svclustering("chromosome") as "chromosome",
             svclustering("start") as "start",
             svclustering("end") as "end",
+            svclustering("reference") as "reference",
+            svclustering("alternate") as "alternate",
           ) as "cluster_info"
         )
 
