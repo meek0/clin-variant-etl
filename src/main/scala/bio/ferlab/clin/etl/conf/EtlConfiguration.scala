@@ -12,6 +12,7 @@ object EtlConfiguration extends App {
   val clin_datalake = "clin_datalake"
   val clin_import = "clin_import"
   val clin_download = "clin_download"
+  val clin_nextflow = "clin_nextflow"
 
   val clin_qa_database = "clin_qa"
   val clin_staging_database = "clin_staging"
@@ -20,20 +21,22 @@ object EtlConfiguration extends App {
   val clin_qa_storage = List(
     StorageConf(clin_import, "s3a://cqgc-qa-app-files-import", S3),
     StorageConf(clin_datalake, "s3a://cqgc-qa-app-datalake", S3),
-    StorageConf(clin_download, "s3a://cqgc-qa-app-download", S3)
+    StorageConf(clin_download, "s3a://cqgc-qa-app-download", S3),
+    StorageConf(clin_nextflow, "s3a://cqgc-qa-app-nextflow", S3)
   )
 
   val clin_staging_storage = List(
     StorageConf(clin_import, "s3a://cqgc-staging-app-files-import", S3),
     StorageConf(clin_datalake, "s3a://cqgc-staging-app-datalake", S3),
-    StorageConf(clin_download, "s3a://cqgc-staging-app-download", S3)
-
+    StorageConf(clin_download, "s3a://cqgc-staging-app-download", S3),
+    StorageConf(clin_nextflow, "s3a://cqgc-staging-app-nextflow", S3)
   )
 
   val clin_prd_storage = List(
     StorageConf(clin_import, "s3a://cqgc-prod-app-files-import", S3),
     StorageConf(clin_datalake, "s3a://cqgc-prod-app-datalake", S3),
-    StorageConf(clin_download, "s3a://cqgc-prod-app-download", S3)
+    StorageConf(clin_download, "s3a://cqgc-prod-app-download", S3),
+    StorageConf(clin_nextflow, "s3a://cqgc-prod-app-nextflow", S3)
   )
 
   val clin_spark_conf = Map(
@@ -96,12 +99,12 @@ object EtlConfiguration extends App {
 
       // nextflow
       // svclustering
-      DatasetConf("nextflow_svclustering_input" , clin_datalake, "/nextflow/svclustering_input"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
-      DatasetConf("nextflow_svclustering_output", clin_datalake, "/nextflow/svclustering_output/svclustering*/*.vcf.gz", VCF  , Read),
+      DatasetConf("nextflow_svclustering_input" , clin_nextflow, "/svclustering/input"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_output", clin_nextflow, "/svclustering/output/svclustering*/*.vcf.gz", VCF  , Read),
       DatasetConf("nextflow_svclustering"       , clin_datalake, "/nextflow/svclustering"                              , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering")), keys = List("name"), repartition = Some(FixedRepartition(1))),
       // svclustering-parental-origin
-      DatasetConf("nextflow_svclustering_parental_origin_input" , clin_datalake, "/nextflow/svclustering_parental_origin_input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
-      DatasetConf("nextflow_svclustering_parental_origin_output", clin_datalake, "/nextflow/svclustering_parental_origin_output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),
+      DatasetConf("nextflow_svclustering_parental_origin_input" , clin_nextflow, "/svclustering_parental_origin/input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_parental_origin_output", clin_nextflow, "/svclustering_parental_origin/output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),
       DatasetConf("nextflow_svclustering_parental_origin"       , clin_datalake, "/nextflow/svclustering_parental_origin"                                           , DELTA, OverWritePartition, partitionby = List("analysis_service_request_id"), table = Some(TableConf("clin", "nextflow_svclustering_parental_origin")), keys = List("name", "service_request_id"), repartition = Some(RepartitionByColumns(Seq("analysis_service_request_id"), n = Some(1)))),
 
       //clinical normalized

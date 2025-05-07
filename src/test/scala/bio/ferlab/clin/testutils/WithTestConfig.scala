@@ -4,7 +4,6 @@ import bio.ferlab.datalake.commons.config.{Configuration, ConfigurationLoader, S
 import bio.ferlab.datalake.commons.file.FileSystemType.{LOCAL, S3}
 import pureconfig.generic.auto._
 
-
 trait WithTestConfig {
   lazy val initConf: SimpleConfiguration = ConfigurationLoader.loadFromResources[SimpleConfiguration]("config/test.conf")
   lazy implicit val conf: SimpleConfiguration = initConf.copy(datalake = initConf.datalake.copy(
@@ -12,6 +11,7 @@ trait WithTestConfig {
       StorageConf("clin_datalake", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
       StorageConf("clin_import", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
       StorageConf("clin_download", "s3a://test", S3),
+      StorageConf("clin_nextflow", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
       StorageConf("raw", this.getClass.getClassLoader.getResource(".").getFile, LOCAL),
       StorageConf("normalized", this.getClass.getClassLoader.getResource(".").getFile, LOCAL)
     )
