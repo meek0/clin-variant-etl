@@ -308,16 +308,13 @@
                 "gnomad_exomes_4": {
                   "properties": {
                     "sc": {
-                      "type": "double",
-                      "index": false
+                      "type": "double"
                     },
                     "sn": {
-                      "type": "double",
-                      "index": false
+                      "type": "double"
                     },
                     "sf": {
-                      "type": "float",
-                      "index": false
+                      "type": "float"
                     }
                   }
                 }
