@@ -136,12 +136,12 @@ object EtlConfiguration extends App {
 
     ) ++ PublicDatasets(clin_datalake, tableDatabase = Some("clin"), viewDatabase = None).sources
 
-  var duplicates = sources.groupBy(_.path).filter(_._2.size > 1)
+  var duplicates = sources.groupBy(_.path).filter { case (_, group) => group.size > 1 }
   if (duplicates.nonEmpty) {
     duplicates.keys.foreach { path =>
       println(s"Duplicated path: $path")
-      duplicates(path).foreach { ds =>
-        println(s" - ${ds.id}")
+      duplicates(path).foreach { conf =>
+        println(s" - ${conf.id}")
       }
     }
     throw new IllegalStateException(s"Duplicated path(s) found")
