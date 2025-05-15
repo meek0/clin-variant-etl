@@ -76,7 +76,7 @@ object EtlConfiguration extends App {
 
       //old version of dbnsfp, should be removed after migration
       //DatasetConf("deprecated_normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite),
-      DatasetConf("deprecated_normalized_dbnsfp_original"     , clin_datalake, "/public/dbnsfp/scores"                              , PARQUET, OverWrite),
+      //DatasetConf("deprecated_normalized_dbnsfp_original"     , clin_datalake, "/public/dbnsfp/scores"                              , PARQUET, OverWrite),
       //varsome
       DatasetConf("normalized_varsome"             , clin_datalake, "/public/varsome"                                    , DELTA  , Upsert   , partitionby = List("chromosome"), table = Some(TableConf("clin", "varsome")), keys = List("chromosome", "start", "reference", "alternate")),
       //fhir
@@ -135,6 +135,17 @@ object EtlConfiguration extends App {
       DatasetConf("es_index_coverage_by_gene_centric", clin_datalake, "/es_index/coverage_by_gene_centric", PARQUET, OverWrite, partitionby = List("chromosome"), table = Some(TableConf("clin", "coverage_by_gene_centric"))),
 
     ) ++ PublicDatasets(clin_datalake, tableDatabase = Some("clin"), viewDatabase = None).sources
+
+  var duplicates = sources.groupBy(_.path).filter(_._2.size > 1)
+  if (duplicates.nonEmpty) {
+    duplicates.keys.foreach { path =>
+      println(s"Duplicated path: $path")
+      duplicates(path).foreach { ds =>
+        println(s" - ${ds.id}")
+      }
+    }
+    throw new IllegalStateException(s"Duplicated path(s) found")
+  }
 
   val qa_conf = SimpleConfiguration(DatalakeConf(
     storages = clin_qa_storage,
