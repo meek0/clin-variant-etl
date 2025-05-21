@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.SNV._
-import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV}
-import bio.ferlab.clin.model.normalized.{NormalizedExomiser, NormalizedFranklin, NormalizedSNV}
+import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedCNV, EnrichedCNVCluster, EnrichedCNVClusterFrequencies, EnrichedSNV}
+import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedExomiser, NormalizedFranklin, NormalizedSNV}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -13,11 +13,13 @@ class SNVSpec extends SparkSpec with WithTestConfig {
   import spark.implicits._
 
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
+  val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val normalized_exomiser: DatasetConf = conf.getDataset("normalized_exomiser")
   val normalized_franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
   it should "transform data into expected format" in {
     val snvDf = Seq(NormalizedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1")).toDF()
+    val cnvDf = Seq(NormalizedCNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1")).toDF()
     val exomiserDf = Seq(
       NormalizedExomiser(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", contributing_variant = true, moi = "XR", gene_combined_score = 1),
       NormalizedExomiser(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", contributing_variant = true, moi = "AD", gene_combined_score = 0.99f),
@@ -26,6 +28,7 @@ class SNVSpec extends SparkSpec with WithTestConfig {
 
     val data = Map(
       normalized_snv.id -> snvDf,
+      normalized_cnv.id -> cnvDf,
       normalized_exomiser.id -> exomiserDf,
       normalized_franklin.id -> franklinDf
     )

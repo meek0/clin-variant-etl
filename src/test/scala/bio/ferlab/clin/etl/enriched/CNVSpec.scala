@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model.enriched.{EnrichedCNV, EnrichedCNVCluster, EnrichedCNVClusterFrequencies, EnrichedCNVClusterFrequenciesGnomadV4, EnrichedClinical}
 import bio.ferlab.clin.model.nextflow.{SVClustering, SVClusteringParentalOrigin}
-import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedPanels, NormalizedRefSeq}
+import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedPanels, NormalizedRefSeq, NormalizedSNV}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.loader.LoadResolver
@@ -17,6 +17,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
   val destination: DatasetConf = conf.getDataset("enriched_cnv")
   val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
+  val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
   val normalized_refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -36,6 +37,9 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT1"),
       NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT2")
     ).toDF(),
+    normalized_snv.id -> Seq(
+      NormalizedSNV(),
+    ).toDF(),
     nextflow_svclustering.id -> Seq(SVClustering()).toDF(),
     // This table is partitioned by analysis_service_request_id
     nextflow_svclustering_parental_origin.id -> Seq(
@@ -54,7 +58,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
     ).toDF()
   )
 
-  override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only,
+  override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only, normalized_snv,
     normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering,
     nextflow_svclustering_parental_origin, normalized_gnomad_cnv_v4)
 
@@ -172,6 +176,55 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
             `gnomad_exomes_4` = None
           )
         ), `hash` = "5f801a8352117ff5b6b204ba6ee78427ec5acdbd"),
+    )
+  }
+
+  "transform" should "enrich CNV data with snv count" in {
+    val data = testData ++ Map(
+      normalized_cnv_somatic_tumor_only.id -> Seq[NormalizedCNVSomaticTumorOnly]().toDF(), // empty somatics for test simplicity
+      normalized_cnv.id -> Seq(
+        // includes no SNV
+        NormalizedCNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", reference = "REF", `name` = "CNV_00", `service_request_id` = "SR_000"),
+        // includes 3 SNV
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `service_request_id` = "SR_001"),
+        // includes 1 SNV
+        NormalizedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_001"),
+        // includes 1 SNV from another service request
+        NormalizedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_002", `aliquot_id` = "11112"),
+      ).toDF(),
+      normalized_snv.id -> Seq(
+        NormalizedSNV(`chromosome` = "1", `start` = 105, `end` = 195, `alternate` = "A", reference = "REF", `name` = "SNV_01", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 140, `end` = 200, `alternate` = "A", reference = "REF", `name` = "SNV_02", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 110, `alternate` = "A", reference = "REF", `name` = "SNV_03", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `name` = "SNV_04", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `name` = "SNV_04", `service_request_id` = "SR_002"),
+      ).toDF(),
+    )
+
+    job.transformSingle(data)
+      .as[EnrichedCNV]
+      .sort($"name".asc) // help organizing assertions bellow
+      .collect() should contain theSameElementsAs Seq(
+      EnrichedCNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", `reference` = "REF", `name` = "CNV_00", `snv_count` = 0, `service_request_id` = "SR_000",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
+        `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `hash` = "54983b0279495b4e60366f31a3c352da5acc8281",
+      ),
+      EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 3, `service_request_id` = "SR_001",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
+        `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
+      ),
+      EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `service_request_id` = "SR_001",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
+        `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `hash` = "fb94d57b79ff40168cc7cb7b8cf5607eb6cf47e4",
+      ),
+      EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `service_request_id` = "SR_002",
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
+        `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `hash` = "37b02ad5d5fb4fcc3c783ebcdecff26480a44ef3", `aliquot_id` = "11112",
+      ),
     )
   }
 

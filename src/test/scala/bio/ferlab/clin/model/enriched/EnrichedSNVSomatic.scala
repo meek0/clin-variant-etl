@@ -64,6 +64,7 @@ case class EnrichedSNVSomatic(`chromosome`: String = "1",
                               `hc_complement`: Seq[HC_COMPLEMENT_SOMATIC_TUMOR_ONLY] = Seq(HC_COMPLEMENT_SOMATIC_TUMOR_ONLY()),
                               `possibly_hc_complement`: Seq[POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY] = Seq(POSSIBLY_HC_COMPLEMENT_SOMATIC_TUMOR_ONLY()),
                               `is_possibly_hc`: Boolean = false,
+                              `cnv_count`: Long = 0,
                               `all_analyses`: Set[String] = Set("TO"))
 
 case class HC_COMPLEMENT_SOMATIC_TUMOR_ONLY(`symbol`: Option[String] = None,

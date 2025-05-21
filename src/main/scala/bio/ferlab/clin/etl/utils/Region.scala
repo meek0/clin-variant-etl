@@ -15,6 +15,10 @@ case class Region(chromosome: Column, start: Column, end: Column) {
       )
   }
 
+  def isIncluding(other: Region): Column = {
+    this.chromosome === other.chromosome and (other.start between(this.start, this.end) and (other.end between(this.start, this.end)))
+  }
+
   def overlap(other: Region): Column = {
     when(this.start <= other.start and this.end >= other.end, other.nbBases)
       .when(this.start >= other.start and this.end <= other.end, this.nbBases)

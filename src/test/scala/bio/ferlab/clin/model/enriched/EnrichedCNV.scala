@@ -59,6 +59,7 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `number_genes`: Int = 1,
                        `variant_external_reference`: Set[String] = Set(),
                        `cluster`: EnrichedCNVCluster = EnrichedCNVCluster(),
+                       `snv_count`: Long = 0,
                        `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
 case class EnrichedCNVCluster(`id`: Option[String] = Some("DRAGEN:DUP:chr1:9823628-9823687"),

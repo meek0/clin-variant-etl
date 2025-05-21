@@ -16,6 +16,7 @@ case class SNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_snv")
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
+  val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val normalized_exomiser: DatasetConf = conf.getDataset("normalized_exomiser")
   val normalized_franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
@@ -23,6 +24,7 @@ case class SNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
     Map(
       normalized_snv.id -> normalized_snv.read,
+      normalized_cnv.id -> normalized_cnv.read,
       normalized_exomiser.id -> normalized_exomiser.read,
       normalized_franklin.id -> normalized_franklin.read
     )
@@ -34,6 +36,7 @@ case class SNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
     data(normalized_snv.id)
       .withExomiser(data(normalized_exomiser.id))
       .withFranklin(data(normalized_franklin.id))
+      .withCnvCount(data(normalized_cnv.id))
   }
 
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
@@ -41,6 +44,11 @@ case class SNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 
 object SNV {
   implicit class DataFrameOps(df: DataFrame) {
+
+    def withCnvCount(cnv: DataFrame): DataFrame = {
+      withCount(df, "hgvsg", cnv, "name", "cnv_count")
+    }
+
     def withExomiser(exomiser: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 

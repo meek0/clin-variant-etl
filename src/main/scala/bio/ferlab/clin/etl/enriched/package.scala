@@ -1,7 +1,9 @@
 package bio.ferlab.clin.etl
 
+import bio.ferlab.clin.etl.enriched.CNV.CnvRegion
+import bio.ferlab.clin.etl.utils.Region
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{array, array_union, col, lit, when}
+import org.apache.spark.sql.functions.{array, array_union, col, count, lit, when}
 
 package object enriched {
 
@@ -13,6 +15,25 @@ package object enriched {
       ) { case (currDf, (cond, value)) =>
         currDf.withColumn(outputColumn, when(cond, array_union(col(outputColumn), array(lit(value)))).otherwise(col(outputColumn)))
       }
+  }
+
+  def withCount(left: DataFrame, leftColToGroup: String, right: DataFrame, rightColToCount: String, countColName: String): DataFrame = {
+    import left.sparkSession.implicits._
+
+    val leftRegion = Region($"left.chromosome", $"left.start", $"left.end")
+    val rightRegion = Region($"right.chromosome", $"right.start", $"right.end")
+
+    val countDf = left.as("left").join(right.alias("right"), ($"left.service_request_id" === $"right.service_request_id") and leftRegion.isIncluding(rightRegion), "left")
+      .groupBy("left.service_request_id", s"left.$leftColToGroup")
+      .agg(count(right(rightColToCount)) as "count")
+      .select(
+        $"left.service_request_id" as "service_request_id",
+        left(leftColToGroup) as leftColToGroup,
+        $"count",
+      )
+
+    left.join(countDf, Seq("service_request_id", leftColToGroup), "left")
+      .select(left("*"), $"count" as countColName)
   }
 
 }

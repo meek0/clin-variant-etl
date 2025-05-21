@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model.enriched.{EnrichedClinical, EnrichedSNVSomatic}
-import bio.ferlab.clin.model.normalized.NormalizedSNVSomatic
+import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedSNVSomatic}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
@@ -12,6 +12,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
   import spark.implicits._
 
   val normalized_snv_somatic: DatasetConf = conf.getDataset("normalized_snv_somatic")
+  val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val enriched_snv_somatic: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
@@ -31,6 +32,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     NormalizedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_service_request_id = "SRA4", bioinfo_analysis_code = "TEBA")
   )
 
+  val existingNormalizedCnv = Seq(
+    NormalizedCNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1"),
+  )
+
   val existingEnrichedData = Seq(
     EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA"),
     EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA"),
@@ -38,7 +43,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     EnrichedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_service_request_id = "SRA4", bioinfo_analysis_code = "TEBA")
   )
 
-  override val dsToClean: List[DatasetConf] = List(normalized_snv_somatic, enriched_snv_somatic, enriched_clinical)
+  override val dsToClean: List[DatasetConf] = List(normalized_snv_somatic, normalized_cnv, enriched_snv_somatic, enriched_clinical)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -70,6 +75,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
       .apply(normalized_snv_somatic, normalizedSnvSomaticDf)
+    LoadResolver
+      .write
+      .apply(normalized_cnv.format, normalized_cnv.loadtype)
+      .apply(normalized_cnv, existingNormalizedCnv.toDF())
 
     val result = job(Some("BATCH3")).extract()
 
@@ -104,6 +113,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
       .apply(normalized_snv_somatic, normalizedSnvSomaticDf)
+    LoadResolver
+      .write
+      .apply(normalized_cnv.format, normalized_cnv.loadtype)
+      .apply(normalized_cnv, existingNormalizedCnv.toDF())
 
     val result = job(Some("BATCH3")).extract()
 
@@ -128,6 +141,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
       .apply(normalized_snv_somatic, existingNormalizedData.toDF())
+    LoadResolver
+      .write
+      .apply(normalized_cnv.format, normalized_cnv.loadtype)
+      .apply(normalized_cnv, existingNormalizedCnv.toDF())
 
     val result = job(None).extract()
 
@@ -149,6 +166,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
         NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH2", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
         NormalizedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH2", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
       ).toDF(),
+      normalized_cnv.id -> existingNormalizedCnv.toDF(),
       enriched_snv_somatic.id -> spark.emptyDataFrame
     )
 
@@ -175,6 +193,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
         NormalizedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH3", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
         NormalizedSNVSomatic(chromosome = "1", aliquot_id = "3", batch_id = "BATCH3", analysis_service_request_id = "SRA3", bioinfo_analysis_code = "TEBA")
       ).toDF(),
+      normalized_cnv.id -> existingNormalizedCnv.toDF(),
       enriched_snv_somatic.id -> Seq(
         EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
         EnrichedSNVSomatic(chromosome = "2", aliquot_id = "1", batch_id = "BATCH2", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
@@ -183,6 +202,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     )
 
     val result = job(Some("BATCH3")).transformSingle(data)
+
+    result.show(100, false)
 
     result
       .as[EnrichedSNVSomatic]
