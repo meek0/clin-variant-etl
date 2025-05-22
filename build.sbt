@@ -6,6 +6,14 @@ scalaVersion := "2.12.13"
 
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
+// To prevent formatting issues with float values when using Glow. For example, in the Canadian French locale,
+// float values are represented with a comma instead of a dot (ex: "3,00" instead of "3.0"). This can lead to
+// java number format exceptions when using Glow.
+javaOptions ++= Seq(
+  "-Duser.language=en",
+  "-Duser.country=US"
+)
+
 val spark_version = "3.3.1"
 val deltaCoreVersion = "2.1.1"
 val scalatestVersion = "3.2.9"
