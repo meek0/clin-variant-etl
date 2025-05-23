@@ -51,6 +51,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(enriched_snv_somatic.format, enriched_snv_somatic.loadtype)
       .apply(enriched_snv_somatic, existingEnrichedData.toDF())
+    LoadResolver
+      .write
+      .apply(normalized_cnv.format, normalized_cnv.loadtype)
+      .apply(normalized_cnv, existingNormalizedCnv.toDF())
   }
 
   "extract" should "only return current analyses when no past analyses exist" in {
@@ -75,10 +79,6 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
       .apply(normalized_snv_somatic, normalizedSnvSomaticDf)
-    LoadResolver
-      .write
-      .apply(normalized_cnv.format, normalized_cnv.loadtype)
-      .apply(normalized_cnv, existingNormalizedCnv.toDF())
 
     val result = job(Some("BATCH3")).extract()
 
@@ -113,10 +113,6 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
       .apply(normalized_snv_somatic, normalizedSnvSomaticDf)
-    LoadResolver
-      .write
-      .apply(normalized_cnv.format, normalized_cnv.loadtype)
-      .apply(normalized_cnv, existingNormalizedCnv.toDF())
 
     val result = job(Some("BATCH3")).extract()
 
@@ -141,10 +137,6 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .write
       .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
       .apply(normalized_snv_somatic, existingNormalizedData.toDF())
-    LoadResolver
-      .write
-      .apply(normalized_cnv.format, normalized_cnv.loadtype)
-      .apply(normalized_cnv, existingNormalizedCnv.toDF())
 
     val result = job(None).extract()
 
@@ -202,8 +194,6 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     )
 
     val result = job(Some("BATCH3")).transformSingle(data)
-
-    result.show(100, false)
 
     result
       .as[EnrichedSNVSomatic]

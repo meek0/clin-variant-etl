@@ -17,13 +17,13 @@ package object enriched {
       }
   }
 
-  def withCount(left: DataFrame, leftColToGroup: String, right: DataFrame, rightColToCount: String, countColName: String): DataFrame = {
-    import left.sparkSession.implicits._
+  def withCount(left: DataFrame, leftColToGroup: String, right: DataFrame, rightColToCount: String, countColName: String)(implicit sparkSession: SparkSession): DataFrame = {
+    import sparkSession.implicits._
 
     val leftRegion = Region($"left.chromosome", $"left.start", $"left.end")
     val rightRegion = Region($"right.chromosome", $"right.start", $"right.end")
 
-    val countDf = left.as("left").join(right.alias("right"), ($"left.service_request_id" === $"right.service_request_id") and leftRegion.isIncluding(rightRegion), "left")
+    val countDf = left.as("left").join(right.alias("right"), ($"left.service_request_id" === $"right.service_request_id") and leftRegion.isIncludingStartOf(rightRegion), "left")
       .groupBy("left.service_request_id", s"left.$leftColToGroup")
       .agg(count(right(rightColToCount)) as "count")
       .select(

@@ -45,7 +45,7 @@ case class SNV(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
 object SNV {
   implicit class DataFrameOps(df: DataFrame) {
 
-    def withCnvCount(cnv: DataFrame): DataFrame = {
+    def withCnvCount(cnv: DataFrame)(implicit spark: SparkSession): DataFrame = {
       withCount(df, "hgvsg", cnv, "name", "cnv_count")
     }
 
