@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl
 import bio.ferlab.clin.etl.enriched.CNV.CnvRegion
 import bio.ferlab.clin.etl.utils.Region
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{array, array_union, col, count, lit, when}
+import org.apache.spark.sql.functions.{array, array_union, col, count, count_distinct, lit, when}
 
 package object enriched {
 
@@ -25,7 +25,7 @@ package object enriched {
 
     val countDf = left.as("left").join(right.alias("right"), ($"left.service_request_id" === $"right.service_request_id") and leftRegion.isIncludingStartOf(rightRegion), "left")
       .groupBy("left.service_request_id", s"left.$leftColToGroup")
-      .agg(count(right(rightColToCount)) as "count")
+      .agg(count_distinct(right(rightColToCount)) as "count")
       .select(
         $"left.service_request_id" as "service_request_id",
         left(leftColToGroup) as leftColToGroup,

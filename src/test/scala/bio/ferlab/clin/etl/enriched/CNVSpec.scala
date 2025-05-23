@@ -119,7 +119,6 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
 
     job.transformSingle(data)
       .as[EnrichedCNV]
-      .sort($"name".asc) // help organizing assertions bellow
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
@@ -193,17 +192,16 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
         NormalizedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_002", `aliquot_id` = "11112"),
       ).toDF(),
       normalized_snv.id -> Seq(
-        NormalizedSNV(`chromosome` = "1", `start` = 105, `end` = 195, `alternate` = "A", reference = "REF", `name` = "SNV_01", `service_request_id` = "SR_001"),
-        NormalizedSNV(`chromosome` = "1", `start` = 140, `end` = 200, `alternate` = "A", reference = "REF", `name` = "SNV_02", `service_request_id` = "SR_001"),
-        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 110, `alternate` = "A", reference = "REF", `name` = "SNV_03", `service_request_id` = "SR_001"),
-        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `name` = "SNV_04", `service_request_id` = "SR_001"),
-        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `name` = "SNV_04", `service_request_id` = "SR_002"),
+        NormalizedSNV(`chromosome` = "1", `start` = 105, `end` = 195, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 140, `end` = 200, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 110, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_03", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `service_request_id` = "SR_002"),
       ).toDF(),
     )
 
     job.transformSingle(data)
       .as[EnrichedCNV]
-      .sort($"name".asc) // help organizing assertions bellow
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", `reference` = "REF", `name` = "CNV_00", `snv_count` = 0, `service_request_id` = "SR_000",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,

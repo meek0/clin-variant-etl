@@ -212,5 +212,40 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       EnrichedSNVSomatic(chromosome = "1", aliquot_id = "3", batch_id = "BATCH3", analysis_service_request_id = "SRA3", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
     )
   }
+
+  it should "enrich SNV Somatic data with cnv count" in {
+    val data = Map(
+      normalized_snv_somatic.id -> Seq(
+        // cover 0 CNV
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 99, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_00", `service_request_id` = "SR_000"),
+        // cover 3 CNV
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 150, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `service_request_id` = "SR_001"),
+        // cover 0 CNV
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 150, `end` = 200, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `service_request_id` = "SR_002"),
+      ).toDF(),
+      normalized_cnv.id -> Seq(
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 120, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 0, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_04", `service_request_id` = "SR_002"),
+      ).toDF(),
+      enriched_snv_somatic.id -> spark.emptyDataFrame
+    )
+
+    val result = job(None).transformSingle(data)
+
+    result.as[EnrichedSNVSomatic]
+      .collect() should contain theSameElementsAs Seq(
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 99, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `service_request_id` = "SR_000",
+
+      ),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 150, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 3, `service_request_id` = "SR_001",
+
+      ),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 150, `end` = 200, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 0, `service_request_id` = "SR_002",
+
+      ),
+    )
+  }
 }
 
