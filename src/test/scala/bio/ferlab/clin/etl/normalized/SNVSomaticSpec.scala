@@ -31,14 +31,14 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
 
   val clinicalDf: DataFrame = Seq(
     // TEBA (tumor only analysis)
-    EnrichedClinical(`patient_id` = "PA0001", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0001", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),
-    EnrichedClinical(`patient_id` = "PA0002", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0002", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "22222", `is_proband` = false, `gender` = "Male", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "SA_002", `specimen_id` = "SP_002", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
-    EnrichedClinical(`patient_id` = "PA0003", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0003", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "33333", `is_proband` = false, `gender` = "Female", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_003", `specimen_id` = "SP_003", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
+    EnrichedClinical(`patient_id` = "PA0001", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),
+    EnrichedClinical(`patient_id` = "PA0002", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0002", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "22222", `is_proband` = false, `gender` = "Male", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "SA_002", `specimen_id` = "SP_002", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
+    EnrichedClinical(`patient_id` = "PA0003", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0003", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "33333", `is_proband` = false, `gender` = "Female", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_003", `specimen_id` = "SP_003", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
 
     // TNEBA (tumor normal analysis)
-    EnrichedClinical(`patient_id` = "PA0001", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0001", `batch_id` = tumorNormalBatchId, `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),
-    EnrichedClinical(`patient_id` = "PA0002", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0002", `batch_id` = tumorNormalBatchId, `aliquot_id` = "22222", `is_proband` = false, `gender` = "Male", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "SA_002", `specimen_id` = "SP_002", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
-    EnrichedClinical(`patient_id` = "PA0003", `analysis_service_request_id` = "SRA0001", `service_request_id` = "SRS0003", `batch_id` = tumorNormalBatchId, `aliquot_id` = "33333", `is_proband` = false, `gender` = "Female", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_003", `specimen_id` = "SP_003", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
+    EnrichedClinical(`patient_id` = "PA0001", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `batch_id` = tumorNormalBatchId, `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),
+    EnrichedClinical(`patient_id` = "PA0002", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0002", `batch_id` = tumorNormalBatchId, `aliquot_id` = "22222", `is_proband` = false, `gender` = "Male", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "SA_002", `specimen_id` = "SP_002", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
+    EnrichedClinical(`patient_id` = "PA0003", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0003", `batch_id` = tumorNormalBatchId, `aliquot_id` = "33333", `is_proband` = false, `gender` = "Female", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_003", `specimen_id` = "SP_003", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
   ).toDF()
 
   val data: Map[String, DataFrame] = Map(
@@ -96,7 +96,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
       organization_id = "CHUSJ",
       hc_complement = List(),
       possibly_hc_complement = List(),
-      service_request_id = "SRS0001",
+      analysis_id = "SRA0001",
+      sequencing_id = "SRS0001",
       last_update = Date.valueOf(LocalDate.now()),
       batch_id = tumorOnlyBatchId,
       bioinfo_analysis_code = "TEBA"
@@ -111,7 +112,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
       specimen_id = "SP_003",
       sample_id = "SA_003",
       organization_id = "CHUSJ",
-      service_request_id = "SRS0003",
+      analysis_id = "SRA0001",
+      sequencing_id = "SRS0003",
       hc_complement = List(),
       possibly_hc_complement = List(),
       is_proband = false,
@@ -147,7 +149,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
       organization_id = "CHUSJ",
       hc_complement = List(),
       possibly_hc_complement = List(),
-      service_request_id = "SRS0001",
+      analysis_id = "SRA0001",
+      sequencing_id = "SRS0001",
       last_update = Date.valueOf(LocalDate.now()),
       batch_id = tumorNormalBatchId,
       bioinfo_analysis_code = "TNEBA"
@@ -162,7 +165,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
       specimen_id = "SP_003",
       sample_id = "SA_003",
       organization_id = "CHUSJ",
-      service_request_id = "SRS0003",
+      analysis_id = "SRA0001",
+      sequencing_id = "SRS0003",
       hc_complement = List(),
       possibly_hc_complement = List(),
       is_proband = false,

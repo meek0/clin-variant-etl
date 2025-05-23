@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.CNV._
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
-import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisIdsInBatch
 import bio.ferlab.clin.etl.utils.{FrequencyUtils, Region}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
@@ -49,9 +49,9 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
         val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only.read.where($"batch_id" === id)
         val normalizedSnvDf = normalized_snv.read.where($"batch_id" === id)
 
-        val analysisServiceRequestIds: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, id)
+        val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
         val nextflowSVClusteringParentalOrigin = nextflow_svclustering_parental_origin
-          .read.where($"analysis_service_request_id".isin(analysisServiceRequestIds: _*))
+          .read.where($"analysis_id".isin(analysisIds: _*))
 
         Map(
           normalized_cnv.id -> normalizedCnvDf,
@@ -93,8 +93,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withClinVariantExternalReference
       .withSnvCount(snvDf)
       .withColumn("number_genes", size($"genes"))
-      .withColumn("hash", sha1(concat_ws("-", col("name"), col("alternate"), col("service_request_id")))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
-
+      .withColumn("hash", sha1(concat_ws("-", col("name"), col("alternate"), col("sequencing_id")))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
   }
 }
 
@@ -201,7 +200,7 @@ object CNV {
 
       df
         .join(parentalOrigin,
-          df("service_request_id") === parentalOrigin("service_request_id") and array_contains(parentalOrigin("members"), df("name")),
+          df("sequencing_id") === parentalOrigin("sequencing_id") and array_contains(parentalOrigin("members"), df("name")),
           "left")
         .select(df("*"), $"transmission", $"parental_origin")
     }

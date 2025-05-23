@@ -1,10 +1,13 @@
 package bio.ferlab.clin.etl.es
 
+import bio.ferlab.clin.etl.es.PrepareVariantCentric._
+import bio.ferlab.clin.etl.utils.RenameFieldsInArrayStruct
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import mainargs.{ParserForMethods, main}
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
@@ -43,8 +46,13 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
       .withColumn("symbol_id_1", col("symbol"))
       .as("consequences")
       .repartition(100)
-    
+
     joinWithConsequences(variants, consequences)
+      // To prevent compatibility issues with the frontend, which still expects 'analysis_service_request_id' and 'service_request_id'
+      .withDonorsFieldsRenamed(Map(
+        "analysis_id"-> "analysis_service_request_id", 
+        "sequencing_id" -> "service_request_id")
+      )
   }
 
   private def joinWithConsequences(variantDF: DataFrame,
@@ -76,6 +84,13 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
 }
 
 object PrepareVariantCentric {
+
+  implicit class DataFrameOps(df: DataFrame) {
+    def withDonorsFieldsRenamed(renameMap: Map[String, String]): DataFrame = {
+      RenameFieldsInArrayStruct("donors", renameMap).transform(df)
+    }
+  }
+
   @main
   def run(rc: RuntimeETLContext): Unit = {
     PrepareVariantCentric(rc).run()

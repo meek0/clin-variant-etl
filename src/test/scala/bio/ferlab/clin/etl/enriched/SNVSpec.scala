@@ -107,21 +107,21 @@ class SNVSpec extends SparkSpec with WithTestConfig {
     val data = Map(
       normalized_snv.id -> Seq(
         // cover 0 CNV
-        NormalizedSNV(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_00", `service_request_id` = "SR_000"),
+        NormalizedSNV(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_00", `analysis_id` = "SRA0001", `sequencing_id` = "SR_000"),
         // cover 1 CNV
-        NormalizedSNV(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
         // cover 3 CNV
-        NormalizedSNV(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
         // cover 0 CNV
-        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_03", `service_request_id` = "SR_001"),
+        NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_03", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
         // cover 0 CNV (cause different service_request_id)
-        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `service_request_id` = "SR_002"),
+        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `analysis_id` = "SRA0001", `sequencing_id` = "SR_002"),
       ).toDF(),
       normalized_cnv.id -> Seq(
-        NormalizedCNV(`chromosome` = "1", `start` = 90, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `service_request_id` = "SR_001"),
-        NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_001"),
-        NormalizedCNV(`chromosome` = "1", `start` = 130, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03", `service_request_id` = "SR_001"),
-        NormalizedCNV(`chromosome` = "1", `start` = 220, `end` = 500, `alternate` = "A", reference = "REF", `name` = "CNV_04", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 90, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 130, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 220, `end` = 500, `alternate` = "A", reference = "REF", `name` = "CNV_04", `analysis_id` = "SRA0001", `sequencing_id` = "SR_001"),
       ).toDF(),
       normalized_exomiser.id -> Seq(NormalizedExomiser()).toDF(),
       normalized_franklin.id -> Seq(NormalizedFranklin()).toDF()
@@ -131,19 +131,19 @@ class SNVSpec extends SparkSpec with WithTestConfig {
 
     result.as[EnrichedSNV]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedSNV(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `service_request_id` = "SR_000",
+      EnrichedSNV(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `analysis_id` = "SRA0001", `sequencing_id` = "SR_000",
         `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
       ),
-      EnrichedSNV(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `service_request_id` = "SR_001",
+      EnrichedSNV(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `analysis_id` = "SRA0001", `sequencing_id` = "SR_001",
         `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
       ),
-      EnrichedSNV(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `service_request_id` = "SR_001",
+      EnrichedSNV(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `analysis_id` = "SRA0001", `sequencing_id` = "SR_001",
         `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
       ),
-      EnrichedSNV(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `service_request_id` = "SR_001",
+      EnrichedSNV(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `analysis_id` = "SRA0001", `sequencing_id` = "SR_001",
         `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
       ),
-      EnrichedSNV(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `service_request_id` = "SR_002",
+      EnrichedSNV(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `analysis_id` = "SRA0001", `sequencing_id` = "SR_002",
         `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
       ),
     )

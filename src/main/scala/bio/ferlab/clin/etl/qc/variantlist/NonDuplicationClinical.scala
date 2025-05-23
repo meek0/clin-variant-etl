@@ -10,7 +10,7 @@ object NonDuplicationClinical extends TestingApp {
     handleErrors(
       shouldBeEmpty(
         clinical
-          .groupBy($"analysis_service_request_id", $"service_request_id", $"bioinfo_analysis_code").count
+          .groupBy($"analysis_id", $"sequencing_id", $"bioinfo_analysis_code").count
           .filter($"count" > 1)
       )
     )

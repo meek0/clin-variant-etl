@@ -146,6 +146,8 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .join(familyRelationships, Seq("analysis_service_request_id", "patient_id"), "left")
       .withParentAliquotIds // Needs to be done after tasks and familyRelationships join
       .join(specimens, Seq("service_request_id", "patient_id"), "left")
+      .withColumnRenamed("analysis_service_request_id", "analysis_id")
+      .withColumnRenamed("service_request_id", "sequencing_id")
   }
 }
 

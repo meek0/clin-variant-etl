@@ -27,7 +27,7 @@ class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll 
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
   val clinicalDf: DataFrame = Seq(
-    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.exomiser.variants.tsv")), `patient_id` = "438787", `service_request_id` = "SR0095"),
+    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.exomiser.variants.tsv")), `patient_id` = "438787", `sequencing_id` = "SR0095"),
     EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot2", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot2.exomiser.variants.tsv"))),
     EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot3", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot3.exomiser.variants.tsv"))),
   ).toDF()

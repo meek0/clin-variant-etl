@@ -26,7 +26,9 @@ case class PrepareCnvCentric(rc: RuntimeETLContext) extends SimpleSingleETL(rc) 
                          lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     data(enriched_cnv.id)
-
+      // To prevent compatibility issues with the frontend, which still expects 'analysis_service_request_id' and 'service_request_id'
+      .withColumnRenamed("analysis_id", "analysis_service_request_id")
+      .withColumnRenamed("sequencing_id", "service_request_id")
   }
 
 }

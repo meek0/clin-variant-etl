@@ -27,7 +27,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
   val clinicalDf: DataFrame = Seq(
-    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.coverage_by_gene.GENCODE_CODING_CANONICAL.csv")), `patient_id` = "438787", `service_request_id` = "SR0095"),
+    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.coverage_by_gene.GENCODE_CODING_CANONICAL.csv")), `patient_id` = "438787", `sequencing_id` = "SR0095"),
     EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot2", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot2.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"))),
     EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot3", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot3.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"))),
   ).toDF()

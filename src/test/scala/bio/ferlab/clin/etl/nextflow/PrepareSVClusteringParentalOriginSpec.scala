@@ -21,8 +21,8 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
   it should "not load dataset if no analyses in batch have cnv files" in {
     val inputData: Map[String, DataFrame] = Map(
       enriched_clinical.id -> Seq(
-        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = Some("2"), cnv_vcf_urls = None),
-        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = None),
+        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = Some("2"), cnv_vcf_urls = None),
+        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = None),
       ).toDF()
     )
 
@@ -42,31 +42,31 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
       enriched_clinical.id -> Seq(
         // Batch 1
         // Trio
-        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = Some("2"), mother_aliquot_id = Some("3"), cnv_vcf_urls = Some(Set("s3a://1.vcf"))),
-        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://2.vcf"))),
-        EnrichedClinical(aliquot_id = "3", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://3.vcf"))),
+        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = Some("2"), mother_aliquot_id = Some("3"), cnv_vcf_urls = Some(Set("s3a://1.vcf"))),
+        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://2.vcf"))),
+        EnrichedClinical(aliquot_id = "3", is_proband = false, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://3.vcf"))),
 
         // Trio+ (with siblings)
-        EnrichedClinical(aliquot_id = "11", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA2", father_aliquot_id = Some("22"), mother_aliquot_id = Some("33"), cnv_vcf_urls = Some(Set("s3a://11.vcf"))),
-        EnrichedClinical(aliquot_id = "22", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA2", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://22.vcf"))),
-        EnrichedClinical(aliquot_id = "33", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA2", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://33.vcf"))),
-        EnrichedClinical(aliquot_id = "44", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA2", father_aliquot_id = Some("22"), mother_aliquot_id = Some("33"), cnv_vcf_urls = Some(Set("s3a://44.vcf"))),
-        EnrichedClinical(aliquot_id = "55", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA2", father_aliquot_id = Some("22"), mother_aliquot_id = Some("33"), cnv_vcf_urls = Some(Set("s3a://55.vcf"))),
+        EnrichedClinical(aliquot_id = "11", is_proband = true, batch_id = "BAT1", analysis_id = "SRA2", father_aliquot_id = Some("22"), mother_aliquot_id = Some("33"), cnv_vcf_urls = Some(Set("s3a://11.vcf"))),
+        EnrichedClinical(aliquot_id = "22", is_proband = false, batch_id = "BAT1", analysis_id = "SRA2", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://22.vcf"))),
+        EnrichedClinical(aliquot_id = "33", is_proband = false, batch_id = "BAT1", analysis_id = "SRA2", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://33.vcf"))),
+        EnrichedClinical(aliquot_id = "44", is_proband = false, batch_id = "BAT1", analysis_id = "SRA2", father_aliquot_id = Some("22"), mother_aliquot_id = Some("33"), cnv_vcf_urls = Some(Set("s3a://44.vcf"))),
+        EnrichedClinical(aliquot_id = "55", is_proband = false, batch_id = "BAT1", analysis_id = "SRA2", father_aliquot_id = Some("22"), mother_aliquot_id = Some("33"), cnv_vcf_urls = Some(Set("s3a://55.vcf"))),
 
         // Duo
-        EnrichedClinical(aliquot_id = "111", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA3", father_aliquot_id = None, mother_aliquot_id = Some("222"), cnv_vcf_urls = Some(Set("s3a://111.vcf"))),
-        EnrichedClinical(aliquot_id = "222", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA3", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://222.vcf"))),
+        EnrichedClinical(aliquot_id = "111", is_proband = true, batch_id = "BAT1", analysis_id = "SRA3", father_aliquot_id = None, mother_aliquot_id = Some("222"), cnv_vcf_urls = Some(Set("s3a://111.vcf"))),
+        EnrichedClinical(aliquot_id = "222", is_proband = false, batch_id = "BAT1", analysis_id = "SRA3", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://222.vcf"))),
 
         // Solo: Should not be included
-        EnrichedClinical(aliquot_id = "1111", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA4", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://1111.vcf"))),
+        EnrichedClinical(aliquot_id = "1111", is_proband = true, batch_id = "BAT1", analysis_id = "SRA4", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://1111.vcf"))),
 
         // Duo with no CNVs: Should not be included
-        EnrichedClinical(aliquot_id = "11111", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA5", father_aliquot_id = None, mother_aliquot_id = Some("22222"), cnv_vcf_urls = None),
-        EnrichedClinical(aliquot_id = "22222", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA5", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = None),
+        EnrichedClinical(aliquot_id = "11111", is_proband = true, batch_id = "BAT1", analysis_id = "SRA5", father_aliquot_id = None, mother_aliquot_id = Some("22222"), cnv_vcf_urls = None),
+        EnrichedClinical(aliquot_id = "22222", is_proband = false, batch_id = "BAT1", analysis_id = "SRA5", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = None),
 
         // Batch 2: Should not be included
-        EnrichedClinical(aliquot_id = "111111", is_proband = true, batch_id = "BAT2", analysis_service_request_id = "SRA6", father_aliquot_id = None, mother_aliquot_id = Some("222222"), cnv_vcf_urls = Some(Set("s3a://111111.vcf"))),
-        EnrichedClinical(aliquot_id = "222222", is_proband = false, batch_id = "BAT2", analysis_service_request_id = "SRA6", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://222222.vcf"))),
+        EnrichedClinical(aliquot_id = "111111", is_proband = true, batch_id = "BAT2", analysis_id = "SRA6", father_aliquot_id = None, mother_aliquot_id = Some("222222"), cnv_vcf_urls = Some(Set("s3a://111111.vcf"))),
+        EnrichedClinical(aliquot_id = "222222", is_proband = false, batch_id = "BAT2", analysis_id = "SRA6", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://222222.vcf"))),
       ).toDF()
     )
 
@@ -99,11 +99,11 @@ class PrepareSVClusteringParentalOriginSpec extends SparkSpec with WithTestConfi
     val inputData: Map[String, DataFrame] = Map(
       enriched_clinical.id -> Seq(
         // Batch 1: Incomplete trio
-        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = Some("3"), mother_aliquot_id = Some("2"), cnv_vcf_urls = Some(Set("s3a://1.vcf"))),
-        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://2.vcf"))),
+        EnrichedClinical(aliquot_id = "1", is_proband = true, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = Some("3"), mother_aliquot_id = Some("2"), cnv_vcf_urls = Some(Set("s3a://1.vcf"))),
+        EnrichedClinical(aliquot_id = "2", is_proband = false, batch_id = "BAT1", analysis_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://2.vcf"))),
 
         // Batch 2: Father of the trio, received in a later batch
-        EnrichedClinical(aliquot_id = "3", is_proband = false, batch_id = "BAT2", analysis_service_request_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://3.vcf"))),
+        EnrichedClinical(aliquot_id = "3", is_proband = false, batch_id = "BAT2", analysis_id = "SRA1", father_aliquot_id = None, mother_aliquot_id = None, cnv_vcf_urls = Some(Set("s3a://3.vcf"))),
       ).toDF()
     )
 

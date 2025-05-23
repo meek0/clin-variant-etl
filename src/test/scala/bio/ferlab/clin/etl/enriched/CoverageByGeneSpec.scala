@@ -62,7 +62,7 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig {
         size = 1,
         coverage5 = 0.3f, coverage15 = 0.52f, coverage30 = 0.52f, coverage50 = 2.5f, coverage100 = 12.3f, coverage200 = 1.23f,
         coverage300 = 1.232f, coverage400 = 3.02f, coverage500 = 1.2f, coverage1000 = 8.4f, aliquot_id = "aliquot1", batch_id = "test_extum",
-        chromosome = "X", panels =  Seq("DYSTM", "MITN"), omim_gene_id = "1234", service_request_id = "SR0095",
+        chromosome = "X", panels =  Seq("DYSTM", "MITN"), omim_gene_id = "1234", sequencing_id = "SR0095",
         ensembl_gene_id = "EBS123414", start = 10000, end = 10059
     ,
     ),

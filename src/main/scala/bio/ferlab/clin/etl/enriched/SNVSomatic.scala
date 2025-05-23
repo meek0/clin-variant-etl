@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
-import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisIdsInBatch
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
@@ -31,13 +31,13 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"batch_id" === id)
         val normalized_cnvDf = normalized_cnv.read.where($"batch_id" === id)
         val clinicalDf = enriched_clinical.read
-        val analysisServiceRequestIds: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, id)
+        val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
 
         val fs = FileSystemResolver.resolve(conf.getStorage(mainDestination.storageid).filesystem)
         val destinationExists = fs.exists(mainDestination.location) && mainDestination.tableExist
 
         val enrichedSnvSomaticDf = if (destinationExists) {
-          mainDestination.read.where($"analysis_service_request_id".isin(analysisServiceRequestIds: _*))
+          mainDestination.read.where($"analysis_id".isin(analysisIds: _*))
         } else spark.emptyDataFrame
 
         Map(
@@ -83,7 +83,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
       .join(withAllAnalysesDf, locusColumnNames :+ "aliquot_id", "inner")
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("analysis_service_request_id", "chromosome"), n = Some(100), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("analysis_id", "chromosome"), n = Some(100), sortColumns = Seq("start"))
 }
 
 object SNVSomatic {
