@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl
 import bio.ferlab.clin.etl.enriched.CNV.CnvRegion
 import bio.ferlab.clin.etl.utils.Region
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{array, array_union, col, count, count_distinct, lit, when}
+import org.apache.spark.sql.functions.{array, array_union, coalesce, col, count, count_distinct, lit, when}
 
 package object enriched {
 
@@ -17,23 +17,42 @@ package object enriched {
       }
   }
 
-  def withCount(left: DataFrame, leftColToGroup: String, right: DataFrame, rightColToCount: String, countColName: String)(implicit sparkSession: SparkSession): DataFrame = {
+  def withCount(snv: DataFrame, cnv: DataFrame, countColName: String)(implicit sparkSession: SparkSession): DataFrame = {
     import sparkSession.implicits._
 
-    val leftRegion = Region($"left.chromosome", $"left.start", $"left.end")
-    val rightRegion = Region($"right.chromosome", $"right.start", $"right.end")
+    val snvRegion = Region($"snv.chromosome", $"snv.start", $"snv.end")
+    val cnvRegion = Region($"cnv.chromosome", $"cnv.start", $"cnv.end")
 
-    val countDf = left.as("left").join(right.alias("right"), ($"left.service_request_id" === $"right.service_request_id") and leftRegion.isIncludingStartOf(rightRegion), "left")
-      .groupBy("left.service_request_id", s"left.$leftColToGroup")
-      .agg(count_distinct(right(rightColToCount)) as "count")
-      .select(
-        $"left.service_request_id" as "service_request_id",
-        left(leftColToGroup) as leftColToGroup,
-        $"count",
-      )
+    // condition is always the same: cnv.start <= snv.start <=cnv.end
+    val countDf = snv.as("snv").join(cnv.alias("cnv"), ($"snv.service_request_id" === $"cnv.service_request_id") and cnvRegion.isIncludingStartOf(snvRegion), "left")
 
-    left.join(countDf, Seq("service_request_id", leftColToGroup), "left")
-      .select(left("*"), $"count" as countColName)
+    countColName match {
+      case "snv_count" => {
+        val toJoin = countDf.groupBy("cnv.service_request_id", "cnv.name")
+          .agg(count_distinct($"snv.hgvsg") as "count")
+          .select(
+            $"cnv.service_request_id" as "service_request_id",
+            $"cnv.name" as "name",
+            $"count",
+          )
+
+        cnv.join(toJoin, Seq("service_request_id", "name"), "left")
+          .select(cnv("*"), coalesce($"count", lit(0)) as countColName)
+      }
+      case "cnv_count" => {
+        val toJoin = countDf.groupBy("snv.service_request_id", "snv.hgvsg")
+        .agg(count_distinct($"cnv.name") as "count")
+        .select(
+          $"snv.service_request_id" as "service_request_id",
+          $"snv.hgvsg" as "hgvsg",
+          $"count",
+        )
+
+        snv.join(toJoin, Seq("service_request_id", "hgvsg"), "left")
+          .select(snv("*"), coalesce($"count", lit(0)) as countColName)
+      }
+      case _ => throw new IllegalStateException(s"Unknown col count name: $countColName expecting: [snv_count|cnv_count]")
+    }
   }
 
 }

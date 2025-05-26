@@ -46,7 +46,7 @@ object SNV {
   implicit class DataFrameOps(df: DataFrame) {
 
     def withCnvCount(cnv: DataFrame)(implicit spark: SparkSession): DataFrame = {
-      withCount(df, "hgvsg", cnv, "name", "cnv_count")
+      withCount(df, cnv, "cnv_count")
     }
 
     def withExomiser(exomiser: DataFrame)(implicit spark: SparkSession): DataFrame = {

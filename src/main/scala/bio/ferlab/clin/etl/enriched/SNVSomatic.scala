@@ -70,7 +70,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
         .distinct()
     else normalizedSnvSomaticDf // No past analyses since enriched is empty for this service request id
 
-    val withCnvCount = withCount(withPastAnalysesDf, "hgvsg", normalizedCnvDf, "name", "cnv_count")
+    val withCnvCount = withCount(withPastAnalysesDf, normalizedCnvDf, "cnv_count")
 
     val withAllAnalysesDf = withPastAnalysesDf
       .groupByLocus($"aliquot_id")

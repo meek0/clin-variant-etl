@@ -110,7 +110,7 @@ object CNV {
   implicit class DataFrameOps(df: DataFrame) {
 
     def withSnvCount(snv: DataFrame)(implicit spark: SparkSession): DataFrame = {
-      withCount(df, "name", snv, "hgvsg", "snv_count")
+      withCount(snv, df, "snv_count")
     }
 
     def withPanels(refseq: DataFrame, panels: DataFrame)(implicit spark: SparkSession): DataFrame = {
