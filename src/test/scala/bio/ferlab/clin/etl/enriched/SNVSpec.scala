@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.etl.enriched.SNV._
-import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedSNV}
-import bio.ferlab.clin.model.normalized.{NormalizedExomiser, NormalizedFranklin, NormalizedSNV}
+import bio.ferlab.clin.model.enriched.{EXOMISER, EXOMISER_OTHER_MOI, EnrichedCNV, EnrichedCNVCluster, EnrichedCNVClusterFrequencies, EnrichedSNV}
+import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedExomiser, NormalizedFranklin, NormalizedSNV}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -13,11 +13,13 @@ class SNVSpec extends SparkSpec with WithTestConfig {
   import spark.implicits._
 
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
+  val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val normalized_exomiser: DatasetConf = conf.getDataset("normalized_exomiser")
   val normalized_franklin: DatasetConf = conf.getDataset("normalized_franklin")
 
   it should "transform data into expected format" in {
     val snvDf = Seq(NormalizedSNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1")).toDF()
+    val cnvDf = Seq(NormalizedCNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1")).toDF()
     val exomiserDf = Seq(
       NormalizedExomiser(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", contributing_variant = true, moi = "XR", gene_combined_score = 1),
       NormalizedExomiser(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "aliquot1", contributing_variant = true, moi = "AD", gene_combined_score = 0.99f),
@@ -26,6 +28,7 @@ class SNVSpec extends SparkSpec with WithTestConfig {
 
     val data = Map(
       normalized_snv.id -> snvDf,
+      normalized_cnv.id -> cnvDf,
       normalized_exomiser.id -> exomiserDf,
       normalized_franklin.id -> franklinDf
     )
@@ -98,6 +101,52 @@ class SNVSpec extends SparkSpec with WithTestConfig {
     result
       .selectLocus($"aliquot_id", $"franklin_combined_score")
       .collect() should contain theSameElementsAs expected
+  }
+
+  it should "enrich SNV data with cnv count" in {
+    val data = Map(
+      normalized_snv.id -> Seq(
+        // cover 0 CNV
+        NormalizedSNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_00", `service_request_id` = "SR_000"),
+        // cover 1 CNV
+        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 150, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `service_request_id` = "SR_001"),
+        // cover 3 CNV
+        NormalizedSNV(`chromosome` = "1", `start` = 200, `end` = 300, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `service_request_id` = "SR_001"),
+        // cover 0 CNV
+        NormalizedSNV(`chromosome` = "1", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_03", `service_request_id` = "SR_001"),
+        // cover 0 CNV (cause different service_request_id)
+        NormalizedSNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `service_request_id` = "SR_002"),
+      ).toDF(),
+      normalized_cnv.id -> Seq(
+        NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `name` = "CNV_03", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 220, `end` = 250, `alternate` = "A", reference = "REF", `name` = "CNV_04", `service_request_id` = "SR_001"),
+      ).toDF(),
+      normalized_exomiser.id -> Seq(NormalizedExomiser()).toDF(),
+      normalized_franklin.id -> Seq(NormalizedFranklin()).toDF()
+    )
+
+    val result = SNV(TestETLContext()).transformSingle(data)
+
+    result.as[EnrichedSNV]
+      .collect() should contain theSameElementsAs Seq(
+      EnrichedSNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `service_request_id` = "SR_000",
+        `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
+      ),
+      EnrichedSNV(`chromosome` = "1", `start` = 100, `end` = 150, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `service_request_id` = "SR_001",
+        `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
+      ),
+      EnrichedSNV(`chromosome` = "1", `start` = 200, `end` = 300, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `service_request_id` = "SR_001",
+        `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
+      ),
+      EnrichedSNV(`chromosome` = "1", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `service_request_id` = "SR_001",
+        `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
+      ),
+      EnrichedSNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `service_request_id` = "SR_002",
+        `exomiser` = None, `exomiser_other_moi` = None, `franklin_combined_score` = None,
+      ),
+    )
   }
 }
 

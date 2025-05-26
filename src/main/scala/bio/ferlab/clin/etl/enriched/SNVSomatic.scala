@@ -18,6 +18,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val normalized_snv_somatic: DatasetConf = conf.getDataset("normalized_snv_somatic")
+  val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
@@ -28,6 +29,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
       // If a batch id was submitted, only process the specified id
       case Some(id) =>
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"batch_id" === id)
+        val normalized_cnvDf = normalized_cnv.read.where($"batch_id" === id)
         val clinicalDf = enriched_clinical.read
         val analysisServiceRequestIds: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, id)
 
@@ -40,12 +42,14 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
 
         Map(
           normalized_snv_somatic.id -> normalizedSnvSomaticDf,
+          normalized_cnv.id -> normalized_cnvDf,
           mainDestination.id -> enrichedSnvSomaticDf
         )
       case None =>
         // If no batch id were submitted, process all data
         Map(
           normalized_snv_somatic.id -> normalized_snv_somatic.read,
+          normalized_cnv.id -> normalized_cnv.read,
           mainDestination.id -> spark.emptyDataFrame // No need to union with enriched
         )
     }
@@ -57,13 +61,16 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
     import spark.implicits._
 
     val normalizedSnvSomaticDf = data(normalized_snv_somatic.id)
+    val normalizedCnvDf = data(normalized_cnv.id)
     val enrichedSnvSomaticDf = data(mainDestination.id)
 
     val withPastAnalysesDf = if (!enrichedSnvSomaticDf.isEmpty)
       normalizedSnvSomaticDf
-        .unionByName(enrichedSnvSomaticDf.drop("all_analyses"), allowMissingColumns = true)
+        .unionByName(enrichedSnvSomaticDf.drop("all_analyses").drop("cnv_count"), allowMissingColumns = true)
         .distinct()
     else normalizedSnvSomaticDf // No past analyses since enriched is empty for this service request id
+
+    val withCnvCount = withCount(withPastAnalysesDf, "hgvsg", normalizedCnvDf, "name", "cnv_count")
 
     val withAllAnalysesDf = withPastAnalysesDf
       .groupByLocus($"aliquot_id")
@@ -72,7 +79,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
       .withColumn("all_analyses", when(array_contains($"all_bioinfo_analysis_codes", "TNEBA"), array_union($"all_analyses", array(lit("TN")))).otherwise($"all_analyses"))
       .drop("all_bioinfo_analysis_codes")
 
-    withPastAnalysesDf
+    withCnvCount
       .join(withAllAnalysesDf, locusColumnNames :+ "aliquot_id", "inner")
   }
 
