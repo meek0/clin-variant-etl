@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.es
 
 import bio.ferlab.clin.etl.es.PrepareVariantCentric._
-import bio.ferlab.clin.etl.utils.RenameFieldsInArrayStruct
+import bio.ferlab.clin.etl.utils.transformation.RenameFieldsInArrayStruct
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._

@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl.utils
+package bio.ferlab.clin.etl.utils.transformation
 
 import bio.ferlab.datalake.testutils.SparkSpec
 import org.apache.spark.sql.types.{StructType, StructField, StringType, ArrayType}
