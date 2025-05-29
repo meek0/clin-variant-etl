@@ -241,6 +241,7 @@ package object dictionary {
     "BS3",
     "BS4",
     "BP1",
+    "BP2",
     "BP3",
     "BP4",
     "BP5",
