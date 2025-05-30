@@ -9,7 +9,7 @@ object ColumnsContainSameValueVariantCentric_Donors extends TestingApp {
   run { spark =>
     import spark.implicits._
 
-    val donorsCols = variants_donors.select("col.*")
+    val donorsCols = variants_donors_sample.select("col.*")
 
     handleErrors(
       shouldNotContainSameValue(
@@ -17,16 +17,16 @@ object ColumnsContainSameValueVariantCentric_Donors extends TestingApp {
         donorsCols.columns.filterNot(List("has_alt", "last_update", "variant_type", "sequencing_strategy", "genome_build").contains(_)): _*
       ),
       shouldNotContainSameValue(
-        variants_donors.select(explode($"col.hc_complement")).select("col.*")
+        variants_donors_sample.select(explode($"col.hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
-        variants_donors.select(explode($"col.possibly_hc_complement")).select("col.*")
+        variants_donors_sample.select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainSameValue(
-        variants_donors.select($"col.exomiser.*")
+        variants_donors_sample.select($"col.exomiser.*")
       ),
       shouldNotContainSameValue(
-        variants_donors.select($"col.exomiser_other_moi.*")
+        variants_donors_sample.select($"col.exomiser_other_moi.*")
       ),
     )
   }

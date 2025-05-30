@@ -33,7 +33,7 @@ class TestingAppSpec extends SparkSpec {
     shouldNotContainNull(df, "foo") shouldBe Some("Column(s) foo should not contain null")
   }
 
-  it should "return no errors" in {
+  it should "return no errors for foo" in {
     val df: DataFrame = Seq(
       FooBar(Some("foo"), Some("bar")),
       FooBar(Some("foo2"), Some("bar2"))
@@ -87,7 +87,7 @@ class TestingAppSpec extends SparkSpec {
     shouldNotContainOnlyNull(df, "foo") shouldBe Some("Column(s) foo should not contain only null")
   }
 
-  it should "return no errors" in {
+  it should "return no errors for foo" in {
     val df: DataFrame = Seq(
       FooBar(Some("foo"), None),
       FooBar(None, Some("bar2"))
@@ -141,7 +141,7 @@ class TestingAppSpec extends SparkSpec {
     shouldNotContainSameValue(df, "foo") shouldBe Some("Column(s) foo should not contain same value")
   }
 
-  it should "return no errors" in {
+  it should "return no errors for foo" in {
     val df: DataFrame = Seq(
       FooBar(Some("foo"), Some("bar")),
       FooBar(Some("foo2"), Some("bar2"))
@@ -186,7 +186,25 @@ class TestingAppSpec extends SparkSpec {
     shouldNotContainSameValue(df) shouldBe Some("Column(s) foo should not contain same value")
   }
 
-  it should "return errors for foo with empty table" in {
+  it should "return no errors when all values are null" in {
+    val df: DataFrame = Seq(
+      FooBar(None, None),
+      FooBar(None, None)
+    ).toDF
+
+    shouldNotContainSameValue(df) shouldBe None
+  }
+
+  it should "return errors when all non-null values are equal" in {
+    val df: DataFrame = Seq(
+      FooBar(Some("foo"), None),
+      FooBar(None, Some("bar"))
+    ).toDF
+
+    shouldNotContainSameValue(df) shouldBe Some("Column(s) foo, bar should not contain same value")
+  }
+
+  "shouldNotBeEmpty" should "return errors for foo with empty table" in {
     val df: DataFrame = spark.emptyDataFrame
     shouldNotBeEmpty(df, "foo") shouldBe Some("DataFrame foo should not be empty")
   }

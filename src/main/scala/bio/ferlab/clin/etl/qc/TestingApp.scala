@@ -37,6 +37,8 @@ trait TestingApp extends App {
   // globally persist re-used dataframe for better perfs
   lazy val variants_donors = variant_centric.select(explode($"donors"))
     .persist()
+  lazy val variants_donors_sample = variant_centric.sample(0.5).select(explode($"donors"))
+    .persist()
   lazy val variants_consequences = variant_centric.select(explode($"consequences"))
     .persist()
 
@@ -118,20 +120,26 @@ object TestingApp {
   }
 
   def shouldNotContainNull(df: DataFrame, columnNames: String*): Option[String] = {
-    val columns: Seq[String] = if (columnNames.nonEmpty) columnNames else df.columns.toSeq
-    val errorColumns: Seq[String] = columns.filter(colName => df.where(col(colName).isNull).count() > 0)
+    val columns: Seq[String] = if (columnNames.nonEmpty) columnNames else df.columns
+    val aggExprs = columns.map(c => sum(when(col(c).isNull, 1).otherwise(0)).alias(c))
+    val nullCountsRow = df.agg(aggExprs.head, aggExprs.tail: _*).head
+    val errorColumns = columns.filter(c => nullCountsRow.getAs[Long](c) > 0)  // > 0 means there are null values
     if (errorColumns.nonEmpty) Some(s"Column(s) ${errorColumns.mkString(", ")} should not contain null") else None
   }
 
   def shouldNotContainOnlyNull(df: DataFrame, columnNames: String*): Option[String] = {
-    val columns: Seq[String] = if (columnNames.nonEmpty) columnNames else df.columns.toSeq
-    val errorColumns: Seq[String] = columns.filter(colName => df.where(col(colName).isNotNull).count() == 0)
+    val columns: Seq[String] = if (columnNames.nonEmpty) columnNames else df.columns
+    val aggExprs = columns.map(c => count(c).alias(c))  // Count only counts non-null values
+    val nullCountsRow = df.agg(aggExprs.head, aggExprs.tail: _*).head
+    val errorColumns = columns.filter(c => nullCountsRow.getAs[Long](c) == 0)  // 0 means all values are null
     if (errorColumns.nonEmpty) Some(s"Column(s) ${errorColumns.mkString(", ")} should not contain only null") else None
   }
 
   def shouldNotContainSameValue(df: DataFrame, columnNames: String*): Option[String] = {
-    val columns: Seq[String] = if (columnNames.nonEmpty) columnNames else df.columns.toSeq
-    val errorColumns: Seq[String] = columns.filter(colName => df.select(col(colName)).na.drop.distinct().count() == 1)
+    val columns: Seq[String] = if (columnNames.nonEmpty) columnNames else df.columns
+    val aggExprs = columns.map(c => count_distinct(col(c)).alias(c))  // Count distinct only counts non-null values
+    val distinctCountsRow = df.agg(aggExprs.head, aggExprs.tail: _*).head
+    val errorColumns = columns.filter(c => distinctCountsRow.getAs[Long](c) == 1)  // 1 means all non-null values are the same
     if (errorColumns.nonEmpty) Some(s"Column(s) ${errorColumns.mkString(", ")} should not contain same value") else None
   }
 

@@ -8,7 +8,7 @@ object ColumnsContainOnlyNullVariantCentric_Donors extends TestingApp {
   run { spark =>
     import spark.implicits._
 
-    val donorsCols = variants_donors.select("col.*")
+    val donorsCols = variants_donors_sample.select("col.*")
 
     handleErrors(
       shouldNotContainOnlyNull(
@@ -16,16 +16,16 @@ object ColumnsContainOnlyNullVariantCentric_Donors extends TestingApp {
         donorsCols.columns.filterNot(List("analysis_display_name"/*CLIN-1358*/, "practitioner_role_id").contains(_)): _*
       ),
       shouldNotContainOnlyNull(
-        variants_donors.select(explode($"col.hc_complement")).select("col.*")
+        variants_donors_sample.select(explode($"col.hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        variants_donors.select(explode($"col.possibly_hc_complement")).select("col.*")
+        variants_donors_sample.select(explode($"col.possibly_hc_complement")).select("col.*")
       ),
       shouldNotContainOnlyNull(
-        variants_donors.select($"col.exomiser.*")
+        variants_donors_sample.select($"col.exomiser.*")
       ),
       shouldNotContainOnlyNull(
-        variants_donors.select($"col.exomiser_other_moi.*")
+        variants_donors_sample.select($"col.exomiser_other_moi.*")
       ),
     )
   }

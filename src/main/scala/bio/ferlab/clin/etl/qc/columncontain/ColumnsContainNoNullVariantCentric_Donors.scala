@@ -10,7 +10,7 @@ object ColumnsContainNoNullVariantCentric_Donors extends TestingApp {
 
     handleErrors(
       shouldNotContainNull(
-        variants_donors.select("col.*"),
+        variants_donors_sample.select("col.*"),
         "patient_id", "aliquot_id", "batch_id", "service_request_id", "organization_id"
       ),
     )
