@@ -1,4 +1,4 @@
-package bio.ferlab.clin.etl.utils
+package bio.ferlab.clin.etl.utils.transformation
 
 import bio.ferlab.datalake.spark3.transformation.Transformation
 import org.apache.spark.sql.DataFrame
