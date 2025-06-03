@@ -19,17 +19,17 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
   val job: Option[String] => SNVSomatic = batch => SNVSomatic(TestETLContext(), batch)
 
   val existingClinicalData = Seq(
-    EnrichedClinical(`batch_id` = "BATCH1", `analysis_service_request_id` = "SRA1", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
-    EnrichedClinical(`batch_id` = "BATCH1", `analysis_service_request_id` = "SRA2", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
-    EnrichedClinical(`batch_id` = "BATCH1", `analysis_service_request_id` = "SRA3", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
-    EnrichedClinical(`batch_id` = "BATCH2", `analysis_service_request_id` = "SRA4", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
+    EnrichedClinical(`batch_id` = "BATCH1", `analysis_id` = "SRA1", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
+    EnrichedClinical(`batch_id` = "BATCH1", `analysis_id` = "SRA2", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
+    EnrichedClinical(`batch_id` = "BATCH1", `analysis_id` = "SRA3", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
+    EnrichedClinical(`batch_id` = "BATCH2", `analysis_id` = "SRA4", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "1"),
   )
 
   val existingNormalizedData = Seq(
-    NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA"),
-    NormalizedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA"),
-    NormalizedSNVSomatic(aliquot_id = "3", batch_id = "BATCH1", analysis_service_request_id = "SRA3", bioinfo_analysis_code = "TEBA"),
-    NormalizedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_service_request_id = "SRA4", bioinfo_analysis_code = "TEBA")
+    NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA"),
+    NormalizedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA"),
+    NormalizedSNVSomatic(aliquot_id = "3", batch_id = "BATCH1", analysis_id = "SRA3", bioinfo_analysis_code = "TEBA"),
+    NormalizedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_id = "SRA4", bioinfo_analysis_code = "TEBA")
   )
 
   val existingNormalizedCnv = Seq(
@@ -37,10 +37,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
   )
 
   val existingEnrichedData = Seq(
-    EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA"),
-    EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA"),
-    EnrichedSNVSomatic(aliquot_id = "3", batch_id = "BATCH1", analysis_service_request_id = "SRA3", bioinfo_analysis_code = "TEBA"),
-    EnrichedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_service_request_id = "SRA4", bioinfo_analysis_code = "TEBA")
+    EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA"),
+    EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA"),
+    EnrichedSNVSomatic(aliquot_id = "3", batch_id = "BATCH1", analysis_id = "SRA3", bioinfo_analysis_code = "TEBA"),
+    EnrichedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_id = "SRA4", bioinfo_analysis_code = "TEBA")
   )
 
   override val dsToClean: List[DatasetConf] = List(normalized_snv_somatic, normalized_cnv, enriched_snv_somatic, enriched_clinical)
@@ -59,9 +59,9 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
 
   "extract" should "only return current analyses when no past analyses exist" in {
     val currentBatchClinicalData = Seq(
-      EnrichedClinical(`batch_id` = "BATCH3", `analysis_service_request_id` = "SRA5", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5"),
-      EnrichedClinical(`batch_id` = "BATCH3", `analysis_service_request_id` = "SRA6", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "6"),
-      EnrichedClinical(`batch_id` = "BATCH3", `analysis_service_request_id` = "SRA7", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "7"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA5", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA6", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "6"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA7", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "7"),
     )
     val clinicalDf = (existingClinicalData ++ currentBatchClinicalData).toDF()
     LoadResolver
@@ -70,9 +70,9 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .apply(enriched_clinical, clinicalDf)
 
     val currentBatchNormalizedData = Seq(
-      NormalizedSNVSomatic(aliquot_id = "5", batch_id = "BATCH3", analysis_service_request_id = "SRA5", bioinfo_analysis_code = "TEBA"),
-      NormalizedSNVSomatic(aliquot_id = "6", batch_id = "BATCH3", analysis_service_request_id = "SRA6", bioinfo_analysis_code = "TEBA"),
-      NormalizedSNVSomatic(aliquot_id = "7", batch_id = "BATCH3", analysis_service_request_id = "SRA7", bioinfo_analysis_code = "TEBA"),
+      NormalizedSNVSomatic(aliquot_id = "5", batch_id = "BATCH3", analysis_id = "SRA5", bioinfo_analysis_code = "TEBA"),
+      NormalizedSNVSomatic(aliquot_id = "6", batch_id = "BATCH3", analysis_id = "SRA6", bioinfo_analysis_code = "TEBA"),
+      NormalizedSNVSomatic(aliquot_id = "7", batch_id = "BATCH3", analysis_id = "SRA7", bioinfo_analysis_code = "TEBA"),
     )
     val normalizedSnvSomaticDf = (existingNormalizedData ++ currentBatchNormalizedData).toDF()
     LoadResolver
@@ -93,9 +93,9 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
 
   "extract" should "return current and past analyses when the latter exists" in {
     val currentBatchClinicalData = Seq(
-      EnrichedClinical(`batch_id` = "BATCH3", `analysis_service_request_id` = "SRA1", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "1"),
-      EnrichedClinical(`batch_id` = "BATCH3", `analysis_service_request_id` = "SRA2", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "2"),
-      EnrichedClinical(`batch_id` = "BATCH3", `analysis_service_request_id` = "SRA5", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA1", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "1"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA2", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "2"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA5", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5"),
     )
     val clinicalDf = (existingClinicalData ++ currentBatchClinicalData).toDF()
     LoadResolver
@@ -104,9 +104,9 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .apply(enriched_clinical, clinicalDf)
 
     val currentBatchNormalizedData = Seq(
-      NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH3", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
-      NormalizedSNVSomatic(aliquot_id = "2", batch_id = "BATCH3", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
-      NormalizedSNVSomatic(aliquot_id = "5", batch_id = "BATCH3", analysis_service_request_id = "SRA5", bioinfo_analysis_code = "TEBA")
+      NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH3", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
+      NormalizedSNVSomatic(aliquot_id = "2", batch_id = "BATCH3", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
+      NormalizedSNVSomatic(aliquot_id = "5", batch_id = "BATCH3", analysis_id = "SRA5", bioinfo_analysis_code = "TEBA")
     )
     val normalizedSnvSomaticDf = (existingNormalizedData ++ currentBatchNormalizedData).toDF()
     LoadResolver
@@ -123,8 +123,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     result(enriched_snv_somatic.id)
       .as[EnrichedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA"),
-      EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA")
+      EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA"),
+      EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA")
     )
   }
 
@@ -151,12 +151,12 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     val data = Map(
       normalized_snv_somatic.id -> Seq(
         // BATCH 1
-        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA"),
-        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH1", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA"),
+        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA"),
+        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA"),
 
         // BATCH 2
-        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH2", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
-        NormalizedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH2", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
+        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH2", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
+        NormalizedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH2", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
       ).toDF(),
       normalized_cnv.id -> existingNormalizedCnv.toDF(),
       enriched_snv_somatic.id -> spark.emptyDataFrame
@@ -168,28 +168,28 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .as[EnrichedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
       // SRA 1
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH2", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH2", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
 
       // SRA 2
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH1", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
-      EnrichedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH2", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TN")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
+      EnrichedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH2", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TN")),
     )
   }
 
   "transform" should "update all_analyses for existing data" in {
     val data = Map(
       normalized_snv_somatic.id -> Seq(
-        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH3", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
-        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH3", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
-        NormalizedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH3", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
-        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "3", batch_id = "BATCH3", analysis_service_request_id = "SRA3", bioinfo_analysis_code = "TEBA")
+        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH3", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
+        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH3", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
+        NormalizedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH3", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA"),
+        NormalizedSNVSomatic(chromosome = "1", aliquot_id = "3", batch_id = "BATCH3", analysis_id = "SRA3", bioinfo_analysis_code = "TEBA")
       ).toDF(),
       normalized_cnv.id -> existingNormalizedCnv.toDF(),
       enriched_snv_somatic.id -> Seq(
-        EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
-        EnrichedSNVSomatic(chromosome = "2", aliquot_id = "1", batch_id = "BATCH2", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
-        EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH2", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
+        EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
+        EnrichedSNVSomatic(chromosome = "2", aliquot_id = "1", batch_id = "BATCH2", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
+        EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH2", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
       ).toDF()
     )
 
@@ -199,17 +199,17 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       .as[EnrichedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
       // SRA 1
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH3", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
-      EnrichedSNVSomatic(chromosome = "2", aliquot_id = "1", batch_id = "BATCH2", analysis_service_request_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "1", batch_id = "BATCH3", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "2", aliquot_id = "1", batch_id = "BATCH2", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
 
       // SRA 2
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH2", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH3", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
-      EnrichedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH3", analysis_service_request_id = "SRA2", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TN")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH2", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "2", batch_id = "BATCH3", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
+      EnrichedSNVSomatic(chromosome = "2", aliquot_id = "2", batch_id = "BATCH3", analysis_id = "SRA2", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TN")),
 
       // SRA 3
-      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "3", batch_id = "BATCH3", analysis_service_request_id = "SRA3", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
+      EnrichedSNVSomatic(chromosome = "1", aliquot_id = "3", batch_id = "BATCH3", analysis_id = "SRA3", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO")),
     )
   }
 
@@ -217,21 +217,21 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     val data = Map(
       normalized_snv_somatic.id -> Seq(
         // cover 0 CNV
-        NormalizedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_00", `service_request_id` = "SR_000"),
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_00", `sequencing_id` = "SR_000"),
         // cover 1 CNV
-        NormalizedSNVSomatic(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `service_request_id` = "SR_001"),
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_01", `sequencing_id` = "SR_001"),
         // cover 3 CNV
-        NormalizedSNVSomatic(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `service_request_id` = "SR_001"),
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_02", `sequencing_id` = "SR_001"),
         // cover 0 CNV
-        NormalizedSNVSomatic(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_03", `service_request_id` = "SR_001"),
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_03", `sequencing_id` = "SR_001"),
         // cover 0 CNV (cause different service_request_id)
-        NormalizedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `service_request_id` = "SR_002"),
+        NormalizedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `sequencing_id` = "SR_002"),
       ).toDF(),
       normalized_cnv.id -> Seq(
-        NormalizedCNV(`chromosome` = "1", `start` = 90, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `service_request_id` = "SR_001"),
-        NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02", `service_request_id` = "SR_001"),
-        NormalizedCNV(`chromosome` = "1", `start` = 130, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03", `service_request_id` = "SR_001"),
-        NormalizedCNV(`chromosome` = "1", `start` = 220, `end` = 500, `alternate` = "A", reference = "REF", `name` = "CNV_04", `service_request_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 90, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01", `sequencing_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02", `sequencing_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 130, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03", `sequencing_id` = "SR_001"),
+        NormalizedCNV(`chromosome` = "1", `start` = 220, `end` = 500, `alternate` = "A", reference = "REF", `name` = "CNV_04", `sequencing_id` = "SR_001"),
       ).toDF(),
       enriched_snv_somatic.id -> spark.emptyDataFrame
     )
@@ -240,15 +240,15 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
 
     result.as[EnrichedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `service_request_id` = "SR_000",
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `sequencing_id` = "SR_000",
       ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `service_request_id` = "SR_001",
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `sequencing_id` = "SR_001",
       ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `service_request_id` = "SR_001",
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `sequencing_id` = "SR_001",
       ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `service_request_id` = "SR_001",
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `sequencing_id` = "SR_001",
       ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `service_request_id` = "SR_002",
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `sequencing_id` = "SR_002",
       ),
     )
   }

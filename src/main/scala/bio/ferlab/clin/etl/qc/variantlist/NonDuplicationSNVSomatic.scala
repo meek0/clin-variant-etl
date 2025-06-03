@@ -10,7 +10,7 @@ object NonDuplicationSNVSomatic extends TestingApp {
     handleErrors(
       shouldBeEmpty(
         snv_somatic
-          .groupBy($"chromosome", $"start", $"reference", $"alternate", $"service_request_id", $"bioinfo_analysis_code").count
+          .groupBy($"chromosome", $"start", $"reference", $"alternate", $"sequencing_id", $"bioinfo_analysis_code").count
           .filter($"count" > 1)
       )
     )

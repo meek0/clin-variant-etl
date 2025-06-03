@@ -5,7 +5,7 @@
 package bio.ferlab.clin.model.nextflow
 
 
-case class SVClusteringParentalOrigin(`analysis_service_request_id`: String = "SRA0001",
+case class SVClusteringParentalOrigin(`analysis_id`: String = "SRA0001",
                                       `aliquot_id`: String = "11111",
                                       `chromosome`: String = "1",
                                       `start`: Long = 9823629,
@@ -16,7 +16,7 @@ case class SVClusteringParentalOrigin(`analysis_service_request_id`: String = "S
                                       `members`: Seq[String] = Seq("DRAGEN:LOSS:chr1:9823628-9823687"),
                                       `batch_id`: String = "BAT1",
                                       `is_multi_allelic`: Boolean = false,
-                                      `service_request_id`: String = "SRS0001",
+                                      `sequencing_id`: String = "SRS0001",
                                       `patient_id`: String = "PA0001",
                                       `gender`: String = "Male",
                                       `family_id`: String = "FM00001",

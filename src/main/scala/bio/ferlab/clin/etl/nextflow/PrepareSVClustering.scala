@@ -29,7 +29,7 @@ case class PrepareSVClustering(rc: RuntimeETLContext) extends SimpleSingleETL(rc
       .where($"cnv_vcf_urls".isNotNull)
       .select(
         $"aliquot_id" as "sample",
-        $"analysis_service_request_id" as "familyId",
+        $"analysis_id" as "familyId",
         regexp_replace($"cnv_vcf_urls"(0), "s3a://", "s3://") as "vcf" // There's always a single file
       )
       .distinct()

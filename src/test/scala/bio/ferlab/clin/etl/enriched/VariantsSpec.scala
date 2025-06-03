@@ -80,9 +80,36 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   val expectedDonors =
     List(
-      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEBA", "PA0001", "FM00001", "PPR00101", "OR00201", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("mother"), Some("AD")),
-      DONORS(1, Some(30), None, List(0, 1), Some(8.07), Some(30), Some(8.07), Some(30), Some(8.07), true, List("PASS"), 0, 30, 30, 1.0, "HET", "chr1:g.69897T>C", "SNV", "BAT1", "SR0095", "14-696", "SP_696", Date.valueOf("2022-04-06"), "germline", "GEBA", "PA0002", "FM00001", "PPR00101", "OR00202", "WXS", "11111", "MM_PG", "Maladies musculaires (Panel global)", "PA0003", "PA0002", Some("33333"), Some("22222"), Some(List(0, 1)), Some(List(0, 0)), Some(true), Some(false), Some("HET"), Some("WT"), Some("father"), Some("AR"))
+      DONORS(
+        dp=1, gq=Some(30), sq=None, calls=List(0, 1), qd=Some(8.07), 
+        mother_gq=Some(30), mother_qd=Some(8.07), father_gq=Some(30), father_qd=Some(8.07), 
+        has_alt=true, filters=List("PASS"), ad_ref=0, ad_alt=30, ad_total=30, ad_ratio=1.0, 
+        zygosity="HET", hgvsg="chr1:g.69897T>C", variant_class="SNV", 
+        batch_id="BAT1", analysis_id="SRA0001", sequencing_id="SR0095", sample_id="14-696", 
+        specimen_id="SP_696",last_update=Date.valueOf("2022-04-06"), variant_type="germline", 
+        bioinfo_analysis_code="GEBA", patient_id="PA0001", family_id="FM00001", practitioner_role_id="PPR00101", 
+        organization_id="OR00201", sequencing_strategy="WXS", aliquot_id="11111", analysis_code="MM_PG", 
+        analysis_display_name="Maladies musculaires (Panel global)", mother_id="PA0003", father_id="PA0002", 
+        mother_aliquot_id=Some("33333"), father_aliquot_id=Some("22222"), mother_calls=Some(List(0, 1)), 
+        father_calls=Some(List(0, 0)), mother_affected_status=Some(true), father_affected_status=Some(false), 
+        mother_zygosity=Some("HET"), father_zygosity=Some("WT"), parental_origin=Some("mother"), transmission=Some("AD")
+      ),
+      DONORS(
+        dp=1, gq=Some(30), sq=None, calls=List(0, 1), qd=Some(8.07), 
+        mother_gq=Some(30), mother_qd=Some(8.07), father_gq=Some(30), father_qd=Some(8.07), 
+        has_alt=true, filters=List("PASS"), ad_ref=0, ad_alt=30, ad_total=30, ad_ratio=1.0, 
+        zygosity="HET", hgvsg="chr1:g.69897T>C", variant_class="SNV", 
+        batch_id="BAT1", analysis_id="SRA0001", sequencing_id="SR0095", sample_id="14-696", 
+        specimen_id="SP_696", last_update=Date.valueOf("2022-04-06"), variant_type="germline", 
+        bioinfo_analysis_code="GEBA", patient_id="PA0002", family_id="FM00001", practitioner_role_id="PPR00101",
+        organization_id="OR00202", sequencing_strategy="WXS", aliquot_id="11111", analysis_code="MM_PG", 
+        analysis_display_name="Maladies musculaires (Panel global)", mother_id="PA0003", father_id="PA0002", 
+        mother_aliquot_id=Some("33333"), father_aliquot_id=Some("22222"), mother_calls=Some(List(0, 1)), 
+        father_calls=Some(List(0, 0)), mother_affected_status=Some(true), father_affected_status=Some(false), 
+        mother_zygosity=Some("HET"), father_zygosity=Some("WT"), parental_origin=Some("father"), transmission=Some("AR")
+      )
     )
+  
 
   "variants job" should "union of all available enriched SNV" in {
     val resultDf = job.transformSingle(data)

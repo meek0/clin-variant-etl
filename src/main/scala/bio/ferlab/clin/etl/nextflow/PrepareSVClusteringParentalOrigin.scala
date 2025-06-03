@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.nextflow
 
 import bio.ferlab.clin.etl.mainutils.Batch
-import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisServiceRequestIdsInBatch
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisIdsInBatch
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
@@ -29,20 +29,20 @@ case class PrepareSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: Str
     import spark.implicits._
 
     val clinicalDf = data(enriched_clinical.id)
-    val analysesInCurrentBatch: Seq[String] = getAnalysisServiceRequestIdsInBatch(clinicalDf, batchId)
+    val analysesInCurrentBatch: Seq[String] = getAnalysisIdsInBatch(clinicalDf, batchId)
 
     val analysesWithAtLeastOneParent = clinicalDf
       .where($"mother_aliquot_id".isNotNull or $"father_aliquot_id".isNotNull)
-      .select("analysis_service_request_id")
+      .select("analysis_id")
       .distinct()
 
     clinicalDf
-      .where($"analysis_service_request_id".isin(analysesInCurrentBatch: _*))
+      .where($"analysis_id".isin(analysesInCurrentBatch: _*))
       .where($"cnv_vcf_urls".isNotNull)
-      .join(analysesWithAtLeastOneParent, Seq("analysis_service_request_id"), "inner")
+      .join(analysesWithAtLeastOneParent, Seq("analysis_id"), "inner")
       .select(
         $"aliquot_id" as "sample",
-        $"analysis_service_request_id" as "familyId",
+        $"analysis_id" as "familyId",
         regexp_replace($"cnv_vcf_urls"(0), "s3a://", "s3://") as "vcf" // There's always a single file
       )
       .distinct()

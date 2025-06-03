@@ -12,7 +12,6 @@ object FileUtils {
    * Table enriched_clinical is used to determine list of urls.
    *
    * @param batchId batchId of files
-   * @param batchId batchId of files
    * @param file    used to filter documents
    * @param spark   spark session
    * @param conf    config
@@ -29,7 +28,7 @@ object FileUtils {
         $"aliquot_id",
         $"patient_id",
         $"specimen_id",
-        $"service_request_id",
+        $"sequencing_id",
         $"is_proband",
         $"mother_id",
         $"father_id",
@@ -40,4 +39,4 @@ object FileUtils {
   }
 }
 
-case class FileInfo(url: String, aliquot_id: String, patient_id: String, specimen_id: String, service_request_id: String, is_proband: Boolean, mother_id: Option[String], father_id: Option[String])
+case class FileInfo(url: String, aliquot_id: String, patient_id: String, specimen_id: String, sequencing_id: String, is_proband: Boolean, mother_id: Option[String], father_id: Option[String])

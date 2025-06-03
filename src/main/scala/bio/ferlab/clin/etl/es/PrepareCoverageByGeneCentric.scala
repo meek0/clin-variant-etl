@@ -26,6 +26,8 @@ case class PrepareCoverageByGeneCentric(rc: RuntimeETLContext) extends SimpleSin
                          lastRunDateTime: LocalDateTime = minValue,
                          currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     data(enriched_coverage_by_gene.id)
+      // To prevent compatibility issues with the frontend, which still expects 'service_request_id'
+      .withColumnRenamed("sequencing_id", "service_request_id")
 
   }
 

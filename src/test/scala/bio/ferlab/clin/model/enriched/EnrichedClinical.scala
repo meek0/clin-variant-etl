@@ -4,9 +4,9 @@
  */
 package bio.ferlab.clin.model.enriched
 
-case class EnrichedClinical(`service_request_id`: String = "SRS0001",
+case class EnrichedClinical(`sequencing_id`: String = "SRS0001",
                             `patient_id`: String = "PA0001",
-                            `analysis_service_request_id`: String = "SRA0001",
+                            `analysis_id`: String = "SRA0001",
                             `batch_id`: String = "BAT1",
                             `bioinfo_analysis`: String = "germline",
                             `bioinfo_analysis_code`: String = "GEBA",

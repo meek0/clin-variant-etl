@@ -10,7 +10,7 @@ object NonDuplicationNextflowSVClusteringParentalOrigin extends TestingApp {
     handleErrors(
       shouldBeEmpty(
         nextflow_svclustering_parental_origin
-          .groupBy($"name", $"service_request_id").count
+          .groupBy($"name", $"sequencing_id").count
           .filter($"count" > 1)
       )
     )

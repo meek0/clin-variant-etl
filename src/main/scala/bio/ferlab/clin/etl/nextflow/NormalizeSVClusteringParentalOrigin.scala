@@ -2,7 +2,7 @@ package bio.ferlab.clin.etl.nextflow
 
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_CNV_SVClustering
-import bio.ferlab.clin.etl.nextflow.NormalizeSVClusteringParentalOrigin.AnalysisServiceRequestIdExtractionRegex
+import bio.ferlab.clin.etl.nextflow.NormalizeSVClusteringParentalOrigin.AnalysisIdExtractionRegex
 import bio.ferlab.clin.etl.normalized.{Occurrences, validContigNames}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
@@ -30,10 +30,10 @@ case class NormalizeSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: S
     val clinicalDf: DataFrame = data(enriched_clinical.id)
       .where(col("batch_id") === batchId)
       .select(
-        "service_request_id",
+        "sequencing_id",
         "aliquot_id",
         "patient_id",
-        "analysis_service_request_id",
+        "analysis_id",
         "gender",
         "family_id",
         "mother_id",
@@ -54,10 +54,10 @@ case class NormalizeSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: S
         col("genotype.calls") as "calls",
         col("INFO_MEMBERS") as "members",
         lit(batchId) as "batch_id",
-        regexp_extract(input_file_name(), AnalysisServiceRequestIdExtractionRegex, 1) as "analysis_service_request_id",
+        regexp_extract(input_file_name(), AnalysisIdExtractionRegex, 1) as "analysis_id",
         is_multi_allelic,
       )
-      .join(broadcast(clinicalDf), Seq("analysis_service_request_id", "aliquot_id"), "inner")
+      .join(broadcast(clinicalDf), Seq("analysis_id", "aliquot_id"), "inner")
       .withColumn("participant_id", col("patient_id"))
       .withColumn("family_info", familyInfo(Seq(col("calls"), col("affected_status"))))
       .withColumn("mother_calls", motherCalls)
@@ -72,7 +72,7 @@ case class NormalizeSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: S
 }
 
 object NormalizeSVClusteringParentalOrigin {
-  final val AnalysisServiceRequestIdExtractionRegex = "([A-Z]*\\d+)\\.[^\\.]+\\.(?:DEL|DUP)\\.vcf\\.gz"
+  final val AnalysisIdExtractionRegex = "([A-Z]*\\d+)\\.[^\\.]+\\.(?:DEL|DUP)\\.vcf\\.gz"
 
   @main
   def run(rc: RuntimeETLContext, batch: Batch): Unit = {

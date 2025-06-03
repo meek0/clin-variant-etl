@@ -10,7 +10,7 @@ object NonDuplicationSNV extends TestingApp {
     handleErrors(
       shouldBeEmpty(
         snv
-          .groupBy($"chromosome", $"start", $"reference", $"alternate", $"service_request_id").count
+          .groupBy($"chromosome", $"start", $"reference", $"alternate", $"sequencing_id").count
           .filter($"count" > 1)
       )
     )

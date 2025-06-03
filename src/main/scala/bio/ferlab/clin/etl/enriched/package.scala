@@ -24,31 +24,31 @@ package object enriched {
     val cnvRegion = Region($"cnv.chromosome", $"cnv.start", $"cnv.end")
 
     // condition is always the same: cnv.start <= snv.start <=cnv.end
-    val countDf = snv.as("snv").join(cnv.alias("cnv"), ($"snv.service_request_id" === $"cnv.service_request_id") and cnvRegion.isIncludingStartOf(snvRegion), "left")
+    val countDf = snv.as("snv").join(cnv.alias("cnv"), ($"snv.sequencing_id" === $"cnv.sequencing_id") and cnvRegion.isIncludingStartOf(snvRegion), "left")
 
     countColName match {
       case "snv_count" => {
-        val toJoin = countDf.groupBy("cnv.service_request_id", "cnv.name")
+        val toJoin = countDf.groupBy("cnv.sequencing_id", "cnv.name")
           .agg(count_distinct($"snv.hgvsg") as "count")
           .select(
-            $"cnv.service_request_id" as "service_request_id",
+            $"cnv.sequencing_id" as "sequencing_id",
             $"cnv.name" as "name",
             $"count",
           )
 
-        cnv.join(toJoin, Seq("service_request_id", "name"), "left")
+        cnv.join(toJoin, Seq("sequencing_id", "name"), "left")
           .select(cnv("*"), coalesce($"count", lit(0)) as countColName)
       }
       case "cnv_count" => {
-        val toJoin = countDf.groupBy("snv.service_request_id", "snv.hgvsg")
+        val toJoin = countDf.groupBy("snv.sequencing_id", "snv.hgvsg")
         .agg(count_distinct($"cnv.name") as "count")
         .select(
-          $"snv.service_request_id" as "service_request_id",
+          $"snv.sequencing_id" as "sequencing_id",
           $"snv.hgvsg" as "hgvsg",
           $"count",
         )
 
-        snv.join(toJoin, Seq("service_request_id", "hgvsg"), "left")
+        snv.join(toJoin, Seq("sequencing_id", "hgvsg"), "left")
           .select(snv("*"), coalesce($"count", lit(0)) as countColName)
       }
       case _ => throw new IllegalStateException(s"Unknown col count name: $countColName expecting: [snv_count|cnv_count]")
