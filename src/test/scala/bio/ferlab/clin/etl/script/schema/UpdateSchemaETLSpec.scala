@@ -1,41 +1,41 @@
 package bio.ferlab.clin.etl.script.schema
 
-import bio.ferlab.datalake.commons.config.{DatalakeConf, DatasetConf, Format, LoadType, SimpleConfiguration, StorageConf, TableConf}
+import bio.ferlab.datalake.commons.config.{Configuration, DatalakeConf, DatasetConf, Format, LoadType, RunStep, SimpleConfiguration, StorageConf, TableConf}
 import bio.ferlab.datalake.commons.file.FileSystemType
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.spark3.transformation.{DuplicateColumn, Transformation, UpperCase}
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.{DataFrame, Row}
+
 
 import java.nio.file.{Files, Paths}
 
-class UpdateSchemaETLSpec extends SparkSpec {
+class UpdateSchemaETLSpec extends SparkSpec with CreateDatabasesBeforeAll with CleanUpBeforeAll {
+
+  import spark.implicits._
 
   lazy implicit val conf: SimpleConfiguration = SimpleConfiguration(
     DatalakeConf(
       storages = List(
-        StorageConf("database1", this.getClass.getClassLoader.getResource(".").getFile, FileSystemType.LOCAL)
+        StorageConf("storage1", this.getClass.getClassLoader.getResource(".").getFile, FileSystemType.LOCAL)
       ),
       sources = List(
-        DatasetConf(
-          id = "dataset1",
-          storageid = "database1",
-          path = "/tables/table1",
-          format = Format.DELTA,
-          loadtype = LoadType.Upsert,
-          table = Some(TableConf("database1", "table1"))
-        )
-      )
+        DatasetConf(id = "dataset1", storageid = "storage1", path = "schemaUtilsSpec/dataset1/test.json", format = Format.JSON, loadtype = LoadType.Read, table = Some(TableConf("test", "dataset1")))
+     )
     )
   )
+
+  override val dbToCreate: List[String] = conf.sources.map(_.table).flatten.map(_.database).toList
+  override val dsToClean: List[DatasetConf] = conf.sources.filter(_.table.isDefined)
 
   "UpdateSchemaETL" should "apply transformations to the source dataset" in {
     val dataset1 = conf.getDataset("dataset1")
 
-    val inputDf = spark.createDataFrame(Seq(
+    val inputDf = Seq(
       ("a1", "b1", "c1"),
       ("a2", "b2", "c2")
-    )).toDF("a", "b", "c")
+    ).toDF("a", "b", "c")
     val data = Map(dataset1.id -> inputDf)
 
     val job = new UpdateSchemaETL(
@@ -69,4 +69,52 @@ class UpdateSchemaETLSpec extends SparkSpec {
     job.mainDestination.writeoptions shouldBe Map("overwriteSchema" -> "true")
   }
 
+  "UpdateSchemaETL" should "skip the reset" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+
+      // Create and write test data for dataset1
+      write(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+
+      val context = TestETLContext(RunStep.initial_load)(updatedConf, spark)
+      val dataset = context.config.getDataset("dataset1")
+      val job = new UpdateSchemaETL(
+        context,
+        dataset,
+        List()
+      )
+      job.reset()
+
+      // Verify that the reset is skipped
+      val df = dataset.read(updatedConf, spark)
+      df.collect() should contain theSameElementsAs Array(Row("a1", "b1", "c1"))
+      df.columns shouldBe Seq("a", "b", "c")
+     }
+  }
+
+  "UpdateSchemaETL" should "load the dataset correctly" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+
+      val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
+      val dataset = context.config.getDataset("dataset1")
+      val job = new UpdateSchemaETL(
+        context,
+        dataset,
+        List()
+      )
+      val data = Map(dataset.id -> Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      job.load(data)
+
+      // Verify that the dataset is loaded correctly
+      val df = dataset.read(updatedConf, spark)
+      df.collect() should contain theSameElementsAs Array(Row("a1", "b1", "c1"))
+      df.columns shouldBe Seq("a", "b", "c")
+    }
+  }
+
+  private def write(conf: Configuration, datasetId: String, df: DataFrame): Unit = {
+    val dataset = conf.getDataset(datasetId)
+    LoadResolver.write(spark, conf)(dataset.format, LoadType.OverWrite).apply(dataset, df)
+  }
 }
