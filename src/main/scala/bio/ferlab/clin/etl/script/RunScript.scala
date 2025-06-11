@@ -8,26 +8,24 @@ object RunScript {
   val log: slf4j.Logger =
     slf4j.LoggerFactory.getLogger(getClass.getCanonicalName)
 
-  /**
-   * With mainargs, if there is only one @main method in the object,
-   * it is not possible to specify the entrypoint name on the command line.
-   * Keeping this dummy/test method allows specifying the entrypoint
-   * explicitly when running the script. If you add a second real @main
-   * method, you can remove this test method.
-  */
   @main
-  def test(rc: RuntimeETLContext): Unit = {
-    log.info("This is a test script")
-    log.info(rc.toString())
+  def rename_service_request_columns(
+      rc: RuntimeETLContext,
+      @arg(doc = "If specified, run a vacuum command on the datasets.")
+      vacuum: Flag): Unit = {
+    log.info("Running RenameServiceRequestColumns script")
+    RenameServiceRequestColumns(rc).run(vacuum.value)
   }
 
   @main
-  def rename_service_request_columns(
-    rc: RuntimeETLContext,
-    @arg(doc = "If this flag is specified, the script will run a vacuum command on the different datasets.")
-    vacuum: Flag): Unit = {
-    log.info("Running RenameServiceRequestColumns script")
-    new RenameServiceRequestColumns(rc).run(vacuum.value)
+  def update_partitioning(
+      rc: RuntimeETLContext,
+      @arg(doc = "If specified, run a vacuum command on the datasets.")
+      vacuum: Flag,
+      @arg(doc = "If specified, run the script in dry-run mode, without applying any changes.")
+      dryrun: Flag): Unit = {
+    log.info("Running UpdatePartitioning script")
+    UpdatePartitioning(rc).run(vacuum.value, dryrun.value)
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

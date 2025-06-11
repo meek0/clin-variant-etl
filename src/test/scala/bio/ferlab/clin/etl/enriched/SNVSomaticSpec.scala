@@ -3,11 +3,13 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.model.enriched.{EnrichedClinical, EnrichedSNVSomatic}
 import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedSNVSomatic}
 import bio.ferlab.clin.testutils.WithTestConfig
+import bio.ferlab.clin.testutils.LoadResolverUtils.write
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import org.apache.spark.sql.DataFrame
 
-class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
+class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeEach {
 
   import spark.implicits._
 
@@ -43,18 +45,13 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
     EnrichedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_id = "SRA4", bioinfo_analysis_code = "TEBA")
   )
 
+  override val dbToCreate: List[String] = List("clin")
   override val dsToClean: List[DatasetConf] = List(normalized_snv_somatic, normalized_cnv, enriched_snv_somatic, enriched_clinical)
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    LoadResolver
-      .write
-      .apply(enriched_snv_somatic.format, enriched_snv_somatic.loadtype)
-      .apply(enriched_snv_somatic, existingEnrichedData.toDF())
-    LoadResolver
-      .write
-      .apply(normalized_cnv.format, normalized_cnv.loadtype)
-      .apply(normalized_cnv, existingNormalizedCnv.toDF())
+    write(enriched_snv_somatic, existingEnrichedData.toDF())
+    write(normalized_cnv, existingNormalizedCnv.toDF())
   }
 
   "extract" should "only return current analyses when no past analyses exist" in {
@@ -64,10 +61,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA7", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "7"),
     )
     val clinicalDf = (existingClinicalData ++ currentBatchClinicalData).toDF()
-    LoadResolver
-      .write
-      .apply(enriched_clinical.format, enriched_clinical.loadtype)
-      .apply(enriched_clinical, clinicalDf)
+    write(enriched_clinical, clinicalDf)
 
     val currentBatchNormalizedData = Seq(
       NormalizedSNVSomatic(aliquot_id = "5", batch_id = "BATCH3", analysis_id = "SRA5", bioinfo_analysis_code = "TEBA"),
@@ -75,10 +69,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       NormalizedSNVSomatic(aliquot_id = "7", batch_id = "BATCH3", analysis_id = "SRA7", bioinfo_analysis_code = "TEBA"),
     )
     val normalizedSnvSomaticDf = (existingNormalizedData ++ currentBatchNormalizedData).toDF()
-    LoadResolver
-      .write
-      .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
-      .apply(normalized_snv_somatic, normalizedSnvSomaticDf)
+    write(normalized_snv_somatic, normalizedSnvSomaticDf)
 
     val result = job(Some("BATCH3")).extract()
 
@@ -98,10 +89,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA5", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5"),
     )
     val clinicalDf = (existingClinicalData ++ currentBatchClinicalData).toDF()
-    LoadResolver
-      .write
-      .apply(enriched_clinical.format, enriched_clinical.loadtype)
-      .apply(enriched_clinical, clinicalDf)
+    write(enriched_clinical, clinicalDf)
 
     val currentBatchNormalizedData = Seq(
       NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH3", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
@@ -109,16 +97,19 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
       NormalizedSNVSomatic(aliquot_id = "5", batch_id = "BATCH3", analysis_id = "SRA5", bioinfo_analysis_code = "TEBA")
     )
     val normalizedSnvSomaticDf = (existingNormalizedData ++ currentBatchNormalizedData).toDF()
-    LoadResolver
-      .write
-      .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
-      .apply(normalized_snv_somatic, normalizedSnvSomaticDf)
+    write(normalized_snv_somatic, normalizedSnvSomaticDf)
 
     val result = job(Some("BATCH3")).extract()
 
     result(normalized_snv_somatic.id)
+      .as[NormalizedSNVSomatic].collect().foreach(row => println(row + "\n\n"))
+
+    result(normalized_snv_somatic.id)
       .as[NormalizedSNVSomatic]
-      .collect() should contain theSameElementsAs currentBatchNormalizedData
+      .collect() should contain theSameElementsAs currentBatchNormalizedData ++ Seq(
+      NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA"),
+      NormalizedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA"),
+    )
 
     result(enriched_snv_somatic.id)
       .as[EnrichedSNVSomatic]
@@ -129,14 +120,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
   }
 
   "extract" should "return all past analyses when no batch id is submitted" in {
-    LoadResolver
-      .write
-      .apply(enriched_clinical.format, enriched_clinical.loadtype)
-      .apply(enriched_clinical, existingClinicalData.toDF())
-    LoadResolver
-      .write
-      .apply(normalized_snv_somatic.format, normalized_snv_somatic.loadtype)
-      .apply(normalized_snv_somatic, existingNormalizedData.toDF())
+    write(enriched_clinical, existingClinicalData.toDF())
+    write(normalized_snv_somatic, existingNormalizedData.toDF())
 
     val result = job(None).extract()
 
@@ -240,17 +225,60 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEac
 
     result.as[EnrichedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `sequencing_id` = "SR_000",
-      ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `sequencing_id` = "SR_001",
-      ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `sequencing_id` = "SR_001",
-      ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `sequencing_id` = "SR_001",
-      ),
-      EnrichedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `sequencing_id` = "SR_002",
-      ),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 1, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_00", `cnv_count` = 0, `sequencing_id` = "SR_000"),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 90, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_01", `cnv_count` = 1, `sequencing_id` = "SR_001"),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 130, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_02", `cnv_count` = 3, `sequencing_id` = "SR_001"),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 210, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_03", `cnv_count` = 0, `sequencing_id` = "SR_001"),
+      EnrichedSNVSomatic(`chromosome` = "1", `start` = 100, `end` = 500, `alternate` = "A", `reference` = "REF", `hgvsg` = "SNV_04", `cnv_count` = 0, `sequencing_id` = "SR_002"),
+    )
+  }
+
+  "run" should "properly merge new batch data with existing analyses from other batches" in {
+
+    // We simulate a new batch (BATCH3) containing somatic tumor normal data for an existing analysis and new analysis as well.
+    val currentBatchClinicalData = Seq(
+      // same analysis exists in a different batch, but with a different bioinfo analysis code
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA1", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "1"),
+
+      // new analysis
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA6", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "6"),
+      EnrichedClinical(`batch_id` = "BATCH3", `analysis_id` = "SRA7", `bioinfo_analysis_code` = "TNEBA", `aliquot_id` = "7")
+    )
+    val clinicalDf = (existingClinicalData ++ currentBatchClinicalData).toDF()
+    write(enriched_clinical, clinicalDf)
+
+    val currentBatchNormalizedData = Seq(
+      // same analysis exists in a different batch, but with a different bioinfo analysis code
+      NormalizedSNVSomatic(aliquot_id = "1", batch_id = "BATCH3", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA"),
+
+      // new analysis
+      NormalizedSNVSomatic(aliquot_id = "6", batch_id = "BATCH3", analysis_id = "SRA6", bioinfo_analysis_code = "TNEBA"),
+      NormalizedSNVSomatic(aliquot_id = "7", batch_id = "BATCH3", analysis_id = "SRA7", bioinfo_analysis_code = "TNEBA"),
+    )
+    val normalizedSnvSomaticDf = (existingNormalizedData ++ currentBatchNormalizedData).toDF()
+    write(normalized_snv_somatic, normalizedSnvSomaticDf)
+
+    // Running the job
+    val result = SNVSomatic(TestETLContext(RunStep.default_load), Some("BATCH3")).run()
+
+    // We expect the enriched_snv_somatic table to contain the merged data
+    result.size shouldBe 1
+    val enrichedDf = result(enriched_snv_somatic.id)
+    enrichedDf.as[EnrichedSNVSomatic].collect() should contain theSameElementsAs Seq(
+      // Changed:  all_analyses column contains TO and TN
+      EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA", all_analyses = Set("TO", "TN")),
+
+      // Added
+      EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH3", analysis_id = "SRA1", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TO", "TN")),
+
+      // Not changed
+      EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA"),
+      EnrichedSNVSomatic(aliquot_id = "3", batch_id = "BATCH1", analysis_id = "SRA3", bioinfo_analysis_code = "TEBA"),
+      EnrichedSNVSomatic(aliquot_id = "4", batch_id = "BATCH2", analysis_id = "SRA4", bioinfo_analysis_code = "TEBA"),
+
+      // Added
+      EnrichedSNVSomatic(aliquot_id = "6", batch_id = "BATCH3", analysis_id = "SRA6", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TN")),
+      EnrichedSNVSomatic(aliquot_id = "7", batch_id = "BATCH3", analysis_id = "SRA7", bioinfo_analysis_code = "TNEBA", all_analyses = Set("TN"))
     )
   }
 }
-
