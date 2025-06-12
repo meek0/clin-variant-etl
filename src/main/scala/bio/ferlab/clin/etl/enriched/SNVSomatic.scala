@@ -27,9 +27,9 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
     batchId match {
       // If a batch id was submitted, only process analysis in the batch
       case Some(id) =>
-        val normalized_cnvDf = normalized_cnv.read.where($"batch_id" === id)
         val clinicalDf = enriched_clinical.read
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
+        val normalized_cnvDf = normalized_cnv.read.where($"analysis_id".isin(analysisIds: _*))
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"analysis_id".isin(analysisIds: _*))
 
         Map(
