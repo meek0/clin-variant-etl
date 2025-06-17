@@ -41,13 +41,13 @@ case class Exomiser(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime,
                                currentRunDateTime: LocalDateTime): DataFrame = {
-    val fileInfo = data("file_info").select("url", "aliquot_id")
-    val withAliquotId = data(raw_exomiser.id)
+    val fileInfo = data("file_info").select("url", "aliquot_id", "analysis_id")
+    val withFileInfo = data(raw_exomiser.id)
       .withColumn("url", input_file_name())
       .join(fileInfo, Seq("url"))
       .drop("url")
 
-    withAliquotId
+    withFileInfo
       .select($"CONTIG" as "chromosome",
         castLong("START") as "start",
         castLong("END") as "end",
@@ -55,6 +55,7 @@ case class Exomiser(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         $"ALT" as "alternate",
         $"ID" as "id",
         $"aliquot_id",
+        $"analysis_id",
         castInt("#RANK") as "rank",
         $"GENE_SYMBOL" as "gene_symbol",
         castLong("ENTREZ_GENE_ID") as "entrez_gene_id",
@@ -67,8 +68,6 @@ case class Exomiser(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         lit(batchId) as "batch_id"
       )
   }
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object Exomiser {

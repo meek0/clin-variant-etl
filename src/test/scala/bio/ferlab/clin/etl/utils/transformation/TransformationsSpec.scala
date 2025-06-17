@@ -55,7 +55,6 @@ class TransformationsSpec extends SparkSpec {
     an[AnalysisException] should be thrownBy job.transform(df)
   }
 
-
   "EnrichWithClinicalInfo" should "enrich a DataFrame with clinical information" in {
     val df = Seq(
       ("aliquot1", "1"),
@@ -77,7 +76,6 @@ class TransformationsSpec extends SparkSpec {
       Row("aliquot2", "2", "analysis2")
     )
   }
-
 
   private def testRenameFieldsInArrayStructDf(): DataFrame = {
     val data = Seq(

@@ -27,9 +27,9 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
   val clinicalDf: DataFrame = Seq(
-    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.coverage_by_gene.GENCODE_CODING_CANONICAL.csv")), `patient_id` = "438787", `sequencing_id` = "SR0095"),
-    EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot2", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot2.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"))),
-    EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot3", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot3.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"))),
+    EnrichedClinical(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `aliquot_id` = "aliquot1", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.coverage_by_gene.GENCODE_CODING_CANONICAL.csv")), `patient_id` = "438787", `sequencing_id` = "SR0095"),
+    EnrichedClinical(`batch_id` = "BAT2", `analysis_id` = "SRA0002", `aliquot_id` = "aliquot2", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot2.coverage_by_gene.GENCODE_CODING_CANONICAL.csv")), `patient_id` = "PATIENT1", `sequencing_id` = "SR0001", `specimen_id` = "SPECIMEN1"),
+    EnrichedClinical(`batch_id` = "BAT2", `analysis_id` = "SRA0003", `aliquot_id` = "aliquot3", `covgene_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot3.coverage_by_gene.GENCODE_CODING_CANONICAL.csv")), `patient_id` = "PATIENT2", `sequencing_id` = "SR0002", `specimen_id` = "SPECIMEN2"),
   ).toDF()
 
   override val dbToCreate: List[String] = List(enriched_clinical.table.get.database)
@@ -54,7 +54,20 @@ class CoverageByGeneSpec extends SparkSpec with WithTestConfig with BeforeAndAft
 
     result("file_info")
       .as[FileInfo]
-      .count() shouldBe 2
+      .collect() should contain theSameElementsAs Seq(
+      FileInfo(
+        `batch_id` = "BAT2", `analysis_id` = "SRA0002", `aliquot_id` = "aliquot2",
+        `patient_id` = "PATIENT1", `specimen_id` = "SPECIMEN1", `sequencing_id` = "SR0001",
+        `is_proband` = true, `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"),
+        url = s"file://${resourcePath}BAT2/aliquot2.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"
+      ),
+      FileInfo(
+        `batch_id` = "BAT2", `analysis_id` = "SRA0003", `aliquot_id` = "aliquot3",
+        `patient_id` = "PATIENT2", `specimen_id` = "SPECIMEN2", `sequencing_id` = "SR0002",
+        `is_proband` = true, `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"),
+        url = s"file://${resourcePath}BAT2/aliquot3.coverage_by_gene.GENCODE_CODING_CANONICAL.csv"
+      )
+    )
   }
 
   it should "normalize coverage by gene data" in {

@@ -6,7 +6,6 @@ import bio.ferlab.clin.etl.model.raw.RawCoverageByGene
 import bio.ferlab.clin.etl.utils.{FileInfo, FileUtils}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
-import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.transformation.Cast.{castDouble, castFloat, castInt}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
@@ -15,6 +14,7 @@ import org.apache.spark.sql.functions.{input_file_name, lit}
 import java.time.LocalDateTime
 
 case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends SimpleSingleETL(rc) {
+
   import spark.implicits._
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_coverage_by_gene")
@@ -39,7 +39,7 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Simple
   override def transformSingle(data: Map[String, DataFrame],
                                lastRunDateTime: LocalDateTime,
                                currentRunDateTime: LocalDateTime): DataFrame = {
-    val fileInfo = data("file_info").select("url", "aliquot_id", "sequencing_id", "patient_id", "is_proband", "mother_id", "father_id")
+    val fileInfo = data("file_info").select("url", "aliquot_id", "analysis_id", "sequencing_id", "patient_id", "is_proband", "mother_id", "father_id")
     val withFileInfo = data(raw_coverage_by_gene.id)
       .withColumn("url", input_file_name())
       .join(fileInfo, Seq("url"))
@@ -62,6 +62,7 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Simple
         castFloat("coverage1000"),
         $"aliquot_id",
         $"patient_id",
+        $"analysis_id",
         $"sequencing_id",
         $"is_proband",
         $"mother_id",
@@ -69,8 +70,6 @@ case class CoverageByGene(rc: RuntimeETLContext, batchId: String) extends Simple
         lit(batchId) as "batch_id"
       )
   }
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object CoverageByGene {

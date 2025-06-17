@@ -5,8 +5,6 @@
 package bio.ferlab.clin.model.normalized
 
 
-
-
 case class NormalizedExomiser(`chromosome`: String = "X",
                               `start`: Long = 111736800,
                               `end`: Long = 111736800,
@@ -14,6 +12,7 @@ case class NormalizedExomiser(`chromosome`: String = "X",
                               `alternate`: String = "G",
                               `id`: String = "X-111736800-A-G_XR",
                               `aliquot_id`: String = "aliquot1",
+                              `analysis_id`: String = "SRA0001",
                               `rank`: Int = 3,
                               `gene_symbol`: String = "ALG13",
                               `entrez_gene_id`: Long = 79868,
@@ -22,6 +21,6 @@ case class NormalizedExomiser(`chromosome`: String = "X",
                               `contributing_variant`: Boolean = true,
                               `moi`: String = "XR",
                               `acmg_classification`: String = "UNCERTAIN_SIGNIFICANCE",
-                              `acmg_evidence`: Seq[String] = Seq("PP4","BP6"),
+                              `acmg_evidence`: Seq[String] = Seq("PP4", "BP6"),
                               `batch_id`: String = "BAT1")
 
