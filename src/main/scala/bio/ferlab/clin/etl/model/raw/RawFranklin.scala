@@ -5,15 +5,13 @@
 package bio.ferlab.clin.etl.model.raw
 
 
-
-
 case class RawFranklin(`variants`: Seq[VARIANTS] = Seq(VARIANTS()),
                        `batch_id`: String = "1",
                        `family_id`: String = "1",
                        `aliquot_id`: String = "12345",
                        `analysis_id`: String = "20")
 
-case class PREDICTIONS(`ada`: Option[Double] = None,
+case class PREDICTIONS(`ada`: Option[Double] = Some(0.5), // Using a non None value to avoid casting issues in tests
                        `aggregated_predictions`: Double = 0.36948757763975154,
                        `dbsnp`: String = "rs35354874",
                        `fathmm`: Double = -0.16,
