@@ -39,3 +39,9 @@ case class EnrichWithClinicalInfo(clinicalDf: DataFrame, joinCols: Seq[String], 
     df.join(clinicalSelectedDf, joinCols, "left")
   }
 }
+
+case class Limit(num: Int) extends Transformation {
+  override def transform: DataFrame => DataFrame = {
+    _.limit(num)
+  }
+}

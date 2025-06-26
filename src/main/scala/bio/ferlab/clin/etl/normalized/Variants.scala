@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.normalized.Variants._
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -68,22 +68,25 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
 
     val (inputVCF, srcScoreColumn, dstScoreColumn, computeFrequencies) = getVCF(data)
 
-    val variants = getVariants(inputVCF)
     val clinicalInfos = data(enriched_clinical.id)
       .where($"batch_id" === batchId)
       .select(
         "analysis_code",
         "analysis_display_name",
         "affected_status",
-        "aliquot_id"
+        "aliquot_id",
+        "bioinfo_analysis_code",
+        "analysis_id"
       )
       .withColumn("affected_status_str", when(col("affected_status"), lit("affected")).otherwise("non_affected"))
 
+    // Data per unique variant positions (no genotype / sample specific information)
+    val uniqueVariants = getUniqueVariants(inputVCF, clinicalInfos)
 
-    val variantsWithClinicalInfo = getVariantsWithClinicalInfo(inputVCF, clinicalInfos, srcScoreColumn, dstScoreColumn)
+    val sampleVariants = getSampleVariants(inputVCF, clinicalInfos, srcScoreColumn, dstScoreColumn)
 
-    val res = getVariantsWithFrequencies(variantsWithClinicalInfo, computeFrequencies)
-      .joinByLocus(variants, "right")
+    val res = getVariantsWithFrequencies(sampleVariants, computeFrequencies)
+      .join(uniqueVariants, locusColumnNames :+ "analysis_id" :+ "bioinfo_analysis_code", "right")
       .withSpliceAi(snv = data(enriched_spliceai_snv.id), indel = data(enriched_spliceai_indel.id))
       .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array(emptyFrequencies)))
       .withColumn("frequency_RQDM", coalesce(col("frequency_RQDM"), emptyFrequencyRQDM))
@@ -93,11 +96,12 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
     res
   }
 
-  def getVariants(vcf: DataFrame): DataFrame = {
+  def getUniqueVariants(vcf: DataFrame, clinicalInfos: DataFrame): DataFrame = {
     vcf
       .withColumn("annotation", firstCsq)
       .withColumn("alleleDepths", functions.transform(col("genotypes.alleleDepths"), c => c(1)))
       .filter(size(filter(col("alleleDepths"), ad => ad >= 3)) > 0)
+      .filter(alternate =!= "*")
       .select(
         chromosome,
         start,
@@ -109,14 +113,15 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         hgvsg,
         variant_class,
         pubmed,
-        hotspot(vcf)
+        hotspot(vcf),
+        explode(col("genotypes.sampleId")) as "aliquot_id",
       )
-      .drop("annotation")
-      .filter($"alternate" =!= "*")
-      .dropDuplicates("chromosome", "start", "reference", "alternate")
+      .join(broadcast(clinicalInfos.select("aliquot_id", "analysis_id", "bioinfo_analysis_code")), Seq("aliquot_id"), "left")
+      .drop("aliquot_id")
+      .dropDuplicates("analysis_id", "bioinfo_analysis_code", "chromosome", "start", "reference", "alternate")
   }
 
-  def getVariantsWithClinicalInfo(vcf: DataFrame, clinicalInfos: DataFrame, srcScoreColumn: String, dstScoreColumn: String): DataFrame = {
+  def getSampleVariants(vcf: DataFrame, clinicalInfos: DataFrame, srcScoreColumn: String, dstScoreColumn: String): DataFrame = {
     vcf
       .withColumn("annotation", firstCsq)
       .select(
@@ -139,8 +144,8 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
 
   def getVariantsEmptyFrequencies(variants: DataFrame): DataFrame = {
     variants
-      .selectLocus()
-      .dropDuplicates("chromosome", "start", "reference", "alternate")
+      .selectLocus(col("analysis_id"), col("bioinfo_analysis_code"))
+      .dropDuplicates("analysis_id", "bioinfo_analysis_code", "chromosome", "start", "reference", "alternate")
       .withColumn("frequencies_by_analysis", lit(null))
       .withColumn("frequency_RQDM", lit(null))
   }
@@ -174,7 +179,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
     }
 
     variants
-      .groupBy(locus :+ col("analysis_code") :+ col("affected_status_str"): _*)
+      .groupBy(locus :+ col("analysis_id") :+ col("bioinfo_analysis_code") :+ col("analysis_code") :+ col("affected_status_str"): _*)
       .agg(
         first($"analysis_display_name") as "analysis_display_name",
         first($"affected_status") as "affected_status",
@@ -186,7 +191,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         FrequencyUtils.pn,
         first(struct(variants("*"))) as "variant")
       .withColumn("frequency_by_status", frequency(""))
-      .groupBy(locus :+ col("analysis_code"): _*)
+      .groupBy(locus :+ col("analysis_id") :+ col("bioinfo_analysis_code") :+ col("analysis_code"): _*)
       .agg(
         map_from_entries(collect_list(struct($"affected_status_str", $"frequency_by_status"))) as "frequency_by_status",
 
@@ -214,7 +219,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
       .withColumn("frequency_by_status", map_concat($"frequency_by_status_total", $"frequency_by_status"))
       .withColumn("frequency_by_status", when(array_contains(map_keys($"frequency_by_status"), "non_affected"), $"frequency_by_status")
         .otherwise(map_concat($"frequency_by_status", map_from_entries(array(struct(lit("non_affected"), emptyFrequency))))))
-      .groupBy(locus: _*)
+      .groupBy(locus :+ col("analysis_id") :+ col("bioinfo_analysis_code"): _*)
       .agg(
         collect_list(struct(
           $"analysis_display_name" as "analysis_display_name",
@@ -247,12 +252,9 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         frequency("non_affected") as "non_affected",
         frequency("") as "total"
       ))
-      .select(locus :+ $"frequencies_by_analysis" :+ $"frequency_RQDM": _*)
+      .select(locus :+ col("analysis_id") :+ col("bioinfo_analysis_code") :+ $"frequencies_by_analysis" :+ $"frequency_RQDM": _*)
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object Variants {
@@ -262,10 +264,6 @@ object Variants {
       import spark.implicits._
 
       def joinAndMergeIntoGenes(variants: DataFrame, spliceai: DataFrame): DataFrame = {
-        val joinCondition: Column = locusColumnNames
-          .map(l => variants(l) === spliceai(l))
-          .reduce(_ and _) and array_contains(variants("genes_symbol"), spliceai("symbol"))
-
         if (!variants.isEmpty) {
           variants
             .select($"*", explode_outer($"genes_symbol") as "symbol") // explode_outer since genes_symbol can be empty
@@ -277,7 +275,7 @@ object Variants {
                 $"spliceai"
               ) as "gene" // add spliceai struct as nested field of gene struct
             )
-            .groupByLocus()
+            .groupByLocus($"analysis_id", $"bioinfo_analysis_code")
             .agg(
               first(struct(variants.drop("genes")("*"))) as "variant",
               collect_list("gene") as "genes" // Create genes list for each locus

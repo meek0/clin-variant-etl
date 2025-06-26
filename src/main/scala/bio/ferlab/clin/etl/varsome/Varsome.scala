@@ -1,6 +1,7 @@
 package bio.ferlab.clin.etl.varsome
 
 import bio.ferlab.clin.etl.mainutils.{Chromosome, OptionalBatch}
+import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisIdsInBatch
 import bio.ferlab.clin.etl.varsome.VarsomeUtils.{transformPartition, varsomeSchema}
 import bio.ferlab.datalake.commons.config.{Coalesce, DatasetConf, RunStep, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
@@ -38,9 +39,10 @@ case class Varsome(rc: RuntimeETLContext,
   override val mainDestination: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   override def extract(lastRunDateTime: LocalDateTime, currentRunDateTime: LocalDateTime): Map[String, DataFrame] = {
-    val variants = normalized_variants.read.select("chromosome", "start", "reference", "alternate", "batch_id", "genes_symbol")
+    val variants = normalized_variants.read.select("chromosome", "start", "reference", "alternate", "analysis_id", "genes_symbol")
     val panels = normalized_panels.read.select("symbol")
 
     val variantFilterByLength = variants
@@ -55,8 +57,14 @@ case class Varsome(rc: RuntimeETLContext,
     jobType match {
       case Reload => Map(normalized_variants.id -> variantsFilterByChr)
       case ForBatch(batchId) =>
-        val batchVariants = variantsFilterByChr
-          .where(col("batch_id") === batchId)
+        val clinicalDf = enriched_clinical.read
+        val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, batchId)
+
+        // Note: An analysis can belong to multiple batches, so this may select variants from other batches as well.
+        // This is acceptable as the only effect is that varsome data for those variants may be updated more often or not
+        // updated at the same time as the rest of the batch.
+        val batchVariants = variantsFilterByChr.where(col("analysis_id").isin(analysisIds: _*))
+
         val extractedVariants = if (mainDestination.tableExist) {
           val varsome = mainDestination.read.where(col("updated_on") >= Timestamp.valueOf(currentRunDateTime.minusDays(7)))
           batchVariants.join(varsome, Seq("chromosome", "start", "reference", "alternate"), "leftanti")
@@ -66,8 +74,6 @@ case class Varsome(rc: RuntimeETLContext,
         }
         Map(normalized_variants.id -> extractedVariants)
     }
-
-
   }
 
   override def defaultRepartition: DataFrame => DataFrame = Coalesce(1)
@@ -88,10 +94,6 @@ case class Varsome(rc: RuntimeETLContext,
       .withColumnRenamed("ref", "reference")
       .withColumnRenamed("alt", "alternate")
       .withColumn("updated_on", lit(Timestamp.valueOf(currentRunDateTime)))
-
-
   }
-
-
 }
 
