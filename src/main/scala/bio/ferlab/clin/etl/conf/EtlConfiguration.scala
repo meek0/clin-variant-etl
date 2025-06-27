@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.conf
 
 import bio.ferlab.datalake.commons.config.Format.{CSV, DELTA, JSON, PARQUET, VCF}
-import bio.ferlab.datalake.commons.config.LoadType.{OverWrite, OverWritePartition, Read, Scd1, Upsert}
+import bio.ferlab.datalake.commons.config.LoadType.{OverWrite, OverWritePartition, OverWritePartitionDynamic, Read, Scd1, Upsert}
 import bio.ferlab.datalake.commons.config._
 import bio.ferlab.datalake.commons.file.FileSystemType.S3
 import bio.ferlab.datalake.spark3.publictables.PublicDatasets
@@ -109,7 +109,7 @@ object EtlConfiguration extends App {
 
       //clinical normalized
       DatasetConf("normalized_snv"                            , clin_datalake, "/normalized/snv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv"))),
-      DatasetConf("normalized_snv_somatic"                    , clin_datalake, "/normalized/snv_somatic"            , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_snv_somatic"))),
+      DatasetConf("normalized_snv_somatic"                    , clin_datalake, "/normalized/snv_somatic"            , DELTA  , OverWritePartitionDynamic, partitionby = List("analysis_id", "bioinfo_analysis_code"), table = Some(TableConf("clin", "normalized_snv_somatic"))),
       DatasetConf("normalized_cnv"                            , clin_datalake, "/normalized/cnv"                    , DELTA  , OverWritePartition, partitionby = List("batch_id", "patient_id"), table = Some(TableConf("clin", "normalized_cnv"))),
       DatasetConf("normalized_cnv_somatic_tumor_only"         , clin_datalake, "/normalized/cnv_somatic_tumor_only" , DELTA  , OverWritePartition, partitionby = List("batch_id", "patient_id"), table = Some(TableConf("clin", "normalized_cnv_somatic_tumor_only"))),
       DatasetConf("normalized_variants"            , clin_datalake, "/normalized/variants"               , DELTA  , OverWritePartition, partitionby = List("batch_id", "chromosome"), table = Some(TableConf("clin", "normalized_variants"))),
@@ -123,7 +123,7 @@ object EtlConfiguration extends App {
 
       //clinical enriched
       DatasetConf("enriched_snv"                   , clin_datalake, "/enriched/snv"                      , DELTA  , OverWrite         , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "snv"))              , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id")),
-      DatasetConf("enriched_snv_somatic"           , clin_datalake, "/enriched/snv_somatic"              , DELTA  , OverWritePartition, partitionby = List("analysis_id", "chromosome"), table = Some(TableConf("clin", "snv_somatic"))      , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id", "bioinfo_analysis_code")),
+      DatasetConf("enriched_snv_somatic"           , clin_datalake, "/enriched/snv_somatic"              , DELTA  , OverWritePartitionDynamic, partitionby = List("analysis_id", "bioinfo_analysis_code"), table = Some(TableConf("clin", "snv_somatic"))      , keys = List("chromosome", "start", "reference", "alternate", "aliquot_id", "bioinfo_analysis_code")),
       DatasetConf("enriched_cnv"                   , clin_datalake, "/enriched/cnv"                      , DELTA  , OverWritePartition, partitionby = List("sequencing_id")                       , table = Some(TableConf("clin", "cnv"))              , keys = List("hash"), repartition = Some(RepartitionByColumns(Seq("sequencing_id"), n = Some(1), sortColumns = Seq("name")))),
       DatasetConf("enriched_variants"              , clin_datalake, "/enriched/variants"                 , DELTA  , OverWritePartition, partitionby = List("chromosome")                               , table = Some(TableConf("clin", "variants"))),
       DatasetConf("enriched_consequences"          , clin_datalake, "/enriched/consequences"             , DELTA  , Scd1              , partitionby = List("chromosome")                               , table = Some(TableConf("clin", "consequences"))     , keys = List("chromosome", "start", "reference", "alternate", "ensembl_transcript_id")),
@@ -181,4 +181,3 @@ object EtlConfiguration extends App {
   ConfigurationWriter.writeTo("src/test/resources/config/test.conf", test_conf)
 
 }
-

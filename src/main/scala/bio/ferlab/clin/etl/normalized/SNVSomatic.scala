@@ -81,10 +81,6 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: String) extends Occurrence
       .drop("symbols", "is_rare")
 
   }
-
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(Seq("chromosome"), Some(100))
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 }
 
 object SNVSomatic {

@@ -28,10 +28,10 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
     batchId match {
       // If a batch id was submitted, only process the specified id
       case Some(id) =>
-        val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"batch_id" === id)
         val normalized_cnvDf = normalized_cnv.read.where($"batch_id" === id)
         val clinicalDf = enriched_clinical.read
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
+        val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"analysis_id".isin(analysisIds: _*))
 
         val fs = FileSystemResolver.resolve(conf.getStorage(mainDestination.storageid).filesystem)
         val destinationExists = fs.exists(mainDestination.location) && mainDestination.tableExist
@@ -83,7 +83,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
       .join(withAllAnalysesDf, locusColumnNames :+ "aliquot_id", "inner")
   }
 
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("analysis_id", "chromosome"), n = Some(100), sortColumns = Seq("start"))
+  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("analysis_id", "bioinfo_analysis_code"), n = Some(100), sortColumns = Seq("start"))
 }
 
 object SNVSomatic {

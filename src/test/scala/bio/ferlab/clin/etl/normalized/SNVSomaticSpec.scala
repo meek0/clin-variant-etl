@@ -6,14 +6,15 @@ import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.NormalizedSNVSomatic
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.{DatasetConf, LoadType}
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
-import bio.ferlab.datalake.testutils.{CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
 import java.sql.Date
 import java.time.LocalDate
 
-class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll {
+class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeEach {
 
   import spark.implicits._
 
@@ -25,20 +26,135 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
   val rare_variants: DatasetConf = conf.getDataset("enriched_rare_variant")
 
   override val dbToCreate: List[String] = List("clin")
+  override val dsToClean: List[DatasetConf] = List(conf.getDataset("normalized_snv_somatic"))
 
   val tumorOnlyJob = SNVSomatic(TestETLContext(), tumorOnlyBatchId)
   val tumorNormalJob = SNVSomatic(TestETLContext(), tumorNormalBatchId)
 
   val clinicalDf: DataFrame = Seq(
     // TEBA (tumor only analysis)
-    EnrichedClinical(`patient_id` = "PA0001", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),
-    EnrichedClinical(`patient_id` = "PA0002", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0002", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "22222", `is_proband` = false, `gender` = "Male", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "SA_002", `specimen_id` = "SP_002", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
-    EnrichedClinical(`patient_id` = "PA0003", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0003", `batch_id` = tumorOnlyBatchId, `aliquot_id` = "33333", `is_proband` = false, `gender` = "Female", `bioinfo_analysis_code` = "TEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_003", `specimen_id` = "SP_003", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
+    EnrichedClinical(
+      `patient_id` = "PA0001",
+      `analysis_id` = "SRA0001",
+      `sequencing_id` = "SRS0001",
+      `batch_id` = tumorOnlyBatchId,
+      `aliquot_id` = "11111",
+      `is_proband` = true,
+      `gender` = "Male",
+      `bioinfo_analysis_code` = "TEBA",
+      `analysis_display_name` = Some("Maladies musculaires (Panel global)"),
+      `affected_status` = true,
+      `affected_status_code` = "affected",
+      `sample_id` = "SA_001",
+      `specimen_id` = "SP_001",
+      `family_id` = Some("FM00001"),
+      `mother_id` = Some("PA0003"),
+      `father_id` = Some("PA0002"),
+      `mother_aliquot_id` = Some("33333"),
+      `father_aliquot_id` = Some("22222")
+    ),
+    EnrichedClinical(
+      `patient_id` = "PA0002",
+      `analysis_id` = "SRA0001",
+      `sequencing_id` = "SRS0002",
+      `batch_id` = tumorOnlyBatchId,
+      `aliquot_id` = "22222",
+      `is_proband` = false,
+      `gender` = "Male",
+      `bioinfo_analysis_code` = "TEBA",
+      `analysis_display_name` = Some("Maladies musculaires (Panel global)"),
+      `affected_status` = false,
+      `affected_status_code` = "not_affected",
+      `sample_id` = "SA_002",
+      `specimen_id` = "SP_002",
+      `family_id` = Some("FM00001"),
+      `mother_id` = None,
+      `father_id` = None,
+      `mother_aliquot_id` = None,
+      `father_aliquot_id` = None
+    ),
+    EnrichedClinical(
+      `patient_id` = "PA0003",
+      `analysis_id` = "SRA0001",
+      `sequencing_id` = "SRS0003",
+      `batch_id` = tumorOnlyBatchId,
+      `aliquot_id` = "33333",
+      `is_proband` = false,
+      `gender` = "Female",
+      `bioinfo_analysis_code` = "TEBA",
+      `analysis_display_name` = Some("Maladies musculaires (Panel global)"),
+      `affected_status` = true,
+      `affected_status_code` = "affected",
+      `sample_id` = "SA_003",
+      `specimen_id` = "SP_003",
+      `family_id` = Some("FM00001"),
+      `mother_id` = None,
+      `father_id` = None,
+      `mother_aliquot_id` = None,
+      `father_aliquot_id` = None
+    ),
 
     // TNEBA (tumor normal analysis)
-    EnrichedClinical(`patient_id` = "PA0001", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `batch_id` = tumorNormalBatchId, `aliquot_id` = "11111", `is_proband` = true, `gender` = "Male", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_001", `specimen_id` = "SP_001", `family_id` = Some("FM00001"), `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"), `mother_aliquot_id` = Some("33333"), `father_aliquot_id` = Some("22222")),
-    EnrichedClinical(`patient_id` = "PA0002", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0002", `batch_id` = tumorNormalBatchId, `aliquot_id` = "22222", `is_proband` = false, `gender` = "Male", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "SA_002", `specimen_id` = "SP_002", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
-    EnrichedClinical(`patient_id` = "PA0003", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0003", `batch_id` = tumorNormalBatchId, `aliquot_id` = "33333", `is_proband` = false, `gender` = "Female", `bioinfo_analysis_code` = "TNEBA", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "SA_003", `specimen_id` = "SP_003", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None, `mother_aliquot_id` = None, `father_aliquot_id` = None),
+    EnrichedClinical(
+      `patient_id` = "PA0001",
+      `analysis_id` = "SRA0001",
+      `sequencing_id` = "SRS0001",
+      `batch_id` = tumorNormalBatchId,
+      `aliquot_id` = "11111",
+      `is_proband` = true,
+      `gender` = "Male",
+      `bioinfo_analysis_code` = "TNEBA",
+      `analysis_display_name` = Some("Maladies musculaires (Panel global)"),
+      `affected_status` = true,
+      `affected_status_code` = "affected",
+      `sample_id` = "SA_001",
+      `specimen_id` = "SP_001",
+      `family_id` = Some("FM00001"),
+      `mother_id` = Some("PA0003"),
+      `father_id` = Some("PA0002"),
+      `mother_aliquot_id` = Some("33333"),
+      `father_aliquot_id` = Some("22222")
+    ),
+    EnrichedClinical(
+      `patient_id` = "PA0002",
+      `analysis_id` = "SRA0001",
+      `sequencing_id` = "SRS0002",
+      `batch_id` = tumorNormalBatchId,
+      `aliquot_id` = "22222",
+      `is_proband` = false,
+      `gender` = "Male",
+      `bioinfo_analysis_code` = "TNEBA",
+      `analysis_display_name` = Some("Maladies musculaires (Panel global)"),
+      `affected_status` = false,
+      `affected_status_code` = "not_affected",
+      `sample_id` = "SA_002",
+      `specimen_id` = "SP_002",
+      `family_id` = Some("FM00001"),
+      `mother_id` = None,
+      `father_id` = None,
+      `mother_aliquot_id` = None,
+      `father_aliquot_id` = None
+    ),
+    EnrichedClinical(
+      `patient_id` = "PA0003",
+      `analysis_id` = "SRA0001",
+      `sequencing_id` = "SRS0003",
+      `batch_id` = tumorNormalBatchId,
+      `aliquot_id` = "33333",
+      `is_proband` = false,
+      `gender` = "Female",
+      `bioinfo_analysis_code` = "TNEBA",
+      `analysis_display_name` = Some("Maladies musculaires (Panel global)"),
+      `affected_status` = true,
+      `affected_status_code` = "affected",
+      `sample_id` = "SA_003",
+      `specimen_id` = "SP_003",
+      `family_id` = Some("FM00001"),
+      `mother_id` = None,
+      `father_id` = None,
+      `mother_aliquot_id` = None,
+      `father_aliquot_id` = None
+    ),
   ).toDF()
 
   val data: Map[String, DataFrame] = Map(
@@ -48,9 +164,10 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
 
   val dataWithVariantCalling: Map[String, DataFrame] = data + (raw_variant_calling.id -> Seq(VCF_SNV_Somatic_Input(
     `genotypes` = List(
-      SNV_SOMATIC_GENOTYPES(`sampleId` = "11111"), //proband
-      SNV_SOMATIC_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0), `alleleDepths` = List(30, 0)), //father
-      SNV_SOMATIC_GENOTYPES(`sampleId` = "33333")) //mother
+      SNV_SOMATIC_GENOTYPES(`sampleId` = "11111"), // proband
+      SNV_SOMATIC_GENOTYPES(`sampleId` = "22222", `calls` = List(0, 0), `alleleDepths` = List(30, 0)), // father
+      SNV_SOMATIC_GENOTYPES(`sampleId` = "33333")
+    ) // mother
   )).toDF())
 
   override def beforeAll(): Unit = {
@@ -133,7 +250,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
       batch_id = tumorOnlyBatchId,
       bioinfo_analysis_code = "TEBA"
     ))
-    //ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNVSomatic", result, "src/test/scala/")
+    // ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "NormalizedSNVSomatic", result, "src/test/scala/")
   }
 
   it should "transform somatic tumor_normal data to expected format" in {
@@ -198,10 +315,119 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
     val results = tumorOnlyJob.transform(data ++ Map(raw_variant_calling.id -> Seq(
       VCF_SNV_Somatic_Input(`contigName` = "chr2"),
       VCF_SNV_Somatic_Input(`contigName` = "chrY"),
-      VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))
+      VCF_SNV_Somatic_Input(`contigName` = "foo")
+    ).toDF))
     val result = results("normalized_snv_somatic").as[NormalizedSNVSomatic].collect()
     result.length shouldBe >(0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
+  }
+
+  "load" should "overwrite only relevant partitions" in {
+    val tumorOnlyData = tumorOnlyJob.transform(dataWithVariantCalling)
+
+    val resultsTumorOnly = tumorOnlyJob.load(tumorOnlyData)
+
+    resultsTumorOnly.size shouldBe 1
+    val expectedResultsTumorOnly = Seq(
+      // proband
+      NormalizedSNVSomatic(
+        analysis_code = "MMG",
+        specimen_id = "SP_001",
+        sample_id = "SA_001",
+        organization_id = "CHUSJ",
+        hc_complement = List(),
+        possibly_hc_complement = List(),
+        analysis_id = "SRA0001",
+        sequencing_id = "SRS0001",
+        last_update = Date.valueOf(LocalDate.now()),
+        batch_id = tumorOnlyBatchId,
+        bioinfo_analysis_code = "TEBA"
+      ),
+      // mother
+      NormalizedSNVSomatic(
+        patient_id = "PA0003",
+        gender = "Female",
+        aliquot_id = "33333",
+        analysis_code = "MMG",
+        specimen_id = "SP_003",
+        sample_id = "SA_003",
+        organization_id = "CHUSJ",
+        analysis_id = "SRA0001",
+        sequencing_id = "SRS0003",
+        hc_complement = List(),
+        possibly_hc_complement = List(),
+        is_proband = false,
+        mother_id = null,
+        father_id = null,
+        mother_aliquot_id = None,
+        father_aliquot_id = None,
+        mother_calls = None,
+        father_calls = None,
+        mother_affected_status = None,
+        father_affected_status = None,
+        mother_zygosity = None,
+        father_zygosity = None,
+        parental_origin = Some("unknown"),
+        transmission = Some("unknown_parents_genotype"),
+        last_update = Date.valueOf(LocalDate.now()),
+        batch_id = tumorOnlyBatchId,
+        bioinfo_analysis_code = "TEBA"
+      )
+    )
+    resultsTumorOnly("normalized_snv_somatic").as[NormalizedSNVSomatic].collect() should contain theSameElementsAs expectedResultsTumorOnly
+
+    // Loading more data for the same analysis id but different bioinfo_analysis_code. The previous data
+    // should not be overwritten.
+    val tumorNormalData = tumorNormalJob.transform(dataWithVariantCalling)
+    val resultsTumorNormal = tumorNormalJob.load(tumorNormalData)
+    resultsTumorNormal.size shouldBe 1
+    val expectedResultsTumorNormal = Seq(
+      // proband
+      NormalizedSNVSomatic(
+        analysis_code = "MMG",
+        specimen_id = "SP_001",
+        sample_id = "SA_001",
+        organization_id = "CHUSJ",
+        hc_complement = List(),
+        possibly_hc_complement = List(),
+        analysis_id = "SRA0001",
+        sequencing_id = "SRS0001",
+        last_update = Date.valueOf(LocalDate.now()),
+        batch_id = tumorNormalBatchId,
+        bioinfo_analysis_code = "TNEBA"
+      ),
+      // mother
+      NormalizedSNVSomatic(
+        patient_id = "PA0003",
+        gender = "Female",
+        aliquot_id = "33333",
+        analysis_code = "MMG",
+        specimen_id = "SP_003",
+        sample_id = "SA_003",
+        organization_id = "CHUSJ",
+        analysis_id = "SRA0001",
+        sequencing_id = "SRS0003",
+        hc_complement = List(),
+        possibly_hc_complement = List(),
+        is_proband = false,
+        mother_id = null,
+        father_id = null,
+        mother_aliquot_id = None,
+        father_aliquot_id = None,
+        mother_calls = None,
+        father_calls = None,
+        mother_affected_status = None,
+        father_affected_status = None,
+        mother_zygosity = None,
+        father_zygosity = None,
+        parental_origin = Some("unknown"),
+        transmission = Some("unknown_parents_genotype"),
+        last_update = Date.valueOf(LocalDate.now()),
+        batch_id = tumorNormalBatchId,
+        bioinfo_analysis_code = "TNEBA"
+      )
+    )
+    resultsTumorNormal("normalized_snv_somatic").as[NormalizedSNVSomatic].collect() should contain theSameElementsAs expectedResultsTumorOnly ++ expectedResultsTumorNormal
   }
 
 }
