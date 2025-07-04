@@ -3,7 +3,6 @@ package bio.ferlab.clin.etl.enriched
 import bio.ferlab.clin.etl.mainutils.OptionalBatch
 import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisIdsInBatch
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
-import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.GenomicOperations
@@ -26,31 +25,22 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
     import spark.implicits._
 
     batchId match {
-      // If a batch id was submitted, only process the specified id
+      // If a batch id was submitted, only process analysis in the batch
       case Some(id) =>
         val normalized_cnvDf = normalized_cnv.read.where($"batch_id" === id)
         val clinicalDf = enriched_clinical.read
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"analysis_id".isin(analysisIds: _*))
 
-        val fs = FileSystemResolver.resolve(conf.getStorage(mainDestination.storageid).filesystem)
-        val destinationExists = fs.exists(mainDestination.location) && mainDestination.tableExist
-
-        val enrichedSnvSomaticDf = if (destinationExists) {
-          mainDestination.read.where($"analysis_id".isin(analysisIds: _*))
-        } else spark.emptyDataFrame
-
         Map(
           normalized_snv_somatic.id -> normalizedSnvSomaticDf,
-          normalized_cnv.id -> normalized_cnvDf,
-          mainDestination.id -> enrichedSnvSomaticDf
+          normalized_cnv.id -> normalized_cnvDf
         )
       case None =>
         // If no batch id were submitted, process all data
         Map(
           normalized_snv_somatic.id -> normalized_snv_somatic.read,
-          normalized_cnv.id -> normalized_cnv.read,
-          mainDestination.id -> spark.emptyDataFrame // No need to union with enriched
+          normalized_cnv.id -> normalized_cnv.read
         )
     }
   }
@@ -62,17 +52,10 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
 
     val normalizedSnvSomaticDf = data(normalized_snv_somatic.id)
     val normalizedCnvDf = data(normalized_cnv.id)
-    val enrichedSnvSomaticDf = data(mainDestination.id)
 
-    val withPastAnalysesDf = if (!enrichedSnvSomaticDf.isEmpty)
-      normalizedSnvSomaticDf
-        .unionByName(enrichedSnvSomaticDf.drop("all_analyses").drop("cnv_count"), allowMissingColumns = true)
-        .distinct()
-    else normalizedSnvSomaticDf // No past analyses since enriched is empty for this service request id
+    val withCnvCount = withCount(normalizedSnvSomaticDf, normalizedCnvDf, "cnv_count")
 
-    val withCnvCount = withCount(withPastAnalysesDf, normalizedCnvDf, "cnv_count")
-
-    val withAllAnalysesDf = withPastAnalysesDf
+    val withAllAnalysesDf = normalizedSnvSomaticDf
       .groupByLocus($"aliquot_id")
       .agg(collect_set($"bioinfo_analysis_code") as "all_bioinfo_analysis_codes")
       .withColumn("all_analyses", when(array_contains($"all_bioinfo_analysis_codes", "TEBA"), array(lit("TO"))).otherwise(array()))
