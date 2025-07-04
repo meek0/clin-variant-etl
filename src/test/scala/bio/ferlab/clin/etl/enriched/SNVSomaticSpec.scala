@@ -79,6 +79,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
   "extract" should "return data relevant to the batch if batch id is provided" in {
     val result = job(Some("BATCH3")).extract()
 
+    result.size shouldBe 2
+
     result(normalized_snv_somatic.id)
       .as[NormalizedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
@@ -92,6 +94,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
 
   it should "include data from other batches if the analysis exists in multiple batches" in {
     val result = job(Some("BATCH4")).extract()
+
+    result.size shouldBe 2
 
     result(normalized_snv_somatic.id)
       .as[NormalizedSNVSomatic]
@@ -111,6 +115,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
   it should "include cnv data if there is cnv data applicable to the batch" in {
     val result = job(Some("BATCH2")).extract()
 
+    result.size shouldBe 2
+
     result(normalized_snv_somatic.id)
       .as[NormalizedSNVSomatic]
       .collect() should contain theSameElementsAs Seq(
@@ -126,6 +132,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
 
   it should "return data for all analyses when no batch id is specified" in {
     val result = job(None).extract()
+
+    result.size shouldBe 2
 
     result(normalized_snv_somatic.id)
       .as[NormalizedSNVSomatic]
@@ -146,8 +154,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
     val result = job(None).transform( // Using None as batch_id here as it is not relevant for this test
       Map(
         normalized_snv_somatic.id -> normalizedSnvSomaticData.toDF(),
-        normalized_cnv.id -> Seq.empty[NormalizedCNV].toDF(),
-        enriched_snv_somatic.id -> Seq.empty[EnrichedSNVSomatic].toDF()
+        normalized_cnv.id -> Seq.empty[NormalizedCNV].toDF()
       )
     )
 
@@ -174,8 +181,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
     val result = job(None).transform( // Using None as batch_id here as it is not relevant for this test
       Map(
         normalized_snv_somatic.id -> normalizedSnvSomaticData.toDF(),
-        normalized_cnv.id -> Seq.empty[NormalizedCNV].toDF(),
-        enriched_snv_somatic.id -> Seq.empty[EnrichedSNVSomatic].toDF()
+        normalized_cnv.id -> Seq.empty[NormalizedCNV].toDF()
       )
     )
 
@@ -210,8 +216,7 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
         NormalizedCNV(`chromosome` = "1", `start` = 110, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_02", `sequencing_id` = "SR_001"),
         NormalizedCNV(`chromosome` = "1", `start` = 130, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_03", `sequencing_id` = "SR_001"),
         NormalizedCNV(`chromosome` = "1", `start` = 220, `end` = 500, `alternate` = "A", reference = "REF", `name` = "CNV_04", `sequencing_id` = "SR_001"),
-      ).toDF(),
-      enriched_snv_somatic.id -> spark.emptyDataFrame
+      ).toDF()
     )
 
     val result = job(None).transformSingle(data)
