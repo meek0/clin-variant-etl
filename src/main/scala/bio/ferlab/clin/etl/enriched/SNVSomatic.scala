@@ -17,7 +17,7 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
 
   override val mainDestination: DatasetConf = conf.getDataset("enriched_snv_somatic")
   val normalized_snv_somatic: DatasetConf = conf.getDataset("normalized_snv_somatic")
-  val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
+  val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
@@ -29,18 +29,19 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
       case Some(id) =>
         val clinicalDf = enriched_clinical.read
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
-        val normalized_cnvDf = normalized_cnv.read.where($"analysis_id".isin(analysisIds: _*))
+
+        val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only.read.where($"analysis_id".isin(analysisIds: _*))
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where($"analysis_id".isin(analysisIds: _*))
 
         Map(
           normalized_snv_somatic.id -> normalizedSnvSomaticDf,
-          normalized_cnv.id -> normalized_cnvDf
+          normalized_cnv_somatic_tumor_only.id -> normalizedCnvSomaticTumorOnlyDf
         )
       case None =>
         // If no batch id were submitted, process all data
         Map(
           normalized_snv_somatic.id -> normalized_snv_somatic.read,
-          normalized_cnv.id -> normalized_cnv.read
+          normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read
         )
     }
   }
@@ -51,9 +52,9 @@ case class SNVSomatic(rc: RuntimeETLContext, batchId: Option[String]) extends Si
     import spark.implicits._
 
     val normalizedSnvSomaticDf = data(normalized_snv_somatic.id)
-    val normalizedCnvDf = data(normalized_cnv.id)
+    val normalizedCnvSomaticTumorOnlyDf = data(normalized_cnv_somatic_tumor_only.id)
 
-    val withCnvCount = withCount(normalizedSnvSomaticDf, normalizedCnvDf, "cnv_count")
+    val withCnvCount = withCount(normalizedSnvSomaticDf, normalizedCnvSomaticTumorOnlyDf, "cnv_count")
 
     val withAllAnalysesDf = normalizedSnvSomaticDf
       .groupByLocus($"aliquot_id")

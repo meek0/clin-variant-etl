@@ -23,6 +23,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
   val normalized_cnv: DatasetConf = conf.getDataset("normalized_cnv")
   val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
   val normalized_snv: DatasetConf = conf.getDataset("normalized_snv")
+  val normalized_snv_somatic: DatasetConf = conf.getDataset("normalized_snv_somatic")
   val refseq_annotation: DatasetConf = conf.getDataset("normalized_refseq_annotation")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
@@ -48,6 +49,10 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
         val normalizedSnvDf = normalized_snv.read.where($"batch_id" === id)
 
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
+        val normalizedSnvSomaticDf = normalized_snv_somatic.read.where(
+          $"analysis_id".isin(analysisIds: _*) &&
+            $"bioinfo_analysis_code" === "TEBA"
+        )
         val normalizedCnvDf = normalized_cnv.read.where($"analysis_id".isin(analysisIds: _*))
         val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only
           .read.where($"analysis_id".isin(analysisIds: _*))
@@ -58,6 +63,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
           normalized_cnv.id -> normalizedCnvDf,
           normalized_cnv_somatic_tumor_only.id -> normalizedCnvSomaticTumorOnlyDf,
           normalized_snv.id -> normalizedSnvDf,
+          normalized_snv_somatic.id -> normalizedSnvSomaticDf,
           nextflow_svclustering_parental_origin.id -> nextflowSVClusteringParentalOrigin
         ) ++ extractedData
 
@@ -67,6 +73,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
           normalized_cnv.id -> normalized_cnv.read,
           normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
           normalized_snv.id -> normalized_snv.read,
+          normalized_snv_somatic.id -> normalized_snv_somatic.read.where($"bioinfo_analysis_code" === "TEBA"),
           nextflow_svclustering_parental_origin.id -> nextflow_svclustering_parental_origin.read
         ) ++ extractedData
     }
@@ -77,7 +84,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
                                currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     val cnvDf = data(normalized_cnv.id).unionByName(data(normalized_cnv_somatic_tumor_only.id), allowMissingColumns = true)
-    val snvDf = data(normalized_snv.id)
+    val snvDf = data(normalized_snv.id).unionByName(data(normalized_snv_somatic.id), allowMissingColumns = true)
     val refseqDf = data(refseq_annotation.id)
     val panelsDf = data(normalized_panels.id)
     val genesDf = data(genes.id)

@@ -8,7 +8,7 @@ object LoadResolverUtils {
 
   def write(datasetConf: DatasetConf, df: DataFrame)(implicit spark: SparkSession, conf: Configuration): Unit = {
     LoadResolver
-      .write
+      .write(spark, conf)
       .apply(datasetConf.format, datasetConf.loadtype)
       .apply(datasetConf, df)
   }
