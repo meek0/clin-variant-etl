@@ -66,6 +66,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       )
       .withColumn("bioinfo_analysis", when($"bioinfo_analysis_code" === "GEBA", "germline")
         .when($"bioinfo_analysis_code".isin("TEBA", "TNEBA"), "somatic"))
+      .filter($"sequencing_strategy" === "WXS") // Only WXS is supported
 
     val patients = data(normalized_patient.id)
       .select(

@@ -81,6 +81,9 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
     // 5. Solo
     NormalizedPatient(`id` = "PA1111", `gender` = "female", `practitioner_role_id` = "PPR00103"), // proband
+
+    // 6. API Solo WGS
+    NormalizedPatient(`id` = "API-PA-0001", `gender` = "female", `practitioner_role_id` = "PPR00103"), // proband
   ).toDF()
 
   val serviceRequestDf: DataFrame = Seq(
@@ -122,6 +125,11 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // Germline analysis
     NormalizedServiceRequest(service_request_type = "analysis", `patient_id` = "PA1111", `id` = "SRA2222", `clinical_impressions` = Some(Seq("CI2222"))),
     NormalizedServiceRequest(service_request_type = "sequencing", `patient_id` = "PA1111", `id` = "SRS2222", analysis_service_request_id = Some("SRA2222")),
+
+    // 6. API Solo WGS
+    // Germline analysis
+    NormalizedServiceRequest(service_request_type = "analysis", `patient_id` = "API-PA-0001", `id` = "API-SRA-0001", `clinical_impressions` = Some(Seq("API-CI-0001"))),
+    NormalizedServiceRequest(service_request_type = "sequencing", `patient_id` = "API-PA-0001", `id` = "API-SRS-0001", analysis_service_request_id = Some("API-SRA-0001")),
   ).toDF()
 
   val clinicalImpressionsDf: DataFrame = Seq(
@@ -155,6 +163,10 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     NormalizedClinicalImpression(id = "CI1111", `patient_id` = "PA1111", observations = List("OB1111", "OB1111-A", "OB1111-B", "OB1111-C")),
     // Clinical impression for germline analysis
     NormalizedClinicalImpression(id = "CI2222", `patient_id` = "PA1111", observations = List("OB2222", "OB2222-A", "OB2222-B", "OB2222-C")),
+
+    // 6. API Solo WGS
+    // Germline analysis
+    NormalizedClinicalImpression(id = "API-CI-0001", `patient_id` = "API-PA-0001", observations = List("API-OBS-0001")),
   ).toDF()
 
   val observationsDf: DataFrame = Seq(
@@ -216,6 +228,10 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     NormalizedObservation(id = "OB2222-A", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "affected"    , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000001"))))),
     NormalizedObservation(id = "OB2222-B", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "not_affected", `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000002"))))),
     NormalizedObservation(id = "OB2222-C", patient_id = "PA1111", `observation_code` = "PHEN", `interpretation_code` = "unknown"     , `concept_values` = Some(Seq(CONCEPT_VALUE(concept_code = Some("HP:0000003"))))),
+
+    // 6. API Solo WGS
+    // Germline analysis
+    NormalizedObservation(id = "API-OBS-0001"  , patient_id = "API-PA-0001", `observation_code` = "DSTA", `interpretation_code` = "affected"),
   ).toDF()
 
   val codeSystemDf: DataFrame = Seq(
@@ -320,6 +336,11 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // 5. Solo, tumor normal (same servie_request_id and aliquot_id as tumor only)
     NormalizedTask(id = "1111-1111-TN", batch_id = "BAT5", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TNEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111"),
       documents = List(DOCUMENTS(id = "1111-1111-TN-SNV", document_type = "SNV"))),
+
+    // 6. API Solo WGS
+    // Germline analysis
+    NormalizedTask(id = "API-0001-TN", batch_id = "API_BAT_01", `patient_id` = "API-PA-0001", `service_request_id` = "API-SRS-0001", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "API-SP-0001", `sequencing_strategy` = "WGS"),
+      documents = List(DOCUMENTS(id = "API-DOC-01-SNV", document_type = "SNV"))),
   ).toDF()
 
   val specimenDf: DataFrame = Seq(
@@ -371,6 +392,11 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // Germline analysis
     NormalizedSpecimen(`id` = "2222-1", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `sample_id` = Some("SA_2222"), `specimen_id` = None),
     NormalizedSpecimen(`id` = "2222-2", `patient_id` = "PA1111", `service_request_id` = "SRS2222", `sample_id` = None, `specimen_id` = Some("SP_2222")),
+
+    // 6. API Solo WGS
+    // Germline analysis
+    NormalizedSpecimen(`id` = "2222-1", `patient_id` = "API-PA-0001", `service_request_id` = "API-SRS-0001", `sample_id` = Some("API-SA-0001"), `specimen_id` = None),
+    NormalizedSpecimen(`id` = "2222-2", `patient_id` = "API-PA-0001", `service_request_id` = "API-SRS-0001", `sample_id` = None, `specimen_id` = Some("API-SP-0001")),
   ).toDF
 
   val documentDf: DataFrame = Seq(
@@ -416,6 +442,9 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     NormalizedDocumentReference(id = "1111-2222-G-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://2222.vcf.gz"), Content(format = "TBI", s3_url = "s3a://2222.vcf.gz.tbi"))),
     // Tumor normal analysis
     NormalizedDocumentReference(id = "1111-1111-TN-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf.gz"), Content(format = "TBI", s3_url = "s3a://1111-2222.vcf.gz.tbi"))),
+
+    // 6. API Solo WGS
+    NormalizedDocumentReference(id = "API-DOC-01-SNV", patient_id = "API-PA-0001", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://api-01-snv.vcf.gz"), Content(format = "TBI", s3_url = "s3a://api-01-snv.vcf.gz.tbi"))),
   ).toDF()
 
   val data: Map[String, DataFrame] = Map(
