@@ -55,9 +55,8 @@ class SNVSomaticSpec extends SparkSpec with WithTestConfig with CreateDatabasesB
   // CNV data for tumor-only batches (TEBA code) should not exist in the normalized_cnv dataset.
   // We include it here only to cover the current extract logic, so we have a baseline for CNV count testing logic.
   val existingNormalizedCnv = Seq(
-    NormalizedCNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "4", sequencing_id = "SR4", analysis_id = "SRA4", batch_id = "BATCH2"),
+    NormalizedCNV(chromosome = "1", start = 1, reference = "T", alternate = "A", aliquot_id = "4", sequencing_id = "SR4", analysis_id = "SRA4", batch_id = "BATCH2")
   )
-
   val existingEnrichedData = Seq(
     EnrichedSNVSomatic(aliquot_id = "1", batch_id = "BATCH1", analysis_id = "SRA1", bioinfo_analysis_code = "TEBA"),
     EnrichedSNVSomatic(aliquot_id = "2", batch_id = "BATCH1", analysis_id = "SRA2", bioinfo_analysis_code = "TEBA"),

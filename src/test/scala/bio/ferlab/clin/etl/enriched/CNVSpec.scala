@@ -1,10 +1,11 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.model.enriched.{EnrichedCNV, EnrichedCNVCluster, EnrichedCNVClusterFrequencies, EnrichedCNVClusterFrequenciesGnomadV4, EnrichedClinical}
+import bio.ferlab.clin.model.enriched._
 import bio.ferlab.clin.model.nextflow.{SVClustering, SVClusteringParentalOrigin}
-import bio.ferlab.clin.model.normalized.{NormalizedCNV, NormalizedCNVSomaticTumorOnly, NormalizedPanels, NormalizedRefSeq, NormalizedSNV}
+import bio.ferlab.clin.model.normalized._
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
+import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.models.enriched.EnrichedGenes
 import bio.ferlab.datalake.testutils.models.normalized.NormalizedGnomadV4CNV
@@ -26,16 +27,19 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
   val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
 
-  val job = CNV(TestETLContext(), None)
+  override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only, normalized_snv,
+    normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering,
+    nextflow_svclustering_parental_origin, normalized_gnomad_cnv_v4)
 
+  val job = CNV(TestETLContext(), None)
   val testData = Map(
     normalized_cnv.id -> Seq(
-      NormalizedCNV(`batch_id` = "BAT1"),
-      NormalizedCNV(`batch_id` = "BAT2")
+      NormalizedCNV(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001"),
+      NormalizedCNV(`batch_id` = "BAT2", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0002")
     ).toDF(),
     normalized_cnv_somatic_tumor_only.id -> Seq(
-      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT1"),
-      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT2")
+      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001"),
+      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT2", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0002")
     ).toDF(),
     normalized_snv.id -> Seq(
       NormalizedSNV(),
@@ -57,10 +61,6 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       NormalizedGnomadV4CNV(),
     ).toDF()
   )
-
-  override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only, normalized_snv,
-    normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering,
-    nextflow_svclustering_parental_origin, normalized_gnomad_cnv_v4)
 
   "transform" should "enrich CNV data" in {
     val data = testData ++ Map(
@@ -237,7 +237,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       .collect() should contain only 0
   }
 
-  "extract" should "return only the CNVs from the batch" in {
+  "extract" should "select only CNV data with analysis ids present in the batch" in {
     withOutputFolder("root") { root =>
       val updatedConf = updateConfStorages(conf, root)
 
@@ -287,5 +287,22 @@ class CNVSpec extends SparkSpec with WithTestConfig with CleanUpBeforeEach {
       }
     }
   }
-}
 
+  "load" should "save enriched CNV data correctly" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+
+      val job = CNV(TestETLContext()(updatedConf, spark), batchId = Some("BAT1"))
+
+      val enrichedCnvData = Seq(
+        EnrichedCNV(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001"),
+        EnrichedCNV(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001")
+      )
+
+      job.load(Map(destination.id -> enrichedCnvData.toDF))
+
+      val result = destination.read(updatedConf, spark)
+      result.as[EnrichedCNV].collect() should contain theSameElementsAs enrichedCnvData
+    }
+  }
+}

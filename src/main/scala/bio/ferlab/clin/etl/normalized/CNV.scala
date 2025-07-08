@@ -3,7 +3,7 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.model.raw.VCF_CNV_Input
 import bio.ferlab.clin.etl.normalized.CNV.getCNV
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
@@ -17,8 +17,8 @@ case class CNV(rc: RuntimeETLContext, batchId: String) extends Occurrences(rc, b
   override val raw_variant_calling: DatasetConf = conf.getDataset("raw_cnv")
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minValue,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
+                               lastRunDateTime: LocalDateTime = minValue,
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
 
     import spark.implicits._
 
@@ -33,10 +33,6 @@ case class CNV(rc: RuntimeETLContext, batchId: String) extends Occurrences(rc, b
 
     occurrences
   }
-
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(Seq("patient_id"), Some(10))
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
 
 }
 

@@ -45,11 +45,12 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
     batchId match {
       case Some(id) =>
         // If a batch id was submitted, only process the specified id
-        val normalizedCnvDf = normalized_cnv.read.where($"batch_id" === id)
-        val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only.read.where($"batch_id" === id)
         val normalizedSnvDf = normalized_snv.read.where($"batch_id" === id)
 
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
+        val normalizedCnvDf = normalized_cnv.read.where($"analysis_id".isin(analysisIds: _*))
+        val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only
+          .read.where($"analysis_id".isin(analysisIds: _*))
         val nextflowSVClusteringParentalOrigin = nextflow_svclustering_parental_origin
           .read.where($"analysis_id".isin(analysisIds: _*))
 
