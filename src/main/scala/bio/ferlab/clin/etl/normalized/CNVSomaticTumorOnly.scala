@@ -33,11 +33,6 @@ case class CNVSomaticTumorOnly(rc: RuntimeETLContext, batchId: String) extends O
 
     occurrences
   }
-
-  override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(Seq("patient_id"), Some(10))
-
-  override def replaceWhere: Option[String] = Some(s"batch_id = '$batchId'")
-
 }
 
 object CNVSomaticTumorOnly {
