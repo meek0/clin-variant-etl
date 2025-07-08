@@ -148,6 +148,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .join(specimens, Seq("service_request_id", "patient_id"), "left")
       .withColumnRenamed("analysis_service_request_id", "analysis_id")
       .withColumnRenamed("service_request_id", "sequencing_id")
+      .filter($"sequencing_strategy" === "WXS") // Only WXS is supported
   }
 }
 
