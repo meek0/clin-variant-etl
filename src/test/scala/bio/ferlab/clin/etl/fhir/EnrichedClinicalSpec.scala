@@ -469,9 +469,6 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
       .filter($"count" > 1)
       .isEmpty shouldBe true
 
-    // until we allow any other strategy types
-    result.filter($"sequencing_strategy" =!= "WXS").count() shouldBe 0
-
     result
       .as[EnrichedClinicalOutput]
       .collect() should contain theSameElementsAs Seq(
