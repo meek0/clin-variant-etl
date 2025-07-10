@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.normalized
 
-import bio.ferlab.clin.etl.mainutils.Batch
+import bio.ferlab.clin.etl.mainutils.{AnalysisIds, Batch}
 import bio.ferlab.datalake.commons.config.RuntimeETLContext
 import mainargs.{ParserForMethods, main}
 
@@ -33,7 +33,7 @@ object RunNormalized {
   def coverage_by_gene(rc: RuntimeETLContext, batch: Batch): Unit = CoverageByGene.run(rc, batch)
 
   @main
-  def franklin(rc: RuntimeETLContext, batch: Batch): Unit = Franklin.run(rc, batch)
+  def franklin(rc: RuntimeETLContext, analysisIds: AnalysisIds): Unit = Franklin.run(rc, analysisIds)
 
   @main
   def all(rc: RuntimeETLContext, batch: Batch): Unit = {

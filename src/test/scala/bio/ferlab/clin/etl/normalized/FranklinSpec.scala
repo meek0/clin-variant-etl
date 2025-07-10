@@ -1,8 +1,8 @@
 package bio.ferlab.clin.etl.normalized
 
+import bio.ferlab.clin.etl.mainutils.AnalysisIds
 import bio.ferlab.clin.etl.model.raw._
 import bio.ferlab.clin.etl.normalized.Franklin.parseNullString
-import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.NormalizedFranklin
 import bio.ferlab.clin.testutils.LoadResolverUtils.write
 import bio.ferlab.clin.testutils.WithTestConfig
@@ -11,7 +11,8 @@ import bio.ferlab.datalake.commons.config.{DatasetConf, RunStep, SimpleConfigura
 import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.lit
 
 import java.nio.file.{Files, Paths}
 
@@ -20,41 +21,95 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   import spark.implicits._
 
   val raw_franklin: DatasetConf = conf.getDataset("raw_franklin")
-  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
   val normalized_franklin: DatasetConf = conf.getDataset("normalized_franklin")
-  val rawDf: DataFrame = Seq(
-    RawFranklin(`batch_id` = "BAT1", `family_id` = "1", `aliquot_id` = "1", `analysis_id` = "1", `variants` = Seq(
-      VARIANTS(
-        `variant` = VARIANT(`chromosome` = "chr1"),
-        `classification` = CLASSIFICATION(`acmg_rules` = Seq(
-          ACMG_RULES(`name` = "PS1", `is_met` = true),
-          ACMG_RULES(`name` = "PS2", `is_met` = false),
-          ACMG_RULES(`name` = "PS3", `is_met` = true)))
-      ),
-      VARIANTS(`variant` = VARIANT(`chromosome` = "chr2")))
-    )).toDF()
+  val defaultRawFranklinData: Map[String, Seq[RawFranklin]] = Map(
+    "SRA0001" -> Seq(
+      RawFranklin(
+        `analysis_id` = "SRA0001", `aliquot_id` = "1", `franklin_analysis_id` = "1",
+        `variants` = Seq(
+          VARIANTS(
+            `variant` = VARIANT(`chromosome` = "chr1"),
+            `classification` = CLASSIFICATION(`acmg_rules` = Seq(
+              ACMG_RULES(`name` = "PS1", `is_met` = true),
+              ACMG_RULES(`name` = "PS2", `is_met` = false),
+              ACMG_RULES(`name` = "PS3", `is_met` = true)))
+          ),
+          VARIANTS(`variant` = VARIANT(`chromosome` = "chr2"))
+        )
+      )
+    )
+  )
+  val defaultAnalysisIds: Seq[String] = defaultRawFranklinData.keys.toSeq
 
-  val clinicalDf: DataFrame = Seq(
-    EnrichedClinical(`analysis_id` = "SRA0001", `batch_id` = "BAT1", `aliquot_id` = "1", `family_id` = Some("1")),
-    EnrichedClinical(`analysis_id` = "SRA0002", `batch_id` = "BAT2", `aliquot_id` = "2", `family_id` = Some("2"))
-  ).toDF()
 
-  override val dsToClean: List[DatasetConf] = List(raw_franklin, normalized_franklin, enriched_clinical)
+  override val dsToClean: List[DatasetConf] = List(raw_franklin, normalized_franklin)
   override val dbToCreate: List[String] = List("clin")
 
-  val batchId = "BAT1"
+  "extract" should "read raw franklin data from all analysis ids that are ready" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+
+      // We simulate a case with several valid analysis. 
+      val rawFranklinData: Map[String, Seq[RawFranklin]] = defaultRawFranklinData ++ Map(
+        "SRA0002" -> Seq(
+          RawFranklin(
+            `analysis_id` = "SRA0002", `aliquot_id` = "2", `franklin_analysis_id` = "22",
+            `variants` = Seq(VARIANTS(`variant` = VARIANT(`chromosome` = "chr3")))
+          )
+        )
+      )
+      writeRawFranklinData(rawFranklinData)(updatedConf, spark)
+
+      // Running extract
+      val etl = franklinETL(rawFranklinData.keys.toSeq)(updatedConf, spark)
+      val extracted = etl.extract()
+
+      // Data from all analysis should be included
+      extracted.size shouldBe 1
+      extracted(raw_franklin.id).as[RawFranklin].collect() should contain theSameElementsAs rawFranklinData.values.flatten
+    }
+  }
+
+  it should "not include data from incomplete analysis" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+
+      writeRawFranklinData()(updatedConf, spark)
+
+      val extraRawFranklinData = Map(
+        "SRA0002" -> Seq(
+          RawFranklin(
+            `analysis_id` = "SRA0002", `aliquot_id` = "2", `franklin_analysis_id` = "22",
+            `variants` = Seq(VARIANTS(`variant` = VARIANT(`chromosome` = "chr3")))
+          )
+        ))
+      writeRawFranklinData(extraRawFranklinData)(updatedConf, spark)
+
+      // simulate incomplete analysis by writing a .txt file in the raw franklin data location
+      val analysisPath = raw_franklin.path.replace("{{ANALYSIS_ID}}", "SRA0002")
+      val analysisLocation = conf.getDataset(raw_franklin.id).copy(path = analysisPath).location(updatedConf)
+      Files.createFile(Paths.get(analysisLocation).resolve("_FRANKLIN_IDS_.txt").toAbsolutePath)
+
+
+      val etl = franklinETL(defaultAnalysisIds ++ extraRawFranklinData.keys.toSeq)(updatedConf, spark)
+      val extracted = etl.extract()
+
+      // We expect the extraction to return only the default raw franklin data as the analysis SRA0002 is incomplete
+      extracted.size shouldBe 1
+      extracted(raw_franklin.id).as[RawFranklin].collect() should contain theSameElementsAs defaultRawFranklinData.values.flatten
+    }
+  }
 
   "transformSingle" should "normalize franklin data" in {
     val expected = Seq(
-      NormalizedFranklin(`analysis_id` = "SRA0001", `batch_id` = "BAT1"),
-      NormalizedFranklin(`analysis_id` = "SRA0001", `chromosome` = "2", `acmg_evidence` = Set())
+      NormalizedFranklin(`analysis_id` = "SRA0001", `aliquot_id` = Some("1")),
+      NormalizedFranklin(`analysis_id` = "SRA0001", `aliquot_id` = Some("1"), `chromosome` = "2", `acmg_evidence` = Set())
     )
 
     val etl = franklinETL()
 
     val result = etl.transformSingle(Map(
-      raw_franklin.id -> rawDf,
-      enriched_clinical.id -> clinicalDf
+      raw_franklin.id -> defaultRawFranklinData.values.flatten.toSeq.toDF()
     ))
 
     result
@@ -62,110 +117,57 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       .collect() should contain theSameElementsAs expected
   }
 
-  "transformSingle" should "should join clinical data using family_id or aliquot_id" in {
-    val clinicalDf = Seq(
-      EnrichedClinical(`analysis_id` = "SRA0001", `batch_id` = "BAT1", `aliquot_id` = "1", `family_id` = Some("1")),
-      EnrichedClinical(`analysis_id` = "SRA0002", `batch_id` = "BAT1", `aliquot_id` = "2", `family_id` = Some("2"))
+  it should "convert 'null' string for the aliquot id to a null value" in {
+    val rawFranklinDf = Seq(
+      RawFranklin(
+        `analysis_id` = "SRA0001", `aliquot_id` = "null", `franklin_analysis_id` = "22",
+        `variants` = Seq(VARIANTS(`variant` = VARIANT(`chromosome` = "chr3")))
+      ),
     ).toDF()
 
-    val rawDf = Seq(
-      // with family_id present and aliquot_id missing (family analysis)
-      RawFranklin(`batch_id` = "BAT1", `family_id` = "1", `aliquot_id` = "null", `analysis_id` = "1", `variants` = Seq(
-        VARIANTS(`variant` = VARIANT(`chromosome` = "chr1")),
-        VARIANTS(`variant` = VARIANT(`chromosome` = "chr2"))
-      )),
-      // with family id missing and aliquot id present (solo analysis)
-      RawFranklin(`batch_id` = "BAT1", `family_id` = "null", `aliquot_id` = "2", `analysis_id` = "1", `variants` = Seq(
-        VARIANTS(`variant` = VARIANT(`chromosome` = "chr1"))
-      ))
-    ).toDF()
+    val expected = Seq(
+      NormalizedFranklin(`analysis_id` = "SRA0001", `aliquot_id` = None, `franklin_analysis_id` = "22", `chromosome` = "3", acmg_evidence = Set()),
+    )
 
     val etl = franklinETL()
-    val results = etl.transformSingle(Map(
-      raw_franklin.id -> rawDf,
-      enriched_clinical.id -> clinicalDf
-    ))
 
-    results
-      .as[NormalizedFranklin]
-      .collect() should contain theSameElementsAs Seq(
-      NormalizedFranklin(`analysis_id` = "SRA0001", `batch_id` = "BAT1", `family_id` = Some("1"), `aliquot_id` = None, `acmg_evidence` = Set(), `chromosome` = "1"),
-      NormalizedFranklin(`analysis_id` = "SRA0001", `batch_id` = "BAT1", `family_id` = Some("1"), `aliquot_id` = None, `acmg_evidence` = Set(), `chromosome` = "2"),
-      NormalizedFranklin(`analysis_id` = "SRA0002", `batch_id` = "BAT1", `family_id` = None, `aliquot_id` = Some("2"), `acmg_evidence` = Set(), `chromosome` = "1")
+    val result = etl.transformSingle(Map(raw_franklin.id -> rawFranklinDf))
+
+    result.as[NormalizedFranklin].collect() should contain theSameElementsAs expected
+    result.select("aliquot_id").as[String].collect() should contain theSameElementsAs Seq(null)
+  }
+
+  it should "cast franklin analysis id to string if parsed as a numerical value by spark" in {
+    val rawFranklinDf = Seq(
+      RawFranklin(
+        `analysis_id` = "SRA0001", `aliquot_id` = "1",
+        `variants` = Seq(VARIANTS(`variant` = VARIANT(`chromosome` = "chr3")))
+      ),
+    ).toDF().withColumn("franklin_analysis_id", lit(22)) // Simulating a numerical franklin_analysis_id parsed by spark
+
+    val expected = Seq(
+      NormalizedFranklin(`analysis_id` = "SRA0001", `aliquot_id` = Some("1"), `franklin_analysis_id` = "22", `chromosome` = "3", acmg_evidence = Set()),
     )
+
+    val etl = franklinETL()
+
+    val result = etl.transformSingle(Map(raw_franklin.id -> rawFranklinDf))
+    result.as[NormalizedFranklin].collect() should contain theSameElementsAs expected
   }
 
-  "extract" should "read clinical data and raw franklin data correctly" in {
+  "run" should "not fail when franklin analysis is not completed" in {
     withOutputFolder("root") { root =>
       val updatedConf = updateConfStorages(conf, root)
-
-      val clinicalDs = updatedConf.getDataset(enriched_clinical.id)
-      write(clinicalDs, clinicalDf)(spark, updatedConf)
-
-      val batchPath = raw_franklin.path.replace("{{BATCH_ID}}", batchId)
-      val updatedRawDs = updatedConf.getDataset(raw_franklin.id).copy(path = batchPath)
-      write(updatedRawDs, rawDf)(spark, updatedConf)
-
-      val etl = franklinETL()(updatedConf, spark)
-      val extracted = etl.extract()
-
-      extracted(raw_franklin.id).as[RawFranklin].collect() should contain theSameElementsAs rawDf.as[RawFranklin].collect()
-      extracted(enriched_clinical.id).as[EnrichedClinical].collect() should contain theSameElementsAs clinicalDf.as[EnrichedClinical].collect()
-    }
-  }
-
-  "load" should "save the data correctly" in {
-    withOutputFolder("root") { root =>
-      val updatedConf = updateConfStorages(conf, root)
-
-      // Prepare some normalized franklin data to save
-      val normalizedFranklinData = Seq(
-        NormalizedFranklin(`analysis_id` = "SRA0001"),
-        NormalizedFranklin(`analysis_id` = "SRA0002")
-      )
-
-      // Load (save) the data
-      val etl = franklinETL()(updatedConf, spark)
-      etl.load(Map(normalized_franklin.id -> normalizedFranklinData.toDF()))
-
-      // Read back and check
-      val result = updatedConf.getDataset(normalized_franklin.id).read(updatedConf, spark)
-      result.as[NormalizedFranklin].collect() should contain theSameElementsAs normalizedFranklinData
-    }
-  }
-
-  it should "not fail when there is no franklin data" in {
-    withOutputFolder("root") { root =>
-      val updatedConf = updateConfStorages(conf, root)
-      val clinicalDs = updatedConf.getDataset(enriched_clinical.id)
-      write(clinicalDs, clinicalDf)(spark, updatedConf)
-
-      val etl = franklinETL()(updatedConf, spark)
-      etl.extract()(raw_franklin.id)
-        .as[RawFranklin]
-        .collect() shouldBe empty
-
-      noException should be thrownBy etl.run()
-    }
-  }
-
-  it should "not fail when franklin analysis is not completed" in {
-    withOutputFolder("root") { root =>
-      val updatedConf = updateConfStorages(conf, root)
-
-      // simulate clinical data
-      val clinicalDs = updatedConf.getDataset(enriched_clinical.id)
-      write(clinicalDs, clinicalDf)(spark, updatedConf)
 
       // simulate raw franklin data
-      val batchPath = raw_franklin.path.replace("{{BATCH_ID}}", batchId)
-      val updatedRawDs = updatedConf.getDataset(raw_franklin.id).copy(path = batchPath)
-      write(updatedRawDs, rawDf)(spark, updatedConf)
+      writeRawFranklinData()(updatedConf, spark)
 
       // simulate incomplete analysis by creating a .txt file in the raw franklin data location
-      Files.createFile(Paths.get(updatedRawDs.location(updatedConf)).resolve("_FRANKLIN_IDS_.txt").toAbsolutePath)
+      val analysisPath = raw_franklin.path.replace("{{ANALYSIS_ID}}", defaultAnalysisIds.head)
+      val analysisLocation = conf.getDataset(raw_franklin.id).copy(path = analysisPath).location(updatedConf)
+      Files.createFile(Paths.get(analysisLocation).resolve("_FRANKLIN_IDS_.txt").toAbsolutePath)
       val fs = FileSystemResolver.resolve(updatedConf.getStorage(raw_franklin.storageid).filesystem)
-      val sourceFiles = fs.list(updatedRawDs.location(updatedConf), recursive = true)
+      val sourceFiles = fs.list(analysisLocation, recursive = true)
       sourceFiles.count(_.path.endsWith(".txt")) shouldBe 1
 
       // run the ETL and check that it does not fail
@@ -175,28 +177,46 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     }
   }
 
+  "Franklin.run" should "throw an exception if the list of analysis id is empty" in {
+    an[IllegalArgumentException] should be thrownBy {
+      Franklin.run(
+        TestETLContext(runSteps = default_load)(conf, spark),
+        analysisIds = AnalysisIds(ids = Seq.empty)
+      )
+    }
+  }
+
   "parseNullString" should "parse null strings as null values" in {
     val df = Seq(
-      RawFranklin(`family_id` = null),
-      RawFranklin(`aliquot_id` = null)
+      RawFranklin(`aliquot_id` = "null"),
+      RawFranklin(`aliquot_id` = "12345"),
     ).toDF()
 
     val expected = Seq(
-      (null, "12345"),
-      ("1", null)
+      ("12345"),
+      (null)
     )
 
     df.select(
-        parseNullString("family_id"),
         parseNullString("aliquot_id")
       )
-      .as[(String, String)]
+      .as[String]
       .collect() should contain theSameElementsAs expected
   }
 
-  private def franklinETL(batchId: String = batchId, runSteps: Seq[RunStep] = default_load)(implicit
-                                                                                            conf: SimpleConfiguration,
-                                                                                            spark: SparkSession): Franklin = {
-    Franklin(TestETLContext(runSteps = runSteps)(conf, spark), batchId = batchId)
+
+  private def franklinETL(analysisIds: Seq[String] = defaultAnalysisIds, runSteps: Seq[RunStep] = default_load)(implicit
+                                                                                                                conf: SimpleConfiguration,
+                                                                                                                spark: SparkSession): Franklin = {
+    Franklin(TestETLContext(runSteps = runSteps)(conf, spark), analysisIds = analysisIds)
   }
+
+  private def writeRawFranklinData(rawFranklinData: Map[String, Seq[RawFranklin]] = defaultRawFranklinData)(implicit conf: SimpleConfiguration, spark: SparkSession): Unit = {
+    rawFranklinData.foreach { case (analysisId, analysisData) =>
+      val analysisPath = raw_franklin.path.replace("{{ANALYSIS_ID}}", analysisId)
+      val rawDs = conf.getDataset(raw_franklin.id).copy(path = analysisPath)
+      write(rawDs, analysisData.toDF())(spark, conf)
+    }
+  }
+
 }

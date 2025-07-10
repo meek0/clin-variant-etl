@@ -75,7 +75,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_task"                  , clin_datalake, "/raw/landing/fhir/Task"                                       , JSON, OverWrite),
       DatasetConf("raw_document_reference"    , clin_datalake, "/raw/landing/fhir/DocumentReference"                          , JSON, OverWrite),
       DatasetConf("raw_panels"                , clin_datalake, "/raw/landing/panels/panels.tsv"                               , CSV , OverWrite, readoptions = tsv_with_headers),
-      DatasetConf("raw_franklin"              , clin_datalake, "/raw/landing/franklin/batch_id={{BATCH_ID}}"                  , JSON, OverWrite, partitionby = List("family_id","aliquot_id","analysis_id")),
+      DatasetConf("raw_franklin"              , clin_datalake, "/raw/landing/franklin/analysis_id={{ANALYSIS_ID}}"            , JSON, OverWrite, partitionby = List("aliquot_id","franklin_analysis_id")),
 
       //old version of dbnsfp, should be removed after migration
       //DatasetConf("deprecated_normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite),
