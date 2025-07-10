@@ -4,8 +4,11 @@
  */
 package bio.ferlab.clin.model.enriched
 
+import java.sql.Date
+
 case class EnrichedClinical(`sequencing_id`: String = "SRS0001",
                             `patient_id`: String = "PA0001",
+                            `person_id`: Option[String] = None,
                             `analysis_id`: String = "SRA0001",
                             `batch_id`: String = "BAT1",
                             `bioinfo_analysis`: String = "germline",
@@ -32,7 +35,9 @@ case class EnrichedClinical(`sequencing_id`: String = "SRS0001",
                             `covgene_urls`: Option[Set[String]] = None,
                             `exomiser_urls`: Option[Set[String]] = None,
                             `cnv_vcf_urls`: Option[Set[String]] = None,
-                            `snv_vcf_urls`: Option[Set[String]] = None
+                            `snv_vcf_urls`: Option[Set[String]] = None,
+                            `birth_date`: Option[Date] = None,
+                            `first_name`: Option[String] = None,
                            )
 
 case class ClinicalSign(`id`: String = "HP:0001347",

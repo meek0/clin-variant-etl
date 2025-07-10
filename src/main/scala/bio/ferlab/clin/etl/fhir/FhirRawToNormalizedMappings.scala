@@ -93,15 +93,26 @@ object FhirRawToNormalizedMappings {
   )
 
   val patientMappings: List[Transformation] = List(
+    Custom(
+      _
+        .withColumn("organization_id", regexp_replace(col("identifier")(0)("assigner")("reference"), "Organization/", ""))
+        .extractIdentifier(List("MR" -> "medical_record_number"))
+        .withColumn("practitioner_role_id", regexp_replace(col("generalPractitioner.reference")(0), "PractitionerRole/", ""))
+    ),
+    Drop("name", "text", "extension", "generalPractitioner", "identifier", "birthDate")
+  )
+
+  val personMappings: List[Transformation] = List(
     Custom(_.withColumnRenamed("birthDate", "birth_date")),
     ToDate("yyyy-MM-dd", "birth_date"),
     Custom(
       _
-        .withColumn("organization_id", regexp_replace(col("identifier")(0)("assigner")("reference"), "Organization/", ""))
-        .extractIdentifier(List("MR" -> "medical_record_number", "JHN" -> "jurisdictional_health_number"))
-        .withColumn("practitioner_role_id", regexp_replace(col("generalPractitioner.reference")(0), "PractitionerRole/", ""))
+        .withColumn("first_name", col("name")(0)("given")(0))
+        .withColumn("last_name", col("name")(0)("family"))
+        .extractIdentifier(List("JHN" -> "jurisdictional_health_number"))
+        .withColumn("patient_ids", transform(filter(col("link.target.reference"), i => i like "Patient/%"), c => regexp_replace(c, "Patient/", "")))
     ),
-    Drop("name", "text", "extension", "generalPractitioner", "identifier")
+    Drop("name", "link", "identifier")
   )
 
   val practitionerMappings: List[Transformation] = List(
@@ -270,6 +281,7 @@ object FhirRawToNormalizedMappings {
       (c.getDataset("raw_observation"), c.getDataset("normalized_observation"), defaultTransformations ++ observationMappings),
       (c.getDataset("raw_organization"), c.getDataset("normalized_organization"), defaultTransformations ++ organizationMappings),
       (c.getDataset("raw_patient"), c.getDataset("normalized_patient"), defaultTransformations ++ patientMappings),
+      (c.getDataset("raw_person"), c.getDataset("normalized_person"), defaultTransformations ++ personMappings),
       (c.getDataset("raw_practitioner"), c.getDataset("normalized_practitioner"), defaultTransformations ++ practitionerMappings),
       (c.getDataset("raw_practitioner_role"), c.getDataset("normalized_practitioner_role"), defaultTransformations ++ practitionerRoleMappings),
       (c.getDataset("raw_service_request"), c.getDataset("normalized_service_request"), defaultTransformations ++ serviceRequestMappings),

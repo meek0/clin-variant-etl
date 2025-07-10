@@ -20,6 +20,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
   val normalized_family: DatasetConf = conf.getDataset("normalized_family")
   val normalized_observation: DatasetConf = conf.getDataset("normalized_observation")
   val normalized_patient: DatasetConf = conf.getDataset("normalized_patient")
+  val normalized_person: DatasetConf = conf.getDataset("normalized_person")
   val normalized_service_request: DatasetConf = conf.getDataset("normalized_service_request")
   val normalized_specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val normalized_task: DatasetConf = conf.getDataset("normalized_task")
@@ -33,6 +34,7 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       normalized_family.id -> normalized_family.read,
       normalized_observation.id -> normalized_observation.read,
       normalized_patient.id -> normalized_patient.read,
+      normalized_person.id -> normalized_person.read,
       normalized_service_request.id -> normalized_service_request.read,
       normalized_specimen.id -> normalized_specimen.read,
       normalized_task.id -> normalized_task.read,
@@ -78,6 +80,14 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .withColumn("gender", when($"gender" === "male", lit("Male"))
         .when($"gender" === "female", lit("Female"))
         .otherwise($"gender"))
+
+    val persons = data(normalized_person.id)
+      .select(
+        $"id" as "person_id",
+        $"birth_date",
+        $"first_name",
+        $"patient_ids",
+      )
 
     val familyRelationships = data(normalized_family.id)
       .select(
@@ -144,11 +154,13 @@ case class EnrichedClinical(rc: RuntimeETLContext) extends SimpleSingleETL(rc) {
       .join(analysisServiceRequestsWithAffectedStatus, Seq("analysis_service_request_id", "patient_id"))
       .join(analysisServiceRequestsWithClinicalSigns, Seq("analysis_service_request_id", "patient_id"), "left") // Left to keep patients without clinical signs
       .join(patients, "patient_id")
+      .join(persons, array_contains(persons("patient_ids"), $"patient_id"), "left")
       .join(familyRelationships, Seq("analysis_service_request_id", "patient_id"), "left")
       .withParentAliquotIds // Needs to be done after tasks and familyRelationships join
       .join(specimens, Seq("service_request_id", "patient_id"), "left")
       .withColumnRenamed("analysis_service_request_id", "analysis_id")
       .withColumnRenamed("service_request_id", "sequencing_id")
+      .drop("patient_ids")
   }
 }
 
