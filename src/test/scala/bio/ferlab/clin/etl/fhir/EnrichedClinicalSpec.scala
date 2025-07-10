@@ -7,6 +7,8 @@ import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.testutils.{ClassGenerator, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
+import java.sql.Date
+
 class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
@@ -17,6 +19,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
   val normalized_family: DatasetConf = conf.getDataset("normalized_family")
   val normalized_observation: DatasetConf = conf.getDataset("normalized_observation")
   val normalized_patient: DatasetConf = conf.getDataset("normalized_patient")
+  val normalized_person: DatasetConf = conf.getDataset("normalized_person")
   val normalized_service_request: DatasetConf = conf.getDataset("normalized_service_request")
   val normalized_specimen: DatasetConf = conf.getDataset("normalized_specimen")
   val normalized_task: DatasetConf = conf.getDataset("normalized_task")
@@ -84,6 +87,11 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
     // 6. API Solo WGS
     NormalizedPatient(`id` = "API-PA-0001", `gender` = "female", `practitioner_role_id` = "PPR00103"), // proband
+  ).toDF()
+
+  val personDf: DataFrame = Seq(
+    NormalizedPerson(`id` = "P0001", `patient_ids` = Seq("PA0001", "PA0002"), `first_name` = "John"),
+    NormalizedPerson(`id` = "P0002", `patient_ids` = Seq("PA0003"))
   ).toDF()
 
   val serviceRequestDf: DataFrame = Seq(
@@ -449,6 +457,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
   val data: Map[String, DataFrame] = Map(
     normalized_patient.id -> patientDf,
+    normalized_person.id -> personDf,
     normalized_service_request.id -> serviceRequestDf,
     normalized_clinical_impression.id -> clinicalImpressionsDf,
     normalized_observation.id -> observationsDf,
@@ -478,17 +487,19 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "1", specimen_id = "SP_0001", sample_id = "SA_0001", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00001"), mother_id = Some("PA0003"), father_id = Some("PA0002"), mother_aliquot_id = Some("3"), father_aliquot_id = Some("2"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
+        person_id = Some("P0001"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("John"),
         covgene_urls = Some(Set("s3a://1.csv")), exomiser_urls = Some(Set("s3a://1.tsv")), cnv_vcf_urls = Some(Set("s3a://1-1.vcf.gz", "s3a://1-2.vcf.gz")), snv_vcf_urls = None),
       // Father
       EnrichedClinicalOutput(patient_id = "PA0002", gender = "Male", analysis_id = "SRA0001", sequencing_id = "SRS0002", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "2", specimen_id = "SP_0002", sample_id = "SA_0002", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
-        clinical_signs = None,
+        clinical_signs = None, person_id = Some("P0001"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("John"),
         covgene_urls = Some(Set("s3a://2.csv")), exomiser_urls = Some(Set("s3a://2.tsv")), cnv_vcf_urls = Some(Set("s3a://2-1.vcf.gz", "s3a://2-2.vcf.gz")), snv_vcf_urls = None),
       // Mother
       EnrichedClinicalOutput(patient_id = "PA0003", gender = "Female", analysis_id = "SRA0001", sequencing_id = "SRS0003", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "3", specimen_id = "SP_0003", sample_id = "SA_0003", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
+        person_id = Some("P0002"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("Jane"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
         covgene_urls = Some(Set("s3a://3.csv")), exomiser_urls = Some(Set("s3a://3.tsv")), cnv_vcf_urls = Some(Set("s3a://3-1.vcf.gz", "s3a://3-2.vcf.gz")), snv_vcf_urls = None),
 

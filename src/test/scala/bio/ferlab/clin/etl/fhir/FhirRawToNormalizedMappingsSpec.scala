@@ -87,6 +87,23 @@ class FhirRawToNormalizedMappingsSpec extends SparkSpec with WithTestConfig {
         `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
   }
 
+  "person raw job" should "return data in the expected format" in {
+
+    val inputDs = conf.getDataset("raw_person")
+
+    val (src, dst, mapping) = FhirRawToNormalizedMappings.mappings.find(_._1 == inputDs).get
+    val job = FhirToNormalizedETL(TestETLContext(), src, dst, mapping)
+    val inputDf = spark.read.schema(getSchema("raw_person")).json("src/test/resources/raw/landing/fhir/Person/Person_0_20230709_102715.json")
+    val output = job.transformSingle(Map(inputDs.id -> inputDf))
+
+    output.count() shouldBe 1
+    val head = output.where("id='864'").as[NormalizedPerson].head()
+
+    head shouldBe NormalizedPerson()
+      .copy(`ingestion_file_name` = head.`ingestion_file_name`, `ingested_on` = head.`ingested_on`,
+        `updated_on` = head.`updated_on`, `created_on` = head.`created_on`)
+  }
+
   "practitioner raw job" should "return data in the expected format" in {
 
     val inputDs = conf.getDataset("raw_practitioner")
