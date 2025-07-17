@@ -76,7 +76,7 @@ object EtlConfiguration extends App {
       DatasetConf("raw_task"                  , clin_datalake, "/raw/landing/fhir/Task"                                       , JSON, OverWrite),
       DatasetConf("raw_document_reference"    , clin_datalake, "/raw/landing/fhir/DocumentReference"                          , JSON, OverWrite),
       DatasetConf("raw_panels"                , clin_datalake, "/raw/landing/panels/panels.tsv"                               , CSV , OverWrite, readoptions = tsv_with_headers),
-      DatasetConf("raw_franklin"              , clin_datalake, "/raw/landing/franklin/batch_id={{BATCH_ID}}"                  , JSON, OverWrite, partitionby = List("family_id","aliquot_id","analysis_id")),
+      DatasetConf("raw_franklin"              , clin_datalake, "/raw/landing/franklin/analysis_id={{ANALYSIS_ID}}"            , JSON, OverWrite, partitionby = List("aliquot_id","franklin_analysis_id")),
 
       //old version of dbnsfp, should be removed after migration
       //DatasetConf("deprecated_normalized_dbnsfp_scores"       , clin_datalake, "/public/dbnsfp/parquet/scores"                      , PARQUET, OverWrite),
@@ -119,7 +119,7 @@ object EtlConfiguration extends App {
       DatasetConf("normalized_panels"              , clin_datalake, "/normalized/panels"                 , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "normalized_panels"))),
       DatasetConf("normalized_exomiser"            , clin_datalake, "/normalized/exomiser"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_exomiser"))),
       DatasetConf("normalized_coverage_by_gene"    , clin_datalake, "/normalized/coverage_by_gene"       , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_coverage_by_gene"))),
-      DatasetConf("normalized_franklin"            , clin_datalake, "/normalized/franklin"               , DELTA  , OverWritePartition, partitionby = List("batch_id")              , table = Some(TableConf("clin", "normalized_franklin"))),
+      DatasetConf("normalized_franklin"            , clin_datalake, "/normalized/franklin"               , DELTA  , OverWritePartition, partitionby = List("analysis_id")           , table = Some(TableConf("clin", "normalized_franklin"))),
       DatasetConf("normalized_hpo_terms"           , clin_datalake, "/public/hpo_terms"                  , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "hpo_terms"))),
       DatasetConf("normalized_mondo_terms"         , clin_datalake, "/public/mondo_terms"                , PARQUET, OverWrite         , partitionby = List()                        , table = Some(TableConf("clin", "mondo_terms"))),
 

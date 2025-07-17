@@ -2,17 +2,16 @@ package bio.ferlab.clin.etl.script
 
 import bio.ferlab.clin.etl.script.schema.SchemaUtils.runUpdateSchemaAndVacuum
 import bio.ferlab.clin.etl.utils.transformation.DatasetTransformationMapping
-import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.commons.config.Format.DELTA
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.transformation.Transformation
 import io.delta.tables.DeltaTable
-
 import org.slf4j
 
 /*
 Adjusts the Delta table’s partitioning to match the current configuration if it differs.
  */
-case class UpdatePartitioning(rc: RuntimeETLContext) {
+class UpdatePartitioning(rc: RuntimeETLContext) {
 
   implicit val log: slf4j.Logger = slf4j.LoggerFactory.getLogger(getClass.getCanonicalName)
 
