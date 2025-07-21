@@ -7,7 +7,11 @@ import bio.ferlab.datalake.spark3.transformation.{Drop, Rename, Transformation}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 
-case class RepartitionByAnalysisId(rc: RuntimeETLContext) extends UpdatePartitioning(rc) {
+/* Allows passing a list of analysis IDs to exclude from the clinical data.
+  In QA and STAGING, due to imperfections in the test data, some aliquot IDs may be linked to multiple analysis IDs.
+  In such cases, we exclude analysis IDs that are not intended to be associated with the Franklin data.
+*/
+case class RepartitionFranklinByAnalysisId(rc: RuntimeETLContext, analysisIdsToExclude: Seq[String]) extends UpdatePartitioning(rc) {
 
   override val mapping = new DatasetTransformationMapping() {
 
@@ -18,7 +22,9 @@ case class RepartitionByAnalysisId(rc: RuntimeETLContext) extends UpdatePartitio
       "normalized_franklin" -> List(
         Rename(Map("analysis_id" -> "franklin_analysis_id")),
         EnrichFranklinWithClinicalInfo(
-          clinicalDf = rc.config.getDataset("enriched_clinical").read(rc.config, rc.spark),
+          clinicalDf = rc.config.getDataset("enriched_clinical")
+            .read(rc.config, rc.spark)
+            .filter(!col("analysis_id").isin(analysisIdsToExclude: _*))
         ),
         Drop("batch_id", "family_id")
       )
