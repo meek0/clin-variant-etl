@@ -16,11 +16,19 @@ object RunScript {
   }
 
   @main
-  def repartition_by_analysis_id(rc: RuntimeETLContext,
-                                 @arg(doc = "If specified, run a vacuum command on the datasets.") vacuum: Flag,
-                                 @arg(doc = "If specified, run the script in dry-run mode, without applying any changes.") dryrun: Flag): Unit = {
-    log.info("Running RepartitionByAnalysisId script")
-    RepartitionByAnalysisId(rc).run(vacuum.value, dryrun.value)
+  def repartition_franklin_by_analysis_id(rc: RuntimeETLContext,
+                                          @arg(doc = "If specified, run a vacuum command on the datasets.") vacuum: Flag,
+                                          @arg(doc = "If specified, run the script in dry-run mode, without applying any changes.") dryrun: Flag,
+                                          @arg(name = "exclude", short = 'e', doc = "Exclude this analysis id from the clinical data") exclude: Seq[String]): Unit = {
+    log.info("Running RepartitionFranklinByAnalysisId script")
+    RepartitionFranklinByAnalysisId(rc, exclude).run(vacuum.value, dryrun.value)
+  }
+
+  @main
+  def franklin_folder_migration(rc: RuntimeETLContext,
+                                @arg(doc = "If specified, run the script in dry-run mode, without applying any changes.") dryrun: Flag): Unit = {
+    log.info("Running FranklinFolderMigration script")
+    FranklinFolderMigration(rc).run(dryrun.value)
   }
 
   // This script updates the partitioning of configured datasets to match the current configuration.
