@@ -14,6 +14,12 @@ object GenomicFile {
     override val urlColumn: String = "exomiser_urls"
   }
 
+  case object EXOMISER_CNV extends GenomicFile {
+    override val dataType: String = "EXOMISER_CNV"
+    override val format: String = "TSV"
+    override val urlColumn: String = "exomiser_cnv_urls"
+  }
+
   case object SNV extends GenomicFile {
     override val dataType: String = "SNV"
     override val format: String = "VCF"

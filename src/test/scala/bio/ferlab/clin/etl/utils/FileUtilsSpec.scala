@@ -34,10 +34,10 @@ class FileUtilsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBe
   "fileUrls" should "return list of expected urls for a given batch id and file type" in {
     val results = fileUrls(batchId = "B1", file = EXOMISER)
     results should contain theSameElementsAs Seq(
-      FileInfo(url = "s3a://file1.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
-      FileInfo(url = "s3a://file2.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
-      FileInfo(url = "s3a://file2b.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
-      FileInfo(url = "s3a://file3.tsv", aliquot_id = "2", patient_id = "PA0001", specimen_id = "2", sequencing_id = "SRS0002", is_proband = true, mother_id = Some("PA0003"), father_id = Some("PA0002"),
+      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file1.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
+      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file2.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
+      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file2b.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
+      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file3.tsv", aliquot_id = "2", patient_id = "PA0001", specimen_id = "2", sequencing_id = "SRS0002", is_proband = true, mother_id = Some("PA0003"), father_id = Some("PA0002"),
     ))
   }
 

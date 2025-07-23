@@ -30,6 +30,9 @@ object RunNormalized {
   def exomiser(rc: RuntimeETLContext, batch: Batch): Unit = Exomiser.run(rc, batch)
 
   @main
+  def exomiser_cnv(rc: RuntimeETLContext, analysisIds: AnalysisIds): Unit = ExomiserCNV.run(rc, analysisIds)
+
+  @main
   def coverage_by_gene(rc: RuntimeETLContext, batch: Batch): Unit = CoverageByGene.run(rc, batch)
 
   @main
