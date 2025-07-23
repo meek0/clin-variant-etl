@@ -40,7 +40,7 @@ class ExomiserCNVSpec extends SparkSpec with WithTestConfig with BeforeAndAfterA
       .apply(enriched_clinical, clinicalDf)
   }
 
-  it should "extract all files matching the analysis ids with their info" in {
+  it should "extract all files matching the analysis IDs with their info" in {
     val result = job1.extract()
 
     result(raw_exomiser_cnv.id)

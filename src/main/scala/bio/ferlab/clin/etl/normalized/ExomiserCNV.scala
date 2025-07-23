@@ -1,19 +1,16 @@
 package bio.ferlab.clin.etl.normalized
 
 import bio.ferlab.clin.etl.fhir.GenomicFile.EXOMISER_CNV
-import bio.ferlab.clin.etl.mainutils.{AnalysisIds, Batch}
-import bio.ferlab.clin.etl.model.raw.{RawExomiser, RawExomiserCNV, RawFranklin}
-import bio.ferlab.clin.etl.utils.ClinicalUtils.getAnalysisIdsInBatch
+import bio.ferlab.clin.etl.mainutils.AnalysisIds
+import bio.ferlab.clin.etl.model.raw.RawExomiserCNV
 import bio.ferlab.clin.etl.utils.{FileInfo, FileUtils}
 import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
-import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.transformation.Cast.{castFloat, castInt, castLong}
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{element_at, input_file_name, lit, split}
+import org.apache.spark.sql.functions.{input_file_name, split}
 import org.apache.spark.sql.types.BooleanType
-import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 
 import java.time.LocalDateTime
 
@@ -32,7 +29,7 @@ case class ExomiserCNV(rc: RuntimeETLContext, analysisIds: Seq[String] = Seq()) 
 
     Map(
       raw_exomiser_cnv.id -> {
-        if (exomiserCNVFiles.isEmpty) Seq.empty[RawExomiser].toDF() else
+        if (exomiserCNVFiles.isEmpty) Seq.empty[RawExomiserCNV].toDF() else
           spark.read
             .format(raw_exomiser_cnv.format.sparkFormat)
             .options(raw_exomiser_cnv.readoptions)
