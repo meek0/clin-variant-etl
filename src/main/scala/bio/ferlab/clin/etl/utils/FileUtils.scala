@@ -8,11 +8,12 @@ import org.apache.spark.sql.functions.explode
 
 object FileUtils {
 
-  private def fileUrlsBy(clinicalDf: DataFrame, file: GenomicFile, batchId : String = null, analysisIds: Seq[String] = null)(implicit spark: SparkSession, conf: Configuration) = {
+  private def fileUrlsBy(clinicalDf: DataFrame, file: GenomicFile, batchId : Option[String], analysisIds: Option[Seq[String]])(implicit spark: SparkSession, conf: Configuration) = {
     import spark.implicits._
 
-    val clinicals = if (batchId != null) clinicalDf.where($"batch_id" === batchId)
-    else if (analysisIds != null) clinicalDf.where($"analysis_id".isin(analysisIds: _*))
+
+    val clinicals = if (batchId.isDefined) clinicalDf.where($"batch_id" === batchId.get)
+    else if (analysisIds.isDefined) clinicalDf.where($"analysis_id".isin(analysisIds.get: _*))
     else throw new IllegalArgumentException("Either batchId or analysisIds must be provided")
 
     clinicals.select(
@@ -45,13 +46,13 @@ object FileUtils {
   def fileUrls(batchId: String, file: GenomicFile)(implicit spark: SparkSession, conf: Configuration): Set[FileInfo] = {
     val clinicalDf = conf.getDataset("enriched_clinical").read
 
-    fileUrlsBy(clinicalDf, file, batchId = batchId)
+    fileUrlsBy(clinicalDf, file, Some(batchId), None)
   }
 
   def fileUrls(analysisIds: Seq[String], file: GenomicFile)(implicit spark: SparkSession, conf: Configuration): Set[FileInfo] = {
     val clinicalDf = conf.getDataset("enriched_clinical").read
 
-    fileUrlsBy(clinicalDf, file, analysisIds = analysisIds)
+    fileUrlsBy(clinicalDf, file, None, Some(analysisIds))
   }
 }
 

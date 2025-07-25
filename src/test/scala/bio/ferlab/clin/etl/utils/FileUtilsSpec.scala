@@ -15,9 +15,9 @@ class FileUtilsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBe
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   val clinicalDf = Seq(
-    EnrichedClinical(`batch_id` = "B1", `patient_id` = "PA0001", `sequencing_id` = "SRS0001", `aliquot_id` = "1", `specimen_id` = "1", `exomiser_urls` = Some(Set("s3a://file1.tsv", "s3a://file2.tsv", "s3a://file2b.tsv")), `covgene_urls` = Some(Set("s3a://file3covgene.csv")), `is_proband` = false, `mother_id` = None, `father_id` = None),
-    EnrichedClinical(`batch_id` = "B1", `patient_id` = "PA0001", `sequencing_id` = "SRS0002", `aliquot_id` = "2", `specimen_id` = "2", `exomiser_urls` = Some(Set("s3a://file3.tsv")), `covgene_urls` = Some(Set("s3a://file4covgene.csv"))),
-    EnrichedClinical(`batch_id` = "B2", `patient_id` = "PA0002", `sequencing_id` = "SRS0003", `aliquot_id` = "3", `specimen_id` = "3", `exomiser_urls` = Some(Set("s3a://file5.tsv")), `covgene_urls` = None),
+    EnrichedClinical(`batch_id` = "B1", `patient_id` = "PA0001", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `aliquot_id` = "1", `specimen_id` = "1", `exomiser_urls` = Some(Set("s3a://file1.tsv", "s3a://file2.tsv", "s3a://file2b.tsv")), `covgene_urls` = Some(Set("s3a://file3covgene.csv")), `is_proband` = false, `mother_id` = None, `father_id` = None),
+    EnrichedClinical(`batch_id` = "B1", `patient_id` = "PA0001", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0002", `aliquot_id` = "2", `specimen_id` = "2", `exomiser_urls` = Some(Set("s3a://file3.tsv")), `covgene_urls` = Some(Set("s3a://file4covgene.csv"))),
+    EnrichedClinical(`batch_id` = "B2", `patient_id` = "PA0002", `analysis_id` = "SRA0003", `sequencing_id` = "SRS0003", `aliquot_id` = "3", `specimen_id` = "3", `exomiser_urls` = Some(Set("s3a://file5.tsv")), `covgene_urls` = None),
   ).toDF()
 
   override val dbToCreate: List[String] = List(enriched_clinical.table.get.database)
@@ -37,8 +37,16 @@ class FileUtilsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBe
       FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file1.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
       FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file2.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
       FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file2b.tsv", aliquot_id = "1", patient_id = "PA0001", specimen_id = "1", sequencing_id = "SRS0001", is_proband = false, mother_id = None, father_id = None),
-      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0001", url = "s3a://file3.tsv", aliquot_id = "2", patient_id = "PA0001", specimen_id = "2", sequencing_id = "SRS0002", is_proband = true, mother_id = Some("PA0003"), father_id = Some("PA0002"),
+      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0002", url = "s3a://file3.tsv", aliquot_id = "2", patient_id = "PA0001", specimen_id = "2", sequencing_id = "SRS0002", is_proband = true, mother_id = Some("PA0003"), father_id = Some("PA0002"),
     ))
+  }
+
+  "fileUrls" should "return list of expected urls for a given analysis IDs and file type" in {
+    val results = fileUrls(analysisIds = Seq("SRA0002","SRA0003"), file = EXOMISER)
+    results should contain theSameElementsAs Seq(
+      FileInfo(`batch_id` = "B1", `analysis_id` = "SRA0002", url = "s3a://file3.tsv", aliquot_id = "2", patient_id = "PA0001", specimen_id = "2", sequencing_id = "SRS0002", is_proband = true, mother_id = Some("PA0003"), father_id = Some("PA0002")),
+      FileInfo(`batch_id` = "B2", `analysis_id` = "SRA0003", url = "s3a://file5.tsv", aliquot_id = "3", patient_id = "PA0002", specimen_id = "3", sequencing_id = "SRS0003", is_proband = true, mother_id = Some("PA0003"), father_id = Some("PA0002")),
+    )
   }
 
 }
