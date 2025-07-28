@@ -325,7 +325,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // 4. Same family, two prescriptions
     // 4.2 Second prescription: Trio
     NormalizedTask(id = "333-333-G", batch_id = "BAT3", `patient_id` = "PA0333", `service_request_id` = "SRS0333", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "333"), // proband
-      documents = List(DOCUMENTS(id = "333-333-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "333-333-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "333-333-G-SNV", document_type = "SNV"))),
+      documents = List(DOCUMENTS(id = "333-333-G-COVGENE", document_type = "COVGENE"), DOCUMENTS(id = "333-333-G-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "333-333-G-EXOMISER_CNV", document_type = "EXOMISER_CNV"), DOCUMENTS(id = "333-333-G-SNV", document_type = "SNV"))),
     NormalizedTask(id = "111-444-G", batch_id = "BAT3", `patient_id` = "PA0111", `service_request_id` = "SRS0444", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "111"), // sister (same aliquot since she's not re-sequenced)
       documents = List(DOCUMENTS(id = "111-444-G-SNV", document_type = "SNV"))),
     NormalizedTask(id = "222-555-G", batch_id = "BAT3", `patient_id` = "PA0222", `service_request_id` = "SRS0555", `analysis_code` = "GEBA", `experiment` = EXPERIMENT(`aliquot_id` = "555"), // mother
@@ -438,6 +438,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // 4.2 Second prescription: Trio -- Mix of files
     NormalizedDocumentReference(id = "333-333-G-COVGENE", patient_id = "PA0333", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://333.csv"))),
     NormalizedDocumentReference(id = "333-333-G-EXOMISER", patient_id = "PA0333", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://333.tsv"), Content(format = "JSON", s3_url = "s3a://333.json"))),
+    NormalizedDocumentReference(id = "333-333-G-EXOMISER_CNV", patient_id = "PA0333", `type` = "EXOMISER_CNV", contents = List(Content(format = "TSV", s3_url = "s3a://333_cnv.tsv"), Content(format = "JSON", s3_url = "s3a://333_cnv.json"))),
     NormalizedDocumentReference(id = "333-333-G-SNV", patient_id = "PA0333", `type` = "SNV", contents = List(Content(format = "TBI", s3_url = "s3a://333.vcf.gz.tbi"))),
     NormalizedDocumentReference(id = "111-444-G-SNV", patient_id = "PA0111", `type` = "SNV", contents = List(Content(format = "TBI", s3_url = "s3a://111-2.vcf.gz.tbi"))), // Same file as before but in different path
     NormalizedDocumentReference(id = "222-555-G-COVGENE", patient_id = "PA0222", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://555.csv"))),
@@ -569,7 +570,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "333", specimen_id = "SP_0333", sample_id = "SA_0333", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
-        covgene_urls = Some(Set("s3a://333.csv")), exomiser_urls = Some(Set("s3a://333.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://333.csv")), exomiser_urls = Some(Set("s3a://333.tsv")), exomiser_cnv_urls = Some(Set("s3a://333_cnv.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
       // Sister
       EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_id = "SRA0333", sequencing_id = "SRS0444", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = false, affected_status = false, affected_status_code = "not_affected",
