@@ -4,6 +4,7 @@
  */
 package bio.ferlab.clin.model
 
+import bio.ferlab.clin.model.enriched.EXOMISER_CNV
 import bio.ferlab.datalake.testutils.models.enriched._
 
 
@@ -57,6 +58,7 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `frequency_RQDM`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(),
                             `number_genes`: Int = 1,
                             `variant_external_reference`: Set[String] = Set(),
+                            `exomiser`: Option[EXOMISER_CNV] = Some(EXOMISER_CNV()),
                             `cluster`: CNV_CNETRIC_CLUSTER = CNV_CNETRIC_CLUSTER(),
                             `snv_count`: Long = 0,
                             `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")

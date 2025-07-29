@@ -8,6 +8,7 @@ import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
+import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns.{locus, locusColumnNames}
 import bio.ferlab.datalake.spark3.transformation.DropDuplicates
 import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions.{struct, _}
@@ -31,6 +32,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
   val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
   val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
+  val normalized_exomiser_cnv: DatasetConf = conf.getDataset("normalized_exomiser_cnv")
 
   override def extract(lastRunDateTime: LocalDateTime = minValue,
                        currentRunDateTime: LocalDateTime = LocalDateTime.now()): Map[String, DataFrame] = {
@@ -39,7 +41,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       normalized_panels.id -> normalized_panels.read,
       genes.id -> genes.read,
       nextflow_svclustering.id -> nextflow_svclustering.read,
-      normalized_gnomad_cnv_v4.id -> normalized_gnomad_cnv_v4.read
+      normalized_gnomad_cnv_v4.id -> normalized_gnomad_cnv_v4.read,
     )
     val clinicalDf = enriched_clinical.read
 
@@ -58,13 +60,16 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
           .read.where($"analysis_id".isin(analysisIds: _*))
         val nextflowSVClusteringParentalOrigin = nextflow_svclustering_parental_origin
           .read.where($"analysis_id".isin(analysisIds: _*))
+        val normalizedExomiserCnv = normalized_exomiser_cnv
+        .read.where($"analysis_id".isin(analysisIds: _*))
 
         Map(
           normalized_cnv.id -> normalizedCnvDf,
           normalized_cnv_somatic_tumor_only.id -> normalizedCnvSomaticTumorOnlyDf,
           normalized_snv.id -> normalizedSnvDf,
           normalized_snv_somatic.id -> normalizedSnvSomaticDf,
-          nextflow_svclustering_parental_origin.id -> nextflowSVClusteringParentalOrigin
+          nextflow_svclustering_parental_origin.id -> nextflowSVClusteringParentalOrigin,
+          normalized_exomiser_cnv.id -> normalizedExomiserCnv,
         ) ++ extractedData
 
       case None =>
@@ -74,7 +79,8 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
           normalized_cnv_somatic_tumor_only.id -> normalized_cnv_somatic_tumor_only.read,
           normalized_snv.id -> normalized_snv.read,
           normalized_snv_somatic.id -> normalized_snv_somatic.read.where($"bioinfo_analysis_code" === "TEBA"),
-          nextflow_svclustering_parental_origin.id -> nextflow_svclustering_parental_origin.read
+          nextflow_svclustering_parental_origin.id -> nextflow_svclustering_parental_origin.read,
+          normalized_exomiser_cnv.id -> normalized_exomiser_cnv.read,
         ) ++ extractedData
     }
   }
@@ -99,6 +105,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withParentalOrigin(parentalOriginDf)
       .withFrequencies(svclusteringDf, gnomadV4)
       .withClinVariantExternalReference
+      .withExomiser(data(normalized_exomiser_cnv.id))
       .withSnvCount(snvDf)
       .withColumn("number_genes", size($"genes"))
       .withColumn("hash", sha1(concat_ws("-", col("name"), col("alternate"), col("sequencing_id")))) // if changed then modify + run https://github.com/Ferlab-Ste-Justine/clin-pipelines/blob/master/src/main/scala/bio/ferlab/clin/etl/scripts/FixFlagHashes.scala
@@ -284,6 +291,41 @@ object CNV {
       )
 
       withExternalReference(df, conditionValueMap)
+    }
+
+    def withExomiser(exomiser: DataFrame)(implicit spark: SparkSession): DataFrame = {
+      import spark.implicits._
+      
+      val variantScore = when($"exomiser_variant_score" >= 0.8, "HIGH")
+        .when($"exomiser_variant_score" >=0.5 && $"exomiser_variant_score" < 0.8, "MEDIUM")
+        .when($"exomiser_variant_score" < 0.5, "LOW").otherwise(null).cast("string")
+
+      val exomiserPrepared = exomiser.selectLocus(
+          $"aliquot_id",
+          $"contributing_variant",
+          struct(
+            $"gene_combined_score", // put first since sort_array uses first numeric field to sort an array of struct
+            $"rank",
+            $"exomiser_variant_score" as "variant_score",
+            variantScore as "variant_score_category",
+            $"gene_symbol",
+            $"moi",
+            $"acmg_classification",
+            $"acmg_evidence"
+          ) as "exomiser_struct"
+        )
+        .groupBy(locus :+ $"aliquot_id": _*)
+        .agg(
+          sort_array(collect_list(when($"contributing_variant", $"exomiser_struct")), asc = false) as "exomiser_struct_list", // sort by gene_combined_score in desc order
+        )
+        .withColumn("exomiser", $"exomiser_struct_list".getItem(0))
+        .selectLocus(
+          $"aliquot_id",
+          $"exomiser",
+        )
+        .withColumn("variant_type", lit("germline")) // exomiser CNV is always germline
+
+      df.join(exomiserPrepared, locusColumnNames ++ Seq("aliquot_id", "variant_type"), "left")
     }
   }
 
