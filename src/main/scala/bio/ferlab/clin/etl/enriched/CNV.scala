@@ -10,7 +10,7 @@ import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.transformation.DropDuplicates
 import mainargs.{ParserForMethods, main}
-import org.apache.spark.sql.functions.{struct, _}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import java.time.LocalDateTime
@@ -45,14 +45,13 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
 
     batchId match {
       case Some(id) =>
-        // If a batch id was submitted, only process the specified id
-        val normalizedSnvDf = normalized_snv.read.where($"batch_id" === id)
-
+        // If a batch id was submitted, only process the corresponding analysis ids
         val analysisIds: Seq[String] = getAnalysisIdsInBatch(clinicalDf, id)
         val normalizedSnvSomaticDf = normalized_snv_somatic.read.where(
           $"analysis_id".isin(analysisIds: _*) &&
             $"bioinfo_analysis_code" === "TEBA"
         )
+        val normalizedSnvDf = normalized_snv.read.where($"analysis_id".isin(analysisIds: _*))
         val normalizedCnvDf = normalized_cnv.read.where($"analysis_id".isin(analysisIds: _*))
         val normalizedCnvSomaticTumorOnlyDf = normalized_cnv_somatic_tumor_only
           .read.where($"analysis_id".isin(analysisIds: _*))

@@ -100,7 +100,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
 
 
 
-  //scnearios: extract: data to include in the test ... 
+  //scenarios: extract: data to include in the test ... 
   // extract: 
 
   "extract" should "select data relevant to analysis present in the batch - germinal" in {
@@ -448,7 +448,6 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .as[Int]
       .collect() should contain only 0
   }
-
 
   "load" should "save enriched CNV data correctly" in {
     withOutputFolder("root") { root =>
