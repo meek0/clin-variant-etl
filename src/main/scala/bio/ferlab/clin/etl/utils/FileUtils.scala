@@ -8,7 +8,7 @@ import org.apache.spark.sql.functions.explode
 
 object FileUtils {
 
-  private def fileUrlsBy(clinicalDf: DataFrame, file: GenomicFile, batchId : Option[String], analysisIds: Option[Seq[String]])(implicit spark: SparkSession, conf: Configuration) = {
+  private def fileUrlsBy(clinicalDf: DataFrame, file: GenomicFile, batchId: Option[String], analysisIds: Option[Seq[String]])(implicit spark: SparkSession, conf: Configuration) = {
     import spark.implicits._
 
 
@@ -20,6 +20,7 @@ object FileUtils {
         explode($"${file.urlColumn}") as "url",
         $"batch_id",
         $"analysis_id",
+        $"bioinfo_analysis_code",
         $"aliquot_id",
         $"patient_id",
         $"specimen_id",
@@ -56,4 +57,4 @@ object FileUtils {
   }
 }
 
-case class FileInfo(batch_id: String, analysis_id: String, url: String, aliquot_id: String, patient_id: String, specimen_id: String, sequencing_id: String, is_proband: Boolean, mother_id: Option[String], father_id: Option[String])
+case class FileInfo(batch_id: String, analysis_id: String, bioinfo_analysis_code: String, url: String, aliquot_id: String, patient_id: String, specimen_id: String, sequencing_id: String, is_proband: Boolean, mother_id: Option[String], father_id: Option[String])

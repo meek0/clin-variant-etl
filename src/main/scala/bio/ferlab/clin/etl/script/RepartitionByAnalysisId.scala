@@ -23,8 +23,8 @@ case class RepartitionByAnalysisId(rc: RuntimeETLContext) extends UpdatePartitio
       "normalized_coverage_by_gene" -> List(
         EnrichWithClinicalInfo(
           clinicalDf = rc.config.getDataset("enriched_clinical").read(rc.config, rc.spark),
-          joinCols = Seq("sequencing_id"),
-          clinicalCols = Seq("analysis_id")
+          joinCols = Seq("batch_id", "sequencing_id"),
+          clinicalCols = Seq("analysis_id", "bioinfo_analysis_code")
         )
       )
     )

@@ -56,13 +56,13 @@ class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll 
       .as[FileInfo]
       .collect() should contain theSameElementsAs Seq(
       FileInfo(
-        `batch_id` = "BAT2", `analysis_id` = "SRA0002", `aliquot_id` = "aliquot2",
+        `batch_id` = "BAT2", `analysis_id` = "SRA0002", `bioinfo_analysis_code` = "GEBA", `aliquot_id` = "aliquot2",
         `patient_id` = "PATIENT1", `specimen_id` = "SPECIMEN1", `sequencing_id` = "SR0001",
         `is_proband` = true, `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"),
         url = s"file://${resourcePath}BAT2/aliquot2.exomiser.variants.tsv"
       ),
       FileInfo(
-        `batch_id` = "BAT2", `analysis_id` = "SRA0003", `aliquot_id` = "aliquot3",
+        `batch_id` = "BAT2", `analysis_id` = "SRA0003", `bioinfo_analysis_code` = "GEBA", `aliquot_id` = "aliquot3",
         `patient_id` = "PATIENT2", `specimen_id` = "SPECIMEN2", `sequencing_id` = "SR0002",
         `is_proband` = true, `mother_id` = Some("PA0003"), `father_id` = Some("PA0002"),
         url = s"file://${resourcePath}BAT2/aliquot3.exomiser.variants.tsv"
