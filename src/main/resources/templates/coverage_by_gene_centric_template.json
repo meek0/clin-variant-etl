@@ -67,7 +67,13 @@
         "end": {
           "type": "long"
         },
+        "analysis_service_request_id": {
+          "type": "keyword"
+        },
         "service_request_id": {
+          "type": "keyword"
+        },
+        "bioinfo_analysis_code": {
           "type": "keyword"
         },
         "ensembl_gene_id": {
