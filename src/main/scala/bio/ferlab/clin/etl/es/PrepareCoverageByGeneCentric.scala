@@ -23,11 +23,13 @@ case class PrepareCoverageByGeneCentric(rc: RuntimeETLContext) extends SimpleSin
   override def defaultRepartition: DataFrame => DataFrame = RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))
 
   override def transformSingle(data: Map[String, DataFrame],
-                         lastRunDateTime: LocalDateTime = minValue,
-                         currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
+                               lastRunDateTime: LocalDateTime = minValue,
+                               currentRunDateTime: LocalDateTime = LocalDateTime.now()): DataFrame = {
     data(enriched_coverage_by_gene.id)
       // To prevent compatibility issues with the frontend, which still expects 'service_request_id'
       .withColumnRenamed("sequencing_id", "service_request_id")
+      // For consistency with other index tables
+      .withColumnRenamed("analysis_id", "analysis_service_request_id")
 
   }
 
