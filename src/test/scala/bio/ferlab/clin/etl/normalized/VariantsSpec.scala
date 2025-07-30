@@ -8,10 +8,10 @@ import bio.ferlab.clin.model.normalized.{GENES, NormalizedVariants, SPLICEAI}
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.testutils.models.enriched.{EnrichedSpliceAi, MAX_SCORE}
-import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
-class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeAll {
+class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAll with CleanUpBeforeEach {
 
   import spark.implicits._
 
@@ -26,7 +26,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     EnrichedClinical(`patient_id` = "PA0003", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0003", `batch_id` = "BAT1", `bioinfo_analysis_code` = "GEBA", `aliquot_id` = "3", `practitioner_role_id` = "PPR00101", `organization_id` = "OR00201", `is_proband` = false, `gender` = "Female", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = false, `affected_status_code` = "not_affected", `sample_id` = "3", `specimen_id` = "3", `family_id` = Some("FM00001"), `mother_id` = None, `father_id` = None),
 
     EnrichedClinical(`patient_id` = "PA0004", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0004", `batch_id` = "BAT1", `bioinfo_analysis_code` = "GEBA", `aliquot_id` = "4", `practitioner_role_id` = "PPR00101", `organization_id` = "OR00201", `is_proband` = true, `gender` = "Female", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "4", `specimen_id` = "4", `family_id` = Some("FM00002"), `mother_id` = None, `father_id` = None),
-    EnrichedClinical(`patient_id` = "PA0004", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0004", `batch_id` = "BAT1", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5", `practitioner_role_id` = "PPR00101", `organization_id` = "OR00201", `is_proband` = true, `gender` = "Female", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "5", `specimen_id` = "5", `family_id` = Some("FM00002"), `mother_id` = None, `father_id` = None),
+    EnrichedClinical(`patient_id` = "PA0004", `analysis_id` = "SRA0003", `sequencing_id` = "SRS0005", `batch_id` = "BAT2", `bioinfo_analysis_code` = "TEBA", `aliquot_id` = "5", `practitioner_role_id` = "PPR00101", `organization_id` = "OR00201", `is_proband` = true, `gender` = "Female", `analysis_display_name` = Some("Maladies musculaires (Panel global)"), `affected_status` = true, `affected_status_code` = "affected", `sample_id` = "5", `specimen_id` = "5", `family_id` = Some("FM00002"), `mother_id` = None, `father_id` = None),
   ).toDF()
 
   val job1 = Variants(TestETLContext(), "BAT1")
@@ -41,10 +41,10 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         referenceAllele = "T",
         INFO_CSQ = List(INFO_CSQ(SYMBOL = "gene1"), INFO_CSQ(SYMBOL = "gene2")),
         `genotypes` = List(
-          SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1)),
-          SNV_GENOTYPES(`sampleId` = "2", `calls` = List(1, 0)),
-          SNV_GENOTYPES(`sampleId` = "3", `calls` = List(0, 0)),
-          SNV_GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1)),
+          SNV_GENOTYPES(`sampleId` = "1", `calls` = List(1, 1)), // analysis id = SRA0001 (GEBA), affected
+          SNV_GENOTYPES(`sampleId` = "2", `calls` = List(1, 0)), // analysis id = SRA0001 (GEBA), not affected
+          SNV_GENOTYPES(`sampleId` = "3", `calls` = List(0, 0)), // analysis id = SRA0001 (GEBA), not affected
+          SNV_GENOTYPES(`sampleId` = "4", `calls` = List(-1, -1)), // analysis id = SRA0002 (GEBA), affected
 
         )),
       VCF_SNV_Input(
@@ -97,25 +97,39 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val results = job1.transform(data)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
-    result.length shouldBe 3
+    result.length shouldBe 4
     resultDf.columns.length shouldBe resultDf.as[NormalizedVariants].columns.length
-    val variantWithFreq = result.find(_.`reference` == "T")
-    variantWithFreq.map(_.copy(`created_on` = null)) shouldBe Some(normalized.NormalizedVariants(
-      `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1))),
-      `frequency_RQDM` = AnalysisFrequencies(Frequency(2, 4, 0.5, 1, 2, 0.5, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 8, 0.375, 2, 4, 0.5, 1)),
-      `genes_symbol` = List("gene1", "gene2"),
-      `genes` = List(
-        GENES(`symbol` = "gene1", `spliceai` = Some(SPLICEAI(ds = 0.1, `type` = Some(Seq("AG", "AL", "DG", "DL"))))),
-        GENES(`symbol` = "gene2", `spliceai` = Some(SPLICEAI(ds = 0.01, `type` = Some(Seq("AG")))))
+    val rowsWithFreq = result.filter(_.`reference` == "T")
+    rowsWithFreq.map(_.copy(`created_on` = null)) should contain theSameElementsAs Seq(
+      normalized.NormalizedVariants(
+        `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA", `reference` = "T",
+        `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(2, 2, 1.0, 1, 1, 1.0, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 6, 0.5, 2, 3, 2.0 / 3, 1))),
+        `frequency_RQDM` = AnalysisFrequencies(Frequency(2, 2, 1.0, 1, 1, 1.0, 1), Frequency(1, 4, 0.25, 1, 2, 0.5, 0), Frequency(3, 6, 0.5, 2, 3, 2.0 / 3, 1)),
+        `genes_symbol` = List("gene1", "gene2"),
+        `genes` = List(
+          GENES(`symbol` = "gene1", `spliceai` = Some(SPLICEAI(ds = 0.1, `type` = Some(Seq("AG", "AL", "DG", "DL"))))),
+          GENES(`symbol` = "gene2", `spliceai` = Some(SPLICEAI(ds = 0.01, `type` = Some(Seq("AG")))))
+        ),
+        `created_on` = null
       ),
-      `created_on` = null)
+      normalized.NormalizedVariants(
+        `batch_id` = "BAT1", `analysis_id` = "SRA0002", `bioinfo_analysis_code` = "GEBA", `reference` = "T",
+        `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(0, 2, 0.0, 0, 1, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 2, 0.0, 0, 1, 0.0, 0))),
+        `frequency_RQDM` = AnalysisFrequencies(Frequency(0, 2, 0.0, 0, 1, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 2, 0.0, 0, 1, 0.0, 0)),
+        `genes_symbol` = List("gene1", "gene2"),
+        `genes` = List(
+          GENES(`symbol` = "gene1", `spliceai` = Some(SPLICEAI(ds = 0.1, `type` = Some(Seq("AG", "AL", "DG", "DL"))))),
+          GENES(`symbol` = "gene2", `spliceai` = Some(SPLICEAI(ds = 0.01, `type` = Some(Seq("AG")))))
+        ),
+        `created_on` = null
+      )
     )
 
     val variantWithoutFreqG = result.find(_.`reference` == "G")
     variantWithoutFreqG.map(_.copy(`created_on` = null)) shouldBe Some(normalized.NormalizedVariants(
-      reference = "G",
-      alternate = "GA",
-      variant_class = "insertion",
+      `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA", `reference` = "G",
+      `alternate` = "GA",
+      `variant_class` = "insertion",
       `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(0, 4, 0.0, 0, 2, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 4, 0.0, 0, 2, 0.0, 0))),
       `frequency_RQDM` = AnalysisFrequencies(Frequency(0, 4, 0.0, 0, 2, 0.0, 0), Frequency(0, 0, 0, 0, 0, 0, 0), Frequency(0, 4, 0.0, 0, 2, 0.0, 0)),
       `genes_symbol` = List("gene1"),
@@ -127,7 +141,8 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     val variantWithoutFreqA = result.find(_.`reference` == "A")
     variantWithoutFreqA.map(_.copy(`created_on` = null)) shouldBe Some(normalized.NormalizedVariants(
-      reference = "A",
+      `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA",
+      `reference` = "A",
       `frequencies_by_analysis` = List(AnalysisCodeFrequencies("MMG", "Maladies musculaires (Panel global)", Frequency(0, 2, 0.0, 0, 1, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 2, 0.0, 0, 1, 0.0, 0))),
       `frequency_RQDM` = AnalysisFrequencies(Frequency(0, 2, 0.0, 0, 1, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 2, 0.0, 0, 1, 0.0, 0)),
       `genes_symbol` = List("gene1"),
@@ -137,10 +152,20 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   }
 
   "variants job" should "transform somatic data to expected format" in {
-    val results = job1.transform(dataSomatic)
+    val results = job2.transform(dataSomatic)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
-    result.length shouldBe 1
+
+    result.map(_.copy(`created_on` = null)) should contain theSameElementsAs Seq(
+      normalized.NormalizedVariants(
+        `analysis_id` = "SRA0003", `bioinfo_analysis_code` = "TEBA", `batch_id` = "BAT2", `reference` = "G", `hotspot` = Some(false),
+        `frequencies_by_analysis` = List(AnalysisCodeFrequencies("", "", Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0))),
+        `frequency_RQDM` = AnalysisFrequencies(Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0), Frequency(0, 0, 0.0, 0, 0, 0.0, 0)),
+        `genes_symbol` = List("gene1"),
+        `genes` = List(GENES(`symbol` = "gene1", `spliceai` = Some(SPLICEAI(ds = 0.0, `type` = None)))),
+        `created_on` = null
+      )
+    )
   }
 
   "variants job" should "not create duplicated variants freqs" in {

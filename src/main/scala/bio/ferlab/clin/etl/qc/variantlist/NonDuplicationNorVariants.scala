@@ -10,7 +10,7 @@ object NonDuplicationNorVariants extends TestingApp {
     handleErrors(
       shouldBeEmpty(
         normalized_variants
-          .groupBy($"chromosome", $"start", $"reference", $"alternate", $"batch_id").count
+          .groupBy($"chromosome", $"start", $"reference", $"alternate", $"analysis_id", $"bioinfo_analysis_code").count
           .filter($"count" > 1)
       )
     )

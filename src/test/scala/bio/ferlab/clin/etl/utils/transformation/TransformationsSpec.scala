@@ -77,6 +77,35 @@ class TransformationsSpec extends SparkSpec {
     )
   }
 
+  "Limit" should "limit the number of rows in a DataFrame" in {
+    val df = Seq(
+      ("a", 1),
+      ("b", 2),
+      ("c", 3)
+    ).toDF("col1", "col2")
+
+    val job = Limit(2)
+    val resultDf = job.transform(df)
+
+    resultDf.collect() should contain theSameElementsAs Seq(
+      Row("a", 1),
+      Row("b", 2)
+    )
+  }
+
+  it should "return an empty DataFrame when limit is 0" in {
+    val df = Seq(
+      ("a", 1),
+      ("b", 2),
+      ("c", 3)
+    ).toDF("col1", "col2")
+
+    val job = Limit(0)
+    val resultDf = job.transform(df)
+
+    resultDf.collect() shouldBe empty
+  }
+
   private def testRenameFieldsInArrayStructDf(): DataFrame = {
     val data = Seq(
       Row("Alice", Seq(Row("french", "excellent"), Row("english", "good"))),

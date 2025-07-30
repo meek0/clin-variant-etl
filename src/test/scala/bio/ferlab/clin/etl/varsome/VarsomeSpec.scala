@@ -1,5 +1,6 @@
 package bio.ferlab.clin.etl.varsome
 
+import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.{NormalizedPanels, NormalizedVariants}
 import bio.ferlab.clin.model.{VarsomeExtractOutput, VarsomeOutput}
 import bio.ferlab.clin.testutils.HttpServerUtils.{resourceHandler, withHttpServer}
@@ -23,11 +24,13 @@ class VarsomeSpec extends SparkSpec with WithTestConfig {
   private val sevenDaysAgo = Timestamp.valueOf(current.minusDays(8))
   private val yesterday = Timestamp.valueOf(current.minusDays(1))
   val normalized_variantsDF: DataFrame = Seq(
-    NormalizedVariants(start = 1000, `reference` = "A", `alternate` = "T"),
-    NormalizedVariants(start = 1001, `reference` = "A", `alternate` = "T", `batch_id` = "BAT2"),
-    NormalizedVariants(start = 1002, `reference` = "A", `alternate` = "T"),
-    NormalizedVariants(start = 1003, `reference` = "A", `alternate` = "T", `genes_symbol` = List("OR4F4")), // bad panel
-    NormalizedVariants(start = 1004, `reference` = "A", `alternate` = "T")
+    NormalizedVariants(start = 1000, `reference` = "A", `alternate` = "T", `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA"),
+    NormalizedVariants(start = 1001, `reference` = "A", `alternate` = "T", `batch_id` = "BAT2", `analysis_id` = "SRA0003", `bioinfo_analysis_code` = "TEBA"),
+    NormalizedVariants(start = 1002, `reference` = "A", `alternate` = "T", `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA"),
+    NormalizedVariants(start = 1003, `reference` = "A", `alternate` = "T", `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA", `genes_symbol` = List("OR4F4")), // bad panel
+    NormalizedVariants(start = 1004, `reference` = "A", `alternate` = "T", `batch_id` = "BAT1", `analysis_id` = "SRA0001", `bioinfo_analysis_code` = "GEBA"),
+    NormalizedVariants(start = 1005, `reference` = "A", `alternate` = "T", `batch_id` = "BAT2", `analysis_id` = "SRA0004", `bioinfo_analysis_code` = "TEBA"),
+    NormalizedVariants(start = 1006, `reference` = "A", `alternate` = "T", `batch_id` = "BAT3", `analysis_id` = "SRA0004", `bioinfo_analysis_code` = "TNEBA")
   ).toDF()
   val normalized_varsomeDF: DataFrame = Seq(
     VarsomeOutput("1", 1000, "A", "T", "1234", sevenDaysAgo, None, None),
@@ -36,13 +39,24 @@ class VarsomeSpec extends SparkSpec with WithTestConfig {
   val normalized_panelsDF: DataFrame = Seq(
     NormalizedPanels(), // available panel
   ).toDF()
+  val enriched_clinicalDF: DataFrame = Seq(
+    EnrichedClinical(`analysis_id` = "SRA0001", `batch_id` = "BAT1", `bioinfo_analysis_code` = "GEBA"),
+    EnrichedClinical(`analysis_id` = "SRA0002", `batch_id` = "BAT1", `bioinfo_analysis_code` = "GEBA"),
+    EnrichedClinical(`analysis_id` = "SRA0003", `batch_id` = "BAT2", `bioinfo_analysis_code` = "TEBA"),
+    EnrichedClinical(`analysis_id` = "SRA0004", `batch_id` = "BAT2", `bioinfo_analysis_code` = "TEBA"), // analysis in 2 batches
+    EnrichedClinical(`analysis_id` = "SRA0004", `batch_id` = "BAT3", `bioinfo_analysis_code` = "TNEBA") // analysis in 2 batches
+  ).toDF()
+
+
   val normalized_varsome: DatasetConf = conf.getDataset("normalized_varsome")
   val normalized_variants: DatasetConf = conf.getDataset("normalized_variants")
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
   private val defaultData = Map(
     normalized_variants.id -> normalized_variantsDF,
     normalized_varsome.id -> normalized_varsomeDF,
-    normalized_panels.id -> normalized_panelsDF
+    normalized_panels.id -> normalized_panelsDF,
+    enriched_clinical.id -> enriched_clinicalDF
   )
 
   def withVarsomeServer[T](resource: String = "varsome_minimal.json")(block: String => T): T = withHttpServer("/lookup/batch/hg38", resourceHandler(resource, "application/json"))(block)
@@ -70,7 +84,18 @@ class VarsomeSpec extends SparkSpec with WithTestConfig {
         VarsomeExtractOutput("1", 1004, "A", "T")
       )
     }
+  }
 
+  it should "include all variants for analysis linked to the batch, even if those variants belong to other batches" in {
+    withData() {
+      _ =>
+        val dataframes = Varsome(TestETLContext(), ForBatch("BAT2"), "url", "").extract(currentRunDateTime = current)
+        dataframes(normalized_variants.id).as[VarsomeExtractOutput].collect() should contain theSameElementsAs Seq(
+          VarsomeExtractOutput("1", 1001, "A", "T"),
+          VarsomeExtractOutput("1", 1005, "A", "T"),
+          VarsomeExtractOutput("1", 1006, "A", "T")
+        )
+    }
   }
 
   "transform" should "return a dataframe representing Varsome response" in {
@@ -105,7 +130,7 @@ class VarsomeSpec extends SparkSpec with WithTestConfig {
         val df = spark.table(normalized_varsome.table.get.fullName)
         df.as[VarsomeOutput].collect() should contain theSameElementsAs Seq(
           VarsomeOutput("1", 1000, "A", "T", "1234", ts, None, None), // updated because more than 7 days
-          VarsomeOutput("1", 1002, "A", "T", "5678", yesterday, None, None),  // already here DELTA - UPSERT
+          VarsomeOutput("1", 1002, "A", "T", "5678", yesterday, None, None), // already here DELTA - UPSERT
           VarsomeOutput("1", 1004, "A", "T", "1234", ts, None, None), // new
         )
       }

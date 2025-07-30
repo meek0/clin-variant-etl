@@ -10,16 +10,16 @@ object FiltersFrequencyMissed extends TestingApp {
 
     val df_NorSNV = normalized_snv
       .filter($"gq" >= 20 && col("filters") === Array("PASS") && $"ad_alt" >= 3 && $"alternate" =!= "*")
-      .select("chromosome", "start", "reference", "alternate", "batch_id")
-      .dropDuplicates("chromosome", "start", "reference", "alternate")
+      .select("chromosome", "start", "reference", "alternate", "analysis_id", "bioinfo_analysis_code")
+      .dropDuplicates("chromosome", "start", "reference", "alternate", "analysis_id", "bioinfo_analysis_code")
 
     val df_NorVar = normalized_variants
       .filter(col("frequency_RQDM").isNull || ($"frequency_RQDM.total.ac" === 0 && $"frequency_RQDM.total.pc" === 0))
-      .select("chromosome", "start", "reference", "alternate", "batch_id")
+      .select("chromosome", "start", "reference", "alternate", "analysis_id", "bioinfo_analysis_code")
 
     handleErrors(
       shouldBeEmpty(
-        df_NorSNV.join(df_NorVar, Seq("chromosome", "start", "reference", "alternate", "batch_id"), "inner")
+        df_NorSNV.join(df_NorVar, Seq("chromosome", "start", "reference", "alternate", "analysis_id", "bioinfo_analysis_code"), "inner")
       )
     )
   }
