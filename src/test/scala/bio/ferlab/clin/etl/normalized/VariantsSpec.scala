@@ -87,13 +87,19 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   val dataSomaticWithDuplicates: Map[String, DataFrame] = data ++ Map(
     raw_variant_calling.id -> Seq(
-      VCF_SNV_Somatic_Input(`referenceAllele` = "G", `INFO_CSQ` = List(INFO_CSQ_SOMATIC(SYMBOL = "gene1"))),
-      VCF_SNV_Somatic_Input(`referenceAllele` = "G", `INFO_CSQ` = List(INFO_CSQ_SOMATIC(SYMBOL = "gene1"))),
-      VCF_SNV_Somatic_Input(`referenceAllele` = "G", `INFO_CSQ` = List(INFO_CSQ_SOMATIC(SYMBOL = "gene1")))
-    ).toDF(),
+      VCF_SNV_Somatic_Input(`referenceAllele` = "G", `INFO_CSQ` = List(INFO_CSQ_SOMATIC(SYMBOL = "gene1")),
+        `genotypes` = List(SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(0, 0)))
+      ),
+      VCF_SNV_Somatic_Input(`referenceAllele` = "G", `INFO_CSQ` = List(INFO_CSQ_SOMATIC(SYMBOL = "gene1")),
+        `genotypes` = List(SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(0, 0)))
+      ),
+      VCF_SNV_Somatic_Input(`referenceAllele` = "G", `INFO_CSQ` = List(INFO_CSQ_SOMATIC(SYMBOL = "gene1")),
+        `genotypes` = List(SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(0, 0)))
+      )
+    ).toDF()
   )
 
-  "variants job" should "transform data in expected format" in {
+  "transform" should "transform data in expected format" in {
     val results = job1.transform(data)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
@@ -151,7 +157,7 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     )
   }
 
-  "variants job" should "transform somatic data to expected format" in {
+  it should "transform somatic data to expected format" in {
     val results = job2.transform(dataSomatic)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
@@ -168,8 +174,18 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     )
   }
 
-  "variants job" should "not create duplicated variants freqs" in {
-    val results = job1.transform(dataSomaticWithDuplicates)
+  it should "ignore data from unknown aliquot ids" in {
+    val results = job1.transform(data ++ Map(raw_variant_calling.id -> Seq(
+      VCF_SNV_Input(`contigName` = "chr2", `genotypes` = List(SNV_GENOTYPES(`sampleId` = "1", `calls` = List(0, 0)))),
+      VCF_SNV_Input(`contigName` = "chrY", `genotypes` = List(SNV_GENOTYPES(`sampleId` = "ZZZ", `calls` = List(0, 0))))
+    ).toDF))
+    val result = results("normalized_variants").as[NormalizedVariants].collect()
+    result.length shouldBe 1
+    result(0).`chromosome` shouldBe "2"
+  }
+
+  it should "not create duplicated variants freqs" in {
+    val results = job2.transform(dataSomaticWithDuplicates)
     val resultDf = results("normalized_variants")
     val result = resultDf.as[NormalizedVariants].collect()
 
@@ -182,29 +198,29 @@ class VariantsSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     result(0).`frequency_RQDM`.non_affected shouldBe Frequency(0, 0, 0.0, 0, 0, 0.0, 0)
   }
 
-  "variants job" should "throw exception if no valid VCF" in {
+  it should "throw exception if no valid VCF" in {
     val exception = intercept[Exception] {
       job1.transform(data ++ Map(raw_variant_calling.id -> spark.emptyDataFrame))
     }
     exception.getMessage shouldBe "No valid raw VCF available"
   }
 
-  "variants job" should "ignore invalid contigName in VCF Germnline" in {
+  it should "ignore invalid contigName in VCF Germline" in {
     val results = job1.transform(data ++ Map(raw_variant_calling.id -> Seq(
-      VCF_SNV_Input(`contigName` = "chr2"),
-      VCF_SNV_Input(`contigName` = "chrY"),
-      VCF_SNV_Input(`contigName` = "foo")).toDF))
+      VCF_SNV_Input(`contigName` = "chr2", `genotypes` = List(SNV_GENOTYPES(`sampleId` = "1", `calls` = List(0, 0)))),
+      VCF_SNV_Input(`contigName` = "chrY", `genotypes` = List(SNV_GENOTYPES(`sampleId` = "1", `calls` = List(0, 0)))),
+      VCF_SNV_Input(`contigName` = "foo", `genotypes` = List(SNV_GENOTYPES(`sampleId` = "1", `calls` = List(0, 0))))).toDF))
     val result = results("normalized_variants").as[NormalizedVariants].collect()
     result.length shouldBe >(0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
   }
 
-  "variants job" should "ignore invalid contigName in VCF Somatic" in {
-    val results = job1.transform(data ++ Map(
+  it should "ignore invalid contigName in VCF Somatic" in {
+    val results = job2.transform(data ++ Map(
       raw_variant_calling.id -> Seq(
-        VCF_SNV_Somatic_Input(`contigName` = "chr2"),
-        VCF_SNV_Somatic_Input(`contigName` = "chrY"),
-        VCF_SNV_Somatic_Input(`contigName` = "foo")).toDF))
+        VCF_SNV_Somatic_Input(`contigName` = "chr2", `genotypes` = List(SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(0, 0)))),
+        VCF_SNV_Somatic_Input(`contigName` = "chrY", `genotypes` = List(SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(0, 0)))),
+        VCF_SNV_Somatic_Input(`contigName` = "foo", `genotypes` = List(SNV_SOMATIC_GENOTYPES(`sampleId` = "5", `calls` = List(0, 0))))).toDF))
     val result = results("normalized_variants").as[NormalizedVariants].collect()
     result.length shouldBe >(0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
