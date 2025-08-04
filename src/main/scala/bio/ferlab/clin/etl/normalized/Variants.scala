@@ -119,7 +119,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
         hotspot(vcf),
         explode(col("genotypes.sampleId")) as "aliquot_id",
       )
-      .join(broadcast(clinicalInfos.select("aliquot_id", "analysis_id", "bioinfo_analysis_code")), Seq("aliquot_id"), "left")
+      .join(broadcast(clinicalInfos.select("aliquot_id", "analysis_id", "bioinfo_analysis_code")), Seq("aliquot_id"), "inner")
       .drop("aliquot_id")
       .dropDuplicates("analysis_id", "bioinfo_analysis_code", "chromosome", "start", "reference", "alternate")
   }
@@ -142,7 +142,7 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
       .withColumn("calls", col("genotype.calls"))
       .withColumn("zygosity", zygosity(col("calls")))
       .drop("genotype")
-      .join(broadcast(clinicalInfos), Seq("aliquot_id"))
+      .join(broadcast(clinicalInfos), Seq("aliquot_id"), "inner")
   }
 
   def getVariantsEmptyFrequencies(variants: DataFrame): DataFrame = {
