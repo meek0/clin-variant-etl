@@ -301,6 +301,34 @@
         "snv_count": {
           "type": "long"
         },
+        "exomiser": {
+          "properties": {
+            "rank": {
+              "type": "integer"
+            },
+            "variant_score": {
+              "type": "float"
+            },
+            "variant_score_category": {
+              "type": "keyword"
+            },
+            "gene_symbol": {
+              "type": "keyword"
+            },
+            "gene_combined_score": {
+              "type": "float"
+            },
+            "moi": {
+              "type": "keyword"
+            },
+            "acmg_classification": {
+              "type": "keyword"
+            },
+            "acmg_evidence": {
+              "type": "keyword"
+            }
+          }
+        },
         "cluster": {
           "properties": {
             "id": {

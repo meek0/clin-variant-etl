@@ -27,11 +27,12 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
   val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
   val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
+  val normalized_exomiser_cnv: DatasetConf = conf.getDataset("normalized_exomiser_cnv")
 
   override val dbToCreate: List[String] = List("clin")
   override val dsToClean: List[DatasetConf] = List(destination, normalized_cnv, normalized_cnv_somatic_tumor_only, normalized_snv,
     normalized_snv_somatic, normalized_refseq_annotation, normalized_panels, genes, enriched_clinical, nextflow_svclustering,
-    nextflow_svclustering_parental_origin, normalized_gnomad_cnv_v4)
+    nextflow_svclustering_parental_origin, normalized_gnomad_cnv_v4, normalized_exomiser_cnv)
 
   val job = CNV(TestETLContext(), None)
 
@@ -95,6 +96,11 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
     genes.id -> Seq(EnrichedGenes()).toDF(),
     normalized_gnomad_cnv_v4.id -> Seq(
       NormalizedGnomadV4CNV(),
+    ).toDF(),
+
+    normalized_exomiser_cnv.id -> Seq(
+      NormalizedExomiserCNV(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `aliquot_id` = "11111", `chromosome` = "1" , `start` = 10000, `reference` = "A", `alternate` = "TAA"),
+      NormalizedExomiserCNV(`batch_id` = "BAT2", `analysis_id` = "SRA0002", `aliquot_id` = "22222", `chromosome` = "1" , `start` = 10000, `reference` = "A", `alternate` = "TAA")
     ).toDF()
   )
 
@@ -235,7 +241,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`sequencing_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5"),
-      EnrichedCNV(`sequencing_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "05c1575c45d71352d7f88c8a688956b139653661"),
+      EnrichedCNV(`sequencing_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "05c1575c45d71352d7f88c8a688956b139653661", `exomiser` = None),
     )
   }
 
@@ -289,7 +295,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
-        ), `hash` = "d770393e8488e9abd9380b5ff08e44e8689a82a5"),
+        ), `exomiser` = None, `hash` = "d770393e8488e9abd9380b5ff08e44e8689a82a5"),
       EnrichedCNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_02",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set("gnomAD"),
@@ -298,7 +304,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
-        ), `hash` = "a099572eaa03cd35dcbfe01be45bd2e036b9d21e"),
+        ), `exomiser` = None, `hash` = "a099572eaa03cd35dcbfe01be45bd2e036b9d21e"),
       EnrichedCNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_03",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set(),
@@ -307,7 +313,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
-        ), `hash` = "f43e1ff5313885d668443e05791f03ec1c9231b8"),
+        ), `exomiser` = None, `hash` = "f43e1ff5313885d668443e05791f03ec1c9231b8"),
       EnrichedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_04",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set(),
@@ -317,7 +323,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
-        ), `hash` = "87779ec18f24a04f353cc13d7c2930406817c735"),
+        ), `exomiser` = None, `hash` = "87779ec18f24a04f353cc13d7c2930406817c735"),
       EnrichedCNV(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_05",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set("gnomAD"),
@@ -326,7 +332,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.003))
           )
-        ), `hash` = "cc6e13e9aad1772f5ab02aef08f1ffaeb0294272"),
+        ), `exomiser` = None, `hash` = "cc6e13e9aad1772f5ab02aef08f1ffaeb0294272"),
       EnrichedCNV(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_06",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set(),
@@ -335,12 +341,12 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
-        ), `hash` = "5f801a8352117ff5b6b204ba6ee78427ec5acdbd"),
+        ), `exomiser` = None, `hash` = "5f801a8352117ff5b6b204ba6ee78427ec5acdbd"),
     )
   }
 
 
-  it should "enrich CNV data with snv count" in {
+  it should "enrich CNV data with snv count and exomiser" in {
     // This test includes only germline data to focus on the overlap logic for snv count calcultation
     // The code assume that an SNV overlap a CNV if the SNV's start is within the CNV's interval.
     val data = testData ++ Map(
@@ -362,6 +368,11 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `sequencing_id` = "SR_001"),
         NormalizedSNV(`chromosome` = "1", `start` = 210, `end` = 250, `alternate` = "A", reference = "REF", `hgvsg` = "SNV_04", `sequencing_id` = "SR_002"),
       ).toDF(),
+      normalized_exomiser_cnv.id -> Seq(
+        NormalizedExomiserCNV(`aliquot_id` = "11111", `chromosome` = "1" , `start` = 1, `alternate` = "A", `reference` = "REF", `exomiser_variant_score` = 0.4f),
+        NormalizedExomiserCNV(`aliquot_id` = "11111", `chromosome` = "1" , `start` = 100, `alternate` = "A", `reference` = "REF", `exomiser_variant_score` = 0.6f),
+        NormalizedExomiserCNV(`aliquot_id` = "11111", `chromosome` = "1" , `start` = 200, `alternate` = "A", `reference` = "REF", `exomiser_variant_score` = 0.8f),
+      ).toDF(),
     )
 
     job.transformSingle(data)
@@ -370,22 +381,22 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       EnrichedCNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", `reference` = "REF", `name` = "CNV_00", `snv_count` = 0, `sequencing_id` = "SR_000",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
-        `hash` = "54983b0279495b4e60366f31a3c352da5acc8281",
+        `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.4f ,`variant_score_category` = "LOW")), `hash` = "54983b0279495b4e60366f31a3c352da5acc8281",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 3, `sequencing_id` = "SR_001",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
-        `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
+        `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.6f, `variant_score_category` = "MEDIUM")), `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `sequencing_id` = "SR_001",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
-        `hash` = "fb94d57b79ff40168cc7cb7b8cf5607eb6cf47e4",
+        `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.8f, `variant_score_category` = "HIGH")), `hash` = "fb94d57b79ff40168cc7cb7b8cf5607eb6cf47e4",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `sequencing_id` = "SR_002",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
-        `hash` = "37b02ad5d5fb4fcc3c783ebcdecff26480a44ef3", `aliquot_id` = "11112",
+        `exomiser` = None, `hash` = "37b02ad5d5fb4fcc3c783ebcdecff26480a44ef3", `aliquot_id` = "11112",
       )
     )
   }
@@ -428,12 +439,12 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 1, `sequencing_id` = "SR_001",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
-        `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
+        `exomiser` = None, `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "CNV_SOMATIC_01", `variant_type` = "somatic", `snv_count` = 1, `sequencing_id` = "SR_002",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `cn` = None, `frequency_RQDM` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
-        `hash` = "6d2e2ec49033dbbda09b1a23f7ef1cc12a161d86"
+        `exomiser` = None, `hash` = "6d2e2ec49033dbbda09b1a23f7ef1cc12a161d86"
       )
     )
   }
