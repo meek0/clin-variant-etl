@@ -31,6 +31,7 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `filters`: Seq[String] = Seq("cnvQual"),
                             `batch_id`: String = "BAT1",
                             `type`: String = "LOSS",
+                            `variant_type`: String = "germline",
                             `sort_chromosome`: Int = 1,
                             `service_request_id`: String = "SRS0001",
                             `patient_id`: String = "PA0001",
@@ -59,20 +60,27 @@ case class CnvCentricOutput(`aliquot_id`: String = "1",
                             `number_genes`: Int = 1,
                             `variant_external_reference`: Set[String] = Set(),
                             `exomiser`: Option[EXOMISER_CNV] = Some(EXOMISER_CNV()),
-                            `cluster`: CNV_CNETRIC_CLUSTER = CNV_CNETRIC_CLUSTER(),
+                            `cluster`: CNV_CENTRIC_CLUSTER = CNV_CENTRIC_CLUSTER(),
                             `snv_count`: Long = 0,
                             `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
-case class CNV_CNETRIC_CLUSTER(`id`: Option[String] = Some("DRAGEN:DUP:chr1:9823628-9823687"),
-                              `external_frequencies`: CNV_CNETRIC_CLUSTER_FREQUENCIES = CNV_CNETRIC_CLUSTER_FREQUENCIES(),
-                             )
+case class CNV_CENTRIC_CLUSTER(`id`: Option[String] = Some("DRAGEN:LOSS:chr1:9823628-9823687"),
+                               `external_frequencies`: CNV_CENTRIC_CLUSTER_FREQUENCIES = CNV_CENTRIC_CLUSTER_FREQUENCIES(),
+                               `frequency_RQDM`: CNV_CENTRIC_CLUSTER_FREQUENCY_RQDM = CNV_CENTRIC_CLUSTER_FREQUENCY_RQDM())
 
-case class CNV_CNETRIC_CLUSTER_FREQUENCIES(`gnomad_exomes_4`: Option[CNV_CNETRIC_CLUSTER_FREQUENCIES_GNOMAD_V4] = None,
-                                        )
+case class CNV_CENTRIC_CLUSTER_FREQUENCIES(`gnomad_exomes_4`: Option[CNV_CENTRIC_CLUSTER_FREQUENCIES_GNOMAD_V4] = None,
+                                          )
 
-case class CNV_CNETRIC_CLUSTER_FREQUENCIES_GNOMAD_V4(`sc`: Double = 0.0,
-                                                 `sn`: Double = 0.0,
-                                                 `sf`: Double = 0.0)
+case class CNV_CENTRIC_CLUSTER_FREQUENCY_RQDM(`germ`: CNV_CENTRIC_FREQUENCY_RQDM_GERM = CNV_CENTRIC_FREQUENCY_RQDM_GERM(),
+                                              `som`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM())
+
+case class CNV_CENTRIC_FREQUENCY_RQDM_GERM(`affected`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(`pc` = 1, `pn` = 1, `pf` = 1.0),
+                                           `non_affected`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(`pc` = 0, `pn` = 1, `pf` = 0.0),
+                                           `total`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(`pc` = 1, `pn` = 1, `pf` = 1.0))
+
+case class CNV_CENTRIC_CLUSTER_FREQUENCIES_GNOMAD_V4(`sc`: Double = 0.0,
+                                                     `sn`: Double = 0.0,
+                                                     `sf`: Double = 0.0)
 
 case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
                              `omim_gene_id`: Option[String] = Some("601013"),
@@ -90,6 +98,6 @@ case class CNV_CENTRIC_GENES(`symbol`: String = "OR4F5",
                              `cosmic`: List[COSMIC] = List(COSMIC()),
                              `overlap_exons`: String = "1")
 
-case class CNV_CENTRIC_FREQUENCY_RQDM(`pn`: Long = 5,
-                                      `pc`: Long = 2,
-                                      `pf`: Double = 0.4)
+case class CNV_CENTRIC_FREQUENCY_RQDM(`pn`: Long = 1,
+                                      `pc`: Long = 1,
+                                      `pf`: Double = 1.0)

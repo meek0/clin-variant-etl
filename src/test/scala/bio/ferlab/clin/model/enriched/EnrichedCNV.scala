@@ -55,7 +55,7 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `genes`: List[ENRICHED_CNV_GENES] = List(ENRICHED_CNV_GENES()),
                        `transmission`: String = "autosomal_dominant",
                        `parental_origin`: String = "mother",
-                       `frequency_RQDM`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(),
+                       `frequency_RQDM`: Option[ENRICHED_CNV_FREQUENCY_RQDM] = Some(ENRICHED_CNV_FREQUENCY_RQDM()),
                        `number_genes`: Int = 1,
                        `variant_external_reference`: Set[String] = Set(),
                        `exomiser`: Option[EXOMISER_CNV] = Some(EXOMISER_CNV()),
@@ -63,9 +63,9 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
                        `snv_count`: Long = 0,
                        `hash`: String = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5")
 
-case class EnrichedCNVCluster(`id`: Option[String] = Some("DRAGEN:DUP:chr1:9823628-9823687"),
+case class EnrichedCNVCluster(`id`: Option[String] = Some("DRAGEN:LOSS:chr1:9823628-9823687"),
                               `external_frequencies`: EnrichedCNVClusterFrequencies = EnrichedCNVClusterFrequencies(),
-                             )
+                              `frequency_RQDM`: Option[EnrichedCNVClusterFrequencyRQDM] = Some(EnrichedCNVClusterFrequencyRQDM()))
 
 case class EnrichedCNVClusterFrequencies(`gnomad_exomes_4`: Option[EnrichedCNVClusterFrequenciesGnomadV4] = None,
                                         )
@@ -73,6 +73,13 @@ case class EnrichedCNVClusterFrequencies(`gnomad_exomes_4`: Option[EnrichedCNVCl
 case class EnrichedCNVClusterFrequenciesGnomadV4(`sc`: Double = 0.0,
                                                  `sn`: Double = 0.0,
                                                  `sf`: Double = 0.0)
+
+case class EnrichedCNVClusterFrequencyRQDM(`germ`: Option[EnrichedCNVClusterFrequencyRQDMGerm] = Some(EnrichedCNVClusterFrequencyRQDMGerm()),
+                                           `som`: Option[ENRICHED_CNV_FREQUENCY_RQDM] = Some(ENRICHED_CNV_FREQUENCY_RQDM()))
+
+case class EnrichedCNVClusterFrequencyRQDMGerm(`affected`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(`pc` = 1, `pn` = 1, `pf` = 1.0),
+                                               `non_affected`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(`pc` = 0, `pn` = 1, `pf` = 0.0),
+                                               `total`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(`pc` = 1, `pn` = 1, `pf` = 1.0))
 
 case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
                               `omim_gene_id`: Option[String] = Some("601013"),
@@ -90,9 +97,9 @@ case class ENRICHED_CNV_GENES(`symbol`: Option[String] = Some("OR4F5"),
                               `cosmic`: List[COSMIC] = List(COSMIC()),
                               `overlap_exons`: Option[String] = Some("1"))
 
-case class ENRICHED_CNV_FREQUENCY_RQDM(`pn`: Long = 5,
-                                       `pc`: Long = 2,
-                                       `pf`: Double = 0.4)
+case class ENRICHED_CNV_FREQUENCY_RQDM(`pn`: Long = 1,
+                                       `pc`: Long = 1,
+                                       `pf`: Double = 1.0)
 
 case class EXOMISER_CNV(`rank`: Int = 3,
                         `variant_score`: Float = 0.6581f,

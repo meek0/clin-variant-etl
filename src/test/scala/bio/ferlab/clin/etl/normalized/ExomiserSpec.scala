@@ -27,9 +27,9 @@ class ExomiserSpec extends SparkSpec with WithTestConfig with BeforeAndAfterAll 
   val resourcePath: String = this.getClass.getClassLoader.getResource(".").getFile
 
   val clinicalDf: DataFrame = Seq(
-    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `analysis_id` = "SRA0001", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.exomiser.variants.tsv")), `patient_id` = "438787", `sequencing_id` = "SR0095"),
-    EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot2", `analysis_id` = "SRA0002", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot2.exomiser.variants.tsv")), `patient_id` = "PATIENT1", `sequencing_id` = "SR0001", `specimen_id` = "SPECIMEN1"),
-    EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot3", `analysis_id` = "SRA0003", `exomiser_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot3.exomiser.variants.tsv")), `patient_id` = "PATIENT2", `sequencing_id` = "SR0002", `specimen_id` = "SPECIMEN2"),
+    EnrichedClinical(`batch_id` = "BAT1", `aliquot_id` = "aliquot1", `analysis_id` = "SRA0001", `exomiser_snv_urls` = Some(Set(s"file://${resourcePath}BAT1/aliquot1.exomiser.variants.tsv")), `patient_id` = "438787", `sequencing_id` = "SR0095"),
+    EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot2", `analysis_id` = "SRA0002", `exomiser_snv_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot2.exomiser.variants.tsv")), `patient_id` = "PATIENT1", `sequencing_id` = "SR0001", `specimen_id` = "SPECIMEN1"),
+    EnrichedClinical(`batch_id` = "BAT2", `aliquot_id` = "aliquot3", `analysis_id` = "SRA0003", `exomiser_snv_urls` = Some(Set(s"file://${resourcePath}BAT2/aliquot3.exomiser.variants.tsv")), `patient_id` = "PATIENT2", `sequencing_id` = "SR0002", `specimen_id` = "SPECIMEN2"),
   ).toDF()
 
   override val dbToCreate: List[String] = List(enriched_clinical.table.get.database)

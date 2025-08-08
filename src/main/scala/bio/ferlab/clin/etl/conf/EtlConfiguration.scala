@@ -102,9 +102,10 @@ object EtlConfiguration extends App {
 
       // nextflow
       // svclustering
-      DatasetConf("nextflow_svclustering_input" , clin_nextflow, "/svclustering/input"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
-      DatasetConf("nextflow_svclustering_output", clin_nextflow, "/svclustering/output/svclustering*/*.vcf.gz", VCF  , Read),
-      DatasetConf("nextflow_svclustering"       , clin_datalake, "/nextflow/svclustering"                              , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering")), keys = List("name"), repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_germline_output", clin_nextflow, "/svclustering/output/germline*/*.vcf.gz", VCF, Read),
+      DatasetConf("nextflow_svclustering_somatic_output" , clin_nextflow, "/svclustering/output/somatic*/*.vcf.gz" , VCF, Read),
+      DatasetConf("nextflow_svclustering_germline"       , clin_datalake, "/nextflow/svclustering/germline"        , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_germline")), keys = List("name"), repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_somatic"        , clin_datalake, "/nextflow/svclustering/somatic"         , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_somatic")) , keys = List("name"), repartition = Some(FixedRepartition(1))),
       // svclustering-parental-origin
       DatasetConf("nextflow_svclustering_parental_origin_input" , clin_nextflow, "/svclustering_parental_origin/input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
       DatasetConf("nextflow_svclustering_parental_origin_output", clin_nextflow, "/svclustering_parental_origin/output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),

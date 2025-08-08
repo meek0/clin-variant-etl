@@ -6,15 +6,16 @@ import bio.ferlab.clin.model.normalized.NormalizedCNVSomaticTumorOnly
 import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.DatasetConf
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
-import bio.ferlab.datalake.testutils.{SparkSpec, TestETLContext}
+import bio.ferlab.datalake.testutils.{CleanUpBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.DataFrame
 
-class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
+class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig with CleanUpBeforeAll {
 
   import spark.implicits._
 
   val raw_cnv: DatasetConf = conf.getDataset("raw_cnv_somatic_tumor_only")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+  val normalized_cnv_somatic_tumor_only: DatasetConf = conf.getDataset("normalized_cnv_somatic_tumor_only")
 
   val job = CNVSomaticTumorOnly(TestETLContext(), "BAT1")
 
@@ -34,9 +35,12 @@ class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
     ClassGenerator.writeCLassFile("bio.ferlab.clin.model", "VCF_CNV_Input", cnv, "src/test/scala/")
   }*/
 
+  override val dsToClean: List[DatasetConf] = List(normalized_cnv_somatic_tumor_only)
+
+
   "cnv transform" should "transform data in expected format" in {
     val results = job.transform(data)
-    val result = results("normalized_cnv_somatic_tumor_only").as[NormalizedCNVSomaticTumorOnly].collect()
+    val result = results(normalized_cnv_somatic_tumor_only.id).as[NormalizedCNVSomaticTumorOnly].collect()
 
     result should contain theSameElementsAs Seq(
       NormalizedCNVSomaticTumorOnly(),
@@ -50,7 +54,7 @@ class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
       VCF_CNV_Somatic_Input(`contigName` = "chr2"),
       VCF_CNV_Somatic_Input(`contigName` = "chrY"),
       VCF_CNV_Somatic_Input(`contigName` = "foo")).toDF))
-    val result = results("normalized_cnv_somatic_tumor_only").as[NormalizedCNVSomaticTumorOnly].collect()
+    val result = results(normalized_cnv_somatic_tumor_only.id).as[NormalizedCNVSomaticTumorOnly].collect()
     result.length shouldBe >(0)
     result.foreach(r => r.chromosome shouldNot be("foo"))
   }
@@ -66,10 +70,10 @@ class CNVSomaticTumorOnlySpec extends SparkSpec with WithTestConfig {
       // Load
       val context = TestETLContext()(updatedConf, spark)
       val job = CNVSomaticTumorOnly(context, "BAT1")
-      job.load(Map("normalized_cnv_somatic_tumor_only" -> normalizedCNVSomaticTumorOnlyData.toDF))
+      job.load(Map(normalized_cnv_somatic_tumor_only.id -> normalizedCNVSomaticTumorOnlyData.toDF))
 
       // Check the output data
-      val result = updatedConf.getDataset("normalized_cnv_somatic_tumor_only").read(updatedConf, spark)
+      val result = updatedConf.getDataset(normalized_cnv_somatic_tumor_only.id).read(updatedConf, spark)
       result.as[NormalizedCNVSomaticTumorOnly].collect() should contain theSameElementsAs normalizedCNVSomaticTumorOnlyData
     }
   }

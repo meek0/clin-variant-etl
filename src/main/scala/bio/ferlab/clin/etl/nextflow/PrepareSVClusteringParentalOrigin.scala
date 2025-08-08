@@ -38,12 +38,12 @@ case class PrepareSVClusteringParentalOrigin(rc: RuntimeETLContext, batchId: Str
 
     clinicalDf
       .where($"analysis_id".isin(analysesInCurrentBatch: _*))
-      .where($"cnv_vcf_urls".isNotNull)
+      .where($"cnv_vcf_germline_urls".isNotNull)
       .join(analysesWithAtLeastOneParent, Seq("analysis_id"), "inner")
       .select(
         $"aliquot_id" as "sample",
         $"analysis_id" as "familyId",
-        regexp_replace($"cnv_vcf_urls"(0), "s3a://", "s3://") as "vcf" // There's always a single file
+        regexp_replace($"cnv_vcf_germline_urls"(0), "s3a://", "s3://") as "vcf" // There's always a single file
       )
       .distinct()
   }

@@ -295,13 +295,13 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
     // 2. Trio+, tumor only
     NormalizedTask(id = "4-4-TO", batch_id = "BAT1", `patient_id` = "PA0004", `service_request_id` = "SRS0004", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "4"),
-      documents = List(DOCUMENTS(id = "4-4-TO-EXOMISER", document_type = "EXOMISER"))),
+      documents = List(DOCUMENTS(id = "4-4-TO-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "4-4-TO-SCNV", document_type = "SCNV"))),
     NormalizedTask(id = "5-5-TO", batch_id = "BAT1", `patient_id` = "PA0005", `service_request_id` = "SRS0005", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "5"),
-      documents = List(DOCUMENTS(id = "5-5-TO-EXOMISER", document_type = "EXOMISER"))),
+      documents = List(DOCUMENTS(id = "5-5-TO-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "5-5-TO-SCNV", document_type = "SCNV"))),
     NormalizedTask(id = "6-6-TO", batch_id = "BAT1", `patient_id` = "PA0006", `service_request_id` = "SRS0006", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "6"),
-      documents = List(DOCUMENTS(id = "6-6-TO-EXOMISER", document_type = "EXOMISER"))),
+      documents = List(DOCUMENTS(id = "6-6-TO-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "6-6-TO-SCNV", document_type = "SCNV"))),
     NormalizedTask(id = "7-7-TO", batch_id = "BAT1", `patient_id` = "PA0007", `service_request_id` = "SRS0007", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "7"),
-      documents = List(DOCUMENTS(id = "7-7-TO-EXOMISER", document_type = "EXOMISER"))),
+      documents = List(DOCUMENTS(id = "7-7-TO-EXOMISER", document_type = "EXOMISER"), DOCUMENTS(id = "7-7-TO-SCNV", document_type = "SCNV"))),
 
     // BATCH 2
     // 3. Incomplete trio
@@ -333,7 +333,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
 
     // 5. Solo, Tumor only analysis
     NormalizedTask(id = "1111-1111-TO", batch_id = "BAT3", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111"),
-      documents = List(DOCUMENTS(id = "1111-1111-TO-SNV", document_type = "SNV"))),
+      documents = List(DOCUMENTS(id = "1111-1111-TO-SSNV", document_type = "SSNV"))),
 
     // BATCH 4
     // 5. Solo, Germline analysis
@@ -343,7 +343,7 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     // BATCH 5
     // 5. Solo, tumor normal (same servie_request_id and aliquot_id as tumor only)
     NormalizedTask(id = "1111-1111-TN", batch_id = "BAT5", `patient_id` = "PA1111", `service_request_id` = "SRS1111", `analysis_code` = "TNEBA", `experiment` = EXPERIMENT(`aliquot_id` = "1111"),
-      documents = List(DOCUMENTS(id = "1111-1111-TN-SNV", document_type = "SNV"))),
+      documents = List(DOCUMENTS(id = "1111-1111-TN-SSNV", document_type = "SSNV"))),
 
     // 6. API Solo WGS
     // Germline analysis
@@ -420,11 +420,15 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     NormalizedDocumentReference(id = "3-3-G-EXOMISER", patient_id = "PA0003", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://3.tsv"), Content(format = "JSON", s3_url = "s3a://3.json"))),
     NormalizedDocumentReference(id = "3-3-G-GCNV", patient_id = "PA0003", `type` = "GCNV", contents = List(Content(format = "VCF", s3_url = "s3a://3-1.vcf.gz"), Content(format = "VCF", s3_url = "s3a://3-2.vcf.gz"))),
 
-    // 2. Trio+: Everyone with Exomiser
+    // 2. Trio+: Everyone with Exomiser and SCNV files
     NormalizedDocumentReference(id = "4-4-TO-EXOMISER", patient_id = "PA0004", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://4.tsv"), Content(format = "JSON", s3_url = "s3a://4.json"))),
+    NormalizedDocumentReference(id = "4-4-TO-SCNV", patient_id = "PA0004", `type` = "SCNV", contents = List(Content(format = "VCF", s3_url = "s3a://4.vcf.gz"), Content(format = "TBI", s3_url = "s3a://4.vcf.gz.tbi"))),
     NormalizedDocumentReference(id = "5-5-TO-EXOMISER", patient_id = "PA0005", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://5.tsv"), Content(format = "JSON", s3_url = "s3a://5.json"))),
+    NormalizedDocumentReference(id = "5-5-TO-SCNV", patient_id = "PA0005", `type` = "SCNV", contents = List(Content(format = "VCF", s3_url = "s3a://5.vcf.gz"), Content(format = "TBI", s3_url = "s3a://5.vcf.gz.tbi"))),
     NormalizedDocumentReference(id = "6-6-TO-EXOMISER", patient_id = "PA0006", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://6.tsv"), Content(format = "JSON", s3_url = "s3a://6.json"))),
+    NormalizedDocumentReference(id = "6-6-TO-SCNV", patient_id = "PA0006", `type` = "SCNV", contents = List(Content(format = "VCF", s3_url = "s3a://6.vcf.gz"), Content(format = "TBI", s3_url = "s3a://6.vcf.gz.tbi"))),
     NormalizedDocumentReference(id = "7-7-TO-EXOMISER", patient_id = "PA0007", `type` = "EXOMISER", contents = List(Content(format = "TSV", s3_url = "s3a://7.tsv"), Content(format = "JSON", s3_url = "s3a://7.json"))),
+    NormalizedDocumentReference(id = "7-7-TO-SCNV", patient_id = "PA0007", `type` = "SCNV", contents = List(Content(format = "VCF", s3_url = "s3a://7.vcf.gz"), Content(format = "TBI", s3_url = "s3a://7.vcf.gz.tbi"))),
 
     // 3. Incomplete trio: Multiple Covgene files per specimen
     NormalizedDocumentReference(id = "11-11-G-COVGENE", patient_id = "PA0011", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://11-1.csv"), Content(format = "CSV", s3_url = "s3a://11-2.csv"), Content(format = "CSV", s3_url = "s3a://11-3.csv"))),
@@ -444,13 +448,13 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
     NormalizedDocumentReference(id = "222-555-G-COVGENE", patient_id = "PA0222", `type` = "COVGENE", contents = List(Content(format = "CSV", s3_url = "s3a://555.csv"))),
     NormalizedDocumentReference(id = "222-555-G-SNV", patient_id = "PA0222", `type` = "SNV", contents = List(Content(format = "TBI", s3_url = "s3a://555.vcf.gz.tbi"))),
 
-    // 5. Solo -- Mix of SNV VCF and SNV TBI files
+    // 5. Solo -- Mix of SNV + SSNV VCF and TBI files
     // Tumor only analysis
-    NormalizedDocumentReference(id = "1111-1111-TO-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111.vcf.gz"), Content(format = "TBI", s3_url = "s3a://1111.vcf.gz.tbi"))),
+    NormalizedDocumentReference(id = "1111-1111-TO-SSNV", patient_id = "PA1111", `type` = "SSNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111.vcf.gz"), Content(format = "TBI", s3_url = "s3a://1111.vcf.gz.tbi"))),
     // Germline analysis
     NormalizedDocumentReference(id = "1111-2222-G-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://2222.vcf.gz"), Content(format = "TBI", s3_url = "s3a://2222.vcf.gz.tbi"))),
     // Tumor normal analysis
-    NormalizedDocumentReference(id = "1111-1111-TN-SNV", patient_id = "PA1111", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf.gz"), Content(format = "TBI", s3_url = "s3a://1111-2222.vcf.gz.tbi"))),
+    NormalizedDocumentReference(id = "1111-1111-TN-SSNV", patient_id = "PA1111", `type` = "SSNV", contents = List(Content(format = "VCF", s3_url = "s3a://1111-2222.vcf.gz"), Content(format = "TBI", s3_url = "s3a://1111-2222.vcf.gz.tbi"))),
 
     // 6. API Solo WGS
     NormalizedDocumentReference(id = "API-DOC-01-SNV", patient_id = "API-PA-0001", `type` = "SNV", contents = List(Content(format = "VCF", s3_url = "s3a://api-01-snv.vcf.gz"), Content(format = "TBI", s3_url = "s3a://api-01-snv.vcf.gz.tbi"))),
@@ -487,22 +491,29 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
       EnrichedClinicalOutput(patient_id = "PA0001", gender = "Male", analysis_id = "SRA0001", sequencing_id = "SRS0001", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "1", specimen_id = "SP_0001", sample_id = "SA_0001", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00001"), mother_id = Some("PA0003"), father_id = Some("PA0002"), mother_aliquot_id = Some("3"), father_aliquot_id = Some("2"),
-        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
         person_id = Some("P0001"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("John"),
-        covgene_urls = Some(Set("s3a://1.csv")), exomiser_urls = Some(Set("s3a://1.tsv")), cnv_vcf_urls = Some(Set("s3a://1-1.vcf.gz", "s3a://1-2.vcf.gz")), snv_vcf_urls = None),
+        clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
+        covgene_urls = Some(Set("s3a://1.csv")), exomiser_snv_urls = Some(Set("s3a://1.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = Some(Set("s3a://1-1.vcf.gz", "s3a://1-2.vcf.gz")), cnv_vcf_somatic_urls = None),
       // Father
       EnrichedClinicalOutput(patient_id = "PA0002", gender = "Male", analysis_id = "SRA0001", sequencing_id = "SRS0002", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "2", specimen_id = "SP_0002", sample_id = "SA_0002", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
-        clinical_signs = None, person_id = Some("P0001"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("John"),
-        covgene_urls = Some(Set("s3a://2.csv")), exomiser_urls = Some(Set("s3a://2.tsv")), cnv_vcf_urls = Some(Set("s3a://2-1.vcf.gz", "s3a://2-2.vcf.gz")), snv_vcf_urls = None),
+        person_id = Some("P0001"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("John"),
+        clinical_signs = None,
+        covgene_urls = Some(Set("s3a://2.csv")), exomiser_snv_urls = Some(Set("s3a://2.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = Some(Set("s3a://2-1.vcf.gz", "s3a://2-2.vcf.gz")), cnv_vcf_somatic_urls = None),
       // Mother
       EnrichedClinicalOutput(patient_id = "PA0003", gender = "Female", analysis_id = "SRA0001", sequencing_id = "SRS0003", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "3", specimen_id = "SP_0003", sample_id = "SA_0003", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00001"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         person_id = Some("P0002"), birth_date = Some(Date.valueOf("2001-03-06")), first_name = Some("Jane"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
-        covgene_urls = Some(Set("s3a://3.csv")), exomiser_urls = Some(Set("s3a://3.tsv")), cnv_vcf_urls = Some(Set("s3a://3-1.vcf.gz", "s3a://3-2.vcf.gz")), snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://3.csv")), exomiser_snv_urls = Some(Set("s3a://3.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = Some(Set("s3a://3-1.vcf.gz", "s3a://3-2.vcf.gz")), cnv_vcf_somatic_urls = None),
 
       // 2. Trio+
       // Proband
@@ -510,25 +521,33 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "4", specimen_id = "SP_0004", sample_id = "SA_0004", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00004"), mother_id = Some("PA0007"), father_id = Some("PA0006"), mother_aliquot_id = Some("7"), father_aliquot_id = Some("6"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
-        exomiser_urls = Some(Set("s3a://4.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = Some(Set("s3a://4.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = Some(Set("s3a://4.vcf.gz"))),
       // Brother
       EnrichedClinicalOutput(patient_id = "PA0005", gender = "Male", analysis_id = "SRA0004", sequencing_id = "SRS0005", bioinfo_analysis = "somatic", bioinfo_analysis_code = "TEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "5", specimen_id = "SP_0005", sample_id = "SA_0005", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00004"), mother_id = Some("PA0007"), father_id = Some("PA0006"), mother_aliquot_id = Some("7"), father_aliquot_id = Some("6"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false))),
-        exomiser_urls = Some(Set("s3a://5.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = Some(Set("s3a://5.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = Some(Set("s3a://5.vcf.gz"))),
       // Father
       EnrichedClinicalOutput(patient_id = "PA0006", gender = "Male", analysis_id = "SRA0004", sequencing_id = "SRS0006", bioinfo_analysis = "somatic", bioinfo_analysis_code = "TEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "6", specimen_id = "SP_0006", sample_id = "SA_0006", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00004"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = None,
-        exomiser_urls = Some(Set("s3a://6.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = Some(Set("s3a://6.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = Some(Set("s3a://6.vcf.gz"))),
       // Mother
       EnrichedClinicalOutput(patient_id = "PA0007", gender = "Female", analysis_id = "SRA0004", sequencing_id = "SRS0007", bioinfo_analysis = "somatic", bioinfo_analysis_code = "TEBA",
         practitioner_role_id = "PPR00101", batch_id = "BAT1", aliquot_id = "7", specimen_id = "SP_0007", sample_id = "SA_0007", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00004"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = None,
-        exomiser_urls = Some(Set("s3a://7.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = Some(Set("s3a://7.tsv")), exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = Some(Set("s3a://7.vcf.gz"))),
 
       // 3. Incomplete trio
       // Proband
@@ -536,19 +555,25 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "11", specimen_id = "SP_0011", sample_id = "SA_0011", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00011"), mother_id = Some("PA0022"), father_id = Some("PA0033"), mother_aliquot_id = Some("22"), father_aliquot_id = Some("33"),
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false))),
-        covgene_urls = Some(Set("s3a://11-1.csv", "s3a://11-2.csv", "s3a://11-3.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://11-1.csv", "s3a://11-2.csv", "s3a://11-3.csv")), exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Mother
       EnrichedClinicalOutput(patient_id = "PA0022", gender = "Female", analysis_id = "SRA0011", sequencing_id = "SRS0022", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "22", specimen_id = "SP_0022", sample_id = "SA_0022", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
-        covgene_urls = Some(Set("s3a://22-1.csv", "s3a://22-2.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://22-1.csv", "s3a://22-2.csv")), exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Father we receive later
       EnrichedClinicalOutput(patient_id = "PA0033", gender = "Male", analysis_id = "SRA0011", sequencing_id = "SRS0033", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "33", specimen_id = "SP_0033", sample_id = "SA_0033", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00011"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "unknown", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "affected", affected_status = true))),
-        covgene_urls = Some(Set("s3a://33.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://33.csv")), exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
 
       // 4. Same family, two prescriptions
       // 4.1 First prescription: Duo
@@ -557,32 +582,42 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00111"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("222"), father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true))),
-        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Mother
       EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_id = "SRA0111", sequencing_id = "SRS0222", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT2", aliquot_id = "222", specimen_id = "SP_0222", sample_id = "SA_0222", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00111"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = None,
-        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // 4.2 Second prescription: Trio
       // Proband
       EnrichedClinicalOutput(patient_id = "PA0333", gender = "Female", analysis_id = "SRA0333", sequencing_id = "SRS0333", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "333", specimen_id = "SP_0333", sample_id = "SA_0333", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
-        covgene_urls = Some(Set("s3a://333.csv")), exomiser_urls = Some(Set("s3a://333.tsv")), exomiser_cnv_urls = Some(Set("s3a://333_cnv.tsv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://333.csv")), exomiser_snv_urls = Some(Set("s3a://333.tsv")), exomiser_cnv_urls = Some(Set("s3a://333_cnv.tsv")),
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Sister
       EnrichedClinicalOutput(patient_id = "PA0111", gender = "Female", analysis_id = "SRA0333", sequencing_id = "SRS0444", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "111", specimen_id = "SP_0111", sample_id = "SA_0111", is_proband = false, affected_status = false, affected_status_code = "not_affected",
         family_id = Some("FM00222"), mother_id = Some("PA0222"), father_id = None, mother_aliquot_id = Some("555"), father_aliquot_id = None,
         clinical_signs = None,
-        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = None, exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Mother
       EnrichedClinicalOutput(patient_id = "PA0222", gender = "Female", analysis_id = "SRA0333", sequencing_id = "SRS0555", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00102", batch_id = "BAT3", aliquot_id = "555", specimen_id = "SP_0555", sample_id = "SA_0555", is_proband = false, affected_status = true, affected_status_code = "affected",
         family_id = Some("FM00222"), mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "affected", affected_status = true))),
-        covgene_urls = Some(Set("s3a://555.csv")), cnv_vcf_urls = None, snv_vcf_urls = None),
+        covgene_urls = Some(Set("s3a://555.csv")), exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
 
       // 5. Solo
       // Tumor only analysis
@@ -590,19 +625,25 @@ class EnrichedClinicalSpec extends SparkSpec with WithTestConfig {
         practitioner_role_id = "PPR00103", batch_id = "BAT3", aliquot_id = "1111", specimen_id = "SP_1111", sample_id = "SA_1111", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
-        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111.vcf.gz"))),
+        covgene_urls = None, exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = Some(Set("s3a://1111.vcf.gz")),
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Germline analysis
       EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_id = "SRA2222", sequencing_id = "SRS2222", bioinfo_analysis = "germline", bioinfo_analysis_code = "GEBA",
         practitioner_role_id = "PPR00103", batch_id = "BAT4", aliquot_id = "2222", specimen_id = "SP_2222", sample_id = "SA_2222", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
-        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://2222.vcf.gz"))),
+        covgene_urls = None, exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = Some(Set("s3a://2222.vcf.gz")), snv_vcf_somatic_urls = None,
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None),
       // Tumor normal analysis
       EnrichedClinicalOutput(patient_id = "PA1111", gender = "Female", analysis_id = "SRA1111", sequencing_id = "SRS1111", bioinfo_analysis = "somatic", bioinfo_analysis_code = "TNEBA",
         practitioner_role_id = "PPR00103", batch_id = "BAT5", aliquot_id = "1111", specimen_id = "SP_1111", sample_id = "SA_1111", is_proband = true, affected_status = true, affected_status_code = "affected",
         family_id = None, mother_id = None, father_id = None, mother_aliquot_id = None, father_aliquot_id = None,
         clinical_signs = Some(Set(ClinicalSign(id = "HP:0000001", name = "Term 1", affected_status_code = "affected", affected_status = true), ClinicalSign(id = "HP:0000002", name = "Term 2", affected_status_code = "not_affected", affected_status = false), ClinicalSign(id = "HP:0000003", name = "Term 3", affected_status_code = "unknown", affected_status = false))),
-        covgene_urls = None, cnv_vcf_urls = None, snv_vcf_urls = Some(Set("s3a://1111-2222.vcf.gz"))),
+        covgene_urls = None, exomiser_snv_urls = None, exomiser_cnv_urls = None,
+        snv_vcf_germline_urls = None, snv_vcf_somatic_urls = Some(Set("s3a://1111-2222.vcf.gz")),
+        cnv_vcf_germline_urls = None, cnv_vcf_somatic_urls = None)
     )
   }
 

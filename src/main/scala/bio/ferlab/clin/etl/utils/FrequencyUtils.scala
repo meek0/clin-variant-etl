@@ -1,7 +1,6 @@
 package bio.ferlab.clin.etl.utils
 
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 object FrequencyUtils {
@@ -33,6 +32,7 @@ object FrequencyUtils {
    */
   val pn: Column = sum(lit(1)) as "pn"
   val pnSomatic: Column = count_distinct(col("sample_id")) as "pn"
+  val pnCnv: Column = count_distinct(col("aliquot_id")) as "pn"
 
   val hom: Column = sum(when(col("zygosity") === "HOM" and frequencyFilter, 1).otherwise(0)) as "hom"
   val het: Column = sum(when(col("zygosity") === "HET" and frequencyFilter, 1).otherwise(0)) as "het"
@@ -48,6 +48,12 @@ object FrequencyUtils {
       lit(0L) as "hom"
     )
 
+  def emptyParticipantFrequency(pn: Long): Column = struct(
+    lit(0) as "pc",
+    lit(pn) as "pn",
+    lit(0.0) as "pf"
+  )
+
   val emptyFrequencyRQDM = struct(
     emptyFrequency as "affected",
     emptyFrequency as "non_affected",
@@ -62,10 +68,10 @@ object FrequencyUtils {
     emptyFrequency as "total"
   )
 
-  def emptySomaticFrequency(pn: Long): Column = struct(
-    lit(0) as "pc",
-    lit(pn) as "pn",
-    lit(0.0) as "pf"
+  def emptyCnvGermFrequency(pn: Long): Column = struct(
+    emptyParticipantFrequency(pn) as "affected",
+    emptyParticipantFrequency(pn) as "non_affected",
+    emptyParticipantFrequency(pn) as "total"
   )
 
   final val EmptyGnomadV4 = struct(
@@ -82,15 +88,25 @@ object FrequencyUtils {
 
     import spark.implicits._
 
-    def getPnSomatic(filter: Column): Long = df
-      .filter(filter)
-      .select("pn")
-      .as[Long]
-      .collect()
-      .headOption
-      .getOrElse(0L)
+    def getPn(pn: Column): Long = {
+      df
+        .select(pn)
+        .as[Long]
+        .collect()
+        .headOption
+        .getOrElse(0L)
+    }
 
-    def withSomaticFreqColumn(colName: String, filter: Column, pn: Long) =
+    def getPnMap(groupBy: String, pn: Column): Map[String, Long] = {
+      df
+        .groupBy(groupBy)
+        .agg(pn)
+        .as[(String, Long)]
+        .collect()
+        .toMap
+    }
+
+    def withSomaticFreqColumn(colName: String, filter: Column, pn: Long): DataFrame =
       df.withColumn(colName, when(filter, struct(
         $"pc",
         lit(pn) as "pn",

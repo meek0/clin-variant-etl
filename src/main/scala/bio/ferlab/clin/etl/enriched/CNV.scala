@@ -29,7 +29,8 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
-  val nextflow_svclustering: DatasetConf = conf.getDataset("nextflow_svclustering")
+  val nextflow_svclustering_germline: DatasetConf = conf.getDataset("nextflow_svclustering_germline")
+  val nextflow_svclustering_somatic: DatasetConf = conf.getDataset("nextflow_svclustering_somatic")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
   val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
   val normalized_exomiser_cnv: DatasetConf = conf.getDataset("normalized_exomiser_cnv")
@@ -40,8 +41,9 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read,
       genes.id -> genes.read,
-      nextflow_svclustering.id -> nextflow_svclustering.read,
-      normalized_gnomad_cnv_v4.id -> normalized_gnomad_cnv_v4.read,
+      nextflow_svclustering_germline.id -> nextflow_svclustering_germline.read,
+      nextflow_svclustering_somatic.id -> nextflow_svclustering_somatic.read,
+      normalized_gnomad_cnv_v4.id -> normalized_gnomad_cnv_v4.read
     )
     val clinicalDf = enriched_clinical.read
 
@@ -93,7 +95,8 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
     val refseqDf = data(refseq_annotation.id)
     val panelsDf = data(normalized_panels.id)
     val genesDf = data(genes.id)
-    val svclusteringDf = data(nextflow_svclustering.id)
+    val svclusteringGermlineDf = data(nextflow_svclustering_germline.id)
+    val svclusteringSomaticDf = data(nextflow_svclustering_somatic.id)
     val parentalOriginDf = data(nextflow_svclustering_parental_origin.id)
     val gnomadV4 = data(normalized_gnomad_cnv_v4.id)
 
@@ -102,7 +105,7 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withExons(refseqDf)
       .withGenes(genesDf)
       .withParentalOrigin(parentalOriginDf)
-      .withFrequencies(svclusteringDf, gnomadV4)
+      .withFrequencies(svclusteringGermlineDf, svclusteringSomaticDf, gnomadV4)
       .withClinVariantExternalReference
       .withExomiser(data(normalized_exomiser_cnv.id))
       .withSnvCount(snvDf)
@@ -219,24 +222,55 @@ object CNV {
         .select(df("*"), $"transmission", $"parental_origin")
     }
 
-    def withFrequencies(svclustering: DataFrame, gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    def withFrequencies(germline: DataFrame, somatic: DataFrame, gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 
+      val allFrequencies = germline
+        .join(somatic, Seq("name"), "full")
+        .select(
+          // Germline and Somatic should have the same locus values for the same cluster name
+          coalesce(germline("chromosome"), somatic("chromosome")) as "chromosome",
+          coalesce(germline("start"), somatic("start")) as "start",
+          coalesce(germline("end"), somatic("end")) as "end",
+          coalesce(germline("reference"), somatic("reference")) as "reference",
+          coalesce(germline("alternate"), somatic("alternate")) as "alternate",
+          $"name",
+          // First coalesce with empty array to remove null values otherwise concat will return null
+          coalesce(germline("members"), array()) as "germline_members",
+          coalesce(somatic("members"), array()) as "somatic_members",
+          struct(
+            germline("frequency_RQDM.germ"),
+            somatic("frequency_RQDM.som"),
+          ) as "frequency_RQDM"
+        ).withColumn("members", array_distinct(concat($"germline_members", $"somatic_members")))
+        .drop("germline_members", "somatic_members")
+
       val clusterDf = df
-        .join(svclustering, array_contains(svclustering("members"), df("name")), "left")
+        .join(allFrequencies, array_contains(allFrequencies("members"), df("name")), "left")
         .select(
           df("*"),
-          $"frequency_RQDM",
           struct(
-            svclustering("name") as "id",
+            allFrequencies("name") as "id",
+            $"frequency_RQDM",
             FrequencyUtils.EmptyClusterFrequencies
           ) as "cluster",
+          // TODO: For backwards compatibility with UI. Remove when UI is updated.
+          when($"frequency_RQDM.germ".isNotNull, struct(
+            allFrequencies("frequency_RQDM.germ.total.pc") as "pc",
+            allFrequencies("frequency_RQDM.germ.total.pn") as "pn",
+            allFrequencies("frequency_RQDM.germ.total.pf") as "pf"
+          ))
+            .otherwise(when($"frequency_RQDM.som".isNotNull, struct(
+              allFrequencies("frequency_RQDM.som.pc") as "pc",
+              allFrequencies("frequency_RQDM.som.pn") as "pn",
+              allFrequencies("frequency_RQDM.som.pf") as "pf"
+            )).otherwise(null)) as "frequency_RQDM",
           struct( // temporary struct to help frequencies joins
-            svclustering("chromosome") as "chromosome",
-            svclustering("start") as "start",
-            svclustering("end") as "end",
-            svclustering("reference") as "reference",
-            svclustering("alternate") as "alternate",
+            allFrequencies("chromosome") as "chromosome",
+            allFrequencies("start") as "start",
+            allFrequencies("end") as "end",
+            allFrequencies("reference") as "reference",
+            allFrequencies("alternate") as "alternate",
           ) as "cluster_info"
         )
 
@@ -294,7 +328,7 @@ object CNV {
 
     def withExomiser(exomiser: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
-      
+
       val variantScore = when($"exomiser_variant_score" >= 0.8, "HIGH")
         .when($"exomiser_variant_score" >=0.5 && $"exomiser_variant_score" < 0.8, "MEDIUM")
         .when($"exomiser_variant_score" < 0.5, "LOW").otherwise(null).cast("string")

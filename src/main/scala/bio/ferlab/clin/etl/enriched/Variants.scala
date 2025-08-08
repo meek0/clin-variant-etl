@@ -1,6 +1,6 @@
 package bio.ferlab.clin.etl.enriched
 
-import bio.ferlab.clin.etl.enriched.Variants.{somaticTumorNormalFilter, somaticTumorOnlyFilter, DataFrameOps => ClinDataFrameOps}
+import bio.ferlab.clin.etl.enriched.Variants.{somaticTumorNormalCode, somaticTumorNormalFilter, somaticTumorOnlyCode, somaticTumorOnlyFilter, DataFrameOps => ClinDataFrameOps}
 import bio.ferlab.clin.etl.mainutils.OptionalChromosome
 import bio.ferlab.clin.etl.utils.FrequencyUtils._
 import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
@@ -248,17 +248,15 @@ case class Variants(rc: RuntimeETLContext, chromosome: Option[String]) extends S
     import spark.implicits._
 
     val occurrencesSomatic = occurrences
-      .filter($"bioinfo_analysis_code".isin("TEBA", "TNEBA"))
+      .filter($"bioinfo_analysis_code".isin(somaticTumorOnlyCode, somaticTumorNormalCode))
       .selectLocus($"bioinfo_analysis_code", $"sample_id", $"filters", $"ad_alt", $"sq")
       .persist()
 
-    val pnPerAnalysisCode = occurrencesSomatic
-      .groupBy("bioinfo_analysis_code")
-      .agg(
-        pnSomatic
-      )
-    val pnSomaticTumorOnly: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorOnlyFilter)
-    val pnSomaticTumorNormal: Long = pnPerAnalysisCode.getPnSomatic(somaticTumorNormalFilter)
+    val analysisCodePnMap: Map[String, Long] = occurrencesSomatic
+      .getPnMap(groupBy="bioinfo_analysis_code", pn=pnSomatic)
+
+    val pnSomaticTumorOnly: Long = analysisCodePnMap.getOrElse(somaticTumorOnlyCode, 0L)
+    val pnSomaticTumorNormal: Long = analysisCodePnMap.getOrElse(somaticTumorNormalCode, 0L)
 
     val pcPerLocus = occurrencesSomatic
       .groupByLocus($"bioinfo_analysis_code")
@@ -276,8 +274,8 @@ case class Variants(rc: RuntimeETLContext, chromosome: Option[String]) extends S
     variants
       .joinByLocus(variantsWithSomaticFrequencies, "left")
       // Replace nulls with empty frequency
-      .withColumn("freq_rqdm_tumor_only", coalesce($"freq_rqdm_tumor_only", emptySomaticFrequency(pn = pnSomaticTumorOnly)))
-      .withColumn("freq_rqdm_tumor_normal", coalesce($"freq_rqdm_tumor_normal", emptySomaticFrequency(pn = pnSomaticTumorNormal)))
+      .withColumn("freq_rqdm_tumor_only", coalesce($"freq_rqdm_tumor_only", emptyParticipantFrequency(pn = pnSomaticTumorOnly)))
+      .withColumn("freq_rqdm_tumor_normal", coalesce($"freq_rqdm_tumor_normal", emptyParticipantFrequency(pn = pnSomaticTumorNormal)))
   }
 
   def joinWithPopulations(variants: DataFrame,
@@ -344,8 +342,10 @@ case class Variants(rc: RuntimeETLContext, chromosome: Option[String]) extends S
 
 object Variants {
 
-  val somaticTumorOnlyFilter: Column = col("bioinfo_analysis_code") === "TEBA"
-  val somaticTumorNormalFilter: Column = col("bioinfo_analysis_code") === "TNEBA"
+  val somaticTumorOnlyCode = "TEBA"
+  val somaticTumorNormalCode = "TNEBA"
+  val somaticTumorOnlyFilter: Column = col("bioinfo_analysis_code") === somaticTumorOnlyCode
+  val somaticTumorNormalFilter: Column = col("bioinfo_analysis_code") === somaticTumorNormalCode
 
   implicit class DataFrameOps(df: DataFrame) {
     def withFranklin(franklin: DataFrame)(implicit spark: SparkSession): DataFrame = {

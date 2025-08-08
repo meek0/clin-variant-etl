@@ -334,6 +334,70 @@
             "id": {
               "type": "keyword"
             },
+            "frequency_RQDM": {
+              "properties": {
+                "germ": {
+                  "properties": {
+                    "affected": {
+                      "properties": {
+                        "pc": {
+                          "type": "long"
+                        },
+                        "pn": {
+                          "type": "long",
+                          "index": false
+                        },
+                        "pf": {
+                          "type": "float"
+                        }
+                      }
+                    },
+                    "non_affected": {
+                      "properties": {
+                        "pc": {
+                          "type": "long"
+                        },
+                        "pn": {
+                          "type": "long",
+                          "index": false
+                        },
+                        "pf": {
+                          "type": "float"
+                        }
+                      }
+                    },
+                    "total": {
+                      "properties": {
+                        "pc": {
+                          "type": "long"
+                        },
+                        "pn": {
+                          "type": "long",
+                          "index": false
+                        },
+                        "pf": {
+                          "type": "float"
+                        }
+                      }
+                    }
+                  }
+                },
+                "som": {
+                  "properties": {
+                    "pc": {
+                      "type": "long"
+                    },
+                    "pn": {
+                      "type": "long",
+                      "index": false
+                    },
+                    "pf": {
+                      "type": "float"
+                    }
+                  }
+                }
+              }
+            },
             "external_frequencies": {
               "properties": {
                 "gnomad_exomes_4": {
