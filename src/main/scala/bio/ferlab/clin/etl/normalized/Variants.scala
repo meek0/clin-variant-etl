@@ -4,7 +4,7 @@ import bio.ferlab.clin.etl.mainutils.Batch
 import bio.ferlab.clin.etl.normalized.Variants._
 import bio.ferlab.clin.etl.utils.FrequencyUtils
 import bio.ferlab.clin.etl.utils.FrequencyUtils.{emptyFrequencies, emptyFrequency, emptyFrequencyRQDM}
-import bio.ferlab.datalake.commons.config.{DatasetConf, RepartitionByColumns, RuntimeETLContext}
+import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.etl.v4.SimpleSingleETL
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits.columns._
@@ -88,7 +88,6 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
 
     val res = getVariantsWithFrequencies(sampleVariants, computeFrequencies)
       .join(uniqueVariants, locusColumnNames :+ "analysis_id" :+ "bioinfo_analysis_code", "right")
-      .partitionForLocusJoins()
       .cacheRDD() // Caching here helps Spark build the execution plan faster and reduces executor idle time between stages.
       .withSpliceAi(snv = data(enriched_spliceai_snv.id), indel = data(enriched_spliceai_indel.id))
       .withColumn("frequencies_by_analysis", coalesce(col("frequencies_by_analysis"), array(emptyFrequencies)))
@@ -262,11 +261,6 @@ case class Variants(rc: RuntimeETLContext, batchId: String) extends SimpleSingle
 object Variants {
 
   implicit class DataFrameOps(df: DataFrame) {
-
-    // to optimize locus-based joins and aggregations
-    def partitionForLocusJoins(): DataFrame = {
-      RepartitionByColumns(columnNames = Seq("chromosome"), n = Some(100), sortColumns = Seq("start"))(df)
-    }
 
     def withSpliceAi(snv: DataFrame, indel: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
