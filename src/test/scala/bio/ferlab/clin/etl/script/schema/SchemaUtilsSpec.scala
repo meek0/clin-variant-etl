@@ -1,8 +1,7 @@
 package bio.ferlab.clin.etl.script.schema
 
-import bio.ferlab.clin.testutils.WithTestConfig
 import bio.ferlab.datalake.commons.config.{Configuration, DatalakeConf, DatasetConf, Format, LoadType, RunStep, SimpleConfiguration, StorageConf, TableConf}
-import bio.ferlab.datalake.commons.file.FileSystemType
+import bio.ferlab.datalake.commons.file.{FileSystemType, FileSystemResolver}
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits._
 import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.spark3.transformation.{Rename, Transformation, UpperCase}
@@ -10,6 +9,7 @@ import bio.ferlab.datalake.testutils.TestETLContext
 import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec}
 import bio.ferlab.clin.etl.utils.transformation.DatasetTransformationMapping
 import org.apache.spark.sql.{AnalysisException, DataFrame, Row}
+
 
 class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with CleanUpBeforeEach {
 
@@ -65,8 +65,8 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
       val updatedConf = updateConfStorages(conf, root)
 
       // Create and write test data for dataset1 and dataset2
-      write(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
-      write(updatedConf, "dataset2", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
+      overwrite(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset2", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
 
       // Call runUpdateSchemaFor
       val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
@@ -97,7 +97,7 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
       val updatedConf = updateConfStorages(conf, root)
 
       // Create and write test data for dataset1
-      write(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
 
       // Call runUpdateSchemaFor with a filter that does not match dataset1
       val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
@@ -122,8 +122,8 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
       val updatedConf = updateConfStorages(conf, root)
 
       // Create and write test data for dataset1 and dataset2
-      write(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
-      write(updatedConf, "dataset2", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
+      overwrite(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset2", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
 
       // Call runUpdateSchemaFor with a transformation that will fail
       val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
@@ -145,26 +145,27 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
     }
   }
 
-// It is difficult to fully test vacuuming behavior here because datalake-lib set a
-// retention period of at least 2 weeks. If the retention restriction is lifted, consider adding
-// tests for more code branches (with filter, etc.).
+  /*
+    It is difficult to fully test vacuuming behavior here because datalake-lib set a
+    retention period of at least 2 weeks. If the retention restriction is lifted, consider adding
+    tests for more code branches (with filter, etc.).
+  */
   "runVacuumFor" should "apply vacuum on specified datasets" in {
     withOutputFolder("root") { root =>
       val updatedConf = updateConfStorages(conf, root)
+      val dataset3 = updatedConf.getDataset("dataset3")
 
       // Create and write test data for dataset3
-      write(updatedConf, "dataset3", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset3", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
 
       // Create and write a new version for dataset3
-      write(updatedConf, "dataset3", Seq(("a2", "b2", "c2")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset3", Seq(("a2", "b2", "c2")).toDF("a", "b", "c"))
 
-      val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
       SchemaUtils.runVacuumFor(Seq("dataset3"), numberOfVersions = 1)(spark, updatedConf)
 
       //  For now we cannot verify the vacuum operation as it only remove files older than 2 weeks.
       // However, we can check that the Delta table still exists and contain the expected data
-      val dataset = context.config.getDataset("dataset3")
-      val df = dataset.read(updatedConf, spark)
+      val df = dataset3.read(updatedConf, spark)
       df.collect() should contain theSameElementsAs Array(Row("a2", "b2", "c2"))
       df.columns shouldBe Seq("a", "b", "c")
     }
@@ -181,8 +182,8 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
       val updatedConf = updateConfStorages(conf, root)
 
       // Create and write test data for dataset3 and dataset4
-      write(updatedConf, "dataset3", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
-      write(updatedConf, "dataset4", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset3", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
+      overwrite(updatedConf, "dataset4", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
 
       // Call runUpdateSchemaAndVacuum
       val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
@@ -214,7 +215,7 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
       val updatedConf = updateConfStorages(conf, root)
 
       // Create and write test data for dataset3
-      write(updatedConf, "dataset3", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
+      overwrite(updatedConf, "dataset3", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
 
       // Call runUpdateSchemaAndVacuum with dryrun=true
       val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
@@ -239,8 +240,8 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
       val updatedConf = updateConfStorages(conf, root)
 
       // Create and write test data for dataset1 (JSON) and dataset3 (DELTA)
-      write(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
-      write(updatedConf, "dataset3", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
+      overwrite(updatedConf, "dataset1", Seq(("a1", "b1", "c1")).toDF("a", "b", "c"))
+      overwrite(updatedConf, "dataset3", Seq(("x1", "y1", "z1")).toDF("x", "y", "z"))
 
       // Call runUpdateSchemaAndVacuum
       val context = TestETLContext(RunStep.default_load)(updatedConf, spark)
@@ -268,7 +269,113 @@ class SchemaUtilsSpec extends SparkSpec with CreateDatabasesBeforeAll with Clean
     }
   }
 
-  private def write(conf: Configuration, datasetId: String, df: DataFrame): Unit = {
+  "runCompactFor" should "compact specified datasets" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+      val dataset4 = updatedConf.getDataset("dataset4")
+      val fs = FileSystemResolver.resolve(updatedConf.getStorage(dataset4.storageid).filesystem)
+
+      // Create and write test data for dataset4, repartitioned into 4 files
+      val inputDf = Seq(
+        ("a1", "b1", "c1"),
+        ("a2", "b2", "c2"),
+        ("a3", "b3", "c3"),
+        ("a4", "b4", "c4")
+      ).toDF("a", "b", "c").repartition(4)
+      overwrite(updatedConf, "dataset4", inputDf)
+
+
+      // There should be 4 data files before compaction
+      countDataFiles(dataset4)(updatedConf) shouldBe 4
+
+      // Call runCompactFor to compact dataset4
+      SchemaUtils.runCompactFor(Seq("dataset4"))(spark, updatedConf)
+
+      // After compaction, there should be 5 data files (1 compacted file + 4 previous files retained by delta)
+      countDataFiles(dataset4)(updatedConf) shouldBe 5
+
+      // Data should be preserved after compaction
+      dataset4.read(updatedConf, spark).collect() should contain theSameElementsAs inputDf.collect()
+    }
+  }
+
+  it should "only compact datasets that pass the filter" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+      val dataset4 = updatedConf.getDataset("dataset4")
+      val fs = FileSystemResolver.resolve(updatedConf.getStorage(dataset4.storageid).filesystem)
+
+      // Create and write test data for dataset4, repartitioned into 4 files
+      val inputDf = Seq(
+        ("a1", "b1", "c1"),
+        ("a2", "b2", "c2"),
+        ("a3", "b3", "c3"),
+        ("a4", "b4", "c4")
+      ).toDF("a", "b", "c").repartition(4)
+      overwrite(updatedConf, "dataset4", inputDf)
+
+      // There should be 4 data files before compaction
+      countDataFiles(dataset4)(updatedConf) shouldBe 4
+
+      // Call runCompactFor with a filter that exclude all datasets
+      SchemaUtils.runCompactFor(Seq("dataset4"), _ => false)(spark, updatedConf)
+
+      // Assert that no compaction was performed (still 4 files)
+      countDataFiles(dataset4)(updatedConf) shouldBe 4
+
+      // Assert data integrity is preserved
+      dataset4.read(updatedConf, spark).collect() should contain theSameElementsAs inputDf.collect()
+    }
+  }
+
+  it should "compact other datasets even if compaction fails for one" in {
+    withOutputFolder("root") { root =>
+      val updatedConf = updateConfStorages(conf, root)
+      val dataset2 = updatedConf.getDataset("dataset2")
+      val dataset4 = updatedConf.getDataset("dataset4")
+      val fs = FileSystemResolver.resolve(updatedConf.getStorage(dataset4.storageid).filesystem)
+
+      // Create and write test data for datasets 2 (JSON) and 4 (Delta), each with 4 files
+      val inputDf = Seq(
+        ("a1", "b1", "c1"),
+        ("a2", "b2", "c2"),
+        ("a3", "b3", "c3"),
+        ("a4", "b4", "c4")
+      ).toDF("a", "b", "c").repartition(4)
+      overwrite(updatedConf, "dataset2", inputDf)
+      overwrite(updatedConf, "dataset4", inputDf)
+
+      // Assert initial file counts before compaction
+      countDataFiles(dataset2)(updatedConf) shouldBe 4
+      countDataFiles(dataset4)(updatedConf) shouldBe 4
+
+      // Simulate a compaction failure for dataset2 (not a Delta table)
+      an[AnalysisException] should be thrownBy {
+        SchemaUtils.runCompactFor(Seq("dataset2", "dataset4"))(spark, updatedConf)
+      }
+
+      // Assert that dataset2 was not compacted (still 4 files)
+      countDataFiles(dataset2)(updatedConf) shouldBe 4
+
+      // Assert that dataset4 was compacted (now 5 files: 4 old + 1 new compacted file)
+      countDataFiles(dataset4)(updatedConf) shouldBe 5
+
+      // Assert data integrity for dataset4
+      dataset4.read(updatedConf, spark).collect() should contain theSameElementsAs inputDf.collect()
+    }
+  }
+
+  private def countDataFiles(dataset: DatasetConf)(implicit conf: Configuration): Int = {
+    val fs = FileSystemResolver.resolve(conf.getStorage(dataset.storageid).filesystem)
+    val extension = dataset.format match {
+      case Format.DELTA => ".parquet"
+      case Format.JSON => ".json"
+      case _ => throw new IllegalArgumentException(s"Unsupported format: ${dataset.format}")
+    }
+    fs.list(dataset.location(conf), false).count(f => f.name.endsWith(extension))
+  }
+
+  private def overwrite(conf: Configuration, datasetId: String, df: DataFrame): Unit = {
     val dataset = conf.getDataset(datasetId)
     LoadResolver.write(spark, conf)(dataset.format, LoadType.OverWrite).apply(dataset, df)
   }

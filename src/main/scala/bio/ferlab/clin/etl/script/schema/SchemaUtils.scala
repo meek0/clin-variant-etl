@@ -14,6 +14,7 @@ object SchemaUtils {
 
   /**
    * Find a list of datasets based on a given filter and execute an [[UpdateSchemaETL]]
+   *
    * @param rc          Runtime ETL context
    * @param filter      Filter to apply to the list of dataset ids
    * @param allMappings Map of all possible dataset ids -> transformations
@@ -37,14 +38,14 @@ object SchemaUtils {
 
   /**
    * Run a vacuum operation on a list of datasets
-   * @param datasetIds        List of dataset ids to vacuum
-   * @param numberOfVersions  Number of versions to keep (default is 1)
-   * @param filter            Filter to apply to the dataset ids (default is to include all)
+   *
+   * @param datasetIds       List of dataset ids to vacuum
+   * @param numberOfVersions Number of versions to keep (default is 1)
+   * @param filter           Filter to apply to the dataset ids (default is to include all)
    */
-  def runVacuumFor(
-      datasetIds: Seq[String],
-      numberOfVersions: Int = 1,
-      filter: String => Boolean = _ => true)(implicit spark: SparkSession, conf: Configuration): Unit =
+  def runVacuumFor(datasetIds: Seq[String],
+                   numberOfVersions: Int = 1,
+                   filter: String => Boolean = _ => true)(implicit spark: SparkSession, conf: Configuration): Unit =
     runOptThrow {
       import bio.ferlab.datalake.spark3.utils.DeltaUtils.vacuum
       val (toVacuum, skipped) = datasetIds.partition(filter)
@@ -63,12 +64,38 @@ object SchemaUtils {
     }
 
   /**
+   * Coalescing small files into larger ones in the given datasets
+   *
+   * @param datasetIds List of dataset ids to optimize
+   * @param filter     Filter to apply to the dataset ids (default is to include all)
+   */
+  def runCompactFor(datasetIds: Seq[String],
+                    filter: String => Boolean = _ => true)(implicit spark: SparkSession, conf: Configuration): Unit =
+    runOptThrow {
+      import bio.ferlab.datalake.spark3.utils.DeltaUtils.compact
+      val (toCompact, skipped) = datasetIds.partition(filter)
+
+      val results = toCompact.map { dsId =>
+        log.info(s"Compacting dataset: $dsId")
+        val ds = conf.getDataset(dsId)
+        val result = optIfFailed(
+          compact(ds)(spark, conf),
+          s"Failed to compact dataset: $dsId"
+        )
+        (dsId, result)
+      }
+      logSummaryMessage(results, "CompactSummary", skipped.size)
+      results.map { case (ds_id, maybeError) => maybeError }
+    }
+
+  /**
    * Updates the schema of each dataset using the provided transformation mapping, and optionally runs vacuum.
-   * @param rc                Runtime ETL context
-   * @param isUpdatedFilter   Filter to select dataset ids that require an update (skips already updated datasets)
-   * @param mappings          DatasetTransformationMapping containing dataset ids and their corresponding transformations
-   * @param vacuum            If true, vacuums the datasets after schema update
-   * @param numberOfVersions  Number of versions to retain during vacuum (default: 1)
+   *
+   * @param rc               Runtime ETL context
+   * @param isUpdatedFilter  Filter to select dataset ids that require an update (skips already updated datasets)
+   * @param mappings         DatasetTransformationMapping containing dataset ids and their corresponding transformations
+   * @param vacuum           If true, vacuums the datasets after schema update
+   * @param numberOfVersions Number of versions to retain during vacuum (default: 1)
    */
   def runUpdateSchemaAndVacuum(rc: RuntimeETLContext,
                                isUpdatedFilter: String => Boolean,
@@ -105,21 +132,22 @@ object SchemaUtils {
     val failed = results.filter(_._2.isDefined)
     val nbFailed = failed.size
     val nbSuccessful = nbProcessed - nbFailed
-    log.info(s"""
-       |$summaryName:
-       |  - Skipped: $skipped
-       |  - Processed: $nbProcessed
-       |      - Successful: $nbSuccessful
-       |      - Failed: $nbFailed
-       |""".stripMargin)
+    log.info(
+      s"""
+         |$summaryName:
+         |  - Skipped: $skipped
+         |  - Processed: $nbProcessed
+         |      - Successful: $nbSuccessful
+         |      - Failed: $nbFailed
+         |""".stripMargin)
     if (nbFailed > 0) {
       log.warn(s"Failed datasets: ${failed.mkString(", ")}")
     }
   }
 
   private def isDeltaTable(datasetId: String)(implicit
-      spark: SparkSession,
-      conf: Configuration): Boolean = {
+                                              spark: SparkSession,
+                                              conf: Configuration): Boolean = {
     val ds = conf.getDataset(datasetId)
     DeltaTable.isDeltaTable(spark, ds.location(conf))
   }

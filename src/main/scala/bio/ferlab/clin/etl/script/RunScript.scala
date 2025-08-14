@@ -39,6 +39,23 @@ object RunScript {
     RepartitionByAnalysisId(rc).run(vacuum.value, dryrun.value)
   }
 
+  @main
+  def drop_url_columns(rc: RuntimeETLContext): Unit = {
+    log.info("Running DropUrlColumns script")
+    DropUrlColumns.run(rc)
+  }
+
+  /** ****************
+   * Generic scripts *
+   * **************** */
+
+  @main
+  def compact(rc: RuntimeETLContext,
+              @arg(doc = "Dataset IDs to compact.", name = "datasetId") datasetIds: Seq[String]): Unit = {
+    log.info("Running Compact script")
+    Compact(rc).run(datasetIds)
+  }
+
   // This script updates the partitioning of configured datasets to match the current configuration.
   @main
   def update_partitioning(rc: RuntimeETLContext,
@@ -49,11 +66,12 @@ object RunScript {
   }
 
   @main
-  def drop_url_columns(rc: RuntimeETLContext): Unit = {
-    log.info("Running DropUrlColumns script")
-    DropUrlColumns.run(rc)
+  def vacuum(rc: RuntimeETLContext,
+             @arg(doc = "Dataset IDs to vacuum.", name = "datasetId") datasetIds: Seq[String],
+             @arg(doc = "Number of versions to keep", name = "nbVersions") nbVersions: Int = 1): Unit = {
+    log.info("Running Vacuum script")
+    Vacuum(rc).run(datasetIds, nbVersions)
   }
-
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }
