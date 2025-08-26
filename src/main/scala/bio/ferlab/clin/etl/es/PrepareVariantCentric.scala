@@ -59,18 +59,21 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
                                    consequencesDf: DataFrame): DataFrame = {
     import spark.implicits._
 
-    variantDF
+    val preprocessedForPickedDf = variantDF
       .joinByLocus(consequencesDf, "left")
       .groupByLocus()
       .agg(
         first(struct("variants.*")) as "variant",
         collect_list(struct("consequences.*")) as "consequences",
         max("impact_score") as "max_impact_score")
-      .withColumn("conseq_exploded", explode(col("consequences")))
-      .withColumn("picked_conseq", filter(col("conseq_exploded"), struct => col("picked") === lit(true)))
-      .withColumn("gene_symbol_picked_consequence", col("picked_conseq.symbol"))
-      .drop("conseq_exploded", "picked_conseq")
-      .select($"variant.*", $"consequences", $"max_impact_score", col("conseq_exploded.symbol").as("gene_symbol_picked_consequence"))
+      .select($"variant.*", $"consequences", $"max_impact_score")
+
+    val explodedDf = preprocessedForPickedDf.withColumn("conseq_exploded", explode(col("consequences")))
+    val filteredDf = explodedDf.filter(col("conseq_exploded.picked") === true)
+
+    filteredDf
+      .withColumn("gene_symbol_picked_consequence", col("conseq_exploded.symbol"))
+      .drop("conseq_exploded")
   }
 
   private def getUpdate(consequencesDf: DataFrame,
