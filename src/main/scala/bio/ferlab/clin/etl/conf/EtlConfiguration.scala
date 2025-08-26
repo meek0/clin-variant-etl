@@ -102,8 +102,8 @@ object EtlConfiguration extends App {
 
       // nextflow
       // svclustering
-      DatasetConf("nextflow_svclustering_germline_output", clin_nextflow, "/svclustering/output/germline*/*.vcf.gz", VCF, Read),
-      DatasetConf("nextflow_svclustering_somatic_output" , clin_nextflow, "/svclustering/output/somatic*/*.vcf.gz" , VCF, Read),
+      DatasetConf("nextflow_svclustering_germline_output", clin_nextflow, "/svclustering/output/germline/svclustering*/*.vcf.gz", VCF, Read),
+      DatasetConf("nextflow_svclustering_somatic_output" , clin_nextflow, "/svclustering/output/somatic/svclustering*/*.vcf.gz" , VCF, Read),
       DatasetConf("nextflow_svclustering_germline"       , clin_datalake, "/nextflow/svclustering/germline"        , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_germline")), keys = List("name"), repartition = Some(FixedRepartition(1))),
       DatasetConf("nextflow_svclustering_somatic"        , clin_datalake, "/nextflow/svclustering/somatic"         , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_somatic")) , keys = List("name"), repartition = Some(FixedRepartition(1))),
       // svclustering-parental-origin
