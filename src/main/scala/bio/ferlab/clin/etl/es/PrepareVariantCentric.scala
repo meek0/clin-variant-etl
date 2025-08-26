@@ -66,7 +66,9 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
         first(struct("variants.*")) as "variant",
         collect_list(struct("consequences.*")) as "consequences",
         max("impact_score") as "max_impact_score")
-      .select($"variant.*", $"consequences", $"max_impact_score")
+      .withColumn("conseq_exploded", explode(col("consequences")))
+      .filter(col("conseq_exploded.picked") === true)
+      .select($"variant.*", $"consequences", $"max_impact_score", col("conseq_exploded.symbol").as("gene_symbol_picked_consequence"))
   }
 
   private def getUpdate(consequencesDf: DataFrame,
