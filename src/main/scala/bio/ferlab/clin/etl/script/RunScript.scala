@@ -48,6 +48,12 @@ object RunScript {
     new UpdatePartitioning(rc).run(vacuum.value, dryrun.value)
   }
 
+  @main
+  def drop_url_columns(rc: RuntimeETLContext): Unit = {
+    log.info("Running DropUrlColumns script")
+    DropUrlColumns.run(rc)
+  }
+
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
 }
