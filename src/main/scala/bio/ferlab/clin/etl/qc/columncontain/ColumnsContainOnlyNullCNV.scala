@@ -16,6 +16,18 @@ object ColumnsContainOnlyNullCNV extends TestingApp {
       shouldNotContainOnlyNull(
         cnv_centric.select(explode($"genes")).select("col.*")
       ),
+      shouldNotContainOnlyNull(
+        cnv_centric.select("cluster.*")
+      ),
+      shouldNotContainOnlyNull(
+        cnv_centric.select("cluster.external_frequencies.*")
+      ),
+      shouldNotContainOnlyNull(
+        cnv_centric.select("cluster.frequency_RQDM.germ.*")
+      ),
+      shouldNotContainOnlyNull(
+        cnv_centric.select("cluster.frequency_RQDM.som.*")
+      ),
     )
   }
 }

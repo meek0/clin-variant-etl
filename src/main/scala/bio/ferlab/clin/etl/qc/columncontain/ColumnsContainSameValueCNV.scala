@@ -16,6 +16,18 @@ object ColumnsContainSameValueCNV extends TestingApp {
       shouldNotContainSameValue(
         cnv_centric.select(explode($"genes")).select("col.*")
       ),
+      shouldNotContainSameValue(
+        cnv_centric.select("cluster.*")
+      ),
+      shouldNotContainSameValue(
+        cnv_centric.select("cluster.external_frequencies.*")
+      ),
+      shouldNotContainSameValue(
+        cnv_centric.select("cluster.frequency_RQDM.germ.*")
+      ),
+      shouldNotContainSameValue(
+        cnv_centric.select("cluster.frequency_RQDM.som.*")
+      ),
     )
   }
 }
