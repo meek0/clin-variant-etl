@@ -325,7 +325,6 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       EnrichedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_04",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `variant_external_reference` = Set(),
-        `frequency_RQDM` = None,
         `cluster` = EnrichedCNVCluster(
           `id` = None,
           `frequency_RQDM` = None,
@@ -392,22 +391,22 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", `reference` = "REF", `name` = "CNV_00", `snv_count` = 0, `sequencing_id` = "SR_000",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = None,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.4f ,`variant_score_category` = "LOW")), `hash` = "54983b0279495b4e60366f31a3c352da5acc8281",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 3, `sequencing_id` = "SR_001",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = None,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.6f, `variant_score_category` = "MEDIUM")), `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `sequencing_id` = "SR_001",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = None,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.8f, `variant_score_category` = "HIGH")), `hash` = "fb94d57b79ff40168cc7cb7b8cf5607eb6cf47e4",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `sequencing_id` = "SR_002",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = None,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = None, `hash` = "37b02ad5d5fb4fcc3c783ebcdecff26480a44ef3", `aliquot_id` = "11112",
       )
@@ -452,12 +451,12 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 1, `sequencing_id` = "SR_001",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `frequency_RQDM` = None,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = None, `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "CNV_SOMATIC_01", `variant_type` = "somatic", `snv_count` = 1, `sequencing_id` = "SR_002",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `cn` = None, `frequency_RQDM` = None,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `cn` = None,
         `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = None, `hash` = "6d2e2ec49033dbbda09b1a23f7ef1cc12a161d86"
       )
@@ -503,7 +502,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01_GERM", `aliquot_id` = "GERM_1",
         `variant_type` = "germline", `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `frequency_RQDM` = Some(ENRICHED_CNV_FREQUENCY_RQDM()), `exomiser` = None,
+        `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("CNV_01"),
           `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
             `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM()))),
@@ -513,7 +512,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01_SOM", `aliquot_id` = "SOM_1",
         `variant_type` = "somatic", `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `frequency_RQDM` = Some(ENRICHED_CNV_FREQUENCY_RQDM()), `exomiser` = None,
+        `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("CNV_01"),
           `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
             `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM()))),
@@ -523,7 +522,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       ),
       EnrichedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `aliquot_id` = "GERM_2",
         `variant_type` = "germline", `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `frequency_RQDM` = Some(ENRICHED_CNV_FREQUENCY_RQDM()), `exomiser` = None,
+        `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("CNV_02"),
           `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
             `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None)),
@@ -533,7 +532,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       ),
       EnrichedCNV(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "CNV_03", `aliquot_id` = "SOM_1",
         `variant_type` = "somatic", `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `frequency_RQDM` = Some(ENRICHED_CNV_FREQUENCY_RQDM()), `exomiser` = None,
+        `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("CNV_03"),
           `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
             `germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM()))),
@@ -543,7 +542,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       ),
       EnrichedCNV(`chromosome` = "3", `start` = 400, `end` = 500, `alternate` = "A", `reference` = "REF", `name` = "CNV_04", `aliquot_id` = "SOM_1",
         `variant_type` = "somatic", `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `frequency_RQDM` = None, `exomiser` = None,
+        `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = None,
           `frequency_RQDM` = None,
           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)

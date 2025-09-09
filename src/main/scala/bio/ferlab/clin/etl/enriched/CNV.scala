@@ -254,17 +254,6 @@ object CNV {
             $"frequency_RQDM",
             FrequencyUtils.EmptyClusterFrequencies
           ) as "cluster",
-          // TODO: For backwards compatibility with UI. Remove when UI is updated.
-          when($"frequency_RQDM.germ".isNotNull, struct(
-            allFrequencies("frequency_RQDM.germ.total.pc") as "pc",
-            allFrequencies("frequency_RQDM.germ.total.pn") as "pn",
-            allFrequencies("frequency_RQDM.germ.total.pf") as "pf"
-          ))
-            .otherwise(when($"frequency_RQDM.som".isNotNull, struct(
-              allFrequencies("frequency_RQDM.som.pc") as "pc",
-              allFrequencies("frequency_RQDM.som.pn") as "pn",
-              allFrequencies("frequency_RQDM.som.pf") as "pf"
-            )).otherwise(null)) as "frequency_RQDM",
           struct( // temporary struct to help frequencies joins
             allFrequencies("chromosome") as "chromosome",
             allFrequencies("start") as "start",

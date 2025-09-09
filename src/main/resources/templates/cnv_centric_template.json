@@ -281,20 +281,6 @@
         "parental_origin": {
           "type": "keyword"
         },
-        "frequency_RQDM": {
-          "properties": {
-            "pf": {
-              "type": "float"
-            },
-            "pn": {
-              "type": "long",
-              "index": false
-            },
-            "pc": {
-              "type": "long"
-            }
-          }
-        },
         "variant_external_reference": {
           "type": "keyword"
         },
