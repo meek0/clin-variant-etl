@@ -68,12 +68,9 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
         max("impact_score") as "max_impact_score")
       .select($"variant.*", $"consequences", $"max_impact_score")
 
-    val explodedDf = preprocessedForPickedDf.withColumn("conseq_exploded", explode(col("consequences")))
-    val filteredDf = explodedDf.filter(col("conseq_exploded.picked") === true)
-
-    filteredDf
-      .withColumn("gene_symbol_picked_consequence", col("conseq_exploded.symbol"))
-      .drop("conseq_exploded")
+    val conditionExpression = (c: Column) => c.getField("picked") === true
+    val extractValueExpression = element_at(filter(col("consequences"), conditionExpression), 1).getField("symbol").cast("string")
+    preprocessedForPickedDf.withColumn("gene_symbol_picked_consequence", extractValueExpression)
   }
 
   private def getUpdate(consequencesDf: DataFrame,
