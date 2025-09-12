@@ -50,7 +50,7 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
     joinWithConsequences(variants, consequences)
       // To prevent compatibility issues with the frontend, which still expects 'analysis_service_request_id' and 'service_request_id'
       .withDonorsFieldsRenamed(Map(
-        "analysis_id"-> "analysis_service_request_id", 
+        "analysis_id"-> "analysis_service_request_id",
         "sequencing_id" -> "service_request_id")
       )
   }
@@ -59,7 +59,7 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
                                    consequencesDf: DataFrame): DataFrame = {
     import spark.implicits._
 
-    variantDF
+    val preprocessedForPickedDf = variantDF
       .joinByLocus(consequencesDf, "left")
       .groupByLocus()
       .agg(
@@ -67,6 +67,10 @@ case class PrepareVariantCentric(rc: RuntimeETLContext) extends SimpleSingleETL(
         collect_list(struct("consequences.*")) as "consequences",
         max("impact_score") as "max_impact_score")
       .select($"variant.*", $"consequences", $"max_impact_score")
+
+    val conditionExpression = (c: Column) => c.getField("picked") === true
+    val extractValueExpression = element_at(filter(col("consequences"), conditionExpression), 1).getField("symbol").cast("string")
+    preprocessedForPickedDf.withColumn("gene_symbol_picked_consequence", extractValueExpression)
   }
 
   private def getUpdate(consequencesDf: DataFrame,

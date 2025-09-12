@@ -14,6 +14,15 @@
           "nested_objects": {
             "limit": "30000"
           }
+        },
+        "analysis": {
+          "normalizer": {
+            "lowercase_normalizer": {
+              "type": "custom",
+              "char_filter": [],
+              "filter": "lowercase"
+            }
+          }
         }
       }
     },
@@ -439,7 +448,12 @@
               "type": "keyword"
             },
             "variant_class": {
-              "type": "keyword"
+              "type": "keyword",
+              "copy_to": "lowercase_variant_class"
+            },
+            "lowercase_variant_class": {
+              "type": "keyword",
+              "normalizer" : "lowercase_normalizer"
             },
             "variant_type": {
               "type": "keyword"
@@ -942,6 +956,9 @@
           }
         },
         "genes_symbol": {
+          "type": "keyword"
+        },
+        "gene_symbol_picked_consequence": {
           "type": "keyword"
         },
         "panels": {
