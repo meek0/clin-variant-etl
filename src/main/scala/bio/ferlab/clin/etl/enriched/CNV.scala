@@ -225,41 +225,36 @@ object CNV {
     def withFrequencies(germline: DataFrame, somatic: DataFrame, gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 
-      val allFrequencies = germline
-        .join(somatic, Seq("name"), "full")
-        .select(
-          // Germline and Somatic should have the same locus values for the same cluster name
-          coalesce(germline("chromosome"), somatic("chromosome")) as "chromosome",
-          coalesce(germline("start"), somatic("start")) as "start",
-          coalesce(germline("end"), somatic("end")) as "end",
-          coalesce(germline("reference"), somatic("reference")) as "reference",
-          coalesce(germline("alternate"), somatic("alternate")) as "alternate",
-          $"name",
-          // First coalesce with empty array to remove null values otherwise concat will return null
-          coalesce(germline("members"), array()) as "germline_members",
-          coalesce(somatic("members"), array()) as "somatic_members",
-          struct(
-            germline("frequency_RQDM.germ"),
-            somatic("frequency_RQDM.som"),
-          ) as "frequency_RQDM"
-        ).withColumn("members", array_distinct(concat($"germline_members", $"somatic_members")))
-        .drop("germline_members", "somatic_members")
-
       val clusterDf = df
-        .join(allFrequencies, array_contains(allFrequencies("members"), df("name")), "left")
+        .join(germline, array_contains(germline("members"), df("name")) and $"variant_type" === "germline", "left")
+        .join(somatic, array_contains(somatic("members"), df("name")) and $"variant_type" === "somatic", "left")
         .select(
           df("*"),
           struct(
-            allFrequencies("name") as "id",
-            $"frequency_RQDM",
+            coalesce(germline("name"), somatic("name")) as "id",
+            struct(
+              germline("frequency_RQDM.germ"),
+              somatic("frequency_RQDM.som"),
+            ) as "frequency_RQDM",
             FrequencyUtils.EmptyClusterFrequencies
           ) as "cluster",
+          // TODO: For backwards compatibility with UI. Remove when UI is updated.
+          when(germline("frequency_RQDM.germ").isNotNull, struct(
+            germline("frequency_RQDM.germ.total.pc") as "pc",
+            germline("frequency_RQDM.germ.total.pn") as "pn",
+            germline("frequency_RQDM.germ.total.pf") as "pf"
+          ))
+            .otherwise(when(somatic("frequency_RQDM.som").isNotNull, struct(
+              somatic("frequency_RQDM.som.pc") as "pc",
+              somatic("frequency_RQDM.som.pn") as "pn",
+              somatic("frequency_RQDM.som.pf") as "pf"
+            )).otherwise(null)) as "frequency_RQDM",
           struct( // temporary struct to help frequencies joins
-            allFrequencies("chromosome") as "chromosome",
-            allFrequencies("start") as "start",
-            allFrequencies("end") as "end",
-            allFrequencies("reference") as "reference",
-            allFrequencies("alternate") as "alternate",
+            coalesce(germline("chromosome"), somatic("chromosome")) as "chromosome",
+            coalesce(germline("start"), somatic("start")) as "start",
+            coalesce(germline("end"), somatic("end")) as "end",
+            coalesce(germline("reference"), somatic("reference")) as "reference",
+            coalesce(germline("alternate"), somatic("alternate")) as "alternate",
           ) as "cluster_info"
         )
 

@@ -70,8 +70,8 @@ case class CNV_CENTRIC_CLUSTER(`id`: Option[String] = Some("DRAGEN:LOSS:chr1:982
 case class CNV_CENTRIC_CLUSTER_FREQUENCIES(`gnomad_exomes_4`: Option[CNV_CENTRIC_CLUSTER_FREQUENCIES_GNOMAD_V4] = None,
                                           )
 
-case class CNV_CENTRIC_CLUSTER_FREQUENCY_RQDM(`germ`: CNV_CENTRIC_FREQUENCY_RQDM_GERM = CNV_CENTRIC_FREQUENCY_RQDM_GERM(),
-                                              `som`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM())
+case class CNV_CENTRIC_CLUSTER_FREQUENCY_RQDM(`germ`: Option[CNV_CENTRIC_FREQUENCY_RQDM_GERM] = Some(CNV_CENTRIC_FREQUENCY_RQDM_GERM()),
+                                              `som`: Option[CNV_CENTRIC_FREQUENCY_RQDM] = None)
 
 case class CNV_CENTRIC_FREQUENCY_RQDM_GERM(`affected`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(`pc` = 1, `pn` = 1, `pf` = 1.0),
                                            `non_affected`: CNV_CENTRIC_FREQUENCY_RQDM = CNV_CENTRIC_FREQUENCY_RQDM(`pc` = 0, `pn` = 1, `pf` = 0.0),

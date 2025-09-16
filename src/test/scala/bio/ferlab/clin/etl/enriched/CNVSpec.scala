@@ -1,7 +1,7 @@
 package bio.ferlab.clin.etl.enriched
 
 import bio.ferlab.clin.model.enriched._
-import bio.ferlab.clin.model.nextflow.{SVClusteringGermline, SVClusteringParentalOrigin, SVClusteringSomatic}
+import bio.ferlab.clin.model.nextflow.{FREQUENCY_RQDM_GERM, SVClusteringGermline, SVClusteringParentalOrigin, SVClusteringSomatic}
 import bio.ferlab.clin.model.normalized._
 import bio.ferlab.clin.testutils.{LoadResolverUtils, WithTestConfig}
 import bio.ferlab.datalake.commons.config.DatasetConf
@@ -242,8 +242,10 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
     result
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedCNV(`sequencing_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5"),
-      EnrichedCNV(`sequencing_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "05c1575c45d71352d7f88c8a688956b139653661", `exomiser` = None),
+      EnrichedCNV(`sequencing_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "65af80e7610e804b2d5d01c32ed39d9f27c9f8d5",
+        `cluster` = EnrichedCNVCluster(`frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None))),
+      EnrichedCNV(`sequencing_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "05c1575c45d71352d7f88c8a688956b139653661", `exomiser` = None,
+        `cluster` = EnrichedCNVCluster(`frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM())))),
     )
   }
 
@@ -297,7 +299,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_1_100_200"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(`som` = None)),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
@@ -307,7 +309,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_2_100_200"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(`som` = None)),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.002))
           )
@@ -317,7 +319,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_3_100_200"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(`som` = None)),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
@@ -327,7 +329,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
           `id` = None,
-          `frequency_RQDM` = None,
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
@@ -337,7 +339,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_5_100_200"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(`som` = None)),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = Some(EnrichedCNVClusterFrequenciesGnomadV4(`sc` = 7.0, `sn` = 0.16, `sf` = 0.003))
           )
@@ -347,7 +349,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_6_100_200"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(`som` = None)),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(
             `gnomad_exomes_4` = None
           )
@@ -392,22 +394,26 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 1, `end` = 100, `alternate` = "A", `reference` = "REF", `name` = "CNV_00", `snv_count` = 0, `sequencing_id` = "SR_000",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.4f ,`variant_score_category` = "LOW")), `hash` = "54983b0279495b4e60366f31a3c352da5acc8281",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 3, `sequencing_id` = "SR_001",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.6f, `variant_score_category` = "MEDIUM")), `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `sequencing_id` = "SR_001",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = Some(EXOMISER_CNV(`variant_score` = 0.8f, `variant_score_category` = "HIGH")), `hash` = "fb94d57b79ff40168cc7cb7b8cf5607eb6cf47e4",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 200, `end` = 250, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `snv_count` = 1, `sequencing_id` = "SR_002",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = None, `hash` = "37b02ad5d5fb4fcc3c783ebcdecff26480a44ef3", `aliquot_id` = "11112",
       )
     )
@@ -452,12 +458,14 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01", `snv_count` = 1, `sequencing_id` = "SR_001",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
-        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = None, `hash` = "256519903d044ebbb123d95989175e04d8c82dd2",
       ),
       EnrichedCNV(`chromosome` = "1", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "CNV_SOMATIC_01", `variant_type` = "somatic", `snv_count` = 1, `sequencing_id` = "SR_002",
         `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `cn` = None,
-        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = None, `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = None, `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)),
         `exomiser` = None, `hash` = "6d2e2ec49033dbbda09b1a23f7ef1cc12a161d86"
       )
     )
@@ -477,78 +485,155 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
   it should "enrich data with RQDM cluster frequencies" in {
     val data = testData ++ Map(
       normalized_cnv.id -> Seq(
-        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01_GERM", `aliquot_id` = "GERM_1"), // Has both germ and som freq
-        NormalizedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", reference = "REF", `name` = "CNV_02", `aliquot_id` = "GERM_2"), // Only germ freq
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "GERM_1", `sequencing_id` = "SEQ_GERM_1"), // Matches with both germ and som freq (same name)
+        NormalizedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", reference = "REF", `name` = "chr2:200-300", `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2"), // Matches only with germ freq (two-member cluster)
+        NormalizedCNV(`chromosome` = "2", `start` = 250, `end` = 275, `alternate` = "A", reference = "REF", `name` = "chr2:250-275", `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3"), // Matches only with germ freq (two-member cluster)
+        NormalizedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `name` = "chr3:300-400", `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3")  // Matches with both germ and som freq (different names)
       ).toDF(),
       normalized_cnv_somatic_tumor_only.id -> Seq(
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "CNV_01_SOM", `aliquot_id` = "SOM_1"), // Has both germ and som freq
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `name` = "CNV_03", `aliquot_id` = "SOM_1"), // Only som freq
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 400, `end` = 500, `alternate` = "A", reference = "REF", `name` = "CNV_04", `aliquot_id` = "SOM_1") // No cluster, no freq
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1"), // Matches with both germ and som freq (same name)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `name` = "chr2:300-400", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1"), // Matches only with som freq (one-member cluster)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `name` = "chr3:300-400", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1"), // Matches with both germ and som freq (different names)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 300, `end` = 500, `alternate` = "A", reference = "REF", `name` = "chr3:300-500", `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2"), // Matches only with som freq (two-member cluster)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "4", `start` = 500, `end` = 700, `alternate` = "A", reference = "REF", `name` = "chr4:500-700", `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2"), // No cluster, no freq
       ).toDF(),
       nextflow_svclustering_germline.id -> Seq(
-        SVClusteringGermline(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("CNV_01_GERM", "CNV_01_SOM"), `name` = "CNV_01"),
-        SVClusteringGermline(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", reference = "REF", `members` = Seq("CNV_02"), `name` = "CNV_02")
+        SVClusteringGermline(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("chr1:100-200"), `name` = "chr1:100-200"),
+        SVClusteringGermline(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", reference = "REF", `members` = Seq("chr2:200-300", "chr2:250-275"), `name` = "chr2:200-300"),
+        SVClusteringGermline(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `members` = Seq("chr3:300-400"), `name` = "chr3:300-400")
       ).toDF(),
       nextflow_svclustering_somatic.id -> Seq(
-        SVClusteringSomatic(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("CNV_01"), `name` = "CNV_01"),
-        SVClusteringSomatic(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `members` = Seq("CNV_03"), `name` = "CNV_03")
+        SVClusteringSomatic(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", reference = "REF", `members` = Seq("chr1:100-200"), `name` = "chr1:100-200"),
+        SVClusteringSomatic(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", reference = "REF", `members` = Seq("chr2:300-400"), `name` = "chr2:300-400"),
+        SVClusteringSomatic(`chromosome` = "3", `start` = 300, `end` = 500, `alternate` = "A", reference = "REF", `members` = Seq("chr3:300-400", "chr3:300-500"), `name` = "chr3:300-500")
       ).toDF(),
     )
 
     val result = job.transformSingle(data)
 
+    result.count() shouldBe 9
     result
+      .orderBy("chromosome", "start", "end", "variant_type")
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01_GERM", `aliquot_id` = "GERM_1",
-        `variant_type` = "germline", `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+      // Germline, chr1:100-200, aliquot GERM_1
+      // Matches with both germ and som freq (same name), should only have germ freq
+      EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "chr1:100-200",
+        `aliquot_id` = "GERM_1", `sequencing_id` = "SEQ_GERM_1", `variant_type` = "germline",
+        `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
-        `cluster` = EnrichedCNVCluster(`id` = Some("CNV_01"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
-            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM()))),
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr1:100-200"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
         ),
-        `hash` = "63ed1235d3f6c50c2d9c9c6bd25638cd25eebc93"
+        `hash` = "989f3a1a9e14480970dc7b4a6bd95783547efafb"
       ),
-      EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "CNV_01_SOM", `aliquot_id` = "SOM_1",
-        `variant_type` = "somatic", `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+      // Somatic, chr1:100-200, aliquot SOM_1
+      // Matches with both germ and som freq (same name), should only have som freq
+      EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "A", `reference` = "REF", `name` = "chr1:100-200",
+        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic",
+        `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
-        `cluster` = EnrichedCNVCluster(`id` = Some("CNV_01"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
-            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM()))),
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr1:100-200"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM())),
           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
         ),
-        `hash` = "a6cf90b03eb436b0c02fd6bef8944b72731ca72e"
+        `hash` = "3fcc6f4e4679d127f65454ca0a222151189883a4"
       ),
-      EnrichedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", `reference` = "REF", `name` = "CNV_02", `aliquot_id` = "GERM_2",
-        `variant_type` = "germline", `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+      // Germline, chr2:200-300, aliquot GERM_2
+      // Matches only with germ freq (two-member cluster), same cluster as below
+      EnrichedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "A", `reference` = "REF", `name` = "chr2:200-300",
+        `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2", `variant_type` = "germline",
+        `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
-        `cluster` = EnrichedCNVCluster(`id` = Some("CNV_02"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
-            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None)),
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr2:200-300"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
         ),
-        `hash` = "a099572eaa03cd35dcbfe01be45bd2e036b9d21e"
+        `hash` = "c9a1808c21d14b72a34a31e88b75c0742dfe6dcd"
       ),
-      EnrichedCNV(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "CNV_03", `aliquot_id` = "SOM_1",
-        `variant_type` = "somatic", `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+      // Germline, chr2:250-275, aliquot GERM_3
+      // Matches only with germ freq (two-member cluster), same cluster as above
+      EnrichedCNV(`chromosome` = "2", `start` = 250, `end` = 275, `alternate` = "A", `reference` = "REF", `name` = "chr2:250-275",
+        `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `variant_type` = "germline",
+        `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
-        `cluster` = EnrichedCNVCluster(`id` = Some("CNV_03"),
-          `frequency_RQDM` = Some(EnrichedCNVClusterFrequencyRQDM(
-            `germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM()))),
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr2:200-300"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None),
           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
         ),
-        `hash` = "f43e1ff5313885d668443e05791f03ec1c9231b8"
+        `hash` = "81464a756fe6e9a9e3253e4641e21e556a3d3ca4"
       ),
-      EnrichedCNV(`chromosome` = "3", `start` = 400, `end` = 500, `alternate` = "A", `reference` = "REF", `name` = "CNV_04", `aliquot_id` = "SOM_1",
-        `variant_type` = "somatic", `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+      // Germline, chr3:300-400, aliquot SOM_1
+      // Matches only with som freq (one-member cluster)
+      EnrichedCNV(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "chr2:300-400",
+        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic",
+        `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `exomiser` = None,
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr2:300-400"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM())),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
+        ),
+        `hash` = "d0b0734aea5e4f94f8293de5f151134bdfaae84a"
+      ),
+      // Germline, chr3:300-400, aliquot GERM_3
+      // Matches with both germ and som freq (same name), should only have germ freq
+      EnrichedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "chr3:300-400",
+        `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `variant_type` = "germline",
+        `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `exomiser` = None,
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr3:300-400"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
+        ),
+        `hash` = "2947ec3a3dbed343be6795a9a0a9e12020cb432c"
+      ),
+      // Somatic, chr3:300-400, aliquot SOM_1
+      // Matches with both germ and som freq (same name), should only have som freq, same cluster as below
+      EnrichedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "A", `reference` = "REF", `name` = "chr3:300-400",
+        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic",
+        `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `exomiser` = None,
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr3:300-500"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM())),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
+        ),
+        `hash` = "a4a4fca9f91060bc07d168eea8f4e8b4c8510e55"
+      ),
+      // Somatic, chr3:300-500, aliquot SOM_2
+      // Matches only with som freq (two-member cluster), same cluster as above
+      EnrichedCNV(`chromosome` = "3", `start` = 300, `end` = 500, `alternate` = "A", `reference` = "REF", `name` = "chr3:300-500",
+        `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `variant_type` = "somatic",
+        `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `exomiser` = None,
+        `cluster` = EnrichedCNVCluster(`id` = Some("chr3:300-500"),
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM())),
+          `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
+        ),
+        `hash` = "0c71c90ed28cbd248212fba638b94679c5e89590"
+      ),
+      // Somatic, chr4:500-700, aliquot SOM_2
+      // No cluster, no freq
+      EnrichedCNV(`chromosome` = "4", `start` = 500, `end` = 700, `alternate` = "A", `reference` = "REF", `name` = "chr4:500-700",
+        `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `variant_type` = "somatic",
+        `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = None,
-          `frequency_RQDM` = None,
+          `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+            `germ` = None, `som` = None
+          ),
           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
         ),
-        `hash` = "87779ec18f24a04f353cc13d7c2930406817c735"
-      )
+        `hash` = "719d064fdb04157178e767c551e80baa4126fdce"
+      ),
     )
   }
 

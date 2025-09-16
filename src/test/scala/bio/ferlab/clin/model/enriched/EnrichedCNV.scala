@@ -64,7 +64,7 @@ case class EnrichedCNV(`aliquot_id`: String = "11111",
 
 case class EnrichedCNVCluster(`id`: Option[String] = Some("DRAGEN:LOSS:chr1:9823628-9823687"),
                               `external_frequencies`: EnrichedCNVClusterFrequencies = EnrichedCNVClusterFrequencies(),
-                              `frequency_RQDM`: Option[EnrichedCNVClusterFrequencyRQDM] = Some(EnrichedCNVClusterFrequencyRQDM()))
+                              `frequency_RQDM`: EnrichedCNVClusterFrequencyRQDM = EnrichedCNVClusterFrequencyRQDM())
 
 case class EnrichedCNVClusterFrequencies(`gnomad_exomes_4`: Option[EnrichedCNVClusterFrequenciesGnomadV4] = None,
                                         )
@@ -74,7 +74,7 @@ case class EnrichedCNVClusterFrequenciesGnomadV4(`sc`: Double = 0.0,
                                                  `sf`: Double = 0.0)
 
 case class EnrichedCNVClusterFrequencyRQDM(`germ`: Option[EnrichedCNVClusterFrequencyRQDMGerm] = Some(EnrichedCNVClusterFrequencyRQDMGerm()),
-                                           `som`: Option[ENRICHED_CNV_FREQUENCY_RQDM] = Some(ENRICHED_CNV_FREQUENCY_RQDM()))
+                                           `som`: Option[ENRICHED_CNV_FREQUENCY_RQDM] = None)
 
 case class EnrichedCNVClusterFrequencyRQDMGerm(`affected`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(`pc` = 1, `pn` = 1, `pf` = 1.0),
                                                `non_affected`: ENRICHED_CNV_FREQUENCY_RQDM = ENRICHED_CNV_FREQUENCY_RQDM(`pc` = 0, `pn` = 1, `pf` = 0.0),
