@@ -72,12 +72,12 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
     ).toDF(),
 
     normalized_cnv.id -> Seq(
-      NormalizedCNV(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001"),
-      NormalizedCNV(`batch_id` = "BAT2", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0002")
+      NormalizedCNV(`batch_id` = "BAT1", `analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `filters` = Seq("PASS")),
+      NormalizedCNV(`batch_id` = "BAT2", `analysis_id` = "SRA0002", `sequencing_id` = "SRS0002", `filters` = Seq("PASS"))
     ).toDF(),
     normalized_cnv_somatic_tumor_only.id -> Seq(
-      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT3", `analysis_id` = "SRA0003", `sequencing_id` = "SRS0003"),
-      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT4", `analysis_id` = "SRA0004", `sequencing_id` = "SRS0004")
+      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT3", `analysis_id` = "SRA0003", `sequencing_id` = "SRS0003", `filters` = Seq("PASS")),
+      NormalizedCNVSomaticTumorOnly(`batch_id` = "BAT4", `analysis_id` = "SRA0004", `sequencing_id` = "SRS0004", `filters` = Seq("PASS"))
     ).toDF(),
 
     normalized_snv.id -> Seq(
@@ -238,8 +238,8 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
 
   "transform" should "enrich CNV data" in {
     val data = testData ++ Map(
-      normalized_cnv.id -> Seq(NormalizedCNV(`alternate` = "<DEL>", `sequencing_id` = "SRS0001", `aliquot_id` = "11111")).toDF(),
-      normalized_cnv_somatic_tumor_only.id -> Seq(NormalizedCNVSomaticTumorOnly(`alternate` = "<DEL>", `sequencing_id` = "SRS0002", `aliquot_id` = "22222")).toDF(),
+      normalized_cnv.id -> Seq(NormalizedCNV(`alternate` = "<DEL>", `sequencing_id` = "SRS0001", `aliquot_id` = "11111", `filters` = Seq("PASS"))).toDF(),
+      normalized_cnv_somatic_tumor_only.id -> Seq(NormalizedCNVSomaticTumorOnly(`alternate` = "<DEL>", `sequencing_id` = "SRS0002", `aliquot_id` = "22222", `filters` = Seq("PASS"))).toDF(),
     )
 
     val result = job.transformSingle(data)
@@ -247,9 +247,9 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
     result
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
-      EnrichedCNV(`alternate` = "<DEL>", `sequencing_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "566d281c96db05b26a6148fd7fe26bdeab1a2d2b",
+      EnrichedCNV(`alternate` = "<DEL>", `sequencing_id` = "SRS0001", `aliquot_id` = "11111", `hash` = "566d281c96db05b26a6148fd7fe26bdeab1a2d2b", `filters` = Seq("PASS"),
         `cluster` = EnrichedCNVCluster(`frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = Some(EnrichedCNVClusterFrequencyRQDMGerm()), `som` = None))),
-      EnrichedCNV(`alternate` = "<DEL>", `sequencing_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "232e8ea8b4cda5d2d8940f2d221c2ae9b95565c6", `exomiser` = None,
+      EnrichedCNV(`alternate` = "<DEL>", `sequencing_id` = "SRS0002", `aliquot_id` = "22222", `variant_type` = "somatic", `cn` = None, `hash` = "232e8ea8b4cda5d2d8940f2d221c2ae9b95565c6", `exomiser` = None, `filters` = Seq("PASS"),
         `cluster` = EnrichedCNVCluster(`frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(`germ` = None, `som` = Some(ENRICHED_CNV_FREQUENCY_RQDM())))),
     )
   }
@@ -259,17 +259,17 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       normalized_cnv_somatic_tumor_only.id -> Seq[NormalizedCNVSomaticTumorOnly]().toDF(), // empty somatics for test simplicity
       normalized_cnv.id -> Seq(
         // match CLUSTER_1_100_200
-        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_01"),
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_01", `filters` = Seq("PASS")),
         // match CLUSTER_2_100_200
-        NormalizedCNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_02"),
+        NormalizedCNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_02", `filters` = Seq("PASS")),
         // match CLUSTER_3_100_200
-        NormalizedCNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_03"),
+        NormalizedCNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_03", `filters` = Seq("PASS")),
         // match no cluster
-        NormalizedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_04"),
+        NormalizedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_04", `filters` = Seq("PASS")),
         // match CLUSTER_5_100_200
-        NormalizedCNV(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_05"),
+        NormalizedCNV(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_05", `filters` = Seq("PASS")),
         // match CLUSTER_6_100_200
-        NormalizedCNV(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_06"),
+        NormalizedCNV(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "CNV_06", `filters` = Seq("PASS")),
       ).toDF(),
       nextflow_svclustering_germline_del.id -> Seq(
         // has 100% overlap with GNOMAD_01
@@ -300,7 +300,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       .as[EnrichedCNV]
       .collect() should contain theSameElementsAs Seq(
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "CNV_01",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `filters` = Seq("PASS"),
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_1_100_200"),
@@ -310,7 +310,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           )
         ), `exomiser` = None, `hash` = "920d3ca50097fee7efa124fa624c19e2b5d97db1"),
       EnrichedCNV(`chromosome` = "2", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "CNV_02",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `filters` = Seq("PASS"),
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_2_100_200"),
@@ -320,7 +320,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           )
         ), `exomiser` = None, `hash` = "cf23cdbfe5f5c8966e9ee2b9830df0510ca2397f"),
       EnrichedCNV(`chromosome` = "3", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "CNV_03",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `filters` = Seq("PASS"),
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_3_100_200"),
@@ -330,7 +330,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           )
         ), `exomiser` = None, `hash` = "95584fd0c632fc1adde87b2a8216f66875403dee"),
       EnrichedCNV(`chromosome` = "4", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "CNV_04",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `filters` = Seq("PASS"),
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
           `id` = None,
@@ -340,7 +340,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           )
         ), `exomiser` = None, `hash` = "f64bc094cb81ee181c2e7a60703516c896eb3869"),
       EnrichedCNV(`chromosome` = "5", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "CNV_05",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `filters` = Seq("PASS"),
         `variant_external_reference` = Set("gnomAD"),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_5_100_200"),
@@ -350,7 +350,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
           )
         ), `exomiser` = None, `hash` = "69d7bfc6533dfa43f5d460479aafa658b4b02fb6"),
       EnrichedCNV(`chromosome` = "6", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "CNV_06",
-        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+        `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null, `filters` = Seq("PASS"),
         `variant_external_reference` = Set(),
         `cluster` = EnrichedCNVCluster(
           `id` = Some("CLUSTER_6_100_200"),
@@ -490,17 +490,18 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
   it should "enrich data with RQDM cluster frequencies" in {
     val data = testData ++ Map(
       normalized_cnv.id -> Seq(
-        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "GERM_1", `sequencing_id` = "SEQ_GERM_1"), // Matches with both germ and som freq (same name)
-        NormalizedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "<DUP>", reference = "REF", `name` = "chr2:200-300", `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2"), // Matches only with germ freq (two-member cluster)
-        NormalizedCNV(`chromosome` = "2", `start` = 250, `end` = 275, `alternate` = "<DEL>", reference = "REF", `name` = "chr2:250-275", `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3"), // Matches only with germ freq (two-member cluster)
-        NormalizedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "<DUP>", reference = "REF", `name` = "chr3:300-400", `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3")  // Matches with both germ and som freq (different names)
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "GERM_1", `sequencing_id` = "SEQ_GERM_1", `filters` = Seq("PASS")), // Matches with both germ and som freq (same name)
+        NormalizedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2", `filters` = Seq("cnvQual")), // Filter is not PASS, should be ignored
+        NormalizedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "<DUP>", reference = "REF", `name` = "chr2:200-300", `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2", `filters` = Seq("PASS")), // Matches only with germ freq (two-member cluster)
+        NormalizedCNV(`chromosome` = "2", `start` = 250, `end` = 275, `alternate` = "<DEL>", reference = "REF", `name` = "chr2:250-275", `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `filters` = Seq("PASS")), // Matches only with germ freq (two-member cluster)
+        NormalizedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "<DUP>", reference = "REF", `name` = "chr3:300-400", `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `filters` = Seq("PASS"))  // Matches with both germ and som freq (different names)
       ).toDF(),
       normalized_cnv_somatic_tumor_only.id -> Seq(
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1"), // Matches with both germ and som freq (same name)
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "<DUP>", reference = "REF", `name` = "chr2:300-400", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1"), // Matches only with som freq (one-member cluster)
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "<DEL>", reference = "REF", `name` = "chr3:300-400", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1"), // Matches with both germ and som freq (different names)
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 300, `end` = 500, `alternate` = "<DEL>", reference = "REF", `name` = "chr3:300-500", `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2"), // Matches only with som freq (two-member cluster)
-        NormalizedCNVSomaticTumorOnly(`chromosome` = "4", `start` = 500, `end` = 700, `alternate` = "<DEL>", reference = "REF", `name` = "chr4:500-700", `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2"), // No cluster, no freq
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `name` = "chr1:100-200", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `filters` = Seq("PASS")), // Matches with both germ and som freq (same name)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "<DUP>", reference = "REF", `name` = "chr2:300-400", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `filters` = Seq("PASS")), // Matches only with som freq (one-member cluster)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "<DEL>", reference = "REF", `name` = "chr3:300-400", `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `filters` = Seq("PASS")), // Matches with both germ and som freq (different names)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "3", `start` = 300, `end` = 500, `alternate` = "<DEL>", reference = "REF", `name` = "chr3:300-500", `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `filters` = Seq("PASS")), // Matches only with som freq (two-member cluster)
+        NormalizedCNVSomaticTumorOnly(`chromosome` = "4", `start` = 500, `end` = 700, `alternate` = "<DEL>", reference = "REF", `name` = "chr4:500-700", `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `filters` = Seq("PASS")), // No cluster, no freq
       ).toDF(),
       nextflow_svclustering_germline_del.id -> Seq(
         SVClusteringGermline(`name` = "chr1:100-200:del", `chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", reference = "REF", `members` = Seq("chr1:100-200"), `aliquot_ids` = Set("GERM_1")),
@@ -526,7 +527,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
 
     val result = job.transformSingle(data)
 
-    result.count() shouldBe 9
+    result.count() shouldBe 10
     result
       .orderBy("chromosome", "start", "end", "variant_type")
       .as[EnrichedCNV]
@@ -534,7 +535,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Germline, chr1:100-200, aliquot GERM_1
       // Matches with both germ and som freq (same name), should only have germ freq
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr1:100-200",
-        `aliquot_id` = "GERM_1", `sequencing_id` = "SEQ_GERM_1", `variant_type` = "germline",
+        `aliquot_id` = "GERM_1", `sequencing_id` = "SEQ_GERM_1", `variant_type` = "germline", `filters` = Seq("PASS"),
         `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr1:100-200:del"),
@@ -544,10 +545,23 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
         ),
         `hash` = "eb8cb91facbb6a396e93521ddb3ba70e5cd333f7"
       ),
+      // Germline, chr1:100-200, aliquot GERM_2
+      // Filter is not PASS, should be ignored
+       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr1:100-200",
+         `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2", `variant_type` = "germline", `filters` = Seq("cnvQual"),
+         `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
+         `exomiser` = None,
+         `cluster` = EnrichedCNVCluster(`id` = None,
+           `frequency_RQDM` = EnrichedCNVClusterFrequencyRQDM(
+             `germ` = None, `som` = None),
+           `external_frequencies` = EnrichedCNVClusterFrequencies(`gnomad_exomes_4` = None)
+         ),
+         `hash` = "dd257123b54dab2bba03f2f8f407f01f44a2e0cb"
+       ),
       // Somatic, chr1:100-200, aliquot SOM_1
       // Matches with both germ and som freq (same name), should only have som freq
       EnrichedCNV(`chromosome` = "1", `start` = 100, `end` = 200, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr1:100-200",
-        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic",
+        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic", `filters` = Seq("PASS"),
         `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr1:100-200:del"),
@@ -560,7 +574,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Germline, chr2:200-300, aliquot GERM_2
       // Matches only with germ freq (two-member cluster), same cluster as below
       EnrichedCNV(`chromosome` = "2", `start` = 200, `end` = 300, `alternate` = "<DUP>", `reference` = "REF", `name` = "chr2:200-300",
-        `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2", `variant_type` = "germline",
+        `aliquot_id` = "GERM_2", `sequencing_id` = "SEQ_GERM_2", `variant_type` = "germline", `filters` = Seq("PASS"),
         `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr2:200-300:dup"),
@@ -573,7 +587,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Germline, chr2:250-275, aliquot GERM_3
       // Matches only with germ freq (two-member cluster), same cluster as above
       EnrichedCNV(`chromosome` = "2", `start` = 250, `end` = 275, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr2:250-275",
-        `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `variant_type` = "germline",
+        `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `variant_type` = "germline", `filters` = Seq("PASS"),
         `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr2:200-300:del"),
@@ -586,7 +600,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Germline, chr3:300-400, aliquot SOM_1
       // Matches only with som freq (one-member cluster)
       EnrichedCNV(`chromosome` = "2", `start` = 300, `end` = 400, `alternate` = "<DUP>", `reference` = "REF", `name` = "chr2:300-400",
-        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic",
+        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic", `filters` = Seq("PASS"),
         `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr2:300-400:dup"),
@@ -599,7 +613,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Germline, chr3:300-400, aliquot GERM_3
       // Matches with both germ and som freq (same name), should only have germ freq
       EnrichedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "<DUP>", `reference` = "REF", `name` = "chr3:300-400",
-        `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `variant_type` = "germline",
+        `aliquot_id` = "GERM_3", `sequencing_id` = "SEQ_GERM_3", `variant_type` = "germline", `filters` = Seq("PASS"),
         `cn` = Some(1), `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr3:300-400:dup"),
@@ -612,7 +626,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Somatic, chr3:300-400, aliquot SOM_1
       // Matches with both germ and som freq (same name), should only have som freq, same cluster as below
       EnrichedCNV(`chromosome` = "3", `start` = 300, `end` = 400, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr3:300-400",
-        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic",
+        `aliquot_id` = "SOM_1", `sequencing_id` = "SEQ_SOM_1", `variant_type` = "somatic", `filters` = Seq("PASS"),
         `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr3:300-500:del"),
@@ -625,7 +639,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Somatic, chr3:300-500, aliquot SOM_2
       // Matches only with som freq (two-member cluster), same cluster as above
       EnrichedCNV(`chromosome` = "3", `start` = 300, `end` = 500, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr3:300-500",
-        `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `variant_type` = "somatic",
+        `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `variant_type` = "somatic", `filters` = Seq("PASS"),
         `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = Some("chr3:300-500:del"),
@@ -638,7 +652,7 @@ class CNVSpec extends SparkSpec with WithTestConfig with CreateDatabasesBeforeAl
       // Somatic, chr4:500-700, aliquot SOM_2
       // No cluster, no freq
       EnrichedCNV(`chromosome` = "4", `start` = 500, `end` = 700, `alternate` = "<DEL>", `reference` = "REF", `name` = "chr4:500-700",
-        `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `variant_type` = "somatic",
+        `aliquot_id` = "SOM_2", `sequencing_id` = "SEQ_SOM_2", `variant_type` = "somatic", `filters` = Seq("PASS"),
         `cn` = None, `number_genes` = 0, `genes` = List(), `transmission` = null, `parental_origin` = null,
         `exomiser` = None,
         `cluster` = EnrichedCNVCluster(`id` = None,

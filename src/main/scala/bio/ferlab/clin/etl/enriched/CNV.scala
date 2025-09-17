@@ -235,7 +235,9 @@ object CNV {
       import spark.implicits._
 
       def joinCondition(cnvDf: DataFrame, svclusteringDf: DataFrame, variant_type: String, alternate: String): Column =
-        (array_contains(svclusteringDf("members"), cnvDf("name")) and array_contains(svclusteringDf("aliquot_ids"), cnvDf("aliquot_id"))
+        (array_contains(svclusteringDf("members"), cnvDf("name"))
+          and array_contains(svclusteringDf("aliquot_ids"), cnvDf("aliquot_id"))
+          and array_contains(cnvDf("filters"), "PASS") // Only consider PASS CNVs for RQDM frequencies
           and $"variant_type" === variant_type and cnvDf("alternate") === alternate)
 
 
