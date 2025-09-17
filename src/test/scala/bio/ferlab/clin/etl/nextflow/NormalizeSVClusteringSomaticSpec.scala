@@ -11,7 +11,8 @@ class NormalizeSVClusteringSomaticSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
-  val job = NormalizeSVClusteringSomatic(TestETLContext())
+  val job = NormalizeSVClusteringSomatic(TestETLContext(),
+    sourceId = "nextflow_svclustering_somatic_del_output", destinationId = "nextflow_svclustering_somatic_del")
 
   val testData: Map[String, DataFrame] = Map(
     job.enriched_clinical.id -> Seq(
@@ -64,6 +65,7 @@ class NormalizeSVClusteringSomaticSpec extends SparkSpec with WithTestConfig {
         `alternate` = "<GAIN>",
         `name` = "DRAGEN:GAIN:chr12:46361100-46365186",
         `members` = Seq("DRAGEN:GAIN:chr12:46361100-46364711", "DRAGEN:GAIN:chr12:46361100-46364999", "DRAGEN:GAIN:chr12:46361100-46365186"),
+        `aliquot_ids` = Set("1", "2"),
         `frequency_RQDM` = FREQUENCY_RQDM_SOM(
           `som` = SOM(`pc` = 1, `pn` = 2, `pf` = 0.5),
         )
@@ -77,6 +79,7 @@ class NormalizeSVClusteringSomaticSpec extends SparkSpec with WithTestConfig {
         `alternate` = "<GAIN>",
         `name` = "DRAGEN:GAIN:chr16:47430-98310",
         `members` = Seq("DRAGEN:GAIN:chr16:47430-98310"),
+        `aliquot_ids` = Set("1"),
         `frequency_RQDM` = FREQUENCY_RQDM_SOM(
           `som` = SOM(`pc` = 1, `pn` = 2, `pf` = 0.5),
         )

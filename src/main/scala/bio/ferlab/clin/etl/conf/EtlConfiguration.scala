@@ -103,10 +103,14 @@ object EtlConfiguration extends App {
 
       // nextflow
       // svclustering
-      DatasetConf("nextflow_svclustering_germline_output", clin_nextflow, "/svclustering/output/germline/svclustering*/*.vcf.gz", VCF, Read),
-      DatasetConf("nextflow_svclustering_somatic_output" , clin_nextflow, "/svclustering/output/somatic/svclustering*/*.vcf.gz" , VCF, Read),
-      DatasetConf("nextflow_svclustering_germline"       , clin_datalake, "/nextflow/svclustering/germline"        , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_germline")), keys = List("name"), repartition = Some(FixedRepartition(1))),
-      DatasetConf("nextflow_svclustering_somatic"        , clin_datalake, "/nextflow/svclustering/somatic"         , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_somatic")) , keys = List("name"), repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_germline_del_output", clin_nextflow, "/svclustering/output/germline/svclusteringdel/*.vcf.gz", VCF, Read),
+      DatasetConf("nextflow_svclustering_germline_dup_output", clin_nextflow, "/svclustering/output/germline/svclusteringdup/*.vcf.gz", VCF, Read),
+      DatasetConf("nextflow_svclustering_somatic_del_output" , clin_nextflow, "/svclustering/output/somatic/svclusteringdel/*.vcf.gz" , VCF, Read),
+      DatasetConf("nextflow_svclustering_somatic_dup_output" , clin_nextflow, "/svclustering/output/somatic/svclusteringdup/*.vcf.gz" , VCF, Read),
+      DatasetConf("nextflow_svclustering_germline_del"       , clin_datalake, "/nextflow/svclustering/germline_del", DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_germline_del")), keys = List("name"), repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_germline_dup"       , clin_datalake, "/nextflow/svclustering/germline_dup", DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_germline_dup")), keys = List("name"), repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_somatic_del"        , clin_datalake, "/nextflow/svclustering/somatic_del" , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_somatic_del")) , keys = List("name"), repartition = Some(FixedRepartition(1))),
+      DatasetConf("nextflow_svclustering_somatic_dup"        , clin_datalake, "/nextflow/svclustering/somatic_dup" , DELTA, OverWrite, partitionby = List(), table = Some(TableConf("clin", "nextflow_svclustering_somatic_dup")) , keys = List("name"), repartition = Some(FixedRepartition(1))),
       // svclustering-parental-origin
       DatasetConf("nextflow_svclustering_parental_origin_input" , clin_nextflow, "/svclustering_parental_origin/input/{{BATCH_ID}}"                        , CSV  , OverWrite, readoptions = csv_with_headers, writeoptions = csv_with_headers, repartition = Some(FixedRepartition(1))),
       DatasetConf("nextflow_svclustering_parental_origin_output", clin_nextflow, "/svclustering_parental_origin/output/{{BATCH_ID}}/svclustering*/*.vcf.gz", VCF  , Read),

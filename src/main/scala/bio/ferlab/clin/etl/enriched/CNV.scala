@@ -29,8 +29,10 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
   val normalized_panels: DatasetConf = conf.getDataset("normalized_panels")
   val genes: DatasetConf = conf.getDataset("enriched_genes")
   val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
-  val nextflow_svclustering_germline: DatasetConf = conf.getDataset("nextflow_svclustering_germline")
-  val nextflow_svclustering_somatic: DatasetConf = conf.getDataset("nextflow_svclustering_somatic")
+  val nextflow_svclustering_germline_del: DatasetConf = conf.getDataset("nextflow_svclustering_germline_del")
+  val nextflow_svclustering_germline_dup: DatasetConf = conf.getDataset("nextflow_svclustering_germline_dup")
+  val nextflow_svclustering_somatic_del: DatasetConf = conf.getDataset("nextflow_svclustering_somatic_del")
+  val nextflow_svclustering_somatic_dup: DatasetConf = conf.getDataset("nextflow_svclustering_somatic_dup")
   val nextflow_svclustering_parental_origin: DatasetConf = conf.getDataset("nextflow_svclustering_parental_origin")
   val normalized_gnomad_cnv_v4: DatasetConf = conf.getDataset("normalized_gnomad_cnv_v4")
   val normalized_exomiser_cnv: DatasetConf = conf.getDataset("normalized_exomiser_cnv")
@@ -41,8 +43,10 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       refseq_annotation.id -> refseq_annotation.read,
       normalized_panels.id -> normalized_panels.read,
       genes.id -> genes.read,
-      nextflow_svclustering_germline.id -> nextflow_svclustering_germline.read,
-      nextflow_svclustering_somatic.id -> nextflow_svclustering_somatic.read,
+      nextflow_svclustering_germline_del.id -> nextflow_svclustering_germline_del.read,
+      nextflow_svclustering_germline_dup.id -> nextflow_svclustering_germline_dup.read,
+      nextflow_svclustering_somatic_del.id -> nextflow_svclustering_somatic_del.read,
+      nextflow_svclustering_somatic_dup.id -> nextflow_svclustering_somatic_dup.read,
       normalized_gnomad_cnv_v4.id -> normalized_gnomad_cnv_v4.read
     )
     val clinicalDf = enriched_clinical.read
@@ -95,8 +99,10 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
     val refseqDf = data(refseq_annotation.id)
     val panelsDf = data(normalized_panels.id)
     val genesDf = data(genes.id)
-    val svclusteringGermlineDf = data(nextflow_svclustering_germline.id)
-    val svclusteringSomaticDf = data(nextflow_svclustering_somatic.id)
+    val svclusteringGermlineDelDf = data(nextflow_svclustering_germline_del.id)
+    val svclusteringGermlineDupDf = data(nextflow_svclustering_germline_dup.id)
+    val svclusteringSomaticDelDf = data(nextflow_svclustering_somatic_del.id)
+    val svclusteringSomaticDupDf = data(nextflow_svclustering_somatic_dup.id)
     val parentalOriginDf = data(nextflow_svclustering_parental_origin.id)
     val gnomadV4 = data(normalized_gnomad_cnv_v4.id)
 
@@ -105,7 +111,8 @@ case class CNV(rc: RuntimeETLContext, batchId: Option[String]) extends SimpleSin
       .withExons(refseqDf)
       .withGenes(genesDf)
       .withParentalOrigin(parentalOriginDf)
-      .withFrequencies(svclusteringGermlineDf, svclusteringSomaticDf, gnomadV4)
+      .withFrequencies(germlineDel = svclusteringGermlineDelDf, germlineDup = svclusteringGermlineDupDf,
+        somaticDel = svclusteringSomaticDelDf, somaticDup = svclusteringSomaticDupDf, gnomadV4 = gnomadV4)
       .withClinVariantExternalReference
       .withExomiser(data(normalized_exomiser_cnv.id))
       .withSnvCount(snvDf)
@@ -222,39 +229,42 @@ object CNV {
         .select(df("*"), $"transmission", $"parental_origin")
     }
 
-    def withFrequencies(germline: DataFrame, somatic: DataFrame, gnomadV4: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    def withFrequencies(germlineDel: DataFrame, germlineDup: DataFrame,
+                        somaticDel: DataFrame, somaticDup: DataFrame, gnomadV4: DataFrame)
+                       (implicit spark: SparkSession): DataFrame = {
       import spark.implicits._
 
+      def joinCondition(cnvDf: DataFrame, svclusteringDf: DataFrame, variant_type: String, alternate: String): Column =
+        (array_contains(svclusteringDf("members"), cnvDf("name")) and array_contains(svclusteringDf("aliquot_ids"), cnvDf("aliquot_id"))
+          and $"variant_type" === variant_type and cnvDf("alternate") === alternate)
+
+
       val clusterDf = df
-        .join(germline, array_contains(germline("members"), df("name")) and $"variant_type" === "germline", "left")
-        .join(somatic, array_contains(somatic("members"), df("name")) and $"variant_type" === "somatic", "left")
+        .join(germlineDel, joinCondition(df, germlineDel, "germline", "<DEL>"), "left")
+        .join(germlineDup, joinCondition(df, germlineDup, "germline", "<DUP>"), "left")
+        .join(somaticDel, joinCondition(df, somaticDel, "somatic", "<DEL>"), "left")
+        .join(somaticDup, joinCondition(df, somaticDup, "somatic", "<DUP>"), "left")
         .select(
           df("*"),
           struct(
-            coalesce(germline("name"), somatic("name")) as "id",
+            coalesce(germlineDel("name"), germlineDup("name"), somaticDel("name"), somaticDup("name")) as "id",
             struct(
-              germline("frequency_RQDM.germ"),
-              somatic("frequency_RQDM.som"),
+              coalesce(germlineDel("frequency_RQDM.germ"), germlineDup("frequency_RQDM.germ")) as "germ",
+              coalesce(somaticDel("frequency_RQDM.som"), somaticDup("frequency_RQDM.som")) as "som",
             ) as "frequency_RQDM",
             FrequencyUtils.EmptyClusterFrequencies
           ) as "cluster",
-          // TODO: For backwards compatibility with UI. Remove when UI is updated.
-          when(germline("frequency_RQDM.germ").isNotNull, struct(
-            germline("frequency_RQDM.germ.total.pc") as "pc",
-            germline("frequency_RQDM.germ.total.pn") as "pn",
-            germline("frequency_RQDM.germ.total.pf") as "pf"
-          ))
-            .otherwise(when(somatic("frequency_RQDM.som").isNotNull, struct(
-              somatic("frequency_RQDM.som.pc") as "pc",
-              somatic("frequency_RQDM.som.pn") as "pn",
-              somatic("frequency_RQDM.som.pf") as "pf"
-            )).otherwise(null)) as "frequency_RQDM",
           struct( // temporary struct to help frequencies joins
-            coalesce(germline("chromosome"), somatic("chromosome")) as "chromosome",
-            coalesce(germline("start"), somatic("start")) as "start",
-            coalesce(germline("end"), somatic("end")) as "end",
-            coalesce(germline("reference"), somatic("reference")) as "reference",
-            coalesce(germline("alternate"), somatic("alternate")) as "alternate",
+            coalesce(germlineDel("chromosome"), germlineDup("chromosome"),
+              somaticDel("chromosome"), somaticDup("chromosome")) as "chromosome",
+            coalesce(germlineDel("start"), germlineDup("start"),
+              somaticDel("start"), somaticDup("start")) as "start",
+            coalesce(germlineDel("end"), germlineDup("end"),
+              somaticDel("end"), somaticDup("end")) as "end",
+            coalesce(germlineDel("reference"), germlineDup("reference"),
+              somaticDel("reference"), somaticDup("reference")) as "reference",
+            coalesce(germlineDel("alternate"), germlineDup("alternate"),
+              somaticDel("alternate"), somaticDup("alternate")) as "alternate",
           ) as "cluster_info"
         )
 

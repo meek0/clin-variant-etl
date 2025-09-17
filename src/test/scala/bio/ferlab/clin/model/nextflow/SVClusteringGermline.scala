@@ -11,6 +11,7 @@ case class SVClusteringGermline(`chromosome`: String = "1",
                                 `alternate`: String = "<DEL>",
                                 `name`: String = "DRAGEN:LOSS:chr1:9823628-9823687",
                                 `members`: Seq[String] = Seq("DRAGEN:LOSS:chr1:9823628-9823687"),
+                                `aliquot_ids`: Set[String] = Set("1", "2", "3", "4"),
                                 `frequency_RQDM`: FREQUENCY_RQDM_GERM = FREQUENCY_RQDM_GERM())
 
 case class FREQUENCY_RQDM_GERM(`germ`: GERM = GERM())

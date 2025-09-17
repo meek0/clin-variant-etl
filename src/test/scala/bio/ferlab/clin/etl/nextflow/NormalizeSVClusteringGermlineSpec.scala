@@ -11,7 +11,8 @@ class NormalizeSVClusteringGermlineSpec extends SparkSpec with WithTestConfig {
 
   import spark.implicits._
 
-  val job = NormalizeSVClusteringGermline(TestETLContext())
+  val job = NormalizeSVClusteringGermline(TestETLContext(),
+    sourceId = "nextflow_svclustering_germline_del_output", destinationId = "nextflow_svclustering_germline_del")
 
   val testData: Map[String, DataFrame] = Map(
     job.enriched_clinical.id -> Seq(
@@ -72,6 +73,7 @@ class NormalizeSVClusteringGermlineSpec extends SparkSpec with WithTestConfig {
         `alternate` = "<GAIN>",
         `name` = "DRAGEN:GAIN:chr12:46361100-46365186",
         `members` = Seq("DRAGEN:GAIN:chr12:46361100-46364711", "DRAGEN:GAIN:chr12:46361100-46364999", "DRAGEN:GAIN:chr12:46361100-46365186"),
+        `aliquot_ids` = Set("1", "2", "3", "4"),
         `frequency_RQDM` = FREQUENCY_RQDM_GERM(
           `germ` = GERM(
             `affected` = AFFECTED(`pc` = 2, `pn` = 4, `pf` = 0.5),
@@ -89,6 +91,7 @@ class NormalizeSVClusteringGermlineSpec extends SparkSpec with WithTestConfig {
         `alternate` = "<GAIN>",
         `name` = "DRAGEN:GAIN:chr15:43635335-43636228",
         `members` = Seq("DRAGEN:GAIN:chr15:43635335-43636228", "DRAGEN:GAIN:chr15:43635335-43636228"),
+        `aliquot_ids` = Set("1", "4"),
         `frequency_RQDM` = FREQUENCY_RQDM_GERM(
           `germ` = GERM(
             `affected` = AFFECTED(`pc` = 1, `pn` = 4, `pf` = 0.25),

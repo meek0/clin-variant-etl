@@ -5,14 +5,15 @@ import bio.ferlab.datalake.commons.config.{DatasetConf, RuntimeETLContext}
 import bio.ferlab.datalake.spark3.implicits.GenomicImplicits._
 import bio.ferlab.datalake.spark3.implicits.SparkUtils.firstAs
 import mainargs.{ParserForMethods, main}
-import org.apache.spark.sql.functions.{coalesce, lit, struct}
+import org.apache.spark.sql.functions.{coalesce, collect_set, lit, struct}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 
-case class NormalizeSVClusteringSomatic(rc: RuntimeETLContext) extends NormalizeSVClustering(rc) {
+case class NormalizeSVClusteringSomatic(rc: RuntimeETLContext,
+                                        sourceId: String, destinationId: String) extends NormalizeSVClustering(rc) {
 
-  override val source: DatasetConf = conf.getDataset("nextflow_svclustering_somatic_output")
-  override val mainDestination: DatasetConf = conf.getDataset("nextflow_svclustering_somatic")
+  override val source: DatasetConf = conf.getDataset(sourceId)
+  override val mainDestination: DatasetConf = conf.getDataset(destinationId)
 
   override def computeFrequencyRQDM(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -28,12 +29,14 @@ case class NormalizeSVClusteringSomatic(rc: RuntimeETLContext) extends Normalize
         firstAs("reference"),
         firstAs("alternate"),
         firstAs("members"),
+        collect_set("aliquot_id") as "aliquot_ids",
         pcNoFilter
       )
       .selectLocus(
         $"end",
         $"name",
         $"members",
+        $"aliquot_ids",
         struct(
           struct(
             $"pc",
@@ -47,8 +50,8 @@ case class NormalizeSVClusteringSomatic(rc: RuntimeETLContext) extends Normalize
 
 object NormalizeSVClusteringSomatic {
   @main
-  def run(rc: RuntimeETLContext): Unit = {
-    NormalizeSVClusteringSomatic(rc).run()
+  def run(rc: RuntimeETLContext, sourceId: String, destinationId: String): Unit = {
+    NormalizeSVClusteringSomatic(rc, sourceId, destinationId).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)

@@ -7,10 +7,11 @@ import mainargs.{ParserForMethods, main}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-case class NormalizeSVClusteringGermline(rc: RuntimeETLContext) extends NormalizeSVClustering(rc) {
+case class NormalizeSVClusteringGermline(rc: RuntimeETLContext,
+                                         sourceId: String, destinationId: String) extends NormalizeSVClustering(rc) {
 
-  override val source: DatasetConf = conf.getDataset("nextflow_svclustering_germline_output")
-  override val mainDestination: DatasetConf = conf.getDataset("nextflow_svclustering_germline")
+  override val source: DatasetConf = conf.getDataset(sourceId)
+  override val mainDestination: DatasetConf = conf.getDataset(destinationId)
 
   override def computeFrequencyRQDM(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -26,6 +27,7 @@ case class NormalizeSVClusteringGermline(rc: RuntimeETLContext) extends Normaliz
         firstAs("reference"),
         firstAs("alternate"),
         firstAs("members"),
+        collect_set("aliquot_id") as "aliquot_ids",
         when($"affected_status", pcNoFilter).otherwise(0) as "affected_pc",
         when(not($"affected_status"), pcNoFilter).otherwise(0) as "non_affected_pc",
       )
@@ -38,6 +40,7 @@ case class NormalizeSVClusteringGermline(rc: RuntimeETLContext) extends Normaliz
         firstAs("reference"),
         firstAs("alternate"),
         firstAs("members"),
+        array_distinct(flatten(collect_list($"aliquot_ids"))) as "aliquot_ids",
         struct(
           struct(
             struct(
@@ -63,8 +66,8 @@ case class NormalizeSVClusteringGermline(rc: RuntimeETLContext) extends Normaliz
 
 object NormalizeSVClusteringGermline {
   @main
-  def run(rc: RuntimeETLContext): Unit = {
-    NormalizeSVClusteringGermline(rc).run()
+  def run(rc: RuntimeETLContext, sourceId: String, destinationId: String): Unit = {
+    NormalizeSVClusteringGermline(rc, sourceId, destinationId).run()
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrThrow(args)
