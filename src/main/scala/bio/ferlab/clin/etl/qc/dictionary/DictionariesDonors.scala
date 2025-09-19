@@ -16,7 +16,7 @@ object DictionariesDonors extends TestingApp {
       shouldValuesContainedInDictionary(variants_donors.select($"col.is_hc"), DicIsHc: _*)("is_hc"),
       shouldValuesContainedInDictionary(variants_donors.select($"col.is_possibly_hc"), DicIsPossiblyHc: _*)("is_possibly_hc"),
       shouldValuesContainedInDictionary(variants_donors.select($"col.mother_zygosity"), DicMotherZygosity: _*)("mother_zygosity"),
-      shouldValuesContainedInDictionary(variants_donors.select($"col.analysis_code"), DicPanels: _*)("analysis_code"),
+      shouldValuesContainedInDictionary(variants_donors.select($"col.analysis_code"), DicAnalysis: _*)("analysis_code"),
       shouldValuesContainedInDictionary(variants_donors.select($"col.parental_origin"), DicParentalOrigin: _*)("parental_origin"),
       shouldValuesContainedInDictionary(variants_donors.select($"col.transmission"), DicTransmission: _*)("transmission"),
       shouldValuesContainedInDictionary(variants_donors.select($"col.zygosity"), DicZygosity: _*)("zygosity"),

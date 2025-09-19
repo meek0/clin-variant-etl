@@ -37,7 +37,8 @@ trait TestingApp extends App {
   // globally persist re-used dataframe for better perfs
   lazy val variants_donors = variant_centric.select(explode($"donors"))
     .persist()
-  lazy val variants_donors_sample = variant_centric.sample(0.5).select(explode($"donors"))
+  lazy val variants_donors_sample = variant_centric.withColumn("keep", when($"hgvsg" === "chr3:g.195764038C>T", lit(true)).otherwise(rand() < 0.5)) // 50% sampling but keeping rare data for QA
+    .filter($"keep").drop("keep").select(explode($"donors"))
     .persist()
   lazy val variants_consequences = variant_centric.select(explode($"consequences"))
     .persist()

@@ -8,6 +8,41 @@ package object dictionary {
     "unknown",
   )
 
+  val DicAnalysis = Seq(
+    "DPSO",
+    "DYSM",
+    "EIDC",
+    "EIDI",
+    "EIII",
+    "EPIL",
+    "EXTUM",
+    "FEAN",
+    "GENOR",
+    "HDIP",
+    "HLEB",
+    "HLH",
+    "HYPM",
+    "MAI",
+    "MITN",
+    "MMG",
+    "MSMD",
+    "MYAC",
+    "MYOC",
+    "NPC",
+    "POLYM",
+    "RETINO",
+    "RGDI",
+    "RHAB",
+    "SCID",
+    "SHIGE",
+    "SLA",
+    "STMO",
+    "SURD",
+    "TUHEM",
+    "TUPED",
+    "VEOIB"
+  )
+
   val DicChromosome = Seq(
     "1",
     "2",
@@ -59,6 +94,7 @@ package object dictionary {
     "no_classification_for_the_single_variant",
     "Conflicting_classifications_of_pathogenicity",
     "no_classifications_from_unflagged_records",
+    "Established_risk_allele",
   )
 
   val DicCmcTier = Seq(
@@ -136,31 +172,6 @@ package object dictionary {
     "LIKELY_PATHOGENIC",
     "PATHOGENIC",
     "UNCERTAIN_SIGNIFICANCE",
-    "null"
-  )
-
-  val DicExoACMGEviMax = Seq(
-    "PVS1",
-    "PS2",
-    "PM2",
-    "PM3",
-    "PM4",
-    "PP3",
-    "PP4",
-    "PP5",
-    "BA1",
-    "BS4",
-    "BP2",
-    "BP4",
-    "BP6",
-    "BP4_VeryStrong",
-    "BP4_Moderate",
-    "BP4_Strong",
-    "BP6_Strong",
-    "PP3_Moderate",
-    "PP3_Strong",
-    "PP5_Strong",
-    "PVS1_Strong",
     "null"
   )
 

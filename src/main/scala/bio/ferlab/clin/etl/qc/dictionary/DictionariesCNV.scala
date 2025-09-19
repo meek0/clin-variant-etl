@@ -12,7 +12,7 @@ object DictionariesCNV extends TestingApp {
       shouldValuesContainedInDictionary(cnv_centric.select($"chromosome"), DicChromosome: _*)("chromosome"),
       shouldValuesContainedInDictionary(cnv_centric.select(explode($"filters")), DicCNVFilters: _*)("filters"),
       shouldValuesContainedInDictionary(cnv_centric.select($"type"), DicCNVType: _*)("type"),
-      shouldValuesContainedInDictionary(cnv_centric.select($"analysis_code"), DicPanels: _*)("analysis_code"),
+      shouldValuesContainedInDictionary(cnv_centric.select($"analysis_code"), DicAnalysis: _*)("analysis_code"),
       shouldValuesContainedInDictionary(cnv_centric.select(explode($"genes")).select(explode($"col.panels")), DicPanels: _*)("panels")
     )
   }
