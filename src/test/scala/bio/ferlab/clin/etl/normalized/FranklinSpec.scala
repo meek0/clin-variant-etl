@@ -11,10 +11,9 @@ import bio.ferlab.datalake.commons.config.RunStep.default_load
 import bio.ferlab.datalake.commons.config.{DatasetConf, RunStep, SimpleConfiguration}
 import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
-import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{element_at, lit}
+import org.apache.spark.sql.functions.lit
 
 import java.nio.file.{Files, Paths}
 
