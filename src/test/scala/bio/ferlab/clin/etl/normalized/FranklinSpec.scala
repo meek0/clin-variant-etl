@@ -46,8 +46,9 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   val defaultAnalysisIds: Seq[String] = defaultRawFranklinData.keys.toSeq
 
   val clinicalDf = Seq(
-    EnrichedClinical(`analysis_id` = "SRA0001", `batch_id` = "BAT1"),
-    EnrichedClinical(`analysis_id` = "SRA0002", `batch_id` = "BAT2"),
+    EnrichedClinical(`analysis_id` = "SRA0001", `sequencing_id` = "SRS0001", `batch_id` = "BAT1"),
+    EnrichedClinical(`analysis_id` = "SRA0001", `sequencing_id` = "SRS0002", `batch_id` = "BAT1"),
+    EnrichedClinical(`analysis_id` = "SRA0002", `sequencing_id` = "SRS0003", `batch_id` = "BAT2"),
   ).toDF()
 
 

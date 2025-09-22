@@ -66,8 +66,13 @@ case class Franklin(rc: RuntimeETLContext, analysisIds: Seq[String] = Seq()) ext
                                lastRunDateTime: LocalDateTime,
                                currentRunDateTime: LocalDateTime): DataFrame = {
 
-    val withBatchId = data(enriched_clinical.id).select("batch_id", "analysis_id")
-      .join(data(raw_franklin.id), Seq("analysis_id"), "left")
+    val clinicalBatchIds = data(enriched_clinical.id)
+      .groupBy("analysis_id")
+      .agg(first("batch_id").as("batch_id")) // keep the first batch_id
+      .select("batch_id", "analysis_id")
+
+    val withBatchId = data(raw_franklin.id)
+      .join(clinicalBatchIds, Seq("analysis_id"), "left")
 
     withBatchId
       .select(
