@@ -20,6 +20,7 @@ case class Franklin(rc: RuntimeETLContext, analysisIds: Seq[String] = Seq()) ext
 
   override val mainDestination: DatasetConf = conf.getDataset("normalized_franklin")
   val raw_franklin: DatasetConf = conf.getDataset("raw_franklin")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
 
   override def extract(lastRunDateTime: LocalDateTime,
                        currentRunDateTime: LocalDateTime): Map[String, DataFrame] = {
@@ -56,7 +57,8 @@ case class Franklin(rc: RuntimeETLContext, analysisIds: Seq[String] = Seq()) ext
     }
 
     Map(
-      raw_franklin.id -> sourceDf
+      raw_franklin.id -> sourceDf,
+      enriched_clinical.id -> enriched_clinical.read.where($"analysis_id".isin(analysisIds: _*))
     )
   }
 
@@ -64,7 +66,15 @@ case class Franklin(rc: RuntimeETLContext, analysisIds: Seq[String] = Seq()) ext
                                lastRunDateTime: LocalDateTime,
                                currentRunDateTime: LocalDateTime): DataFrame = {
 
-    data(raw_franklin.id)
+    val clinicalBatchIds = data(enriched_clinical.id)
+      .groupBy("analysis_id")
+      .agg(first("batch_id").as("batch_id")) // keep the first batch_id
+      .select("batch_id", "analysis_id")
+
+    val withBatchId = data(raw_franklin.id)
+      .join(clinicalBatchIds, Seq("analysis_id"), "left")
+
+    withBatchId
       .select(
         explode($"variants") as "variant",
         ltrim($"variant.variant.chromosome", "chr") as "chromosome",
@@ -74,6 +84,7 @@ case class Franklin(rc: RuntimeETLContext, analysisIds: Seq[String] = Seq()) ext
         $"variant.variant.alt" as "alternate",
         parseNullString("aliquot_id"),
         $"analysis_id",
+        $"batch_id",
         $"franklin_analysis_id".cast(StringType) as "franklin_analysis_id", // Because spark infers as int but should be String
         $"variant.priority.score" as "score",
         $"variant.classification.acmg_classification" as "acmg_classification",
