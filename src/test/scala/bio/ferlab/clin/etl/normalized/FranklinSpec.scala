@@ -3,6 +3,7 @@ package bio.ferlab.clin.etl.normalized
 import bio.ferlab.clin.etl.mainutils.AnalysisIds
 import bio.ferlab.clin.etl.model.raw._
 import bio.ferlab.clin.etl.normalized.Franklin.parseNullString
+import bio.ferlab.clin.model.enriched.EnrichedClinical
 import bio.ferlab.clin.model.normalized.NormalizedFranklin
 import bio.ferlab.clin.testutils.LoadResolverUtils.write
 import bio.ferlab.clin.testutils.WithTestConfig
@@ -10,9 +11,10 @@ import bio.ferlab.datalake.commons.config.RunStep.default_load
 import bio.ferlab.datalake.commons.config.{DatasetConf, RunStep, SimpleConfiguration}
 import bio.ferlab.datalake.commons.file.FileSystemResolver
 import bio.ferlab.datalake.spark3.implicits.DatasetConfImplicits.DatasetConfOperations
+import bio.ferlab.datalake.spark3.loader.LoadResolver
 import bio.ferlab.datalake.testutils.{CleanUpBeforeEach, CreateDatabasesBeforeAll, SparkSpec, TestETLContext}
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.{element_at, lit}
 
 import java.nio.file.{Files, Paths}
 
@@ -22,6 +24,8 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
   val raw_franklin: DatasetConf = conf.getDataset("raw_franklin")
   val normalized_franklin: DatasetConf = conf.getDataset("normalized_franklin")
+  val enriched_clinical: DatasetConf = conf.getDataset("enriched_clinical")
+
   val defaultRawFranklinData: Map[String, Seq[RawFranklin]] = Map(
     "SRA0001" -> Seq(
       RawFranklin(
@@ -41,8 +45,13 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
   )
   val defaultAnalysisIds: Seq[String] = defaultRawFranklinData.keys.toSeq
 
+  val clinicalDf = Seq(
+    EnrichedClinical(`analysis_id` = "SRA0001", `batch_id` = "BAT1"),
+    EnrichedClinical(`analysis_id` = "SRA0002", `batch_id` = "BAT2"),
+  ).toDF()
 
-  override val dsToClean: List[DatasetConf] = List(raw_franklin, normalized_franklin)
+
+  override val dsToClean: List[DatasetConf] = List(raw_franklin, normalized_franklin, enriched_clinical)
   override val dbToCreate: List[String] = List("clin")
 
   "extract" should "read raw franklin data from all analysis ids that are ready" in {
@@ -59,13 +68,14 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
         )
       )
       writeRawFranklinData(rawFranklinData)(updatedConf, spark)
+      write(enriched_clinical, clinicalDf)(spark, updatedConf)
 
       // Running extract
       val etl = franklinETL(rawFranklinData.keys.toSeq)(updatedConf, spark)
       val extracted = etl.extract()
 
       // Data from all analysis should be included
-      extracted.size shouldBe 1
+      extracted.size shouldBe 2
       extracted(raw_franklin.id).as[RawFranklin].collect() should contain theSameElementsAs rawFranklinData.values.flatten
     }
   }
@@ -84,6 +94,7 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
           )
         ))
       writeRawFranklinData(extraRawFranklinData)(updatedConf, spark)
+      write(enriched_clinical, clinicalDf)(spark, updatedConf)
 
       // simulate incomplete analysis by writing a .txt file in the raw franklin data location
       val analysisPath = raw_franklin.path.replace("{{ANALYSIS_ID}}", "SRA0002")
@@ -95,7 +106,7 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
       val extracted = etl.extract()
 
       // We expect the extraction to return only the default raw franklin data as the analysis SRA0002 is incomplete
-      extracted.size shouldBe 1
+      extracted.size shouldBe 2
       extracted(raw_franklin.id).as[RawFranklin].collect() should contain theSameElementsAs defaultRawFranklinData.values.flatten
     }
   }
@@ -109,7 +120,8 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
     val etl = franklinETL()
 
     val result = etl.transformSingle(Map(
-      raw_franklin.id -> defaultRawFranklinData.values.flatten.toSeq.toDF()
+      raw_franklin.id -> defaultRawFranklinData.values.flatten.toSeq.toDF(),
+      enriched_clinical.id -> clinicalDf
     ))
 
     result
@@ -131,7 +143,7 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     val etl = franklinETL()
 
-    val result = etl.transformSingle(Map(raw_franklin.id -> rawFranklinDf))
+    val result = etl.transformSingle(Map(raw_franklin.id -> rawFranklinDf, enriched_clinical.id -> clinicalDf))
 
     result.as[NormalizedFranklin].collect() should contain theSameElementsAs expected
     result.select("aliquot_id").as[String].collect() should contain theSameElementsAs Seq(null)
@@ -151,7 +163,7 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
     val etl = franklinETL()
 
-    val result = etl.transformSingle(Map(raw_franklin.id -> rawFranklinDf))
+    val result = etl.transformSingle(Map(raw_franklin.id -> rawFranklinDf, enriched_clinical.id -> clinicalDf))
     result.as[NormalizedFranklin].collect() should contain theSameElementsAs expected
   }
 
@@ -161,6 +173,7 @@ class FranklinSpec extends SparkSpec with WithTestConfig with CreateDatabasesBef
 
       // simulate raw franklin data
       writeRawFranklinData()(updatedConf, spark)
+      write(enriched_clinical, clinicalDf)(spark, updatedConf)
 
       // simulate incomplete analysis by creating a .txt file in the raw franklin data location
       val analysisPath = raw_franklin.path.replace("{{ANALYSIS_ID}}", defaultAnalysisIds.head)
